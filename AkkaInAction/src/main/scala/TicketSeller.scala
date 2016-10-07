@@ -1,6 +1,8 @@
-import akka.actor.{Actor, PoisonPill}
+import akka.actor.{Actor, PoisonPill, Props}
 
 object TicketSeller {
+  def props(event: String) = Props(new TicketSeller(event))
+
   case class Add(tickets: Vector[Ticket]) // Message to add tickets to the TicketSeller
   case class Buy(tickets: Int)            // Message to buy tickets from the TicketSeller
   case class Ticket(id: Int)              // A ticket
@@ -19,6 +21,7 @@ class TicketSeller(event: String) extends Actor {
   def receive = {
     case Add(newTickets) =>
       tickets = tickets ++ newTickets
+
     case Buy(nrOfTickets) =>
       val entries = tickets.take(nrOfTickets).toVector
       if (entries.size >= nrOfTickets) {
@@ -26,11 +29,12 @@ class TicketSeller(event: String) extends Actor {
       } else {
         sender() ! Tickets(event)
       }
+
     case GetEvent =>
       sender() ! Some(BoxOffice.Event(event, tickets.size))
+
     case Cancel =>
       sender() ! Some(BoxOffice.Event(event, tickets.size))
       self ! PoisonPill
-
   }
 }
