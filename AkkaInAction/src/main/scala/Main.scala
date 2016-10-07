@@ -1,10 +1,9 @@
 import scala.concurrent.Future
-import akka.actor.{ ActorSystem, Actor, Props }
+import akka.actor.ActorSystem
 import akka.event.Logging
 import akka.util.Timeout
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
-import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
 import com.typesafe.config.{ Config, ConfigFactory }
 

@@ -1,12 +1,10 @@
+import scala.concurrent.Future
 import akka.actor._
 import akka.util.Timeout
 
-import scala.concurrent.duration._
-import scala.concurrent.Future
-
 object BoxOffice {
   def props(implicit timeout: Timeout) = Props(new BoxOffice)
-  def name = "boxoffice"
+  def name = "boxOffice"
 
   case class CreateEvent(name: String, tickets: Int)          // Message to create an event
   case class GetEvent(name: String)                           // Message to get an event
