@@ -35,7 +35,7 @@ class BoxOffice(implicit timeout: Timeout) extends Actor {
           TicketSeller.Ticket(ticketId)
         }.toVector
         ticketSeller ! TicketSeller.Add(newTickets)
-        sender() ! EventCreated
+        sender() ! EventCreated(Event(name, tickets))
       }
       context.child(name).fold(create())(_ => sender() ! EventExists)
 

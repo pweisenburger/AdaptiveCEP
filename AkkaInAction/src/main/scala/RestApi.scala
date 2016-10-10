@@ -44,13 +44,13 @@ trait RestRoutes extends BoxOfficeApi with EventMarshalling {
                 complete(BadRequest, err)
             }
           }
-        }
+        } ~
         // GET /events/:event
         get {
           onSuccess(getEvent(event)) {
             _.fold(complete(NotFound))(e => complete(OK, e))
           }
-        }
+        } ~
         // DELETE /events/:event
         delete {
           onSuccess(cancelEvent(event)) {

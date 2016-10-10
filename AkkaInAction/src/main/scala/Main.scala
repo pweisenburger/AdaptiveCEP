@@ -23,7 +23,7 @@ object Main extends App with RequestTimeout {
 
   val log = Logging(system.eventStream, "go-ticks")
   bindingFuture.map { serverBinding =>
-    log.info(s"RestApi bound to ${serverBinding.localAddress} ")
+    log.info(s"RestApi bound to ${serverBinding.localAddress}.")
   }.onFailure {
     case ex: Exception =>
       log.error(ex, "Failed to bind to {}:{}!", host, port)
