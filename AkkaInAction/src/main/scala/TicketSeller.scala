@@ -26,6 +26,7 @@ class TicketSeller(event: String) extends Actor {
       val entries = tickets.take(nrOfTickets).toVector
       if (entries.size >= nrOfTickets) {
         sender() ! Tickets(event, entries)
+        tickets = tickets.drop(nrOfTickets)
       } else {
         sender() ! Tickets(event)
       }

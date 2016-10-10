@@ -1,5 +1,3 @@
-// enablePlugins(JavaServerAppPackaging) Needed for deploying to Heroku
-
 name := "goticks"
 
 version := "1.0"
@@ -15,7 +13,6 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-http-spray-json-experimental" % akkaVersion,
     "com.typesafe.akka" %% "akka-slf4j"                        % akkaVersion,
     "com.typesafe.akka" %% "akka-testkit"                      % akkaVersion % "test",
-    "io.spray"          %% "spray-json"                        % "1.3.1",
     "ch.qos.logback"    %  "logback-classic"                   % "1.1.3",
     "org.scalatest"     %% "scalatest"                         % "2.2.0"     % "test"
   )
