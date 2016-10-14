@@ -14,11 +14,6 @@ object Main extends App {
   rootNode ! Greet(4)
   rootNode ! Greet(5)
 
-  val lucas =5
-  val behindert = 3
-  if (lucas > behindert)
-    println("DÖÖÖÖÖÖÖ!!!")
-
 }
 
 
