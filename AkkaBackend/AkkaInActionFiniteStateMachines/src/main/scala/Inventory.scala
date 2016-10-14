@@ -1,4 +1,5 @@
 import akka.actor.{Actor, ActorRef, FSM}
+import scala.math.min
 
 // Events
 case class BookRequest(context: AnyRef, target: ActorRef)
@@ -54,35 +55,85 @@ class Inventory(publisher: ActorRef) extends Actor with FSM[State, StateData] {
     }
   }
 
-  // TODO Continue from here!
-
   when(ProcessRequest) {
     case Event(Done, data: StateData) => {
-      ???
+      goto(WaitForRequests) using data.copy(
+        nrBooksInStore = data.nrBooksInStore - 1,
+        pendingRequests = data.pendingRequests.tail)
     }
   }
 
   when(SoldOut) {
     case Event(request: BookRequest, data: StateData) => {
-      ???
+      goto(ProcessSoldOut) using new StateData(0, Seq(request))
     }
   }
 
   when(ProcessSoldOut) {
     case Event(Done, data: StateData) => {
-      ???
+      goto(SoldOut) using new StateData(0, Seq())
     }
   }
 
   whenUnhandled {
     case Event(request: BookRequest, data: StateData) => {
-      ???
+      stay using data.copy(pendingRequests = data.pendingRequests :+ request)
     }
     case Event(e, s) => {
-      ???
+      log.warning("Received unhandled request {} in state {}/{}", e, stateName, s)
+      stay
     }
   }
 
   initialize
+
+  // Entry actions
+  onTransition {
+
+    case _ -> WaitForRequests => {
+      if (!nextStateData.pendingRequests.isEmpty) {
+        // Go to next state
+        self ! PendingRequests
+      }
+    }
+
+    case _ -> WaitForPublisher => {
+      // Send request to publisher
+      publisher ! PublisherRequest
+    }
+
+    case _ -> ProcessRequest => {
+      val request = nextStateData.pendingRequests.head
+      reserveId += 1
+      request.target ! new BookReply(request.context, Right(reserveId))
+      self ! Done
+    }
+
+    case _ -> ProcessSoldOut => {
+      nextStateData.pendingRequests.foreach(request => {
+        request.target ! new BookReply(request.context, Left("SoldOut"))
+      })
+      self ! Done
+    }
+
+  }
+
+}
+
+class Publisher(totalNrBooks: Int, nrBooksPerRequest: Int) extends Actor {
+
+  var nrLeft = totalNrBooks
+
+  def receive = {
+    case PublisherRequest => {
+      if (nrLeft == 0) {
+        sender() ! BookSupplySoldOut
+      } else {
+        val supply = min(nrBooksPerRequest, nrLeft)
+        nrLeft -= supply
+        sender() ! new BookSupply(supply)
+      }
+    }
+  }
 
 }
