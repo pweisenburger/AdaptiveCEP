@@ -14,6 +14,6 @@ object StreamRepresentation extends App {
   def join22[A, B, C, D](s1: Stream2[A, B], s2: Stream2[C, D]) = Stream4[A, B, C, D](s1.t._1, s1.t._2, s2.t._1, s2.t._2)
   def join31[A, B, C, D](s1: Stream3[A, B, C], s2: Stream1[D]) = Stream4[A, B, C, D](s1.t._1, s1.t._2, s1.t._3, s2.t)
 
-  println(join22(Stream2((13, "Foo")), Stream2((42, "Bar"))) == Stream4((12, "Foo", 42, "Bar")))
+  assert(join22(Stream2((13, "Foo")), Stream2((42, "Bar"))) == Stream4((13, "Foo", 42, "Bar")))
 
 }
