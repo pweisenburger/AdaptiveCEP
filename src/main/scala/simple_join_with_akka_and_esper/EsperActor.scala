@@ -1,4 +1,4 @@
-package simple_join_with_esper_actor
+package simple_join_with_akka_and_esper
 
 import akka.actor.Actor
 import com.espertech.esper.client.{Configuration, EPServiceProviderManager, UpdateListener}
