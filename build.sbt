@@ -7,6 +7,7 @@ scalaVersion := "2.11.8"
 libraryDependencies ++= {
   val akkaVersion = "2.4.9"
   Seq(
+    "org.scala-lang" % "scala-reflect" % "2.11.8",
     "com.typesafe.akka" %% "akka-actor" % akkaVersion,
     "com.espertech" % "esper" % "5.3.0"
   )
