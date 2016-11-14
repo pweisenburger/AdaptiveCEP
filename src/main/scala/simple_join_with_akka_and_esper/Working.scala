@@ -4,9 +4,8 @@ import scala.reflect.{ClassTag, classTag}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import com.espertech.esper.client._
 
-// TODO Restrict A, B, ... to `<: AnyRef`!
-case class Stream2[A, B](t: (A, B))(implicit val aCt: ClassTag[A], val bCt: ClassTag[B])
-case class Stream4[A, B, C, D](t: (A, B, C, D))(implicit val aCt: ClassTag[A], val bCt: ClassTag[B], val cCt: ClassTag[C], val dCt: ClassTag[D])
+case class Stream2[A <: AnyRef, B <: AnyRef](t: (A, B))(implicit val aCt: ClassTag[A], val bCt: ClassTag[B])
+case class Stream4[A <: AnyRef, B <: AnyRef, C <: AnyRef, D <: AnyRef](t: (A, B, C, D))(implicit val aCt: ClassTag[A], val bCt: ClassTag[B], val cCt: ClassTag[C], val dCt: ClassTag[D])
 
 class ReceiverActor extends Actor {
 
@@ -52,7 +51,6 @@ class JoinActor(receiverActor: ActorRef) extends Actor {
     }
   })
 
-  // TODO Define that upper bound directly with `Stream2`!
   def stream2ToArray[A <: AnyRef, B <: AnyRef](s: Stream2[A, B]): Array[AnyRef] =
     Array[AnyRef](s.t._1, s.t._2)
 
