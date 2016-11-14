@@ -1,7 +1,7 @@
 package simple_join_with_esper
 
 import com.espertech.esper.client._
-import stream_representation.StreamRepresentation.Stream4
+import stream_representation.StreamRepresentation.{Stream2, Stream4}
 
 object WorkingWithArrays extends App {
 
@@ -34,8 +34,12 @@ object WorkingWithArrays extends App {
     }
   })
 
+  // TODO Maybe define that upper bound directly with `Stream 2`..?
+  def stream2ToArray[A <: AnyRef, B <: AnyRef](s: Stream2[A, B]): Array[AnyRef] =
+    Array[AnyRef](s.t._1, s.t._2)
+
   // Send events to the Esper engine as events
-  runtime.sendEvent(Array[AnyRef](Int.box(42), "42"), "StreamX")
-  runtime.sendEvent(Array[AnyRef]("13", Int.box(13)), "StreamY")
+  runtime.sendEvent(stream2ToArray(Stream2[Integer, String](42, "42")), "StreamX")
+  runtime.sendEvent(stream2ToArray(Stream2[String, Integer]("13", 13)), "StreamY")
 
 }
