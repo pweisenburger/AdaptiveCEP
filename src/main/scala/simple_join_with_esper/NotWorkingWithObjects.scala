@@ -5,7 +5,7 @@ import stream_representation.StreamRepresentation._
 
 import scala.reflect.ClassTag
 
-object NotWorking extends App {
+object NotWorkingWithObjects extends App {
 
   def classForT[T: ClassTag] = implicitly[ClassTag[T]].runtimeClass
 
