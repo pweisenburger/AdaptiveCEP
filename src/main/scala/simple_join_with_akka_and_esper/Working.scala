@@ -23,7 +23,7 @@ class ReceiverActor extends Actor {
 
 }
 
-class JoinActor(receiverActor: ActorRef) extends Actor {
+class StaticJoinActor(receiverActor: ActorRef) extends Actor {
 
   val configuration = new Configuration
 
@@ -71,7 +71,7 @@ object Working extends App {
 
   val actorSystem = ActorSystem()
   val receiverActor = actorSystem.actorOf(Props(new ReceiverActor))
-  val joinActor = actorSystem.actorOf(Props(new JoinActor(receiverActor)))
+  val joinActor = actorSystem.actorOf(Props(new StaticJoinActor(receiverActor)))
 
   joinActor ! Stream2[Integer, String](42, "42")
   joinActor ! Stream2[String, Integer]("13", 13)
