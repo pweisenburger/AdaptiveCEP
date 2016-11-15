@@ -39,14 +39,14 @@ class JoinActor(receiverActor: ActorRef) extends Actor {
   configuration.addEventType("rhs", rhsNames, rhsTypes)
 
   val eplStatement = administrator.createEPL(
-    "select * from lhs.win:length_batch(1) as l, rhs.win:length_batch(1) as r")
+    "select * from lhs.win:length_batch(1) as lhs, rhs.win:length_batch(1) as rhs")
 
   eplStatement.addListener(new UpdateListener {
     def update(newEvents: Array[EventBean], oldEvents: Array[EventBean]) = {
-      val lP0: Integer = newEvents(0).get("l").asInstanceOf[Array[AnyRef]](0).asInstanceOf[Integer]
-      val lP1: String = newEvents(0).get("l").asInstanceOf[Array[AnyRef]](1).asInstanceOf[String]
-      val rP0: String = newEvents(0).get("r").asInstanceOf[Array[AnyRef]](0).asInstanceOf[String]
-      val rP1: Integer = newEvents(0).get("r").asInstanceOf[Array[AnyRef]](1).asInstanceOf[Integer]
+      val lP0: Integer = newEvents(0).get("lhs").asInstanceOf[Array[AnyRef]](0).asInstanceOf[Integer]
+      val lP1: String = newEvents(0).get("lhs").asInstanceOf[Array[AnyRef]](1).asInstanceOf[String]
+      val rP0: String = newEvents(0).get("rhs").asInstanceOf[Array[AnyRef]](0).asInstanceOf[String]
+      val rP1: Integer = newEvents(0).get("rhs").asInstanceOf[Array[AnyRef]](1).asInstanceOf[Integer]
       receiverActor ! Stream4[Integer, String, String, Integer](lP0, lP1, rP0, rP1)
     }
   })
