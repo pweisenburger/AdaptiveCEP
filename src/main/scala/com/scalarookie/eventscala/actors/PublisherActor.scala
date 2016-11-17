@@ -28,7 +28,7 @@ trait PublisherActor extends Actor {
 
 }
 
-case class RandomEventPublisher[T](name: String, createEventFromId: Int => T) extends PublisherActor {
+case class RandomPublisherActor[T](name: String, createEventFromId: Int => T) extends PublisherActor {
 
   def publish(id: Int): Unit = {
     val t = createEventFromId(id)
