@@ -22,21 +22,6 @@ case class TimeBatch(secs: Int) extends Window
 
 object Query {
 
-  def getNrOfFieldsFrom(query: Query): Int = {
-    def getNrOfFieldsFromStream(stream: Stream): Int = stream match {
-      case _: Stream1[_] => 1
-      case _: Stream2[_, _] => 2
-      case _: Stream3[_, _, _] => 3
-      case _: Stream4[_, _, _, _] => 4
-      case _: Stream5[_, _, _, _, _] => 5
-      case _: Stream6[_, _, _, _, _, _] => 6
-    }
-    query match {
-      case s: Stream => getNrOfFieldsFromStream(s)
-      case Join(q1, _, q2, _) => getNrOfFieldsFrom(q1) + getNrOfFieldsFrom(q2)
-    }
-  }
-
   def getArrayOfClassesFrom(query: Query): Array[java.lang.Class[_]] = {
     def getArrayOfClassesFromStream(stream: Stream): Array[java.lang.Class[_]] = stream match {
       case s: Stream1[_] => Array(s.ctA.runtimeClass)

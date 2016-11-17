@@ -15,11 +15,11 @@ object Main extends App {
   val publishers = Map("A" -> publisherA, "B" -> publisherB, "C" -> publisherC)
 
   val join: Join = Join(
-    Stream2[Integer, String]("A"), LengthBatch(3),
+    Stream2[Integer, String]("A"), Length(3),
     Join(
-      Stream2[Integer, Character]("B"), LengthBatch(3),
-      Stream1[Integer]("C"), LengthBatch(3)),
-    LengthBatch(3))
+      Stream2[Integer, Character]("B"), Length(3),
+      Stream1[Integer]("C"), Length(3)),
+    Length(3))
 
   val joinActor = actorSystem.actorOf(Props(new JoinActor(join, publishers, None)), "root")
 
