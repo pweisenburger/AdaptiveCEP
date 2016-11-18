@@ -5,17 +5,18 @@ import com.espertech.esper.client._
 import com.scalarookie.eventscala.caseclasses._
 import com.scalarookie.eventscala.caseclasses.Query._
 import com.scalarookie.eventscala.caseclasses.Event._
-import com.scalarookie.eventscala.actors.PublisherActor._
 
 // `join` is the query this node represents, `publishers` contains the `ActorRef`s of all `Publisher`s of `Event`
 // instances, and `root` is the `ActorRef` of the root node of the event graph -- iff this node is not root itself.
 class JoinActor(join: Join, publishers: Map[String, ActorRef], root: Option[ActorRef]) extends Actor {
 
-  // For convenience, `lhsQuery` and `rhsQuery` are pulled out of the query.
+  /* TODO DELETE */ println(s"Node ${self.path.name} created; representing $join.")
+
+  // For convenience, `lhsQuery` and `rhsQuery` are pulled out of `join`.
   val lhsQuery: Query = join.lhsQuery
   val rhsQuery: Query = join.rhsQuery
 
-  // Boilerplate code required by Esper
+  // Boilerplate code required by Esper -.-
   val configuration = new Configuration
   lazy val serviceProvider = EPServiceProviderManager.getProvider("ServiceProvider", configuration)
   lazy val runtime = serviceProvider.getEPRuntime
@@ -47,7 +48,7 @@ class JoinActor(join: Join, publishers: Map[String, ActorRef], root: Option[Acto
   val eplStatement = administrator.createEPL(
     s"select * from lhs.$lhsWindowEpl as lhs, rhs.$rhsWindowEpl as rhs")
 
-  // ... and add an `UpdateListener` to it, specifying what to do when Esper emits new events.
+  // ...and add an `UpdateListener` to it, specifying what to do when Esper emits new events.
   eplStatement.addListener(new UpdateListener {
     override def update(newEvents: Array[EventBean], oldEvents: Array[EventBean]): Unit = {
       // A join usually results in several new events, so we reify them one by one.
@@ -64,47 +65,45 @@ class JoinActor(join: Join, publishers: Map[String, ActorRef], root: Option[Acto
     }
   })
 
-  val lhsChild: Option[ActorRef] = lhsQuery match {
-    // `lhsQuery` is a subscription to a stream, so we subscribe to it.
-    case lhsStream: Stream => publishers(lhsStream.name) ! Subscribe; None
+  val lhsActor: ActorRef = lhsQuery match {
+    // `lhsQuery` is a stream, so we create a child actor to subscribe to it.
+    case lhsStream: Stream => context.actorOf(Props(
+      new StreamActor(lhsStream, publishers, Some(root.getOrElse(self)))),
+      s"${self.path.name}-lhs")
     // `lhsQuery` is another join, so we create a child actor to perform that join.
-    case lhsJoin: Join => Some(context.actorOf(Props(
-      new JoinActor(lhsJoin, publishers, Some(root.getOrElse(self)))), s"${self.path.name}-lhs"))
+    case lhsJoin: Join => context.actorOf(Props(
+      new JoinActor(lhsJoin, publishers, Some(root.getOrElse(self)))),
+      s"${self.path.name}-lhs")
   }
 
-  val rhsChild: Option[ActorRef] = rhsQuery match {
-    // Suppose `lhsQuery` and `rhsQuery` are a subscription to the same stream -- then, we won't subscribe again.
+  val rhsActor: Option[ActorRef] = rhsQuery match {
     case rhsStream: Stream => lhsQuery match {
+      // Suppose `lhsQuery` and `rhsQuery` are the same stream -- then, we won't create second child actor for it.
       case lhsStream: Stream if lhsStream.name == rhsStream.name => None
-      case _ => publishers(rhsStream.name) ! Subscribe; None
+      case _ => Some(context.actorOf(Props(
+        new StreamActor(rhsStream, publishers, Some(root.getOrElse(self)))),
+        s"${self.path.name}-rhs"))
     }
-    case join: Join => Some(context.actorOf(Props(
-      new JoinActor(join, publishers, Some(root.getOrElse(self)))), s"${self.path.name}-rhs"))
+    case rhsJoin: Join => Some(context.actorOf(Props(
+      new JoinActor(rhsJoin, publishers, Some(root.getOrElse(self)))),
+      s"${self.path.name}-rhs"))
   }
 
   // `receive` receives events and figures out whether to send them to the Esper engine as instance of `lhs` or `rhs`.
   override def receive: Receive = {
     case event: Event =>
-      val senderName = sender.path.name
-      val eventAsArray: Array[AnyRef] = getArrayOfValuesFrom(event)
-      (lhsQuery, rhsQuery) match {
-        // `lhsQuery` and `rhsQuery` are both subscriptions to the same stream, and `event` is from this stream.
-        case (lhsStream: Stream, rhsStream: Stream)
-          if lhsStream.name == rhsStream.name && lhsStream.name == senderName =>
-          runtime.sendEvent(eventAsArray, "lhs")
-          runtime.sendEvent(eventAsArray, "rhs")
-        // `lhsQuery` is a subscription to a stream, and `event` is from this stream.
-        case (lhsStream: Stream, _) if lhsStream.name == senderName =>
-          runtime.sendEvent(eventAsArray, "lhs")
-        // `lhsQuery` is another join, and `event` is resulting from it.
-        case (_: Join, _) if senderName == s"${self.path.name}-lhs" =>
-          runtime.sendEvent(eventAsArray, "lhs")
-        // `rhsQuery` is a subscription to a stream, and `event` is from this stream.
-        case (_, rhsStream: Stream) if rhsStream.name == senderName =>
-          runtime.sendEvent(eventAsArray, "rhs")
-        // `rhsQuery` is another join, and `event` is resulting from it.
-        case (_, _: Join) if senderName == s"${self.path.name}-rhs" =>
-          runtime.sendEvent(eventAsArray, "rhs")
+      if (sender == lhsActor) {
+        (lhsQuery, rhsQuery) match {
+          // If `lhsQuery` and `rhsQuery` are the same stream, we only created one child actor for it, remember?
+          case (lhsStream: Stream, rhsStream: Stream) if lhsStream.name == rhsStream.name =>
+            runtime.sendEvent(getArrayOfValuesFrom(event), "lhs")
+            runtime.sendEvent(getArrayOfValuesFrom(event), "rhs")
+          case _ =>
+            runtime.sendEvent(getArrayOfValuesFrom(event), "lhs")
+        }
+      } else if (sender == rhsActor.getOrElse(
+        sys.error(s"Panic! If $event is not from $lhsActor while there is no `rhsActor`, where is it from?"))) {
+          runtime.sendEvent(getArrayOfValuesFrom(event), "rhs")
       }
   }
 
