@@ -31,8 +31,8 @@ class JoinActor(join: Join, publishers: Map[String, ActorRef], root: Option[Acto
     case TimeTumbling(secs) => s"win:time_batch($secs)"
   }
 
-  val subquery1WindowEpl = getEplFrom(join.subquery1Window)
-  val subquery2WindowEpl = getEplFrom(join.subquery2Window)
+  val subquery1WindowEpl: String = getEplFrom(join.subquery1Window)
+  val subquery2WindowEpl: String = getEplFrom(join.subquery2Window)
 
   val eplStatement: EPStatement = administrator.createEPL(
     s"select * from subquery1.$subquery1WindowEpl as sq1, subquery2.$subquery2WindowEpl as sq2")
@@ -60,6 +60,9 @@ class JoinActor(join: Join, publishers: Map[String, ActorRef], root: Option[Acto
     case select1: Select => context.actorOf(Props(
       new SelectActor(select1, publishers, Some(root.getOrElse(self)))),
       s"${self.path.name}-select1")
+    case filter1: Filter => context.actorOf(Props(
+      new FilterActor(filter1, publishers, Some(root.getOrElse(self)))),
+      s"${self.path.name}-filter1")
   }
 
   val subquery2Actor: Option[ActorRef] = subquery2 match {
@@ -75,6 +78,9 @@ class JoinActor(join: Join, publishers: Map[String, ActorRef], root: Option[Acto
     case select2: Select => Some(context.actorOf(Props(
       new SelectActor(select2, publishers, Some(root.getOrElse(self)))),
       s"${self.path.name}-select2"))
+    case filter2: Filter => Some(context.actorOf(Props(
+      new FilterActor(filter2, publishers, Some(root.getOrElse(self)))),
+      s"${self.path.name}-filter2"))
   }
 
   override def receive: Receive = {
