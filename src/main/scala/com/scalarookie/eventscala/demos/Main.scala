@@ -8,7 +8,7 @@ object Main extends App {
 
   val actorSystem = ActorSystem()
 
-  val publisherA = actorSystem.actorOf(Props(RandomPublisherActor("A", id => Event2[Integer, String](id, "X"))), "A")
+  val publisherA = actorSystem.actorOf(Props(RandomPublisherActor("A", id => Event2[Integer, String](id, "X"))), "A") // TODO
   val publisherB = actorSystem.actorOf(Props(RandomPublisherActor("B", id => Event2[Integer, Character](id, 'Y'))), "B")
   val publisherC = actorSystem.actorOf(Props(RandomPublisherActor("C", id => Event1[Integer](id))), "C")
 
@@ -24,6 +24,8 @@ object Main extends App {
 
   val select: Select = Select(join2, List(3, 4, 5))
 
-  val selectActor = actorSystem.actorOf(Props(new SelectActor(select, publishers, None)), "select")
+  val filter: Filter = Filter(select, Greater, Left(1), Right(Integer.valueOf(5)))
+
+  val selectActor = actorSystem.actorOf(Props(new FilterActor(filter, publishers, None)), "filter")
 
 }

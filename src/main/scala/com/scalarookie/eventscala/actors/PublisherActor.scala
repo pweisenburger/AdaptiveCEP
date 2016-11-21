@@ -28,9 +28,9 @@ trait PublisherActor extends Actor {
 
 }
 
-case class RandomPublisherActor[T](name: String, createEventFromId: Int => T) extends PublisherActor {
+case class RandomPublisherActor[T](name: String, createEventFromId: Integer => T) extends PublisherActor {
 
-  def publish(id: Int): Unit = {
+  def publish(id: Integer): Unit = {
     val t = createEventFromId(id)
     this.subscribers.foreach(_ ! t)
     println(s"Published in stream $name: $t")

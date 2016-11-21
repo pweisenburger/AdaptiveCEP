@@ -5,7 +5,6 @@ import scala.reflect.ClassTag
 sealed trait Query
 
 sealed trait Stream extends Query { val name: String }
-
 case class Stream1[A](name: String)(implicit val ctA: ClassTag[A]) extends Stream
 case class Stream2[A, B](name: String)(implicit val ctA: ClassTag[A], val ctB: ClassTag[B]) extends Stream
 case class Stream3[A, B, C](name: String)(implicit val ctA: ClassTag[A], val ctB: ClassTag[B], val ctC: ClassTag[C]) extends Stream
@@ -22,6 +21,16 @@ case class TimeSliding(secs: Int) extends Window
 case class TimeTumbling(secs: Int) extends Window
 
 case class Select(subquery: Query, elementIds: List[Int]) extends Query
+
+case class Filter(subquery: Query, operator: Operator , operand1: Either[Int, Any], operand2: Either[Int, Any]) extends Query
+
+sealed trait Operator
+case object Equal extends Operator
+case object NotEqual extends Operator
+case object Greater extends Operator
+case object GreaterEqual extends Operator
+case object Smaller extends Operator
+case object SmallerEqual extends Operator
 
 object Query {
 
@@ -42,6 +51,8 @@ object Query {
       case Select(subquery, elementIds) =>
         val arrayOfClasses = getArrayOfClassesFrom(subquery)
         elementIds.map(id => arrayOfClasses(id - 1)).toArray
+      case Filter(subquery, _, _, _) =>
+        getArrayOfClassesFrom(subquery)
     }
   }
 
