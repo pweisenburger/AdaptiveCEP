@@ -15,10 +15,10 @@ case class Stream6[A, B, C, D, E, F](name: String)(implicit val ctA: ClassTag[A]
 case class Join(subquery1: Query, subquery1Window: Window, subquery2: Query, subquery2Window: Window) extends Query
 
 sealed trait Window
-case class LengthSliding(length: Int) extends Window
-case class LengthTumbling(length: Int) extends Window
-case class TimeSliding(secs: Int) extends Window
-case class TimeTumbling(secs: Int) extends Window
+case class LengthSliding(instances: Int) extends Window
+case class LengthTumbling(instances: Int) extends Window
+case class TimeSliding(seconds: Int) extends Window
+case class TimeTumbling(seconds: Int) extends Window
 
 case class Select(subquery: Query, elementIds: List[Int]) extends Query
 
