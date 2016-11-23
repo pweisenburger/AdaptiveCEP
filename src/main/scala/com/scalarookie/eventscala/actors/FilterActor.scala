@@ -24,8 +24,8 @@ class FilterActor(filter: Filter, publishers: Map[String, ActorRef], root: Optio
   configuration.addEventType("subquery", subqueryElementNames, subqueryElementClasses.asInstanceOf[Array[AnyRef]])
 
   def getEplFrom(operand: Either[Int, Any]): String = operand match {
-    case Left(int) => s"sq.e$int"
-    case Right(any) => any match {
+    case Left(id) => s"sq.e$id"
+    case Right(literal) => literal match {
       // Have a look at "Table 5.1. Types of EPL constants". `java.lang.Byte` has been omitted for simplicity's sake.
       // http://www.espertech.com/esper/release-5.5.0/esper-reference/html/epl_clauses.html#epl-syntax-datatype
       case s: String => s"'$s'"
@@ -53,9 +53,6 @@ class FilterActor(filter: Filter, publishers: Map[String, ActorRef], root: Optio
 
   val eplStatement: EPStatement = administrator.createEPL(
     s"select * from subquery as sq where $operand1Epl $operatorEpl $operand2Epl")
-
-  // TODO
-  println(s"select * from subquery as sq where $operand1Epl $operatorEpl $operand2Epl")
 
   eplStatement.addListener(new UpdateListener {
     override def update(newEvents: Array[EventBean], oldEvents: Array[EventBean]): Unit = {

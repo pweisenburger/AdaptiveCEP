@@ -25,10 +25,10 @@ class JoinActor(join: Join, publishers: Map[String, ActorRef], root: Option[Acto
   configuration.addEventType("subquery2", subquery2ElementNames, subquery2ElementClasses.asInstanceOf[Array[AnyRef]])
 
   def getEplFrom(window: Window): String = window match {
-    case LengthSliding(length) => s"win:length($length)"
-    case LengthTumbling(length) => s"win:length_batch($length)"
-    case TimeSliding(secs) => s"win:time($secs)"
-    case TimeTumbling(secs) => s"win:time_batch($secs)"
+    case LengthSliding(instances) => s"win:length($instances)"
+    case LengthTumbling(instances) => s"win:length_batch($instances)"
+    case TimeSliding(seconds) => s"win:time($seconds)"
+    case TimeTumbling(seconds) => s"win:time_batch($seconds)"
   }
 
   val subquery1WindowEpl: String = getEplFrom(join.subquery1Window)

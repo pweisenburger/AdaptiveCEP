@@ -28,12 +28,12 @@ trait PublisherActor extends Actor {
 
 }
 
-case class RandomPublisherActor[T](name: String, createEventFromId: Integer => T) extends PublisherActor {
+case class RandomPublisherActor[T](createEventFromId: Integer => T) extends PublisherActor {
 
   def publish(id: Integer): Unit = {
     val t = createEventFromId(id)
     this.subscribers.foreach(_ ! t)
-    println(s"Published in stream $name: $t")
+    println(s"Published in stream ${self.path.name}: $t")
     context.system.scheduler.scheduleOnce(
       delay = FiniteDuration(Random.nextInt(5000), TimeUnit.MILLISECONDS),
       runnable = new Runnable { def run() = publish(id + 1) }
