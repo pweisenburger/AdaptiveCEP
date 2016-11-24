@@ -13,13 +13,16 @@ As of now, no QoS features have been implemented yet. However, the goal is that 
 
 ## Table of Contents
 + [EventScala DSL](#eventscala-dsl)
-+ TODO
+    + [Primitives](#primitives)
+    + [Operators](#operators)
+    + [Case class representation](#case-class-representation)
++ [EventScala EventGraph](#eventscala-eventgraph)
 
 ## EventScala DSL
 
 EventScala DSL is the domain-specific language to express event processing queries. Queries are made up of primitives and operators and can be arbitrarily nested and composed.
 
-Internally, queries expressed using EventScala DSL are represented by case classes. This case class representation can then be passed to EventScala's EventGraph for execution, but it may also be interpreted by another backend.
+Internally, queries expressed using EventScala DSL are represented by case classes. This case class representation can then be passed to EventScala EventGraph for execution, but it may also be interpreted by another backend.
 
 ### Primitives
 
@@ -152,4 +155,10 @@ val queryCaseClassRepresentation: Query =
 
 ## EventScala EventGraph
 
-[eventscala_eventgraph_mockup](img/eventscala_eventgraph_mockup.png)
+As said, the EventScala EventGraph is a tree of Akka actors representing a query, with each actor representing a primitive or an operator of that query. Given a query as well as the `ActorRef`s to the event publishers, the EventGraph will automatically build and start emitting events.
+
+A node representing a primitive (so far, there's only one primitive: a subscription to a stream) is just a plain Akka actor subscribing to the respective publisher, whereas nodes representing operators are all running an independent instance of the Esper event processing engine.
+
+Below, find a mockup of what the EventGraph for the [query above](#case-class-representation) would look like.
+
+![eventscala_eventgraph_mockup](img/eventscala_eventgraph_mockup.png)
