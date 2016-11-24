@@ -152,4 +152,4 @@ val queryCaseClassRepresentation: Query =
 
 ## EventScala EventGraph
 
-TODO
+[eventscala_eventgraph_mockup](img/eventscala_eventgraph_mockup.png)
