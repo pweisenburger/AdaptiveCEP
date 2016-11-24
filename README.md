@@ -80,20 +80,40 @@ Internally, queries expressed using EventScala's DSL are represented by case cla
 
 Below find a more complex query expressed in EventScala's DSL as well as in its case class representation.
 
-     val subquery: Query =
-       stream[String, Integer].from("B")
-       .select(elements(2))
+    val subquery: Query =
+      stream[String, Integer].from("B")
+      .select(elements(2))
 
-     val query: Query =
-       stream[Integer, String].from("A")
-       .join(subquery).in(slidingWindow(3 instances), tumblingWindow(3 seconds))
-       .join(stream[java.lang.Boolean].from("C")).in(slidingWindow(1 instances), slidingWindow(1 instances))
-       .select(elements(1, 2, 4))
-       .where(element(1) <:= literal(15))
-       .where(literal(true) =:= element(3))
+    val query: Query =
+      stream[Integer, String].from("A")
+      .join(subquery).in(slidingWindow(3 instances), tumblingWindow(3 seconds))
+      .join(stream[java.lang.Boolean].from("C")).in(slidingWindow(1 instances), slidingWindow(1 instances))
+      .select(elements(1, 2, 4))
+      .where(element(1) <:= literal(15))
+      .where(literal(true) =:= element(3))
        
-     val ccQuery: Query =
-       Filter(Filter(Select(Join(Join(Stream2(A),LengthSliding(3),Select(Stream2(B),List(2)),TimeTumbling(3)),LengthSliding(1),Stream1(C),LengthSliding(1)),List(1, 2, 4)),SmallerEqual,Left(1),Right(15)),Equal,Right(true),Left(3))
+    val queryCaseClassRepresentation: Query =
+      Filter(
+        Filter(
+          Select(
+            Join(
+              Join(
+                Stream2("A")[Integer, String],
+                LengthSliding(3),
+                Select(
+                  Stream2("B")[String, Integer],
+                  List(2)),
+                TimeTumbling(3)),
+              LengthSliding(1),
+              Stream1("C")[java.lang.Boolean],
+              LengthSliding(1)),
+            List(1, 2, 4)),
+          SmallerEqual,
+          Left(1),
+          Right(15)),
+        Equal,
+        Right(true),
+        Left(3))
 
 ## EventGraph for Executing Queries
 
