@@ -1,11 +1,11 @@
-package com.scalarookie.eventscala.actors
+package com.scalarookie.eventscala.graph
 
 import akka.actor.{Actor, ActorRef}
 import com.scalarookie.eventscala.caseclasses._
-import com.scalarookie.eventscala.actors.PublisherActor.Subscribe
+import com.scalarookie.eventscala.publishers.PublisherActor.Subscribe
 
 class StreamActor(stream: Stream, publishers: Map[String, ActorRef], root: Option[ActorRef]) extends Actor {
-  
+
   val publisher: ActorRef = publishers(stream.name)
 
   publisher ! Subscribe
