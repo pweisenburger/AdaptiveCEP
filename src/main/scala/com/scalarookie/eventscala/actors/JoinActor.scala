@@ -4,25 +4,23 @@ import akka.actor.{Actor, ActorRef, Props}
 import com.espertech.esper.client._
 import com.scalarookie.eventscala.caseclasses._
 
-class JoinActor(join: Join, publishers: Map[String, ActorRef], root: Option[ActorRef]) extends Actor {
+class JoinActor(join: Join, publishers: Map[String, ActorRef], root: Option[ActorRef]) extends Actor with EsperEngine {
 
   /* TODO */ println(s"Node `${self.path.name}` created; representing `$join`.")
 
+  val actorName: String = self.path.name
+  override val esperServiceProviderUri: String = actorName
+
   val subquery1: Query = join.subquery1
   val subquery2: Query = join.subquery2
-
-  val configuration = new Configuration
-  lazy val serviceProvider = EPServiceProviderManager.getProvider(s"${self.path.name}", configuration)
-  lazy val runtime = serviceProvider.getEPRuntime
-  lazy val administrator = serviceProvider.getEPAdministrator
 
   val subquery1ElementClasses: Array[java.lang.Class[_]] = Query.getArrayOfClassesFrom(subquery1)
   val subquery2ElementClasses: Array[java.lang.Class[_]] = Query.getArrayOfClassesFrom(subquery2)
   val subquery1ElementNames: Array[String] = (1 to subquery1ElementClasses.length).map(i => s"e$i").toArray
   val subquery2ElementNames: Array[String] = (1 to subquery2ElementClasses.length).map(i => s"e$i").toArray
 
-  configuration.addEventType("subquery1", subquery1ElementNames, subquery1ElementClasses.asInstanceOf[Array[AnyRef]])
-  configuration.addEventType("subquery2", subquery2ElementNames, subquery2ElementClasses.asInstanceOf[Array[AnyRef]])
+  addEventType("subquery1", subquery1ElementNames, subquery1ElementClasses)
+  addEventType("subquery2", subquery2ElementNames, subquery2ElementClasses)
 
   def getEplFrom(window: Window): String = window match {
     case LengthSliding(instances) => s"win:length($instances)"
@@ -34,7 +32,7 @@ class JoinActor(join: Join, publishers: Map[String, ActorRef], root: Option[Acto
   val subquery1WindowEpl: String = getEplFrom(join.subquery1Window)
   val subquery2WindowEpl: String = getEplFrom(join.subquery2Window)
 
-  val eplStatement: EPStatement = administrator.createEPL(
+  val eplStatement: EPStatement = createEplStatement(
     s"select * from subquery1.$subquery1WindowEpl as sq1, subquery2.$subquery2WindowEpl as sq2")
 
   eplStatement.addListener(new UpdateListener {
@@ -53,16 +51,16 @@ class JoinActor(join: Join, publishers: Map[String, ActorRef], root: Option[Acto
   val subquery1Actor: ActorRef = subquery1 match {
     case stream1: Stream => context.actorOf(Props(
       new StreamActor(stream1, publishers, Some(root.getOrElse(self)))),
-      s"${self.path.name}-stream1")
+      s"$actorName-stream1")
     case join1: Join => context.actorOf(Props(
       new JoinActor(join1, publishers, Some(root.getOrElse(self)))),
-      s"${self.path.name}-join1")
+      s"$actorName-join1")
     case select1: Select => context.actorOf(Props(
       new SelectActor(select1, publishers, Some(root.getOrElse(self)))),
-      s"${self.path.name}-select1")
+      s"$actorName-select1")
     case filter1: Filter => context.actorOf(Props(
       new FilterActor(filter1, publishers, Some(root.getOrElse(self)))),
-      s"${self.path.name}-filter1")
+      s"$actorName-filter1")
   }
 
   val subquery2Actor: Option[ActorRef] = subquery2 match {
@@ -70,17 +68,17 @@ class JoinActor(join: Join, publishers: Map[String, ActorRef], root: Option[Acto
       case stream1: Stream if stream1.name == stream2.name => None
       case _ => Some(context.actorOf(Props(
         new StreamActor(stream2, publishers, Some(root.getOrElse(self)))),
-        s"${self.path.name}-stream2"))
+        s"$actorName-stream2"))
     }
     case join2: Join => Some(context.actorOf(Props(
       new JoinActor(join2, publishers, Some(root.getOrElse(self)))),
-      s"${self.path.name}-join2"))
+      s"$actorName-join2"))
     case select2: Select => Some(context.actorOf(Props(
       new SelectActor(select2, publishers, Some(root.getOrElse(self)))),
-      s"${self.path.name}-select2"))
+      s"$actorName-select2"))
     case filter2: Filter => Some(context.actorOf(Props(
       new FilterActor(filter2, publishers, Some(root.getOrElse(self)))),
-      s"${self.path.name}-filter2"))
+      s"$actorName-filter2"))
   }
 
   override def receive: Receive = {
@@ -88,13 +86,13 @@ class JoinActor(join: Join, publishers: Map[String, ActorRef], root: Option[Acto
       if (sender == subquery1Actor) {
         (subquery1, subquery2) match {
           case (stream1: Stream, stream2: Stream) if stream1.name == stream2.name =>
-            runtime.sendEvent(Event.getArrayOfValuesFrom(event), "subquery1")
-            runtime.sendEvent(Event.getArrayOfValuesFrom(event), "subquery2")
+            sendEvent("subquery1", Event.getArrayOfValuesFrom(event))
+            sendEvent("subquery2", Event.getArrayOfValuesFrom(event))
           case _ =>
-            runtime.sendEvent(Event.getArrayOfValuesFrom(event), "subquery1")
+            sendEvent("subquery1", Event.getArrayOfValuesFrom(event))
         }
       } else if (sender == subquery2Actor.get) {
-          runtime.sendEvent(Event.getArrayOfValuesFrom(event), "subquery2")
+          sendEvent("subquery2", Event.getArrayOfValuesFrom(event))
       }
   }
 
