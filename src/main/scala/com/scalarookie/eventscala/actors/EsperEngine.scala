@@ -4,11 +4,11 @@ import com.espertech.esper.client._
 
 trait EsperEngine {
 
-  val serviceProviderUri: String
+  val esperServiceProviderUri: String
 
   val configuration = new Configuration
   // Using `lazy val`s here is inspired by https://www.lightbend.com/activator/template/akka-with-esper
-  lazy val serviceProvider = EPServiceProviderManager.getProvider(serviceProviderUri, configuration)
+  lazy val serviceProvider = EPServiceProviderManager.getProvider(esperServiceProviderUri, configuration)
   lazy val runtime = serviceProvider.getEPRuntime
   lazy val administrator = serviceProvider.getEPAdministrator
 

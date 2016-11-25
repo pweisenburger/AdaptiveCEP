@@ -9,7 +9,7 @@ class SelectActor(select: Select, publishers: Map[String, ActorRef], root: Optio
   /* TODO */ println(s"Node `${self.path.name}` created; representing `$select`.")
 
   val actorName: String = self.path.name
-  override val serviceProviderUri: String = actorName
+  override val esperServiceProviderUri: String = actorName
 
   val subquery: Query = select.subquery
   val elementIds: List[Int] = select.elementIds
