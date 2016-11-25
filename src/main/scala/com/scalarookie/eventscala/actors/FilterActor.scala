@@ -9,7 +9,7 @@ class FilterActor(filter: Filter, publishers: Map[String, ActorRef], root: Optio
   /* TODO */ println(s"Node `${self.path.name}` created; representing `$filter`.")
 
   val actorName: String = self.path.name
-  override val serviceProviderUri: String = actorName
+  override val esperServiceProviderUri: String = actorName
 
   val subquery: Query = filter.subquery
   val operator: Operator = filter.operator
