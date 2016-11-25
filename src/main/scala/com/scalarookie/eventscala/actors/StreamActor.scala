@@ -5,9 +5,7 @@ import com.scalarookie.eventscala.caseclasses._
 import com.scalarookie.eventscala.actors.PublisherActor.Subscribe
 
 class StreamActor(stream: Stream, publishers: Map[String, ActorRef], root: Option[ActorRef]) extends Actor {
-
-  /* TODO */ println(s"Node `${self.path.name}` created; representing `$stream`.")
-
+  
   val publisher: ActorRef = publishers(stream.name)
 
   publisher ! Subscribe

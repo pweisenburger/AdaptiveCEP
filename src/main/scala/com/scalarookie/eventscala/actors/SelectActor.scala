@@ -6,8 +6,6 @@ import com.scalarookie.eventscala.caseclasses._
 
 class SelectActor(select: Select, publishers: Map[String, ActorRef], root: Option[ActorRef]) extends Actor with EsperEngine {
 
-  /* TODO */ println(s"Node `${self.path.name}` created; representing `$select`.")
-
   val actorName: String = self.path.name
   override val esperServiceProviderUri: String = actorName
 
