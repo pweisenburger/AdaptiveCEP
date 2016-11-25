@@ -1,11 +1,12 @@
-package com.scalarookie.eventscala.demos
+package com.scalarookie.eventscala
 
 import akka.actor.{ActorSystem, Props}
-import com.scalarookie.eventscala.actors._
 import com.scalarookie.eventscala.caseclasses._
 import com.scalarookie.eventscala.dsl._
+import com.scalarookie.eventscala.graph._
+import com.scalarookie.eventscala.publishers.RandomPublisherActor
 
-object Main extends App {
+object Demo extends App {
 
   val actorSystem = ActorSystem()
 

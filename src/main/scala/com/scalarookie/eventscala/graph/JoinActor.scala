@@ -1,4 +1,4 @@
-package com.scalarookie.eventscala.actors
+package com.scalarookie.eventscala.graph
 
 import akka.actor.{Actor, ActorRef, Props}
 import com.espertech.esper.client._
