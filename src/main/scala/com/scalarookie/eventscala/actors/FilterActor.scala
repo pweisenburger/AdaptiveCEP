@@ -4,24 +4,22 @@ import akka.actor.{Actor, ActorRef, Props}
 import com.espertech.esper.client._
 import com.scalarookie.eventscala.caseclasses._
 
-class FilterActor(filter: Filter, publishers: Map[String, ActorRef], root: Option[ActorRef]) extends Actor {
+class FilterActor(filter: Filter, publishers: Map[String, ActorRef], root: Option[ActorRef]) extends Actor with EsperEngine {
 
   /* TODO */ println(s"Node `${self.path.name}` created; representing `$filter`.")
+
+  val actorName: String = self.path.name
+  override val serviceProviderUri: String = actorName
 
   val subquery: Query = filter.subquery
   val operator: Operator = filter.operator
   val operand1: Either[Int, Any] = filter.operand1
   val operand2: Either[Int, Any] = filter.operand2
 
-  val configuration = new Configuration
-  lazy val serviceProvider = EPServiceProviderManager.getProvider(s"${self.path.name}", configuration)
-  lazy val runtime = serviceProvider.getEPRuntime
-  lazy val administrator = serviceProvider.getEPAdministrator
-
-  val subqueryElementClasses: Array[java.lang.Class[_]] = Query.getArrayOfClassesFrom(subquery)
+  val subqueryElementClasses: Array[Class[_]] = Query.getArrayOfClassesFrom(subquery)
   val subqueryElementNames: Array[String] = (1 to subqueryElementClasses.length).map(i => s"e$i").toArray
 
-  configuration.addEventType("subquery", subqueryElementNames, subqueryElementClasses.asInstanceOf[Array[AnyRef]])
+  addEventType("subquery", subqueryElementNames, subqueryElementClasses)
 
   def getEplFrom(operand: Either[Int, Any]): String = operand match {
     case Left(id) => s"sq.e$id"
@@ -51,14 +49,12 @@ class FilterActor(filter: Filter, publishers: Map[String, ActorRef], root: Optio
 
   val operatorEpl: String = getEplFrom(operator)
 
-  val eplStatement: EPStatement = administrator.createEPL(
+  val eplStatement: EPStatement = createEplStatement(
     s"select * from subquery as sq where $operand1Epl $operatorEpl $operand2Epl")
 
   eplStatement.addListener(new UpdateListener {
     override def update(newEvents: Array[EventBean], oldEvents: Array[EventBean]): Unit = {
-      // TODO
       val subqueryElementValues: Array[AnyRef] = subqueryElementNames.map(s => newEvents(0).get(s))
-      //val subqueryElementValues: Array[AnyRef] = newEvents(0).get("sq").asInstanceOf[Array[AnyRef]]
       val event: Event = Event.getEventFrom(subqueryElementValues, subqueryElementClasses)
       if (root.isEmpty) println(s"Received from event graph: $event") else context.parent ! event
     }
@@ -67,22 +63,22 @@ class FilterActor(filter: Filter, publishers: Map[String, ActorRef], root: Optio
   val subqueryActor: ActorRef = subquery match {
     case stream: Stream => context.actorOf(Props(
       new StreamActor(stream, publishers, Some(root.getOrElse(self)))),
-      s"${self.path.name}-stream")
+      s"$actorName-stream")
     case join: Join => context.actorOf(Props(
       new JoinActor(join, publishers, Some(root.getOrElse(self)))),
-      s"${self.path.name}-join")
+      s"$actorName-join")
     case select: Select => context.actorOf(Props(
       new SelectActor(select, publishers, Some(root.getOrElse(self)))),
-      s"${self.path.name}-select")
+      s"$actorName-select")
     case filter: Filter => context.actorOf(Props(
       new FilterActor(filter, publishers, Some(root.getOrElse(self)))),
-      s"${self.path.name}-filter")
+      s"$actorName-filter")
   }
 
   override def receive: Receive = {
     case event: Event =>
       if (sender == subqueryActor) {
-        runtime.sendEvent(Event.getArrayOfValuesFrom(event), "subquery")
+        sendEvent("subquery", Event.getArrayOfValuesFrom(event))
       }
   }
 
