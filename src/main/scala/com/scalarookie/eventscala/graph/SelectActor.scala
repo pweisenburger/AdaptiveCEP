@@ -9,28 +9,25 @@ class SelectActor(select: Select, publishers: Map[String, ActorRef], root: Optio
   val actorName: String = self.path.name
   override val esperServiceProviderUri: String = actorName
 
-  val subquery: Query = select.subquery
-  val elementIds: List[Int] = select.elementIds
-
-  val subqueryElementClasses: Array[Class[_]] = Query.getArrayOfClassesFrom(subquery)
+  val subqueryElementClasses: Array[Class[_]] = Query.getArrayOfClassesFrom(select.subquery)
   val subqueryElementNames: Array[String] = (1 to subqueryElementClasses.length).map(i => s"e$i").toArray
 
   addEventType("subquery", subqueryElementNames, subqueryElementClasses)
 
-  val elementIdsEpl: String = elementIds.map(i => s"sq.e$i").mkString(", ")
+  val elementIdsEpl: String = select.elementIds.map(i => s"sq.e$i").mkString(", ")
 
   val eplStatement: EPStatement = createEplStatement(s"select $elementIdsEpl from subquery as sq")
 
   eplStatement.addListener(new UpdateListener {
     override def update(newEvents: Array[EventBean], oldEvents: Array[EventBean]): Unit = {
-      val subqueryElementValues: Array[AnyRef] = elementIds.map(i => s"sq.e$i").map(s => newEvents(0).get(s)).toArray
+      val subqueryElementValues: Array[AnyRef] = select.elementIds.map(i => s"sq.e$i").map(s => newEvents(0).get(s)).toArray
       val subqueryElementClasses: Array[java.lang.Class[_]] = Query.getArrayOfClassesFrom(select)
       val event: Event = Event.getEventFrom(subqueryElementValues, subqueryElementClasses)
       if (root.isEmpty) println(s"Received from event graph: $event") else context.parent ! event
     }
   })
 
-  val subqueryActor: ActorRef = subquery match {
+  val subqueryActor: ActorRef = select.subquery match {
     case stream: Stream => context.actorOf(Props(
       new StreamActor(stream, publishers, Some(root.getOrElse(self)))),
       s"$actorName-stream")
@@ -49,10 +46,8 @@ class SelectActor(select: Select, publishers: Map[String, ActorRef], root: Optio
   }
 
   override def receive: Receive = {
-    case event: Event =>
-      if (sender == subqueryActor) {
-        sendEvent("subquery", Event.getArrayOfValuesFrom(event))
-      }
+    case event: Event if sender == subqueryActor =>
+      sendEvent("subquery", Event.getArrayOfValuesFrom(event))
   }
 
 }

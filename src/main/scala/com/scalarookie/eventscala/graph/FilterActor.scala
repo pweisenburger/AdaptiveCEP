@@ -4,20 +4,7 @@ import akka.actor.{Actor, ActorRef, Props}
 import com.espertech.esper.client._
 import com.scalarookie.eventscala.caseclasses._
 
-class FilterActor(filter: Filter, publishers: Map[String, ActorRef], root: Option[ActorRef]) extends Actor with EsperEngine {
-
-  val actorName: String = self.path.name
-  override val esperServiceProviderUri: String = actorName
-
-  val subquery: Query = filter.subquery
-  val operator: Operator = filter.operator
-  val operand1: Either[Int, Any] = filter.operand1
-  val operand2: Either[Int, Any] = filter.operand2
-
-  val subqueryElementClasses: Array[Class[_]] = Query.getArrayOfClassesFrom(subquery)
-  val subqueryElementNames: Array[String] = (1 to subqueryElementClasses.length).map(i => s"e$i").toArray
-
-  addEventType("subquery", subqueryElementNames, subqueryElementClasses)
+object FilterActor {
 
   def getEplFrom(operand: Either[Int, Any]): String = operand match {
     case Left(id) => s"sq.e$id"
@@ -33,9 +20,6 @@ class FilterActor(filter: Filter, publishers: Map[String, ActorRef], root: Optio
     }
   }
 
-  val operand1Epl: String = getEplFrom(operand1)
-  val operand2Epl: String = getEplFrom(operand2)
-
   def getEplFrom(operator: Operator): String = operator match {
     case Equal => "="
     case NotEqual => "!="
@@ -45,7 +29,22 @@ class FilterActor(filter: Filter, publishers: Map[String, ActorRef], root: Optio
     case SmallerEqual => "<="
   }
 
-  val operatorEpl: String = getEplFrom(operator)
+}
+
+class FilterActor(filter: Filter, publishers: Map[String, ActorRef], root: Option[ActorRef]) extends Actor with EsperEngine {
+
+  val actorName: String = self.path.name
+  override val esperServiceProviderUri: String = actorName
+
+  val subqueryElementClasses: Array[Class[_]] = Query.getArrayOfClassesFrom(filter.subquery)
+  val subqueryElementNames: Array[String] = (1 to subqueryElementClasses.length).map(i => s"e$i").toArray
+
+  addEventType("subquery", subqueryElementNames, subqueryElementClasses)
+
+  val operand1Epl: String = FilterActor.getEplFrom(filter.operand1)
+  val operand2Epl: String = FilterActor.getEplFrom(filter.operand2)
+
+  val operatorEpl: String = FilterActor.getEplFrom(filter.operator)
 
   val eplStatement: EPStatement = createEplStatement(
     s"select * from subquery as sq where $operand1Epl $operatorEpl $operand2Epl")
@@ -58,7 +57,7 @@ class FilterActor(filter: Filter, publishers: Map[String, ActorRef], root: Optio
     }
   })
 
-  val subqueryActor: ActorRef = subquery match {
+  val subqueryActor: ActorRef = filter.subquery match {
     case stream: Stream => context.actorOf(Props(
       new StreamActor(stream, publishers, Some(root.getOrElse(self)))),
       s"$actorName-stream")
@@ -77,10 +76,8 @@ class FilterActor(filter: Filter, publishers: Map[String, ActorRef], root: Optio
   }
 
   override def receive: Receive = {
-    case event: Event =>
-      if (sender == subqueryActor) {
-        sendEvent("subquery", Event.getArrayOfValuesFrom(event))
-      }
+    case event: Event if sender == subqueryActor =>
+      sendEvent("subquery", Event.getArrayOfValuesFrom(event))
   }
 
 }
