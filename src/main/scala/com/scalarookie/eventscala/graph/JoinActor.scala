@@ -29,8 +29,8 @@ class JoinActor(join: Join, publishers: Map[String, ActorRef], root: Option[Acto
     case TimeTumbling(seconds) => s"win:time_batch($seconds)"
   }
 
-  val window1Epl: String = getEplFrom(join.subquery1Window)
-  val window2Epl: String = getEplFrom(join.subquery2Window)
+  val window1Epl: String = getEplFrom(join.window1)
+  val window2Epl: String = getEplFrom(join.window2)
 
   val eplStatement: EPStatement = createEplStatement(
     s"select * from subquery1.$window1Epl as sq1, subquery2.$window2Epl as sq2")
