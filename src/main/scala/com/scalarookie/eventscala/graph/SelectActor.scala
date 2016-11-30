@@ -20,7 +20,7 @@ class SelectActor(select: Select, publishers: Map[String, ActorRef], root: Optio
 
   eplStatement.addListener(new UpdateListener {
     override def update(newEvents: Array[EventBean], oldEvents: Array[EventBean]): Unit = {
-      val subqueryElementValues: Array[AnyRef] = select.elementIds.map(i => s"sq.e$i").map(s => newEvents(0).get(s)).toArray
+      val subqueryElementValues: Array[AnyRef] = select.elementIds.map(i => s"sq.e$i").map(newEvents(0).get(_)).toArray
       val subqueryElementClasses: Array[java.lang.Class[_]] = Query.getArrayOfClassesFrom(select)
       val event: Event = Event.getEventFrom(subqueryElementValues, subqueryElementClasses)
       if (root.isEmpty) println(s"Received from event graph: $event") else context.parent ! event
