@@ -6,15 +6,17 @@ import com.scalarookie.eventscala.caseclasses._
 
 class JoinActor(join: Join, publishers: Map[String, ActorRef], root: Option[ActorRef]) extends Actor with EsperEngine {
 
+  require(join.subquery1 != join.subquery2)
+
   val actorName: String = self.path.name
   override val esperServiceProviderUri: String = actorName
 
   val subquery1: Query = join.subquery1
   val subquery2: Query = join.subquery2
 
-  val subquery1ElementClasses: Array[java.lang.Class[_]] = Query.getArrayOfClassesFrom(subquery1)
-  val subquery2ElementClasses: Array[java.lang.Class[_]] = Query.getArrayOfClassesFrom(subquery2)
+  val subquery1ElementClasses: Array[Class[_]] = Query.getArrayOfClassesFrom(subquery1)
   val subquery1ElementNames: Array[String] = (1 to subquery1ElementClasses.length).map(i => s"e$i").toArray
+  val subquery2ElementClasses: Array[Class[_]] = Query.getArrayOfClassesFrom(subquery2)
   val subquery2ElementNames: Array[String] = (1 to subquery2ElementClasses.length).map(i => s"e$i").toArray
 
   addEventType("subquery1", subquery1ElementNames, subquery1ElementClasses)
