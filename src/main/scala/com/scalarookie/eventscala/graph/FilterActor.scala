@@ -51,7 +51,7 @@ class FilterActor(filter: Filter, publishers: Map[String, ActorRef], root: Optio
 
   eplStatement.addListener(new UpdateListener {
     override def update(newEvents: Array[EventBean], oldEvents: Array[EventBean]): Unit = {
-      val subqueryElementValues: Array[AnyRef] = subqueryElementNames.map(s => newEvents(0).get(s))
+      val subqueryElementValues: Array[AnyRef] = subqueryElementNames.map(newEvents(0).get(_))
       val event: Event = Event.getEventFrom(subqueryElementValues, subqueryElementClasses)
       if (root.isEmpty) println(s"Received from event graph: $event") else context.parent ! event
     }
