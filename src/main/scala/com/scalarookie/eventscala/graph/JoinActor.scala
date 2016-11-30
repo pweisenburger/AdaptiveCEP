@@ -4,6 +4,17 @@ import akka.actor.{Actor, ActorRef, Props}
 import com.espertech.esper.client._
 import com.scalarookie.eventscala.caseclasses._
 
+object JoinActor {
+
+  def getEplFrom(window: Window): String = window match {
+    case LengthSliding(instances) => s"win:length($instances)"
+    case LengthTumbling(instances) => s"win:length_batch($instances)"
+    case TimeSliding(seconds) => s"win:time($seconds)"
+    case TimeTumbling(seconds) => s"win:time_batch($seconds)"
+  }
+
+}
+
 class JoinActor(join: Join, publishers: Map[String, ActorRef], root: Option[ActorRef]) extends Actor with EsperEngine {
 
   require(join.subquery1 != join.subquery2)
@@ -22,15 +33,8 @@ class JoinActor(join: Join, publishers: Map[String, ActorRef], root: Option[Acto
   addEventType("subquery1", subquery1ElementNames, subquery1ElementClasses)
   addEventType("subquery2", subquery2ElementNames, subquery2ElementClasses)
 
-  def getEplFrom(window: Window): String = window match {
-    case LengthSliding(instances) => s"win:length($instances)"
-    case LengthTumbling(instances) => s"win:length_batch($instances)"
-    case TimeSliding(seconds) => s"win:time($seconds)"
-    case TimeTumbling(seconds) => s"win:time_batch($seconds)"
-  }
-
-  val window1Epl: String = getEplFrom(join.window1)
-  val window2Epl: String = getEplFrom(join.window2)
+  val window1Epl: String = JoinActor.getEplFrom(join.window1)
+  val window2Epl: String = JoinActor.getEplFrom(join.window2)
 
   val eplStatement: EPStatement = createEplStatement(
     s"select * from subquery1.$window1Epl as sq1, subquery2.$window2Epl as sq2")
@@ -41,7 +45,7 @@ class JoinActor(join: Join, publishers: Map[String, ActorRef], root: Option[Acto
         val subquery1ElementValues: Array[AnyRef] = newEvents(nrOfNewEvent).get("sq1").asInstanceOf[Array[AnyRef]]
         val subquery2ElementValues: Array[AnyRef] = newEvents(nrOfNewEvent).get("sq2").asInstanceOf[Array[AnyRef]]
         val subqueries1And2ElementValues: Array[AnyRef] = subquery1ElementValues ++ subquery2ElementValues
-        val subqueries1And2ElementClasses: Array[java.lang.Class[_]] = Query.getArrayOfClassesFrom(join)
+        val subqueries1And2ElementClasses: Array[Class[_]] = Query.getArrayOfClassesFrom(join)
         val event: Event = Event.getEventFrom(subqueries1And2ElementValues, subqueries1And2ElementClasses)
         if (root.isEmpty) println(s"Received from event graph: $event") else context.parent ! event
       }
@@ -52,7 +56,10 @@ class JoinActor(join: Join, publishers: Map[String, ActorRef], root: Option[Acto
     case stream1: Stream => context.actorOf(Props(
       new StreamActor(stream1, publishers, Some(root.getOrElse(self)))),
       s"$actorName-stream1")
-    case join1: Join => context.actorOf(Props(
+    case join1: Join if join1.subquery1 == join1.subquery2 => context.actorOf(Props(
+      new SelfJoinActor(join1, publishers, Some(root.getOrElse(self)))),
+      s"$actorName-join1")
+    case join1: Join if join1.subquery1 != join1.subquery2 => context.actorOf(Props(
       new JoinActor(join1, publishers, Some(root.getOrElse(self)))),
       s"$actorName-join1")
     case select1: Select => context.actorOf(Props(
@@ -63,37 +70,29 @@ class JoinActor(join: Join, publishers: Map[String, ActorRef], root: Option[Acto
       s"$actorName-filter1")
   }
 
-  val subquery2Actor: Option[ActorRef] = subquery2 match {
-    case stream2: Stream => subquery1 match {
-      case stream1: Stream if stream1.name == stream2.name => None
-      case _ => Some(context.actorOf(Props(
+  val subquery2Actor: ActorRef = subquery2 match {
+    case stream2: Stream => context.actorOf(Props(
         new StreamActor(stream2, publishers, Some(root.getOrElse(self)))),
-        s"$actorName-stream2"))
-    }
-    case join2: Join => Some(context.actorOf(Props(
+        s"$actorName-stream2")
+    case join2: Join if join2.subquery1 == join2.subquery2 => context.actorOf(Props(
+      new SelfJoinActor(join2, publishers, Some(root.getOrElse(self)))),
+      s"$actorName-join2")
+    case join2: Join if join2.subquery1 != join2.subquery2 => context.actorOf(Props(
       new JoinActor(join2, publishers, Some(root.getOrElse(self)))),
-      s"$actorName-join2"))
-    case select2: Select => Some(context.actorOf(Props(
+      s"$actorName-join2")
+    case select2: Select => context.actorOf(Props(
       new SelectActor(select2, publishers, Some(root.getOrElse(self)))),
-      s"$actorName-select2"))
-    case filter2: Filter => Some(context.actorOf(Props(
+      s"$actorName-select2")
+    case filter2: Filter => context.actorOf(Props(
       new FilterActor(filter2, publishers, Some(root.getOrElse(self)))),
-      s"$actorName-filter2"))
+      s"$actorName-filter2")
   }
 
   override def receive: Receive = {
-    case event: Event =>
-      if (sender == subquery1Actor) {
-        (subquery1, subquery2) match {
-          case (stream1: Stream, stream2: Stream) if stream1.name == stream2.name =>
-            sendEvent("subquery1", Event.getArrayOfValuesFrom(event))
-            sendEvent("subquery2", Event.getArrayOfValuesFrom(event))
-          case _ =>
-            sendEvent("subquery1", Event.getArrayOfValuesFrom(event))
-        }
-      } else if (sender == subquery2Actor.get) {
-          sendEvent("subquery2", Event.getArrayOfValuesFrom(event))
-      }
+    case event: Event if sender == subquery1Actor =>
+      sendEvent("subquery1", Event.getArrayOfValuesFrom(event))
+    case event: Event if sender == subquery2Actor =>
+      sendEvent("subquery2", Event.getArrayOfValuesFrom(event))
   }
 
 }
