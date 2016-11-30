@@ -1,13 +1,13 @@
 package com.scalarookie.eventscala.graph
 
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.{Actor, ActorRef}
 import com.espertech.esper.client._
 import com.scalarookie.eventscala.caseclasses._
 
-class SelectActor(select: Select, publishers: Map[String, ActorRef], root: Option[ActorRef]) extends Actor with EsperEngine {
+class SelectNode(select: Select, publishers: Map[String, ActorRef], root: Option[ActorRef]) extends Actor with EsperEngine {
 
-  val actorName: String = self.path.name
-  override val esperServiceProviderUri: String = actorName
+  val nodeName: String = self.path.name
+  override val esperServiceProviderUri: String = nodeName
 
   val subqueryElementClasses: Array[Class[_]] = Query.getArrayOfClassesFrom(select.subquery)
   val subqueryElementNames: Array[String] = (1 to subqueryElementClasses.length).map(i => s"e$i").toArray
@@ -27,11 +27,11 @@ class SelectActor(select: Select, publishers: Map[String, ActorRef], root: Optio
     }
   })
 
-  val subqueryActor: ActorRef =
-    OperatorActor.createChildActorFrom(select.subquery, actorName, 1, context, publishers, Some(root.getOrElse(self)))
+  val subqueryNode: ActorRef =
+    Node.createChildNodeFrom(select.subquery, nodeName, 1, context, publishers, Some(root.getOrElse(self)))
 
   override def receive: Receive = {
-    case event: Event if sender == subqueryActor =>
+    case event: Event if sender == subqueryNode =>
       sendEvent("subquery", Event.getArrayOfValuesFrom(event))
   }
 

@@ -4,18 +4,18 @@ import akka.actor.{ActorSystem, Props}
 import com.scalarookie.eventscala.caseclasses._
 import com.scalarookie.eventscala.dsl._
 import com.scalarookie.eventscala.graph._
-import com.scalarookie.eventscala.publishers.RandomPublisherActor
+import com.scalarookie.eventscala.publishers.RandomPublisher
 
 object Demo extends App {
 
   val actorSystem = ActorSystem()
 
   val publisherA = actorSystem.actorOf(Props(
-    RandomPublisherActor(id => Event2[Integer, String](id, id.toString))), "A")
+    RandomPublisher(id => Event2[Integer, String](id, id.toString))), "A")
   val publisherB = actorSystem.actorOf(Props(
-    RandomPublisherActor(id => Event2[String, Integer](id.toString, id))), "B")
+    RandomPublisher(id => Event2[String, Integer](id.toString, id))), "B")
   val publisherC = actorSystem.actorOf(Props(
-    RandomPublisherActor(id => Event1[java.lang.Boolean](if (id % 2 == 0) true else false))), "C")
+    RandomPublisher(id => Event1[java.lang.Boolean](if (id % 2 == 0) true else false))), "C")
 
   val publishers = Map("A" -> publisherA, "B" -> publisherB, "C" -> publisherC)
 
@@ -35,6 +35,6 @@ object Demo extends App {
     .where(literal(true) =:= element(3))
 //  .with(frequency(instancesPerSecond :>: 1, abort)
 
-  val eventGraph = actorSystem.actorOf(Props(new FilterActor(query.asInstanceOf[Filter], publishers, None)), "filter")
+  val eventGraph = actorSystem.actorOf(Props(new FilterNode(query.asInstanceOf[Filter], publishers, None)), "filter")
 
 }

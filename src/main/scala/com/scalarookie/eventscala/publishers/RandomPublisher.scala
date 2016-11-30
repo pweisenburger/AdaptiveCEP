@@ -5,7 +5,7 @@ import scala.util.Random
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.ExecutionContext.Implicits.global
 
-case class RandomPublisherActor[T](createEventFromId: Integer => T) extends PublisherActor {
+case class RandomPublisher[T](createEventFromId: Integer => T) extends PublisherActor {
 
   val publisherName = self.path.name
 
