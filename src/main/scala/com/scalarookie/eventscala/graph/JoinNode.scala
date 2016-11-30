@@ -15,7 +15,7 @@ object JoinNode {
 
 }
 
-class JoinNode(join: Join, publishers: Map[String, ActorRef], root: Option[ActorRef]) extends Actor with EsperEngine {
+class JoinNode(join: Join, publishers: Map[String, ActorRef]) extends Actor with EsperEngine {
 
   require(join.subquery1 != join.subquery2)
 
@@ -44,16 +44,13 @@ class JoinNode(join: Join, publishers: Map[String, ActorRef], root: Option[Actor
         val subqueries1And2ElementValues: Array[AnyRef] = subquery1ElementValues ++ subquery2ElementValues
         val subqueries1And2ElementClasses: Array[Class[_]] = Query.getArrayOfClassesFrom(join)
         val event: Event = Event.getEventFrom(subqueries1And2ElementValues, subqueries1And2ElementClasses)
-        if (root.isEmpty) println(s"Received from event graph: $event") else context.parent ! event
+        context.parent ! event
       }
     }
   })
 
-  val subquery1Node: ActorRef =
-    Node.createChildNodeFrom(join.subquery1, nodeName, 1, context, publishers, Some(root.getOrElse(self)))
-
-  val subquery2Node: ActorRef =
-    Node.createChildNodeFrom(join.subquery2, nodeName, 2, context, publishers, Some(root.getOrElse(self)))
+  val subquery1Node: ActorRef = Node.createChildNodeFrom(join.subquery1, nodeName, 1, publishers, context)
+  val subquery2Node: ActorRef = Node.createChildNodeFrom(join.subquery2, nodeName, 2, publishers, context)
 
   override def receive: Receive = {
     case event: Event if sender == subquery1Node =>

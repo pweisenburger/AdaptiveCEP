@@ -4,7 +4,7 @@ import akka.actor.{Actor, ActorRef}
 import com.espertech.esper.client._
 import com.scalarookie.eventscala.caseclasses._
 
-class SelfJoinNode(join: Join, publishers: Map[String, ActorRef], root: Option[ActorRef]) extends Actor with EsperEngine {
+class SelfJoinNode(join: Join, publishers: Map[String, ActorRef]) extends Actor with EsperEngine {
 
   require(join.subquery1 == join.subquery2)
 
@@ -30,13 +30,12 @@ class SelfJoinNode(join: Join, publishers: Map[String, ActorRef], root: Option[A
         val lhsAndRhsElementValues: Array[AnyRef] = lhsElementValues ++ rhsElementValues
         val lhsAndRhsElementClasses: Array[Class[_]] = Query.getArrayOfClassesFrom(join)
         val event: Event = Event.getEventFrom(lhsAndRhsElementValues, lhsAndRhsElementClasses)
-        if (root.isEmpty) println(s"Received from event graph: $event") else context.parent ! event
+        context.parent ! event
       }
     }
   })
 
-  val subqueryNode: ActorRef =
-    Node.createChildNodeFrom(join.subquery1, nodeName, 1, context, publishers, Some(root.getOrElse(self)))
+  val subqueryNode: ActorRef = Node.createChildNodeFrom(join.subquery1, nodeName, 1, publishers, context)
 
   override def receive: Receive = {
     case event: Event if sender == subqueryNode =>

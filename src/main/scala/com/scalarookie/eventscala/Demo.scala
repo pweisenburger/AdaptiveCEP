@@ -35,6 +35,6 @@ object Demo extends App {
     .where(literal(true) =:= element(3))
 //  .with(frequency(instancesPerSecond :>: 1, abort)
 
-  val eventGraph = actorSystem.actorOf(Props(new FilterNode(query.asInstanceOf[Filter], publishers, None)), "filter")
+  val graph = actorSystem.actorOf(Props(new RootNode(query, publishers, event => println(s"Complex event received: $event"))), "root")
 
 }
