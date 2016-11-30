@@ -29,11 +29,11 @@ class JoinActor(join: Join, publishers: Map[String, ActorRef], root: Option[Acto
     case TimeTumbling(seconds) => s"win:time_batch($seconds)"
   }
 
-  val subquery1WindowEpl: String = getEplFrom(join.subquery1Window)
-  val subquery2WindowEpl: String = getEplFrom(join.subquery2Window)
+  val window1Epl: String = getEplFrom(join.subquery1Window)
+  val window2Epl: String = getEplFrom(join.subquery2Window)
 
   val eplStatement: EPStatement = createEplStatement(
-    s"select * from subquery1.$subquery1WindowEpl as sq1, subquery2.$subquery2WindowEpl as sq2")
+    s"select * from subquery1.$window1Epl as sq1, subquery2.$window2Epl as sq2")
 
   eplStatement.addListener(new UpdateListener {
     override def update(newEvents: Array[EventBean], oldEvents: Array[EventBean]): Unit = {
