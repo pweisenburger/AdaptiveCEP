@@ -4,29 +4,36 @@ import akka.actor.{Actor, ActorRef, Props}
 import com.espertech.esper.client._
 import com.scalarookie.eventscala.caseclasses._
 
-class SelectActor(select: Select, publishers: Map[String, ActorRef], root: Option[ActorRef]) extends Actor with EsperEngine {
+class SelfJoinActor(join: Join, publishers: Map[String, ActorRef], root: Option[ActorRef]) extends Actor with EsperEngine {
+
+  require(join.subquery1 == join.subquery2)
 
   val actorName: String = self.path.name
   override val esperServiceProviderUri: String = actorName
 
-  val subquery: Query = select.subquery
-  val elementIds: List[Int] = select.elementIds
+  val subquery: Query = join.subquery1
 
   val subqueryElementClasses: Array[Class[_]] = Query.getArrayOfClassesFrom(subquery)
   val subqueryElementNames: Array[String] = (1 to subqueryElementClasses.length).map(i => s"e$i").toArray
 
   addEventType("subquery", subqueryElementNames, subqueryElementClasses)
 
-  val elementIdsEpl: String = elementIds.map(i => s"sq.e$i").mkString(", ")
+  val window1Epl: String = JoinActor.getEplFrom(join.window1)
+  val window2Epl: String = JoinActor.getEplFrom(join.window2)
 
-  val eplStatement: EPStatement = createEplStatement(s"select $elementIdsEpl from subquery as sq")
+  val eplStatement: EPStatement = createEplStatement(
+    s"select * from subquery.$window1Epl as lhs, subquery.$window2Epl as rhs")
 
   eplStatement.addListener(new UpdateListener {
     override def update(newEvents: Array[EventBean], oldEvents: Array[EventBean]): Unit = {
-      val subqueryElementValues: Array[AnyRef] = elementIds.map(i => s"sq.e$i").map(s => newEvents(0).get(s)).toArray
-      val subqueryElementClasses: Array[java.lang.Class[_]] = Query.getArrayOfClassesFrom(select)
-      val event: Event = Event.getEventFrom(subqueryElementValues, subqueryElementClasses)
-      if (root.isEmpty) println(s"Received from event graph: $event") else context.parent ! event
+      for (nrOfNewEvent <- newEvents.indices) {
+        val lhsElementValues: Array[AnyRef] = newEvents(nrOfNewEvent).get("lhs").asInstanceOf[Array[AnyRef]]
+        val rhsElementValues: Array[AnyRef] = newEvents(nrOfNewEvent).get("rhs").asInstanceOf[Array[AnyRef]]
+        val lhsAndRhsElementValues: Array[AnyRef] = lhsElementValues ++ rhsElementValues
+        val lhsAndRhsElementClasses: Array[Class[_]] = Query.getArrayOfClassesFrom(join)
+        val event: Event = Event.getEventFrom(lhsAndRhsElementValues, lhsAndRhsElementClasses)
+        if (root.isEmpty) println(s"Received from event graph: $event") else context.parent ! event
+      }
     }
   })
 
@@ -49,10 +56,8 @@ class SelectActor(select: Select, publishers: Map[String, ActorRef], root: Optio
   }
 
   override def receive: Receive = {
-    case event: Event =>
-      if (sender == subqueryActor) {
-        sendEvent("subquery", Event.getArrayOfValuesFrom(event))
-      }
+    case event: Event if sender == subqueryActor =>
+      sendEvent("subquery", Event.getArrayOfValuesFrom(event))
   }
 
 }

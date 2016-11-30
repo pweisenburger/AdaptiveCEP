@@ -62,7 +62,10 @@ class FilterActor(filter: Filter, publishers: Map[String, ActorRef], root: Optio
     case stream: Stream => context.actorOf(Props(
       new StreamActor(stream, publishers, Some(root.getOrElse(self)))),
       s"$actorName-stream")
-    case join: Join => context.actorOf(Props(
+    case join: Join if join.subquery1 == join.subquery2 => context.actorOf(Props(
+      new SelfJoinActor(join, publishers, Some(root.getOrElse(self)))),
+      s"$actorName-join")
+    case join: Join if join.subquery1 != join.subquery2 => context.actorOf(Props(
       new JoinActor(join, publishers, Some(root.getOrElse(self)))),
       s"$actorName-join")
     case select: Select => context.actorOf(Props(
