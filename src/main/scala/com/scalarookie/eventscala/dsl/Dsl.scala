@@ -82,15 +82,4 @@ package object dsl {
     def apply(operand2: Either[Int, Any]) = (operator, operand1, operand2)
   }
 
-  // Sample query ------------------------------------------------------------------------------------------------------
-
-  val query: Query =
-    stream[Integer, String].from("A")
-      .join(stream[String, Integer].from("B"))
-        .in(slidingWindow(3 instances), tumblingWindow(3 seconds))
-      .join(stream[java.lang.Boolean].from("C"))
-        .in(slidingWindow(1 instances), slidingWindow(1 instances))
-      .select(elements(1, 3, 5))
-      .where(element(1) <:= literal(3))
-
 }
