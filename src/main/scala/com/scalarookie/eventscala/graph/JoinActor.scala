@@ -22,12 +22,9 @@ class JoinActor(join: Join, publishers: Map[String, ActorRef], root: Option[Acto
   val actorName: String = self.path.name
   override val esperServiceProviderUri: String = actorName
 
-  val subquery1: Query = join.subquery1
-  val subquery2: Query = join.subquery2
-
-  val subquery1ElementClasses: Array[Class[_]] = Query.getArrayOfClassesFrom(subquery1)
+  val subquery1ElementClasses: Array[Class[_]] = Query.getArrayOfClassesFrom(join.subquery1)
   val subquery1ElementNames: Array[String] = (1 to subquery1ElementClasses.length).map(i => s"e$i").toArray
-  val subquery2ElementClasses: Array[Class[_]] = Query.getArrayOfClassesFrom(subquery2)
+  val subquery2ElementClasses: Array[Class[_]] = Query.getArrayOfClassesFrom(join.subquery2)
   val subquery2ElementNames: Array[String] = (1 to subquery2ElementClasses.length).map(i => s"e$i").toArray
 
   addEventType("subquery1", subquery1ElementNames, subquery1ElementClasses)
@@ -52,7 +49,7 @@ class JoinActor(join: Join, publishers: Map[String, ActorRef], root: Option[Acto
     }
   })
 
-  val subquery1Actor: ActorRef = subquery1 match {
+  val subquery1Actor: ActorRef = join.subquery1 match {
     case stream1: Stream => context.actorOf(Props(
       new StreamActor(stream1, publishers, Some(root.getOrElse(self)))),
       s"$actorName-stream1")
@@ -70,7 +67,7 @@ class JoinActor(join: Join, publishers: Map[String, ActorRef], root: Option[Acto
       s"$actorName-filter1")
   }
 
-  val subquery2Actor: ActorRef = subquery2 match {
+  val subquery2Actor: ActorRef = join.subquery2 match {
     case stream2: Stream => context.actorOf(Props(
         new StreamActor(stream2, publishers, Some(root.getOrElse(self)))),
         s"$actorName-stream2")

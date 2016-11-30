@@ -1,9 +1,7 @@
 package com.scalarookie.eventscala.publishers
 
 import akka.actor.{Actor, ActorRef}
-
-import scala.concurrent.duration.FiniteDuration
-import scala.util.Random
+import PublisherActor._
 
 object PublisherActor {
 

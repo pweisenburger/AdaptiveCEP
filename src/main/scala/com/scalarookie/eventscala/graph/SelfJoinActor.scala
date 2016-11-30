@@ -11,9 +11,7 @@ class SelfJoinActor(join: Join, publishers: Map[String, ActorRef], root: Option[
   val actorName: String = self.path.name
   override val esperServiceProviderUri: String = actorName
 
-  val subquery: Query = join.subquery1
-
-  val subqueryElementClasses: Array[Class[_]] = Query.getArrayOfClassesFrom(subquery)
+  val subqueryElementClasses: Array[Class[_]] = Query.getArrayOfClassesFrom(join.subquery1)
   val subqueryElementNames: Array[String] = (1 to subqueryElementClasses.length).map(i => s"e$i").toArray
 
   addEventType("subquery", subqueryElementNames, subqueryElementClasses)
@@ -37,7 +35,7 @@ class SelfJoinActor(join: Join, publishers: Map[String, ActorRef], root: Option[
     }
   })
 
-  val subqueryActor: ActorRef = subquery match {
+  val subqueryActor: ActorRef = join.subquery1 match {
     case stream: Stream => context.actorOf(Props(
       new StreamActor(stream, publishers, Some(root.getOrElse(self)))),
       s"$actorName-stream")
