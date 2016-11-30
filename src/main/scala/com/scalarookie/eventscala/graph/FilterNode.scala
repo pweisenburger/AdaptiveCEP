@@ -31,7 +31,7 @@ object FilterNode {
 
 }
 
-class FilterNode(filter: Filter, publishers: Map[String, ActorRef], root: Option[ActorRef]) extends Actor with EsperEngine {
+class FilterNode(filter: Filter, publishers: Map[String, ActorRef]) extends Actor with EsperEngine {
 
   val nodeName: String = self.path.name
   override val esperServiceProviderUri: String = nodeName
@@ -51,14 +51,13 @@ class FilterNode(filter: Filter, publishers: Map[String, ActorRef], root: Option
 
   eplStatement.addListener(new UpdateListener {
     override def update(newEvents: Array[EventBean], oldEvents: Array[EventBean]): Unit = {
-      val subqueryElementValues: Array[AnyRef] = subqueryElementNames.map(newEvents(0).get(_))
+      val subqueryElementValues: Array[AnyRef] = subqueryElementNames.map(newEvents(0).get)
       val event: Event = Event.getEventFrom(subqueryElementValues, subqueryElementClasses)
-      if (root.isEmpty) println(s"Received from event graph: $event") else context.parent ! event
+      context.parent ! event
     }
   })
 
-  val subqueryNode: ActorRef =
-    Node.createChildNodeFrom(filter.subquery, nodeName, 1, context, publishers, Some(root.getOrElse(self)))
+  val subqueryNode: ActorRef = Node.createChildNodeFrom(filter.subquery, nodeName, 1, publishers, context)
 
   override def receive: Receive = {
     case event: Event if sender == subqueryNode =>
