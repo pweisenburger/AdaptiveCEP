@@ -4,7 +4,7 @@ import akka.actor.{Actor, ActorRef}
 import com.scalarookie.eventscala.caseclasses._
 import com.scalarookie.eventscala.publishers.PublisherActor.Subscribe
 
-class StreamActor(stream: Stream, publishers: Map[String, ActorRef], root: Option[ActorRef]) extends Actor {
+class StreamNode(stream: Stream, publishers: Map[String, ActorRef], root: Option[ActorRef]) extends Actor {
 
   val publisher: ActorRef = publishers(stream.name)
 

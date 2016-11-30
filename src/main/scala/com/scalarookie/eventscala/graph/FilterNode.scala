@@ -1,10 +1,10 @@
 package com.scalarookie.eventscala.graph
 
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.{Actor, ActorRef}
 import com.espertech.esper.client._
 import com.scalarookie.eventscala.caseclasses._
 
-object FilterActor {
+object FilterNode {
 
   def getEplFrom(operand: Either[Int, Any]): String = operand match {
     case Left(id) => s"sq.e$id"
@@ -31,20 +31,20 @@ object FilterActor {
 
 }
 
-class FilterActor(filter: Filter, publishers: Map[String, ActorRef], root: Option[ActorRef]) extends Actor with EsperEngine {
+class FilterNode(filter: Filter, publishers: Map[String, ActorRef], root: Option[ActorRef]) extends Actor with EsperEngine {
 
-  val actorName: String = self.path.name
-  override val esperServiceProviderUri: String = actorName
+  val nodeName: String = self.path.name
+  override val esperServiceProviderUri: String = nodeName
 
   val subqueryElementClasses: Array[Class[_]] = Query.getArrayOfClassesFrom(filter.subquery)
   val subqueryElementNames: Array[String] = (1 to subqueryElementClasses.length).map(i => s"e$i").toArray
 
   addEventType("subquery", subqueryElementNames, subqueryElementClasses)
 
-  val operand1Epl: String = FilterActor.getEplFrom(filter.operand1)
-  val operand2Epl: String = FilterActor.getEplFrom(filter.operand2)
+  val operand1Epl: String = FilterNode.getEplFrom(filter.operand1)
+  val operand2Epl: String = FilterNode.getEplFrom(filter.operand2)
 
-  val operatorEpl: String = FilterActor.getEplFrom(filter.operator)
+  val operatorEpl: String = FilterNode.getEplFrom(filter.operator)
 
   val eplStatement: EPStatement = createEplStatement(
     s"select * from subquery as sq where $operand1Epl $operatorEpl $operand2Epl")
@@ -57,11 +57,11 @@ class FilterActor(filter: Filter, publishers: Map[String, ActorRef], root: Optio
     }
   })
 
-  val subqueryActor: ActorRef =
-    OperatorActor.createChildActorFrom(filter.subquery, actorName, 1, context, publishers, Some(root.getOrElse(self)))
+  val subqueryNode: ActorRef =
+    Node.createChildNodeFrom(filter.subquery, nodeName, 1, context, publishers, Some(root.getOrElse(self)))
 
   override def receive: Receive = {
-    case event: Event if sender == subqueryActor =>
+    case event: Event if sender == subqueryNode =>
       sendEvent("subquery", Event.getArrayOfValuesFrom(event))
   }
 
