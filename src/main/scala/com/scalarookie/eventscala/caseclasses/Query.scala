@@ -12,7 +12,7 @@ case class Stream4[A, B, C, D](name: String)(implicit val ctA: ClassTag[A], val 
 case class Stream5[A, B, C, D, E](name: String)(implicit val ctA: ClassTag[A], val ctB: ClassTag[B], val ctC: ClassTag[C], val ctD: ClassTag[D], val ctE: ClassTag[E]) extends Stream
 case class Stream6[A, B, C, D, E, F](name: String)(implicit val ctA: ClassTag[A], val ctB: ClassTag[B], val ctC: ClassTag[C], val ctD: ClassTag[D], val ctE: ClassTag[E], val ctF: ClassTag[F]) extends Stream
 
-case class Join(subquery1: Query, subquery1Window: Window, subquery2: Query, subquery2Window: Window) extends Query
+case class Join(subquery1: Query, window1: Window, subquery2: Query, window2: Window) extends Query
 
 sealed trait Window
 case class LengthSliding(instances: Int) extends Window
