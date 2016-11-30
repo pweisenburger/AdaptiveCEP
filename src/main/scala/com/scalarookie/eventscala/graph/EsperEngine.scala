@@ -8,9 +8,10 @@ trait EsperEngine {
 
   val configuration = new Configuration
   // Using `lazy val`s here is inspired by https://www.lightbend.com/activator/template/akka-with-esper
-  lazy val serviceProvider = EPServiceProviderManager.getProvider(esperServiceProviderUri, configuration)
-  lazy val runtime = serviceProvider.getEPRuntime
-  lazy val administrator = serviceProvider.getEPAdministrator
+  lazy val serviceProvider: EPServiceProvider =
+    EPServiceProviderManager.getProvider(esperServiceProviderUri, configuration)
+  lazy val runtime: EPRuntime = serviceProvider.getEPRuntime
+  lazy val administrator: EPAdministrator = serviceProvider.getEPAdministrator
 
   def addEventType(eventTypeName: String, elementNames: Array[String], elementClasses: Array[Class[_]]): Unit =
     configuration.addEventType(eventTypeName, elementNames, elementClasses.asInstanceOf[Array[AnyRef]])
@@ -18,7 +19,7 @@ trait EsperEngine {
   def createEplStatement(eplString: String): EPStatement =
     administrator.createEPL(eplString)
 
-  def sendEvent(eventTypeName: String, eventAsArray: Array[AnyRef]) =
+  def sendEvent(eventTypeName: String, eventAsArray: Array[AnyRef]): Unit =
     runtime.sendEvent(eventAsArray, eventTypeName)
 
 }
