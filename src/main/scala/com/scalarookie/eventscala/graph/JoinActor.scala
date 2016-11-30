@@ -49,41 +49,11 @@ class JoinActor(join: Join, publishers: Map[String, ActorRef], root: Option[Acto
     }
   })
 
-  val subquery1Actor: ActorRef = join.subquery1 match {
-    case stream1: Stream => context.actorOf(Props(
-      new StreamActor(stream1, publishers, Some(root.getOrElse(self)))),
-      s"$actorName-stream1")
-    case join1: Join if join1.subquery1 == join1.subquery2 => context.actorOf(Props(
-      new SelfJoinActor(join1, publishers, Some(root.getOrElse(self)))),
-      s"$actorName-join1")
-    case join1: Join if join1.subquery1 != join1.subquery2 => context.actorOf(Props(
-      new JoinActor(join1, publishers, Some(root.getOrElse(self)))),
-      s"$actorName-join1")
-    case select1: Select => context.actorOf(Props(
-      new SelectActor(select1, publishers, Some(root.getOrElse(self)))),
-      s"$actorName-select1")
-    case filter1: Filter => context.actorOf(Props(
-      new FilterActor(filter1, publishers, Some(root.getOrElse(self)))),
-      s"$actorName-filter1")
-  }
+  val subquery1Actor: ActorRef =
+    OperatorActor.createChildActorFrom(join.subquery1, actorName, 1, context, publishers, Some(root.getOrElse(self)))
 
-  val subquery2Actor: ActorRef = join.subquery2 match {
-    case stream2: Stream => context.actorOf(Props(
-        new StreamActor(stream2, publishers, Some(root.getOrElse(self)))),
-        s"$actorName-stream2")
-    case join2: Join if join2.subquery1 == join2.subquery2 => context.actorOf(Props(
-      new SelfJoinActor(join2, publishers, Some(root.getOrElse(self)))),
-      s"$actorName-join2")
-    case join2: Join if join2.subquery1 != join2.subquery2 => context.actorOf(Props(
-      new JoinActor(join2, publishers, Some(root.getOrElse(self)))),
-      s"$actorName-join2")
-    case select2: Select => context.actorOf(Props(
-      new SelectActor(select2, publishers, Some(root.getOrElse(self)))),
-      s"$actorName-select2")
-    case filter2: Filter => context.actorOf(Props(
-      new FilterActor(filter2, publishers, Some(root.getOrElse(self)))),
-      s"$actorName-filter2")
-  }
+  val subquery2Actor: ActorRef =
+    OperatorActor.createChildActorFrom(join.subquery2, actorName, 2, context, publishers, Some(root.getOrElse(self)))
 
   override def receive: Receive = {
     case event: Event if sender == subquery1Actor =>

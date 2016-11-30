@@ -57,23 +57,8 @@ class FilterActor(filter: Filter, publishers: Map[String, ActorRef], root: Optio
     }
   })
 
-  val subqueryActor: ActorRef = filter.subquery match {
-    case stream: Stream => context.actorOf(Props(
-      new StreamActor(stream, publishers, Some(root.getOrElse(self)))),
-      s"$actorName-stream")
-    case join: Join if join.subquery1 == join.subquery2 => context.actorOf(Props(
-      new SelfJoinActor(join, publishers, Some(root.getOrElse(self)))),
-      s"$actorName-join")
-    case join: Join if join.subquery1 != join.subquery2 => context.actorOf(Props(
-      new JoinActor(join, publishers, Some(root.getOrElse(self)))),
-      s"$actorName-join")
-    case select: Select => context.actorOf(Props(
-      new SelectActor(select, publishers, Some(root.getOrElse(self)))),
-      s"$actorName-select")
-    case filter: Filter => context.actorOf(Props(
-      new FilterActor(filter, publishers, Some(root.getOrElse(self)))),
-      s"$actorName-filter")
-  }
+  val subqueryActor: ActorRef =
+    OperatorActor.createChildActorFrom(filter.subquery, actorName, 1, context, publishers, Some(root.getOrElse(self)))
 
   override def receive: Receive = {
     case event: Event if sender == subqueryActor =>
