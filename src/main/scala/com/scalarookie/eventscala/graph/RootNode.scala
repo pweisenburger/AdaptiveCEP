@@ -7,8 +7,7 @@ class RootNode(query: Query, publishers: Map[String, ActorRef], callback: Event 
 
   val nodeName: String = self.path.name
 
-  val childNode: ActorRef =
-    Node.createChildNodeFrom(query, nodeName, 1, publishers, context)
+  val childNode: ActorRef = Node.createChildNodeFrom(query, nodeName, 1, publishers, context)
 
   override def receive: Receive = {
     case event: Event if sender == childNode =>
