@@ -21,7 +21,7 @@ object Event {
     case e: Event6[_, _, _, _, _, _] => Array(e.t._1.asInstanceOf[AnyRef], e.t._2.asInstanceOf[AnyRef], e.t._3.asInstanceOf[AnyRef], e.t._4.asInstanceOf[AnyRef], e.t._5.asInstanceOf[AnyRef], e.t._6.asInstanceOf[AnyRef])
   }
 
-  def getEventFrom(values: Array[AnyRef], classes: Array[java.lang.Class[_]]): Event = {
+  def getEventFrom(values: Array[AnyRef], classes: Array[Class[_]]): Event = {
     require(values.length == classes.length)
     values.length match {
       case 1 => Event1(classes(0).cast(values(0)))
