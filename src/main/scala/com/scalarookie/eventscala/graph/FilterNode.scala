@@ -1,10 +1,22 @@
 package com.scalarookie.eventscala.graph
 
+import java.time.Clock
 import akka.actor.{Actor, ActorRef}
 import com.espertech.esper.client._
 import com.scalarookie.eventscala.caseclasses._
 
-object FilterNode {
+class FilterNode(filter: Filter, publishers: Map[String, ActorRef]) extends Actor with EsperEngine {
+
+  // TODO Experimental!
+  val clock: Clock = Clock.systemDefaultZone
+
+  val nodeName: String = self.path.name
+  override val esperServiceProviderUri: String = nodeName
+
+  val subqueryElementClasses: Array[Class[_]] = Query.getArrayOfClassesFrom(filter.subquery)
+  val subqueryElementNames: Array[String] = (1 to subqueryElementClasses.length).map(i => s"e$i").toArray
+
+  addEventType("subquery", subqueryElementNames, subqueryElementClasses)
 
   def getEplFrom(operand: Either[Int, Any]): String = operand match {
     case Left(id) => s"sq.e$id"
@@ -20,6 +32,9 @@ object FilterNode {
     }
   }
 
+  val operand1Epl: String = getEplFrom(filter.operand1)
+  val operand2Epl: String = getEplFrom(filter.operand2)
+
   def getEplFrom(operator: Operator): String = operator match {
     case Equal => "="
     case NotEqual => "!="
@@ -29,22 +44,7 @@ object FilterNode {
     case SmallerEqual => "<="
   }
 
-}
-
-class FilterNode(filter: Filter, publishers: Map[String, ActorRef]) extends Actor with EsperEngine {
-
-  val nodeName: String = self.path.name
-  override val esperServiceProviderUri: String = nodeName
-
-  val subqueryElementClasses: Array[Class[_]] = Query.getArrayOfClassesFrom(filter.subquery)
-  val subqueryElementNames: Array[String] = (1 to subqueryElementClasses.length).map(i => s"e$i").toArray
-
-  addEventType("subquery", subqueryElementNames, subqueryElementClasses)
-
-  val operand1Epl: String = FilterNode.getEplFrom(filter.operand1)
-  val operand2Epl: String = FilterNode.getEplFrom(filter.operand2)
-
-  val operatorEpl: String = FilterNode.getEplFrom(filter.operator)
+  val operatorEpl: String = getEplFrom(filter.operator)
 
   val eplStatement: EPStatement = createEplStatement(
     s"select * from subquery as sq where $operand1Epl $operatorEpl $operand2Epl")
@@ -52,7 +52,7 @@ class FilterNode(filter: Filter, publishers: Map[String, ActorRef]) extends Acto
   eplStatement.addListener(new UpdateListener {
     override def update(newEvents: Array[EventBean], oldEvents: Array[EventBean]): Unit = {
       val subqueryElementValues: Array[AnyRef] = subqueryElementNames.map(newEvents(0).get)
-      val event: Event = Event.getEventFrom(subqueryElementValues, subqueryElementClasses)
+      val event: Event = Event.getEventFrom(clock.instant, subqueryElementValues, subqueryElementClasses)
       context.parent ! event
     }
   })

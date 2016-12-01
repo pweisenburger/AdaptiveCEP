@@ -4,18 +4,18 @@ import akka.actor.{ActorSystem, Props}
 import com.scalarookie.eventscala.caseclasses._
 import com.scalarookie.eventscala.dsl._
 import com.scalarookie.eventscala.graph._
-import com.scalarookie.eventscala.publishers.RandomPublisher
+import com.scalarookie.eventscala.publishers._
 
 object Demo extends App {
 
   val actorSystem = ActorSystem()
 
   val publisherA = actorSystem.actorOf(Props(
-    RandomPublisher(id => Event2[Integer, String](id, id.toString))), "A")
+    RandomPublisher((timestamp, id) => Event2[Integer, String](timestamp, (id, id.toString)))), "A")
   val publisherB = actorSystem.actorOf(Props(
-    RandomPublisher(id => Event2[String, Integer](id.toString, id))), "B")
+    RandomPublisher((timestamp, id) => Event2[String, Integer](timestamp, (id.toString, id)))), "B")
   val publisherC = actorSystem.actorOf(Props(
-    RandomPublisher(id => Event1[java.lang.Boolean](if (id % 2 == 0) true else false))), "C")
+    RandomPublisher((timestamp, id) => Event1[java.lang.Boolean](timestamp, if (id % 2 == 0) true else false))), "C")
 
   val publishers = Map("A" -> publisherA, "B" -> publisherB, "C" -> publisherC)
 
