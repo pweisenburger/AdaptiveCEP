@@ -5,10 +5,11 @@ import com.scalarookie.eventscala.caseclasses._
 
 object Node {
 
-  def createChildNodeFrom(query: Query, parentNodeName: String,
-                          childNodeId: Int,
-                          publishers: Map[String, ActorRef],
-                          context: ActorContext): ActorRef = query match {
+  def createChildNodeFrom(
+       query: Query, parentNodeName: String,
+       childNodeId: Int,
+       publishers: Map[String, ActorRef],
+       context: ActorContext): ActorRef = query match {
     case stream: Stream => context.actorOf(Props(
       new StreamNode(stream, publishers)),
       s"$parentNodeName-$childNodeId-stream")
