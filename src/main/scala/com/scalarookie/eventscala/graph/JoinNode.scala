@@ -1,14 +1,21 @@
 package com.scalarookie.eventscala.graph
 
-import java.time.Clock
 import akka.actor.{Actor, ActorRef}
 import com.espertech.esper.client._
 import com.scalarookie.eventscala.caseclasses._
 
-class JoinNode(join: Join, publishers: Map[String, ActorRef]) extends Actor with EsperEngine {
+object JoinNode {
 
-  // TODO Experimental!
-  val clock: Clock = Clock.systemDefaultZone
+  def getEplFrom(window: Window): String = window match {
+    case LengthSliding(instances) => s"win:length($instances)"
+    case LengthTumbling(instances) => s"win:length_batch($instances)"
+    case TimeSliding(seconds) => s"win:time($seconds)"
+    case TimeTumbling(seconds) => s"win:time_batch($seconds)"
+  }
+
+}
+
+class JoinNode(join: Join, publishers: Map[String, ActorRef]) extends Actor with EsperEngine {
 
   require(join.subquery1 != join.subquery2)
 
@@ -23,15 +30,8 @@ class JoinNode(join: Join, publishers: Map[String, ActorRef]) extends Actor with
   addEventType("subquery1", subquery1ElementNames, subquery1ElementClasses)
   addEventType("subquery2", subquery2ElementNames, subquery2ElementClasses)
 
-  def getEplFrom(window: Window): String = window match {
-    case LengthSliding(instances) => s"win:length($instances)"
-    case LengthTumbling(instances) => s"win:length_batch($instances)"
-    case TimeSliding(seconds) => s"win:time($seconds)"
-    case TimeTumbling(seconds) => s"win:time_batch($seconds)"
-  }
-
-  val window1Epl: String = getEplFrom(join.window1)
-  val window2Epl: String = getEplFrom(join.window2)
+  val window1Epl: String = JoinNode.getEplFrom(join.window1)
+  val window2Epl: String = JoinNode.getEplFrom(join.window2)
 
   val eplStatement: EPStatement = createEplStatement(
     s"select * from subquery1.$window1Epl as sq1, subquery2.$window2Epl as sq2")
@@ -43,7 +43,7 @@ class JoinNode(join: Join, publishers: Map[String, ActorRef]) extends Actor with
         val subquery2ElementValues: Array[AnyRef] = newEvents(nrOfNewEvent).get("sq2").asInstanceOf[Array[AnyRef]]
         val subqueries1And2ElementValues: Array[AnyRef] = subquery1ElementValues ++ subquery2ElementValues
         val subqueries1And2ElementClasses: Array[Class[_]] = Query.getArrayOfClassesFrom(join)
-        val event: Event = Event.getEventFrom(clock.instant, subqueries1And2ElementValues, subqueries1And2ElementClasses)
+        val event: Event = Event.getEventFrom(subqueries1And2ElementValues, subqueries1And2ElementClasses)
         context.parent ! event
       }
     }

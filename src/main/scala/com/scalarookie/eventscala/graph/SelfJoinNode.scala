@@ -1,6 +1,5 @@
 package com.scalarookie.eventscala.graph
 
-import java.time.Clock
 import akka.actor.{Actor, ActorRef}
 import com.espertech.esper.client._
 import com.scalarookie.eventscala.caseclasses._
@@ -8,9 +7,6 @@ import com.scalarookie.eventscala.caseclasses._
 class SelfJoinNode(join: Join, publishers: Map[String, ActorRef]) extends Actor with EsperEngine {
 
   require(join.subquery1 == join.subquery2)
-
-  // TODO Experimental!
-  val clock: Clock = Clock.systemDefaultZone
 
   val nodeName: String = self.path.name
   override val esperServiceProviderUri: String = nodeName
@@ -20,15 +16,8 @@ class SelfJoinNode(join: Join, publishers: Map[String, ActorRef]) extends Actor 
 
   addEventType("subquery", subqueryElementNames, subqueryElementClasses)
 
-  def getEplFrom(window: Window): String = window match {
-    case LengthSliding(instances) => s"win:length($instances)"
-    case LengthTumbling(instances) => s"win:length_batch($instances)"
-    case TimeSliding(seconds) => s"win:time($seconds)"
-    case TimeTumbling(seconds) => s"win:time_batch($seconds)"
-  }
-
-  val window1Epl: String = getEplFrom(join.window1)
-  val window2Epl: String = getEplFrom(join.window2)
+  val window1Epl: String = JoinNode.getEplFrom(join.window1)
+  val window2Epl: String = JoinNode.getEplFrom(join.window2)
 
   val eplStatement: EPStatement = createEplStatement(
     s"select * from subquery.$window1Epl as lhs, subquery.$window2Epl as rhs")
@@ -40,7 +29,7 @@ class SelfJoinNode(join: Join, publishers: Map[String, ActorRef]) extends Actor 
         val rhsElementValues: Array[AnyRef] = newEvents(nrOfNewEvent).get("rhs").asInstanceOf[Array[AnyRef]]
         val lhsAndRhsElementValues: Array[AnyRef] = lhsElementValues ++ rhsElementValues
         val lhsAndRhsElementClasses: Array[Class[_]] = Query.getArrayOfClassesFrom(join)
-        val event: Event = Event.getEventFrom(clock.instant, lhsAndRhsElementValues, lhsAndRhsElementClasses)
+        val event: Event = Event.getEventFrom(lhsAndRhsElementValues, lhsAndRhsElementClasses)
         context.parent ! event
       }
     }
