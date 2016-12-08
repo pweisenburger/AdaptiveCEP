@@ -1,5 +1,6 @@
 package com.scalarookie.eventscala.graph
 
+import java.time.{Clock, Duration}
 import akka.actor.{Actor, ActorRef}
 import com.espertech.esper.client._
 import com.scalarookie.eventscala.caseclasses._
@@ -52,11 +53,54 @@ class JoinNode(join: Join, publishers: Map[String, ActorRef]) extends Actor with
   val subquery1Node: ActorRef = Node.createChildNodeFrom(join.subquery1, nodeName, 1, publishers, context)
   val subquery2Node: ActorRef = Node.createChildNodeFrom(join.subquery2, nodeName, 2, publishers, context)
 
+  /********************************************************************************************************************/
+  val clock: Clock = Clock.systemDefaultZone
+  var subquery1Latency: Option[Duration] = None
+  var subquery2Latency: Option[Duration] = None
+  var pathLatency: Option[Duration] = None
+  /********************************************************************************************************************/
+
   override def receive: Receive = {
     case event: Event if sender == subquery1Node =>
       sendEvent("subquery1", Event.getArrayOfValuesFrom(event))
     case event: Event if sender == subquery2Node =>
       sendEvent("subquery2", Event.getArrayOfValuesFrom(event))
+    /******************************************************************************************************************/
+    case LatencyRequest(time) =>
+      sender ! LatencyResponse(time)
+      subquery1Node ! LatencyRequest(clock.instant)
+      subquery2Node ! LatencyRequest(clock.instant)
+    case LatencyResponse(requestTime) if sender == subquery1Node =>
+      subquery1Latency = Some(Duration.between(requestTime, clock.instant).dividedBy(2))
+      if (join.subquery1.isInstanceOf[Stream]) {
+        if (pathLatency.isEmpty || subquery1Latency.get.compareTo(pathLatency.get) > 0) {
+          pathLatency = subquery1Latency
+        }
+        context.parent ! PathLatency(pathLatency.get)
+        /* TODO */ println(s"PATH LATENCY:\t\tNode $nodeName: ${pathLatency.get}")
+      }
+    case LatencyResponse(requestTime) if sender == subquery2Node =>
+      subquery2Latency = Some(Duration.between(requestTime, clock.instant).dividedBy(2))
+      if (join.subquery2.isInstanceOf[Stream]) {
+        if (pathLatency.isEmpty || subquery2Latency.get.compareTo(pathLatency.get) > 0) {
+          pathLatency = subquery2Latency
+        }
+        context.parent ! PathLatency(pathLatency.get)
+        /* TODO */ println(s"PATH LATENCY:\t\tNode $nodeName: ${pathLatency.get}")
+      }
+    case PathLatency(duration) if sender == subquery1Node =>
+      if (pathLatency.isEmpty || duration.plus(subquery1Latency.get).compareTo(pathLatency.get) > 0) {
+        pathLatency = Some(duration.plus(subquery1Latency.get))
+      }
+      context.parent ! PathLatency(pathLatency.get)
+      /* TODO */ println(s"PATH LATENCY:\t\tNode $nodeName: ${pathLatency.get}")
+    case PathLatency(duration) if sender == subquery2Node =>
+      if (pathLatency.isEmpty || duration.plus(subquery2Latency.get).compareTo(pathLatency.get) > 0) {
+        pathLatency = Some(duration.plus(subquery2Latency.get))
+      }
+      context.parent ! PathLatency(pathLatency.get)
+      /* TODO */ println(s"PATH LATENCY:\t\tNode $nodeName: ${pathLatency.get}")
+    /******************************************************************************************************************/
   }
 
 }

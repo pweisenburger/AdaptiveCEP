@@ -1,6 +1,7 @@
 package com.scalarookie.eventscala.graph
 
-import akka.actor.{Actor, ActorRef}
+import java.time.{Clock, Duration}
+import akka.actor.{Actor, ActorRef, ActorLogging}
 import com.espertech.esper.client._
 import com.scalarookie.eventscala.caseclasses._
 
@@ -31,7 +32,7 @@ object FilterNode {
 
 }
 
-class FilterNode(filter: Filter, publishers: Map[String, ActorRef]) extends Actor with EsperEngine {
+class FilterNode(filter: Filter, publishers: Map[String, ActorRef]) extends Actor with ActorLogging with EsperEngine {
 
   val nodeName: String = self.path.name
   override val esperServiceProviderUri: String = nodeName
@@ -59,9 +60,31 @@ class FilterNode(filter: Filter, publishers: Map[String, ActorRef]) extends Acto
 
   val subqueryNode: ActorRef = Node.createChildNodeFrom(filter.subquery, nodeName, 1, publishers, context)
 
+  /********************************************************************************************************************/
+  val clock: Clock = Clock.systemDefaultZone
+  var subqueryLatency: Option[Duration] = None
+  var pathLatency: Option[Duration] = None
+  /********************************************************************************************************************/
+
   override def receive: Receive = {
     case event: Event if sender == subqueryNode =>
       sendEvent("subquery", Event.getArrayOfValuesFrom(event))
+    /******************************************************************************************************************/
+    case LatencyRequest(time) =>
+      sender ! LatencyResponse(time)
+      subqueryNode ! LatencyRequest(clock.instant)
+    case LatencyResponse(requestTime) =>
+      subqueryLatency = Some(Duration.between(requestTime, clock.instant).dividedBy(2))
+      if (filter.subquery.isInstanceOf[Stream]) {
+        pathLatency = Some(subqueryLatency.get)
+        context.parent ! PathLatency(pathLatency.get)
+        /* TODO */ println(s"PATH LATENCY:\t\tNode $nodeName: ${pathLatency.get}")
+      }
+    case PathLatency(duration) =>
+      pathLatency = Some(duration.plus(subqueryLatency.get))
+      context.parent ! PathLatency(pathLatency.get)
+      /* TODO */ println(s"PATH LATENCY:\t\tNode $nodeName: ${pathLatency.get}")
+    /******************************************************************************************************************/
   }
 
 }
