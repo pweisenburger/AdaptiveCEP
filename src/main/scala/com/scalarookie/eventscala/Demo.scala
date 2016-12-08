@@ -36,8 +36,15 @@ object Demo extends App {
       .join(stream[Integer, String].from("A"))
       .in(tumblingWindow(1 instances), tumblingWindow(1 instances))
 
+  val query3: Query =
+    stream[Integer, String].from("A")
+      .where(element(1) >:= literal(1))
+      .where(element(1) >:= literal(2))
+      .select(elements(1))
+      .where(element(1) >:= literal(3))
+
   val graph = actorSystem.actorOf(Props(
-    new RootNode(query2, publishers, event => println(s"Complex event received: $event"))),
+    new RootNode(query3, publishers, event => println(s"COMPLEX EVENT:\t\t$event"))),
     "root")
 
 }
