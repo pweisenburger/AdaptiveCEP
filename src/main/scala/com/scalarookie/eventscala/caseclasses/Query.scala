@@ -1,18 +1,19 @@
 package com.scalarookie.eventscala.caseclasses
 
+import java.time.Duration
 import scala.reflect.ClassTag
 
 sealed trait Query
 
-sealed trait Stream extends Query { val name: String }
-case class Stream1[A](name: String)(implicit val ctA: ClassTag[A]) extends Stream
-case class Stream2[A, B](name: String)(implicit val ctA: ClassTag[A], val ctB: ClassTag[B]) extends Stream
-case class Stream3[A, B, C](name: String)(implicit val ctA: ClassTag[A], val ctB: ClassTag[B], val ctC: ClassTag[C]) extends Stream
-case class Stream4[A, B, C, D](name: String)(implicit val ctA: ClassTag[A], val ctB: ClassTag[B], val ctC: ClassTag[C], val ctD: ClassTag[D]) extends Stream
-case class Stream5[A, B, C, D, E](name: String)(implicit val ctA: ClassTag[A], val ctB: ClassTag[B], val ctC: ClassTag[C], val ctD: ClassTag[D], val ctE: ClassTag[E]) extends Stream
-case class Stream6[A, B, C, D, E, F](name: String)(implicit val ctA: ClassTag[A], val ctB: ClassTag[B], val ctC: ClassTag[C], val ctD: ClassTag[D], val ctE: ClassTag[E], val ctF: ClassTag[F]) extends Stream
+sealed trait Stream extends Query { val name: String; val frequencyRequirement: Option[FrequencyRequirement] }
+case class Stream1[A](name: String, frequencyRequirement: Option[FrequencyRequirement])(implicit val ctA: ClassTag[A]) extends Stream
+case class Stream2[A, B](name: String, frequencyRequirement: Option[FrequencyRequirement])(implicit val ctA: ClassTag[A], val ctB: ClassTag[B]) extends Stream
+case class Stream3[A, B, C](name: String, frequencyRequirement: Option[FrequencyRequirement])(implicit val ctA: ClassTag[A], val ctB: ClassTag[B], val ctC: ClassTag[C]) extends Stream
+case class Stream4[A, B, C, D](name: String, frequencyRequirement: Option[FrequencyRequirement])(implicit val ctA: ClassTag[A], val ctB: ClassTag[B], val ctC: ClassTag[C], val ctD: ClassTag[D]) extends Stream
+case class Stream5[A, B, C, D, E](name: String, frequencyRequirement: Option[FrequencyRequirement])(implicit val ctA: ClassTag[A], val ctB: ClassTag[B], val ctC: ClassTag[C], val ctD: ClassTag[D], val ctE: ClassTag[E]) extends Stream
+case class Stream6[A, B, C, D, E, F](name: String, frequencyRequirement: Option[FrequencyRequirement])(implicit val ctA: ClassTag[A], val ctB: ClassTag[B], val ctC: ClassTag[C], val ctD: ClassTag[D], val ctE: ClassTag[E], val ctF: ClassTag[F]) extends Stream
 
-case class Join(subquery1: Query, window1: Window, subquery2: Query, window2: Window) extends Query
+case class Join(subquery1: Query, window1: Window, subquery2: Query, window2: Window, frequencyRequirement: Option[FrequencyRequirement], latencyRequirement: Option[LatencyRequirement]) extends Query
 
 sealed trait Window
 case class LengthSliding(instances: Int) extends Window
@@ -20,9 +21,9 @@ case class LengthTumbling(instances: Int) extends Window
 case class TimeSliding(seconds: Int) extends Window
 case class TimeTumbling(seconds: Int) extends Window
 
-case class Select(subquery: Query, elementIds: List[Int]) extends Query
+case class Select(subquery: Query, elementIds: List[Int], frequencyRequirement: Option[FrequencyRequirement], latencyRequirement: Option[LatencyRequirement]) extends Query
 
-case class Filter(subquery: Query, operator: Operator , operand1: Either[Int, Any], operand2: Either[Int, Any]) extends Query
+case class Filter(subquery: Query, operator: Operator , operand1: Either[Int, Any], operand2: Either[Int, Any], frequencyRequirement: Option[FrequencyRequirement], latencyRequirement: Option[LatencyRequirement]) extends Query
 
 sealed trait Operator
 case object Equal extends Operator
@@ -31,6 +32,9 @@ case object Greater extends Operator
 case object GreaterEqual extends Operator
 case object Smaller extends Operator
 case object SmallerEqual extends Operator
+
+case class LatencyRequirement(operator: Operator, duration: Duration, callback: String => Any)
+case class FrequencyRequirement(operator: Operator, instances: Int, seconds: Int, callback: String => Any)
 
 object Query {
 
@@ -46,12 +50,12 @@ object Query {
     query match {
       case s: Stream =>
         getArrayOfClassesFromStream(s)
-      case Join(subquery1, _, subquery2, _) =>
+      case Join(subquery1, _, subquery2, _, _, _) =>
         getArrayOfClassesFrom(subquery1) ++ getArrayOfClassesFrom(subquery2)
-      case Select(subquery, elementIds) =>
+      case Select(subquery, elementIds, _, _) =>
         val arrayOfClasses = getArrayOfClassesFrom(subquery)
         elementIds.map(id => arrayOfClasses(id - 1)).toArray
-      case Filter(subquery, _, _, _) =>
+      case Filter(subquery, _, _, _, _, _) =>
         getArrayOfClassesFrom(subquery)
     }
   }

@@ -1,9 +1,11 @@
 package com.scalarookie.eventscala.graph
 
 import java.time.{Clock, Duration}
-import akka.actor.{Actor, ActorRef}
+
+import akka.actor.{Actor, ActorLogging, ActorRef}
 import com.espertech.esper.client._
 import com.scalarookie.eventscala.caseclasses._
+import com.scalarookie.eventscala.qos.{FrequencyStrategy, PathLatencyBinaryNodeStrategy}
 
 object JoinNode {
 
@@ -16,7 +18,7 @@ object JoinNode {
 
 }
 
-class JoinNode(join: Join, publishers: Map[String, ActorRef]) extends Actor with EsperEngine {
+class JoinNode(join: Join, publishers: Map[String, ActorRef], frequencyStrategy: FrequencyStrategy, latencyStrategy: PathLatencyBinaryNodeStrategy) extends Actor with EsperEngine {
 
   require(join.subquery1 != join.subquery2)
 
@@ -46,6 +48,7 @@ class JoinNode(join: Join, publishers: Map[String, ActorRef]) extends Actor with
         val subqueries1And2ElementClasses: Array[Class[_]] = Query.getArrayOfClassesFrom(join)
         val event: Event = Event.getEventFrom(subqueries1And2ElementValues, subqueries1And2ElementClasses)
         context.parent ! event
+        if (join.frequencyRequirement.isDefined) frequencyStrategy.onEventEmit(context, nodeName, join.frequencyRequirement.get)
       }
     }
   })
@@ -53,20 +56,28 @@ class JoinNode(join: Join, publishers: Map[String, ActorRef]) extends Actor with
   val subquery1Node: ActorRef = Node.createChildNodeFrom(join.subquery1, nodeName, 1, publishers, context)
   val subquery2Node: ActorRef = Node.createChildNodeFrom(join.subquery2, nodeName, 2, publishers, context)
 
-  /********************************************************************************************************************/
-  val clock: Clock = Clock.systemDefaultZone
+  /*val clock: Clock = Clock.systemDefaultZone
   var subquery1Latency: Option[Duration] = None
   var subquery2Latency: Option[Duration] = None
   var pathLatency: Option[Duration] = None
-  /********************************************************************************************************************/
+
+  def enforceLatencyRequirement(): Unit =  if (join.latencyRequirement.isDefined) join.latencyRequirement.get.operator match {
+    case Equal        => if (!(pathLatency.get.compareTo(join.latencyRequirement.get.duration) == 0)) join.latencyRequirement.get.callback(nodeName)
+    case NotEqual     => if (!(pathLatency.get.compareTo(join.latencyRequirement.get.duration) != 0)) join.latencyRequirement.get.callback(nodeName)
+    case Greater      => if (!(pathLatency.get.compareTo(join.latencyRequirement.get.duration) >  0)) join.latencyRequirement.get.callback(nodeName)
+    case GreaterEqual => if (!(pathLatency.get.compareTo(join.latencyRequirement.get.duration) >= 0)) join.latencyRequirement.get.callback(nodeName)
+    case Smaller      => if (!(pathLatency.get.compareTo(join.latencyRequirement.get.duration) <  0)) join.latencyRequirement.get.callback(nodeName)
+    case SmallerEqual => if (!(pathLatency.get.compareTo(join.latencyRequirement.get.duration) <= 0)) join.latencyRequirement.get.callback(nodeName)
+  }*/
+
+  var oneChildCreated = false
 
   override def receive: Receive = {
     case event: Event if sender == subquery1Node =>
       sendEvent("subquery1", Event.getArrayOfValuesFrom(event))
     case event: Event if sender == subquery2Node =>
       sendEvent("subquery2", Event.getArrayOfValuesFrom(event))
-    /******************************************************************************************************************/
-    case LatencyRequest(time) =>
+    /*case LatencyRequest(time) =>
       sender ! LatencyResponse(time)
       subquery1Node ! LatencyRequest(clock.instant)
       subquery2Node ! LatencyRequest(clock.instant)
@@ -77,7 +88,8 @@ class JoinNode(join: Join, publishers: Map[String, ActorRef]) extends Actor with
           pathLatency = subquery1Latency
         }
         context.parent ! PathLatency(pathLatency.get)
-        /* TODO */ println(s"PATH LATENCY:\t\tNode $nodeName: ${pathLatency.get}")
+        enforceLatencyRequirement()
+        /* TODOo */ println(s"PATH LATENCY:\t\tNode $nodeName: ${pathLatency.get}")
       }
     case LatencyResponse(requestTime) if sender == subquery2Node =>
       subquery2Latency = Some(Duration.between(requestTime, clock.instant).dividedBy(2))
@@ -86,21 +98,33 @@ class JoinNode(join: Join, publishers: Map[String, ActorRef]) extends Actor with
           pathLatency = subquery2Latency
         }
         context.parent ! PathLatency(pathLatency.get)
-        /* TODO */ println(s"PATH LATENCY:\t\tNode $nodeName: ${pathLatency.get}")
+        enforceLatencyRequirement()
+        /* TODOo */ println(s"PATH LATENCY:\t\tNode $nodeName: ${pathLatency.get}")
       }
     case PathLatency(duration) if sender == subquery1Node =>
       if (pathLatency.isEmpty || duration.plus(subquery1Latency.get).compareTo(pathLatency.get) > 0) {
         pathLatency = Some(duration.plus(subquery1Latency.get))
       }
       context.parent ! PathLatency(pathLatency.get)
-      /* TODO */ println(s"PATH LATENCY:\t\tNode $nodeName: ${pathLatency.get}")
+      enforceLatencyRequirement()
+      /* TODOo */ println(s"PATH LATENCY:\t\tNode $nodeName: ${pathLatency.get}")
     case PathLatency(duration) if sender == subquery2Node =>
       if (pathLatency.isEmpty || duration.plus(subquery2Latency.get).compareTo(pathLatency.get) > 0) {
         pathLatency = Some(duration.plus(subquery2Latency.get))
       }
       context.parent ! PathLatency(pathLatency.get)
-      /* TODO */ println(s"PATH LATENCY:\t\tNode $nodeName: ${pathLatency.get}")
-    /******************************************************************************************************************/
+      enforceLatencyRequirement()
+      /* TODOo */ println(s"PATH LATENCY:\t\tNode $nodeName: ${pathLatency.get}")*/
+    case Created =>
+      if (oneChildCreated) {
+        context.parent ! Created
+        if (join.frequencyRequirement.isDefined) frequencyStrategy.onSubtreeCreated(context, nodeName, join.frequencyRequirement.get)
+        latencyStrategy.onSubtreeCreated(self, subquery1Node, subquery2Node, context, nodeName, join.latencyRequirement)
+      } else {
+        oneChildCreated = true
+      }
+    case unhandledMessage =>
+      latencyStrategy.onMessageReceive(unhandledMessage, self, subquery1Node, subquery2Node, context, nodeName, join.latencyRequirement)
   }
 
 }

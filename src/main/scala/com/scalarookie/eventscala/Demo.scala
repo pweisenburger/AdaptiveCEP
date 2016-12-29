@@ -20,31 +20,36 @@ object Demo extends App {
   val publishers = Map("A" -> publisherA, "B" -> publisherB, "C" -> publisherC)
 
   val subquery: Query =
-    stream[String, Integer].from("B")
-    .select(elements(2))
+    stream[String, Integer].from("B", None)
+    .select(elements(2), None, None)
 
   val query: Query =
-    stream[Integer, String].from("A")
-    .join(subquery).in(slidingWindow(3 instances), tumblingWindow(3 seconds))
-    .join(stream[java.lang.Boolean].from("C")).in(slidingWindow(1 instances), slidingWindow(1 instances))
-    .select(elements(1, 2, 4))
-    .where(element(1) <:= literal(15))
-    .where(literal(true) =:= element(3))
+    stream[Integer, String].from("A", None)
+    .join(subquery, None, None).in(slidingWindow(3 instances), tumblingWindow(3 seconds))
+    .join(stream[java.lang.Boolean].from("C", None), None, None).in(slidingWindow(1 instances), slidingWindow(1 instances))
+    .select(elements(1, 2, 4), None, None)
+    .where(element(1) <= literal(15),
+      None,
+      Some(latency <= timespan(/*126*/ 0 milliseconds) otherwise { nodeName => println(s"WARNING:\t\t$nodeName sucks tit.") }))
+    .where(literal(true) =!= element(3),
+      Some(frequency > ratio(4 instances, 5 seconds) otherwise { nodeName => println(s"WARNING:\t\t$nodeName is slow.") }),
+      None)
 
   val query2: Query =
-    stream[Integer, String].from("A")
-      .join(stream[Integer, String].from("A"))
+    stream[Integer, String].from("A", None)
+      .join(stream[Integer, String].from("A", None), None, None)
       .in(tumblingWindow(1 instances), tumblingWindow(1 instances))
 
   val query3: Query =
-    stream[Integer, String].from("A")
-      .where(element(1) >:= literal(1))
-      .where(element(1) >:= literal(2))
-      .select(elements(1))
-      .where(element(1) >:= literal(3))
+    stream[Integer, String].from("A",
+      Some(frequency > ratio(3 instances, 5 seconds) otherwise { nodeName => println(s"WARNING:\t\t$nodeName is slow.") }))
+      .where(element(1) >= literal(1), None, None)
+      .where(element(1) >= literal(2), None, None)
+      .select(elements(1), None, None)
+      .where(element(1) >= literal(3), None, None)
 
   val graph = actorSystem.actorOf(Props(
-    new RootNode(query3, publishers, event => println(s"COMPLEX EVENT:\t\t$event"))),
+    new RootNode(query, publishers, event => println(s"COMPLEX EVENT:\t\t$event"))),
     "root")
 
 }

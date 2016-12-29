@@ -13,25 +13,14 @@ class RootNode(query: Query, publishers: Map[String, ActorRef], callback: Event 
 
   val childNode: ActorRef = Node.createChildNodeFrom(query, nodeName, 1, publishers, context)
 
-  /********************************************************************************************************************/
-  val clock: Clock = Clock.systemDefaultZone
+  /*val clock: Clock = Clock.systemDefaultZone
   var childLatency: Option[Duration] = None
-  var pathLatency: Option[Duration] = None
-  context.system.scheduler.schedule(
-    initialDelay = FiniteDuration(0, TimeUnit.SECONDS),
-    interval = FiniteDuration(10, TimeUnit.SECONDS),
-    runnable = new Runnable {
-      override def run(): Unit = {
-        childNode ! LatencyRequest(clock.instant)
-      }
-    })
-  /********************************************************************************************************************/
+  var pathLatency: Option[Duration] = None*/
 
   override def receive: Receive = {
     case event: Event if sender == childNode =>
       callback(event)
-    /******************************************************************************************************************/
-    case LatencyResponse(requestTime) =>
+    /*case LatencyResponse(requestTime) =>
       childLatency = Some(Duration.between(requestTime, clock.instant).dividedBy(2))
       if (childNode.isInstanceOf[Stream]) {
         pathLatency = Some(childLatency.get)
@@ -40,7 +29,16 @@ class RootNode(query: Query, publishers: Map[String, ActorRef], callback: Event 
     case PathLatency(duration) =>
       pathLatency = Some(duration.plus(childLatency.get))
       /* TODO */ println(s"PATH LATENCY:\t\tNode $nodeName: ${pathLatency.get}")
-    /******************************************************************************************************************/
+    case Created =>
+      /* TODO */ println(s"STATUS:\t\t\tGraph is created.")
+      context.system.scheduler.schedule(
+        initialDelay = FiniteDuration(0, TimeUnit.SECONDS),
+        interval = FiniteDuration(10, TimeUnit.SECONDS),
+        runnable = new Runnable {
+          override def run(): Unit = {
+            childNode ! LatencyRequest(clock.instant)
+          }
+        })*/
 
   }
 
