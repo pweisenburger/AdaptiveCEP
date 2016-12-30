@@ -7,7 +7,6 @@ import com.scalarookie.eventscala.graph._
 import com.scalarookie.eventscala.publishers.RandomPublisher
 
 object Demo extends App {
-
   val actorSystem = ActorSystem()
 
   val publisherA = actorSystem.actorOf(Props(
@@ -51,5 +50,4 @@ object Demo extends App {
   val graph = actorSystem.actorOf(Props(
     new RootNode(query, publishers, event => println(s"COMPLEX EVENT:\t\t$event"))),
     "root")
-
 }

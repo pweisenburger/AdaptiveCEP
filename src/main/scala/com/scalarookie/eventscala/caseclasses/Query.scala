@@ -38,8 +38,8 @@ case class FrequencyRequirement(operator: Operator, instances: Int, seconds: Int
 
 object Query {
 
-  def getArrayOfClassesFrom(query: Query): Array[java.lang.Class[_]] = {
-    def getArrayOfClassesFromStream(stream: Stream): Array[java.lang.Class[_]] = stream match {
+  def getArrayOfClassesFrom(query: Query): Array[Class[_]] = {
+    def getArrayOfClassesFromStream(stream: Stream): Array[Class[_]] = stream match {
       case s: Stream1[_] => Array(s.ctA.runtimeClass)
       case s: Stream2[_, _] => Array(s.ctA.runtimeClass, s.ctB.runtimeClass)
       case s: Stream3[_, _, _] => Array(s.ctA.runtimeClass, s.ctB.runtimeClass, s.ctC.runtimeClass)

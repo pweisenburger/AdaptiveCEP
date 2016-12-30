@@ -7,7 +7,8 @@ import com.scalarookie.eventscala.qos.{AverageFrequencyStrategy, PathLatencyBina
 object Node {
 
   def createChildNodeFrom(
-       query: Query, parentNodeName: String,
+       query: Query,
+       parentNodeName: String,
        childNodeId: Int,
        publishers: Map[String, ActorRef],
        context: ActorContext): ActorRef = query match {
