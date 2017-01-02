@@ -32,8 +32,14 @@ package object dsl {
   // Queries in general ------------------------------------------------------------------------------------------------
 
   case class QueryHelper(query: Query) {
-    def join(query2: Query, frequencyRequirement: Option[FrequencyRequirement], latencyRequirement: Option[LatencyRequirement]) =
+    def join(query2: Query, frequencyRequirement: Option[FrequencyRequirement], latencyRequirement: Option[LatencyRequirement]) = {
+      require(query != query2)
       JoinHelper(query, query2, frequencyRequirement, latencyRequirement)
+    }
+    def selfJoin(query2: Query, frequencyRequirement: Option[FrequencyRequirement], latencyRequirement: Option[LatencyRequirement]) = {
+      require(query == query2)
+      SelfJoinHelper(query, frequencyRequirement, latencyRequirement)
+    }
     def select(elementIds: List[Int], frequencyRequirement: Option[FrequencyRequirement], latencyRequirement: Option[LatencyRequirement]) =
       Select(query, elementIds, frequencyRequirement, latencyRequirement)
     def where(tuple: (Operator, Either[Int, Any], Either[Int, Any]), frequencyRequirement: Option[FrequencyRequirement], latencyRequirement: Option[LatencyRequirement]) =
@@ -42,6 +48,7 @@ package object dsl {
 
   implicit def stream2QueryHelper(stream: Stream): QueryHelper = QueryHelper(stream)
   implicit def join2QueryHelper(join: Join): QueryHelper = QueryHelper(join)
+  implicit def selfJoin2QueryHelper(selfJoin: SelfJoin): QueryHelper = QueryHelper(selfJoin)
   implicit def select2QueryHelper(select: Select): QueryHelper = QueryHelper(select)
   implicit def filter2QueryHelper(filter: Filter): QueryHelper = QueryHelper(filter)
 
@@ -54,23 +61,29 @@ package object dsl {
   def stream[A : ClassTag, B : ClassTag, C : ClassTag, D : ClassTag, E : ClassTag] = Stream5Helper[A, B, C, D, E]()
   def stream[A : ClassTag, B : ClassTag, C : ClassTag, D : ClassTag, E : ClassTag, F : ClassTag] = Stream6Helper[A, B, C, D, E, F]()
 
-  case class Stream1Helper[A : ClassTag]() { def from(publisherName: String, frequencyRequirement: Option[FrequencyRequirement]) = Stream1[A](publisherName, frequencyRequirement) }
-  case class Stream2Helper[A : ClassTag, B : ClassTag]() { def from(publisherName: String, frequencyRequirement: Option[FrequencyRequirement]) = Stream2[A, B](publisherName, frequencyRequirement) }
-  case class Stream3Helper[A : ClassTag, B : ClassTag, C : ClassTag]() { def from(publisherName: String, frequencyRequirement: Option[FrequencyRequirement]) = Stream3[A, B, C](publisherName, frequencyRequirement) }
-  case class Stream4Helper[A : ClassTag, B : ClassTag, C : ClassTag, D : ClassTag]() { def from(publisherName: String, frequencyRequirement: Option[FrequencyRequirement]) = Stream4[A, B, C, D](publisherName, frequencyRequirement) }
-  case class Stream5Helper[A : ClassTag, B : ClassTag, C : ClassTag, D : ClassTag, E : ClassTag]() { def from(publisherName: String, frequencyRequirement: Option[FrequencyRequirement]) = Stream5[A, B, C, D, E](publisherName, frequencyRequirement) }
-  case class Stream6Helper[A : ClassTag, B : ClassTag, C : ClassTag, D : ClassTag, E : ClassTag, F : ClassTag]() { def from(publisherName: String, frequencyRequirement: Option[FrequencyRequirement]) = Stream6[A, B, C, D, E, F](publisherName, frequencyRequirement) }
+  case class Stream1Helper[A : ClassTag]() { def from(publisherName: String, frequencyRequirement: Option[FrequencyRequirement], latencyRequirement: Option[LatencyRequirement]) = Stream1[A](publisherName, frequencyRequirement, latencyRequirement) }
+  case class Stream2Helper[A : ClassTag, B : ClassTag]() { def from(publisherName: String, frequencyRequirement: Option[FrequencyRequirement], latencyRequirement: Option[LatencyRequirement]) = Stream2[A, B](publisherName, frequencyRequirement, latencyRequirement) }
+  case class Stream3Helper[A : ClassTag, B : ClassTag, C : ClassTag]() { def from(publisherName: String, frequencyRequirement: Option[FrequencyRequirement], latencyRequirement: Option[LatencyRequirement]) = Stream3[A, B, C](publisherName, frequencyRequirement, latencyRequirement) }
+  case class Stream4Helper[A : ClassTag, B : ClassTag, C : ClassTag, D : ClassTag]() { def from(publisherName: String, frequencyRequirement: Option[FrequencyRequirement], latencyRequirement: Option[LatencyRequirement]) = Stream4[A, B, C, D](publisherName, frequencyRequirement, latencyRequirement) }
+  case class Stream5Helper[A : ClassTag, B : ClassTag, C : ClassTag, D : ClassTag, E : ClassTag]() { def from(publisherName: String, frequencyRequirement: Option[FrequencyRequirement], latencyRequirement: Option[LatencyRequirement]) = Stream5[A, B, C, D, E](publisherName, frequencyRequirement, latencyRequirement) }
+  case class Stream6Helper[A : ClassTag, B : ClassTag, C : ClassTag, D : ClassTag, E : ClassTag, F : ClassTag]() { def from(publisherName: String, frequencyRequirement: Option[FrequencyRequirement], latencyRequirement: Option[LatencyRequirement]) = Stream6[A, B, C, D, E, F](publisherName, frequencyRequirement, latencyRequirement) }
 
   // Joins -------------------------------------------------------------------------------------------------------------
 
   case class JoinHelper(query1: Query, query2: Query, frequencyRequirement: Option[FrequencyRequirement], latencyRequirement: Option[LatencyRequirement]) {
-    def in(window1: Window, window2: Window) = Join(query1, window1, query2, window2, frequencyRequirement, latencyRequirement)
+    def in(window1: Window, window2: Window): Join =
+      Join(query1, window1, query2, window2, frequencyRequirement, latencyRequirement)
   }
 
-  def slidingWindow(instances: Instances) = LengthSliding(instances.i)
-  def slidingWindow(seconds: Seconds) = TimeSliding(seconds.i)
-  def tumblingWindow(instances: Instances) = LengthTumbling(instances.i)
-  def tumblingWindow(seconds: Seconds) = TimeTumbling(seconds.i)
+  case class SelfJoinHelper(query: Query, frequencyRequirement: Option[FrequencyRequirement], latencyRequirement: Option[LatencyRequirement]) {
+    def in(window1: Window, window2: Window): SelfJoin =
+      SelfJoin(query, window1, window2, frequencyRequirement, latencyRequirement)
+  }
+
+  def slidingWindow(instances: Instances): Window = LengthSliding(instances.i)
+  def slidingWindow(seconds: Seconds): Window = TimeSliding(seconds.i)
+  def tumblingWindow(instances: Instances): Window = LengthTumbling(instances.i)
+  def tumblingWindow(seconds: Seconds): Window = TimeTumbling(seconds.i)
 
   // Select ------------------------------------------------------------------------------------------------------------
 

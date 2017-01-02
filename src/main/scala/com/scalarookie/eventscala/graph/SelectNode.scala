@@ -5,8 +5,14 @@ import com.espertech.esper.client._
 import com.scalarookie.eventscala.caseclasses._
 import com.scalarookie.eventscala.qos.{FrequencyStrategy, PathLatencyUnaryNodeStrategy}
 
-class SelectNode(select: Select, publishers: Map[String, ActorRef], frequencyStrategy: FrequencyStrategy, latencyStrategy: PathLatencyUnaryNodeStrategy)
-  extends UnaryNode(select.subquery, select.frequencyRequirement, frequencyStrategy, select.latencyRequirement, latencyStrategy, publishers) {
+class SelectNode(select: Select,
+                 publishers: Map[String, ActorRef],
+                 frequencyStrategy: FrequencyStrategy,
+                 latencyStrategy: PathLatencyUnaryNodeStrategy)
+  extends UnaryNode(select,
+                    frequencyStrategy,
+                    latencyStrategy,
+                    publishers) {
 
   val elementIdsEpl: String = select.elementIds.map(i => s"sq.e$i").mkString(", ")
 
@@ -19,4 +25,5 @@ class SelectNode(select: Select, publishers: Map[String, ActorRef], frequencyStr
   }
 
   createEplStatementAndAddListener(eplString, event2EventBean)
+
 }
