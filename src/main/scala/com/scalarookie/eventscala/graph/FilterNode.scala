@@ -6,6 +6,7 @@ import com.scalarookie.eventscala.caseclasses._
 import com.scalarookie.eventscala.qos.{FrequencyStrategy, PathLatencyUnaryNodeStrategy}
 
 object FilterNode {
+
   def getEplFrom(operand: Either[Int, Any]): String = operand match {
     case Left(id) => s"sq.e$id"
     case Right(literal) => literal match {
@@ -28,10 +29,17 @@ object FilterNode {
     case Smaller => "<"
     case SmallerEqual => "<="
   }
+
 }
 
-class FilterNode(filter: Filter, publishers: Map[String, ActorRef], frequencyStrategy: FrequencyStrategy, latencyStrategy: PathLatencyUnaryNodeStrategy)
-  extends UnaryNode(filter.subquery, filter.frequencyRequirement, frequencyStrategy, filter.latencyRequirement, latencyStrategy, publishers) {
+class FilterNode(filter: Filter,
+                 publishers: Map[String, ActorRef],
+                 frequencyStrategy: FrequencyStrategy,
+                 latencyStrategy: PathLatencyUnaryNodeStrategy)
+  extends UnaryNode(filter,
+                    frequencyStrategy,
+                    latencyStrategy,
+                    publishers) {
 
   val operand1Epl: String = FilterNode.getEplFrom(filter.operand1)
   val operand2Epl: String = FilterNode.getEplFrom(filter.operand2)
@@ -45,4 +53,5 @@ class FilterNode(filter: Filter, publishers: Map[String, ActorRef], frequencyStr
   }
 
   createEplStatementAndAddListener(eplString, eventBean2Event)
+
 }

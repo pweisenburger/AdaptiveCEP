@@ -16,10 +16,14 @@ object JoinNode {
 
 }
 
-class JoinNode(join: Join, publishers: Map[String, ActorRef], frequencyStrategy: FrequencyStrategy, latencyStrategy: PathLatencyBinaryNodeStrategy)
-  extends BinaryNode(join.subquery1, join.subquery2, join.frequencyRequirement, frequencyStrategy, join.latencyRequirement, latencyStrategy, publishers) {
-
-  require(join.subquery1 != join.subquery2)
+class JoinNode(join: Join,
+               publishers: Map[String, ActorRef],
+               frequencyStrategy: FrequencyStrategy,
+               latencyStrategy: PathLatencyBinaryNodeStrategy)
+  extends BinaryNode(join,
+                     frequencyStrategy,
+                     latencyStrategy,
+                     publishers) {
 
   val window1Epl: String = JoinNode.getEplFrom(join.window1)
   val window2Epl: String = JoinNode.getEplFrom(join.window2)
@@ -35,4 +39,5 @@ class JoinNode(join: Join, publishers: Map[String, ActorRef], frequencyStrategy:
   }
 
   createEplStatementAndAddListener(eplString, eventBean2Event)
+
 }

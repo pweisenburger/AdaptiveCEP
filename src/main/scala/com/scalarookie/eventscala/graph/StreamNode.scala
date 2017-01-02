@@ -1,13 +1,15 @@
 package com.scalarookie.eventscala.graph
 
-import akka.actor.{Actor, ActorRef}
+import akka.actor.ActorRef
 import com.scalarookie.eventscala.caseclasses._
 import com.scalarookie.eventscala.qos.{FrequencyStrategy, PathLatencyLeafNodeStrategy}
 import com.scalarookie.eventscala.publishers.PublisherActor._
 
-class StreamNode(stream: Stream, publishers: Map[String, ActorRef], frequencyStrategy: FrequencyStrategy, latencyStrategy: PathLatencyLeafNodeStrategy) extends Actor {
-
-  val nodeName: String = self.path.name
+class StreamNode(stream: Stream,
+                 publishers: Map[String, ActorRef],
+                 frequencyStrategy: FrequencyStrategy,
+                 latencyStrategy: PathLatencyLeafNodeStrategy)
+  extends Node(publishers) {
 
   val publisher: ActorRef = publishers(stream.name)
 
@@ -21,8 +23,6 @@ class StreamNode(stream: Stream, publishers: Map[String, ActorRef], frequencyStr
     case event: Event if sender == publisher =>
       context.parent ! event
       if (stream.frequencyRequirement.isDefined) frequencyStrategy.onEventEmit(context, nodeName, stream.frequencyRequirement.get)
-    /*case LatencyRequest(time) =>
-      sender ! LatencyResponse(time)*/
     case unhandledMessage =>
       latencyStrategy.onMessageReceive(unhandledMessage, context)
   }
