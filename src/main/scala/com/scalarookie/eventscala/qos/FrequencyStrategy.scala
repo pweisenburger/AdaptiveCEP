@@ -6,7 +6,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import akka.actor.ActorContext
 import com.scalarookie.eventscala.caseclasses._
 
-abstract class FrequencyStrategy(interval: Int) {
+trait FrequencyStrategy {
+
+  val interval: Int
 
   var currentOutput: Int = 0
 
@@ -43,21 +45,21 @@ abstract class FrequencyStrategy(interval: Int) {
 
 }
 
-class FrequencyLeafNodeStrategy(interval: Int) extends FrequencyStrategy(interval) with LeafNodeStrategy {
+class FrequencyLeafNodeStrategy(val interval: Int) extends FrequencyStrategy with LeafNodeStrategy {
 
   override def onCreated(nodeData: LeafNodeData): Unit = onCreated(nodeData.name, nodeData.query, nodeData.context)
   override def onEventEmit(event: Event, nodeData: LeafNodeData): Unit = onEventEmit()
 
 }
 
-class FrequencyUnaryNodeStrategy(interval: Int) extends FrequencyStrategy(interval) with UnaryNodeStrategy {
+class FrequencyUnaryNodeStrategy(val interval: Int) extends FrequencyStrategy with UnaryNodeStrategy {
 
   override def onCreated(nodeData: UnaryNodeData): Unit = onCreated(nodeData.name, nodeData.query, nodeData.context)
   override def onEventEmit(event: Event, nodeData: UnaryNodeData): Unit = onEventEmit()
 
 }
 
-class FrequencyBinaryNodeStrategy(interval: Int) extends FrequencyStrategy(interval) with BinaryNodeStrategy {
+class FrequencyBinaryNodeStrategy(val interval: Int) extends FrequencyStrategy with BinaryNodeStrategy {
 
   override def onCreated(nodeData: BinaryNodeData): Unit = onCreated(nodeData.name, nodeData.query, nodeData.context)
   override def onEventEmit(event: Event, nodeData: BinaryNodeData): Unit = onEventEmit()
