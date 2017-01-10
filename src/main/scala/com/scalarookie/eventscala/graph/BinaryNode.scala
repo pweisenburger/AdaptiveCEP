@@ -3,7 +3,7 @@ package com.scalarookie.eventscala.graph
 import akka.actor.ActorRef
 import com.espertech.esper.client.{EventBean, UpdateListener}
 import com.scalarookie.eventscala.caseclasses._
-import com.scalarookie.eventscala.qos.{FrequencyStrategy, PathLatencyBinaryNodeStrategy}
+import com.scalarookie.eventscala.qos.{BinaryNodeData, FrequencyStrategy, PathLatencyBinaryNodeStrategy}
 
 abstract class BinaryNode(query: BinaryQuery,
                           frequencyStrategy: FrequencyStrategy,
@@ -26,6 +26,8 @@ abstract class BinaryNode(query: BinaryQuery,
 
   var oneChildCreated = false
 
+  val nodeData: BinaryNodeData = BinaryNodeData(nodeName, query, context, subquery1Node, subquery2Node)
+
   def createEplStatementAndAddListener(eplString: String, eventBean2Event: EventBean => Event): Unit =
     createEplStatement(eplString).addListener(new UpdateListener {
       override def update(newEvents: Array[EventBean], oldEvents: Array[EventBean]): Unit = {
@@ -33,6 +35,7 @@ abstract class BinaryNode(query: BinaryQuery,
         events.foreach(event => {
           if (query.frequencyRequirement.isDefined) frequencyStrategy.onEventEmit(context, nodeName, query.frequencyRequirement.get)
           context.parent ! event
+          latencyStrategy.onEventEmit(event, nodeData)
         })
       }
     })
@@ -46,12 +49,12 @@ abstract class BinaryNode(query: BinaryQuery,
       if (oneChildCreated) {
         context.parent ! Created
         if (query.frequencyRequirement.isDefined) frequencyStrategy.onSubtreeCreated(context, nodeName, query.frequencyRequirement.get)
-        latencyStrategy.onSubtreeCreated(self, subquery1Node, subquery2Node, context, nodeName, query.latencyRequirement)
+        latencyStrategy.onCreated(nodeData)
       } else {
         oneChildCreated = true
       }
     case unhandledMessage =>
-      latencyStrategy.onMessageReceive(unhandledMessage, self, subquery1Node, subquery2Node, context, nodeName, query.latencyRequirement)
+      latencyStrategy.onMessageReceive(unhandledMessage, nodeData)
   }
 
 }
