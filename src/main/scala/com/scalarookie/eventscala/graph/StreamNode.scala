@@ -7,11 +7,10 @@ import com.scalarookie.eventscala.publishers.PublisherActor._
 
 class StreamNode(stream: Stream,
                  publishers: Map[String, ActorRef],
-                 frequencyStrategy: FrequencyStrategy,
-                 latencyStrategy: LeafNodeQosStrategy)
+                 frequencyStrategy: LeafNodeStrategy,
+                 latencyStrategy: LeafNodeStrategy)
   extends Node(publishers) {
 
-  val data: LeafNodeData = LeafNodeData(stream.name, stream, context)
 
   val publisher: ActorRef = publishers(stream.name)
 
@@ -19,16 +18,19 @@ class StreamNode(stream: Stream,
 
   context.parent ! Created
 
-  if (stream.frequencyRequirement.isDefined) frequencyStrategy.onSubtreeCreated(context, nodeName, stream.frequencyRequirement.get)
-  latencyStrategy.onCreated(data)
+  val nodeData: LeafNodeData = LeafNodeData(stream.name, stream, context)
+
+  frequencyStrategy.onCreated(nodeData)
+  latencyStrategy.onCreated(nodeData)
 
   override def receive: Receive = {
     case event: Event if sender == publisher =>
       context.parent ! event
-      if (stream.frequencyRequirement.isDefined) frequencyStrategy.onEventEmit(context, nodeName, stream.frequencyRequirement.get)
-      latencyStrategy.onEventEmit(event, data)
+      frequencyStrategy.onEventEmit(event, nodeData)
+      latencyStrategy.onEventEmit(event, nodeData)
     case unhandledMessage =>
-      latencyStrategy.onMessageReceive(unhandledMessage, data)
+      frequencyStrategy.onMessageReceive(unhandledMessage, nodeData)
+      latencyStrategy.onMessageReceive(unhandledMessage, nodeData)
   }
 
 }

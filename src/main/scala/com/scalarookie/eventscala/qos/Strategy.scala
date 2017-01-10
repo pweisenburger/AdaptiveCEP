@@ -7,7 +7,7 @@ case class LeafNodeData(name: String, query: Query, context: ActorContext)
 case class UnaryNodeData(name: String, query: Query, context: ActorContext, childNode: ActorRef)
 case class BinaryNodeData(name: String, query: Query, context: ActorContext, childNode1: ActorRef, childNode2: ActorRef)
 
-trait LeafNodeQosStrategy {
+trait LeafNodeStrategy {
 
   def onCreated(nodeData: LeafNodeData): Unit = ()
   def onEventEmit(event: Event, nodeData: LeafNodeData): Unit = ()
@@ -15,7 +15,7 @@ trait LeafNodeQosStrategy {
 
 }
 
-trait UnaryNodeQosStrategy {
+trait UnaryNodeStrategy {
 
   def onCreated(nodeData: UnaryNodeData): Unit = ()
   def onEventEmit(event: Event, nodeData: UnaryNodeData): Unit = ()
@@ -23,7 +23,7 @@ trait UnaryNodeQosStrategy {
 
 }
 
-trait BinaryNodeQosStrategy {
+trait BinaryNodeStrategy {
 
   def onCreated(nodeData: BinaryNodeData): Unit = ()
   def onEventEmit(event: Event, nodeData: BinaryNodeData): Unit = ()

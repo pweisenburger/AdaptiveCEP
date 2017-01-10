@@ -3,11 +3,11 @@ package com.scalarookie.eventscala.graph
 import akka.actor.ActorRef
 import com.espertech.esper.client.{EventBean, UpdateListener}
 import com.scalarookie.eventscala.caseclasses._
-import com.scalarookie.eventscala.qos.{BinaryNodeData, FrequencyStrategy, PathLatencyBinaryNodeStrategy}
+import com.scalarookie.eventscala.qos.{BinaryNodeData, BinaryNodeStrategy, LatencyBinaryNodeStrategy}
 
 abstract class BinaryNode(query: BinaryQuery,
-                          frequencyStrategy: FrequencyStrategy,
-                          latencyStrategy: PathLatencyBinaryNodeStrategy,
+                          frequencyStrategy: BinaryNodeStrategy,
+                          latencyStrategy: BinaryNodeStrategy,
                           publishers: Map[String, ActorRef])
   extends Node(publishers) with EsperEngine {
 
@@ -33,8 +33,8 @@ abstract class BinaryNode(query: BinaryQuery,
       override def update(newEvents: Array[EventBean], oldEvents: Array[EventBean]): Unit = {
         val events: List[Event] = newEvents.map(eventBean2Event).toList
         events.foreach(event => {
-          if (query.frequencyRequirement.isDefined) frequencyStrategy.onEventEmit(context, nodeName, query.frequencyRequirement.get)
           context.parent ! event
+          frequencyStrategy.onEventEmit(event, nodeData)
           latencyStrategy.onEventEmit(event, nodeData)
         })
       }
@@ -48,12 +48,13 @@ abstract class BinaryNode(query: BinaryQuery,
     case Created =>
       if (oneChildCreated) {
         context.parent ! Created
-        if (query.frequencyRequirement.isDefined) frequencyStrategy.onSubtreeCreated(context, nodeName, query.frequencyRequirement.get)
+        frequencyStrategy.onCreated(nodeData)
         latencyStrategy.onCreated(nodeData)
       } else {
         oneChildCreated = true
       }
     case unhandledMessage =>
+      frequencyStrategy.onMessageReceive(unhandledMessage, nodeData)
       latencyStrategy.onMessageReceive(unhandledMessage, nodeData)
   }
 
