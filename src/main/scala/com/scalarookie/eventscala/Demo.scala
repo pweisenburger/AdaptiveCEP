@@ -30,9 +30,9 @@ object Demo extends App {
     .select(elements(1, 2, 4), None, None)
     .where(element(1) <= literal(15),
       None,
-      Some(latency <= timespan(/*126*/ 0 milliseconds) otherwise { nodeName => println(s"WARNING:\t\t$nodeName sucks tit.") }))
+      Some(latency <= timespan(1 milliseconds) otherwise { nodeName => println(s"LATENCY WARNING:\t$nodeName's latency is higher than 1 millisecond.") }))
     .where(literal(true) =!= element(3),
-      Some(frequency > ratio(4 instances, 5 seconds) otherwise { nodeName => println(s"WARNING:\t\t$nodeName is slow.") }),
+      Some(frequency > ratio(3 instances, 5 seconds) otherwise { nodeName => println(s"FREQUENCY WARNING:\t$nodeName doesn't on average emit at least 3 instances per 5 seconds.") }),
       None)
 
   val query2: Query =

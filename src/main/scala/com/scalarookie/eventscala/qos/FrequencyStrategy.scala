@@ -8,6 +8,8 @@ import com.scalarookie.eventscala.caseclasses._
 
 trait FrequencyStrategy {
 
+  val logging: Boolean
+
   val interval: Int
 
   var currentOutput: Int = 0
@@ -24,13 +26,13 @@ trait FrequencyStrategy {
             val divisor: Int = interval / frequencyRequirement.seconds
             val frequency: Int = currentOutput / divisor
             currentOutput = 0
-            println(s"FREQUENCY:\t\tOn average, $nodeName emits $frequency events every ${frequencyRequirement.seconds} seconds.")
+            if (logging) println(s"FREQUENCY LOG:\t\tIn the last $interval seconds, $nodeName on average emitted $frequency events per ${frequencyRequirement.seconds} seconds.")
             frequencyRequirement.operator match {
               case Equal        => if (!(frequency == frequencyRequirement.instances)) frequencyRequirement.callback(nodeName)
               case NotEqual     => if (!(frequency != frequencyRequirement.instances)) frequencyRequirement.callback(nodeName)
-              case Greater      => if (!(frequency > frequencyRequirement.instances)) frequencyRequirement.callback(nodeName)
+              case Greater      => if (!(frequency >  frequencyRequirement.instances)) frequencyRequirement.callback(nodeName)
               case GreaterEqual => if (!(frequency >= frequencyRequirement.instances)) frequencyRequirement.callback(nodeName)
-              case Smaller      => if (!(frequency < frequencyRequirement.instances)) frequencyRequirement.callback(nodeName)
+              case Smaller      => if (!(frequency <  frequencyRequirement.instances)) frequencyRequirement.callback(nodeName)
               case SmallerEqual => if (!(frequency <= frequencyRequirement.instances)) frequencyRequirement.callback(nodeName)
             }
           }
@@ -45,21 +47,21 @@ trait FrequencyStrategy {
 
 }
 
-class FrequencyLeafNodeStrategy(val interval: Int) extends FrequencyStrategy with LeafNodeStrategy {
+class FrequencyLeafNodeStrategy(val interval: Int, val logging: Boolean) extends FrequencyStrategy with LeafNodeStrategy {
 
   override def onCreated(nodeData: LeafNodeData): Unit = onCreated(nodeData.name, nodeData.query, nodeData.context)
   override def onEventEmit(event: Event, nodeData: LeafNodeData): Unit = onEventEmit()
 
 }
 
-class FrequencyUnaryNodeStrategy(val interval: Int) extends FrequencyStrategy with UnaryNodeStrategy {
+class FrequencyUnaryNodeStrategy(val interval: Int, val logging: Boolean) extends FrequencyStrategy with UnaryNodeStrategy {
 
   override def onCreated(nodeData: UnaryNodeData): Unit = onCreated(nodeData.name, nodeData.query, nodeData.context)
   override def onEventEmit(event: Event, nodeData: UnaryNodeData): Unit = onEventEmit()
 
 }
 
-class FrequencyBinaryNodeStrategy(val interval: Int) extends FrequencyStrategy with BinaryNodeStrategy {
+class FrequencyBinaryNodeStrategy(val interval: Int, val logging: Boolean) extends FrequencyStrategy with BinaryNodeStrategy {
 
   override def onCreated(nodeData: BinaryNodeData): Unit = onCreated(nodeData.name, nodeData.query, nodeData.context)
   override def onEventEmit(event: Event, nodeData: BinaryNodeData): Unit = onEventEmit()

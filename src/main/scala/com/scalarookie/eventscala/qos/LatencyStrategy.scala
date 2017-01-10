@@ -10,7 +10,7 @@ case class ChildLatencyRequest(time: Instant)
 case class ChildLatencyResponse(childNode: ActorRef, requestTime: Instant)
 case class PathLatency(childNode: ActorRef, duration: Duration)
 
-class LatencyLeafNodeStrategy extends LeafNodeStrategy {
+class LatencyLeafNodeStrategy(interval: Int, logging: Boolean) extends LeafNodeStrategy {
 
   override def onMessageReceive(message: Any, data: LeafNodeData): Unit = message match {
     case ChildLatencyRequest(requestTime) =>
@@ -20,7 +20,7 @@ class LatencyLeafNodeStrategy extends LeafNodeStrategy {
 
 }
 
-class LatencyUnaryNodeStrategy(interval: Int) extends UnaryNodeStrategy {
+class LatencyUnaryNodeStrategy(interval: Int, logging: Boolean) extends UnaryNodeStrategy {
 
   val clock: Clock = Clock.systemDefaultZone
   var childNodeLatency: Option[Duration] = None
@@ -46,7 +46,7 @@ class LatencyUnaryNodeStrategy(interval: Int) extends UnaryNodeStrategy {
       if (childNodePathLatency.isDefined) {
         val pathLatency: Duration = childNodeLatency.get.plus(childNodePathLatency.get)
         nodeData.context.parent ! PathLatency(nodeData.context.self, pathLatency)
-        /* TODO */ println(s"===> ${nodeData.name} path latency: $pathLatency")
+        if (logging) println(s"LATENCY LOG:\t\t${nodeData.name}: $pathLatency")
         childNodeLatency = None
         childNodePathLatency = None
       }
@@ -55,14 +55,14 @@ class LatencyUnaryNodeStrategy(interval: Int) extends UnaryNodeStrategy {
       if (childNodeLatency.isDefined) {
         val pathLatency: Duration = childNodeLatency.get.plus(childNodePathLatency.get)
         nodeData.context.parent ! PathLatency(nodeData.context.self, pathLatency)
-        /* TODO */ println(s"===> ${nodeData.name} path latency: $pathLatency")
+        if (logging) println(s"LATENCY LOG:\t\t${nodeData.name}: $pathLatency")
         childNodeLatency = None
         childNodePathLatency = None
       }
   }
 }
 
-class LatencyBinaryNodeStrategy(interval: Int) extends BinaryNodeStrategy {
+class LatencyBinaryNodeStrategy(interval: Int, logging: Boolean) extends BinaryNodeStrategy {
 
   val clock: Clock = Clock.systemDefaultZone
   var childNode1Latency: Option[Duration] = None
@@ -99,10 +99,10 @@ class LatencyBinaryNodeStrategy(interval: Int) extends BinaryNodeStrategy {
         val pathLatency2 = childNode2Latency.get.plus(childNode2PathLatency.get)
         if (pathLatency1.compareTo(pathLatency2) >= 0) {
           nodeData.context.parent ! PathLatency(nodeData.context.self, pathLatency1)
-          /* TODO */ println(s"===> ${nodeData.name} path latency: $pathLatency1")
+          if (logging) println(s"LATENCY LOG:\t\t${nodeData.name}: $pathLatency1")
         } else {
           nodeData.context.parent ! PathLatency(nodeData.context.self, pathLatency2)
-          /* TODO */ println(s"===> ${nodeData.name} path latency: $pathLatency2")
+          if (logging) println(s"LATENCY LOG:\t\t${nodeData.name}: $pathLatency2")
         }
         childNode1Latency = None
         childNode2Latency = None
@@ -122,10 +122,10 @@ class LatencyBinaryNodeStrategy(interval: Int) extends BinaryNodeStrategy {
         val pathLatency2 = childNode2Latency.get.plus(childNode2PathLatency.get)
         if (pathLatency1.compareTo(pathLatency2) >= 0) {
           nodeData.context.parent ! PathLatency(nodeData.context.self, pathLatency1)
-          /* TODO */ println(s"===> ${nodeData.name} path latency: $pathLatency1")
+          if (logging) println(s"LATENCY LOG:\t\t${nodeData.name}: $pathLatency1")
         } else {
           nodeData.context.parent ! PathLatency(nodeData.context.self, pathLatency2)
-          /* TODO */ println(s"===> ${nodeData.name} path latency: $pathLatency2")
+          if (logging) println(s"LATENCY LOG:\t\t${nodeData.name}: $pathLatency2")
         }
         childNode1Latency = None
         childNode2Latency = None
