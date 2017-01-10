@@ -3,11 +3,11 @@ package com.scalarookie.eventscala.graph
 import akka.actor.ActorRef
 import com.espertech.esper.client.{EventBean, UpdateListener}
 import com.scalarookie.eventscala.caseclasses._
-import com.scalarookie.eventscala.qos.{FrequencyStrategy, PathLatencyUnaryNodeStrategy, UnaryNodeData, UnaryNodeQosStrategy}
+import com.scalarookie.eventscala.qos.{UnaryNodeData, UnaryNodeStrategy}
 
 abstract class UnaryNode(query: UnaryQuery,
-                         frequencyStrategy: FrequencyStrategy,
-                         latencyStrategy: UnaryNodeQosStrategy,
+                         frequencyStrategy: UnaryNodeStrategy,
+                         latencyStrategy: UnaryNodeStrategy,
                          publishers: Map[String, ActorRef])
   extends Node(publishers) with EsperEngine {
 
@@ -27,8 +27,8 @@ abstract class UnaryNode(query: UnaryQuery,
       override def update(newEvents: Array[EventBean], oldEvents: Array[EventBean]): Unit = {
         val events: List[Event] = newEvents.map(eventBean2Event).toList
         events.foreach(event => {
-          if (query.frequencyRequirement.isDefined) frequencyStrategy.onEventEmit(context, nodeName, query.frequencyRequirement.get)
           context.parent ! event
+          frequencyStrategy.onEventEmit(event, nodeData)
           latencyStrategy.onEventEmit(event, nodeData)
         })
       }
@@ -39,9 +39,10 @@ abstract class UnaryNode(query: UnaryQuery,
       sendEvent("subquery", Event.getArrayOfValuesFrom(event))
     case Created =>
       context.parent ! Created
-      if (query.frequencyRequirement.isDefined) frequencyStrategy.onSubtreeCreated(context, nodeName, query.frequencyRequirement.get)
+      frequencyStrategy.onCreated(nodeData)
       latencyStrategy.onCreated(nodeData)
     case unhandledMessage =>
+      frequencyStrategy.onMessageReceive(unhandledMessage, nodeData)
       latencyStrategy.onMessageReceive(unhandledMessage, nodeData)
   }
 

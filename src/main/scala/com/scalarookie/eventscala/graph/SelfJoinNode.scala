@@ -3,12 +3,12 @@ package com.scalarookie.eventscala.graph
 import akka.actor.ActorRef
 import com.espertech.esper.client._
 import com.scalarookie.eventscala.caseclasses._
-import com.scalarookie.eventscala.qos.{FrequencyStrategy, PathLatencyUnaryNodeStrategy}
+import com.scalarookie.eventscala.qos.{LatencyUnaryNodeStrategy, UnaryNodeStrategy}
 
 class SelfJoinNode(selfJoin: SelfJoin,
                    publishers: Map[String, ActorRef],
-                   frequencyStrategy: FrequencyStrategy,
-                   latencyStrategy: PathLatencyUnaryNodeStrategy)
+                   frequencyStrategy: UnaryNodeStrategy,
+                   latencyStrategy: UnaryNodeStrategy)
   extends UnaryNode(selfJoin,
                     frequencyStrategy,
                     latencyStrategy,
