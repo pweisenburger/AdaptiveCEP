@@ -5,10 +5,32 @@ import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.ExecutionContext.Implicits.global
 import akka.actor.ActorRef
+import com.scalarookie.eventscala.caseclasses._
+import LatencyStrategy._
 
 case class ChildLatencyRequest(time: Instant)
 case class ChildLatencyResponse(childNode: ActorRef, requestTime: Instant)
 case class PathLatency(childNode: ActorRef, duration: Duration)
+
+object LatencyStrategy {
+
+  def latencyRequirementDefinedAndNotMet(latency: Duration, latencyRequirement: Option[LatencyRequirement]): Boolean = {
+    if (latencyRequirement.isDefined) {
+      val met: Boolean = latencyRequirement.get.operator match {
+        case Equal        => latency.compareTo(latencyRequirement.get.duration) == 0
+        case NotEqual     => latency.compareTo(latencyRequirement.get.duration) != 0
+        case Greater      => latency.compareTo(latencyRequirement.get.duration) >  0
+        case GreaterEqual => latency.compareTo(latencyRequirement.get.duration) >= 0
+        case Smaller      => latency.compareTo(latencyRequirement.get.duration) <  0
+        case SmallerEqual => latency.compareTo(latencyRequirement.get.duration) <= 0
+      }
+      !met
+    } else {
+      false
+    }
+  }
+
+}
 
 class LatencyLeafNodeStrategy(interval: Int, logging: Boolean) extends LeafNodeStrategy {
 
@@ -47,6 +69,9 @@ class LatencyUnaryNodeStrategy(interval: Int, logging: Boolean) extends UnaryNod
         val pathLatency: Duration = childNodeLatency.get.plus(childNodePathLatency.get)
         nodeData.context.parent ! PathLatency(nodeData.context.self, pathLatency)
         if (logging) println(s"LATENCY LOG:\t\t${nodeData.name}: $pathLatency")
+        if (latencyRequirementDefinedAndNotMet(pathLatency, nodeData.query.latencyRequirement)) {
+          nodeData.query.latencyRequirement.get.callback(nodeData.name)
+        }
         childNodeLatency = None
         childNodePathLatency = None
       }
@@ -56,10 +81,14 @@ class LatencyUnaryNodeStrategy(interval: Int, logging: Boolean) extends UnaryNod
         val pathLatency: Duration = childNodeLatency.get.plus(childNodePathLatency.get)
         nodeData.context.parent ! PathLatency(nodeData.context.self, pathLatency)
         if (logging) println(s"LATENCY LOG:\t\t${nodeData.name}: $pathLatency")
+        if (latencyRequirementDefinedAndNotMet(pathLatency, nodeData.query.latencyRequirement)) {
+          nodeData.query.latencyRequirement.get.callback(nodeData.name)
+        }
         childNodeLatency = None
         childNodePathLatency = None
       }
   }
+
 }
 
 class LatencyBinaryNodeStrategy(interval: Int, logging: Boolean) extends BinaryNodeStrategy {
@@ -100,10 +129,14 @@ class LatencyBinaryNodeStrategy(interval: Int, logging: Boolean) extends BinaryN
         if (pathLatency1.compareTo(pathLatency2) >= 0) {
           nodeData.context.parent ! PathLatency(nodeData.context.self, pathLatency1)
           if (logging) println(s"LATENCY LOG:\t\t${nodeData.name}: $pathLatency1")
-        } else {
+          if (latencyRequirementDefinedAndNotMet(pathLatency1, nodeData.query.latencyRequirement)) {
+            nodeData.query.latencyRequirement.get.callback(nodeData.name)
+          }        } else {
           nodeData.context.parent ! PathLatency(nodeData.context.self, pathLatency2)
           if (logging) println(s"LATENCY LOG:\t\t${nodeData.name}: $pathLatency2")
-        }
+          if (latencyRequirementDefinedAndNotMet(pathLatency2, nodeData.query.latencyRequirement)) {
+            nodeData.query.latencyRequirement.get.callback(nodeData.name)
+          }        }
         childNode1Latency = None
         childNode2Latency = None
         childNode1PathLatency = None
@@ -123,10 +156,14 @@ class LatencyBinaryNodeStrategy(interval: Int, logging: Boolean) extends BinaryN
         if (pathLatency1.compareTo(pathLatency2) >= 0) {
           nodeData.context.parent ! PathLatency(nodeData.context.self, pathLatency1)
           if (logging) println(s"LATENCY LOG:\t\t${nodeData.name}: $pathLatency1")
-        } else {
+          if (latencyRequirementDefinedAndNotMet(pathLatency1, nodeData.query.latencyRequirement)) {
+            nodeData.query.latencyRequirement.get.callback(nodeData.name)
+          }        } else {
           nodeData.context.parent ! PathLatency(nodeData.context.self, pathLatency2)
           if (logging) println(s"LATENCY LOG:\t\t${nodeData.name}: $pathLatency2")
-        }
+          if (latencyRequirementDefinedAndNotMet(pathLatency2, nodeData.query.latencyRequirement)) {
+            nodeData.query.latencyRequirement.get.callback(nodeData.name)
+          }        }
         childNode1Latency = None
         childNode2Latency = None
         childNode1PathLatency = None
