@@ -68,4 +68,26 @@ object Query {
     }
   }
 
+  def addFrequencyRequirement[A : ClassTag](stream1: Stream1[A], frequencyRequirement: FrequencyRequirement): Stream1[A] = Stream1[A](stream1.name, Some(frequencyRequirement), stream1.latencyRequirement)
+  def addFrequencyRequirement[A : ClassTag, B : ClassTag](stream2: Stream2[A, B], frequencyRequirement: FrequencyRequirement): Stream2[A, B] = Stream2[A, B](stream2.name, Some(frequencyRequirement), stream2.latencyRequirement)
+  def addFrequencyRequirement[A : ClassTag, B : ClassTag, C : ClassTag](stream3: Stream3[A, B, C], frequencyRequirement: FrequencyRequirement): Stream3[A, B, C] = Stream3[A, B, C](stream3.name, Some(frequencyRequirement), stream3.latencyRequirement)
+  def addFrequencyRequirement[A : ClassTag, B : ClassTag, C : ClassTag, D : ClassTag](stream4: Stream4[A, B, C, D], frequencyRequirement: FrequencyRequirement): Stream4[A, B, C, D] = Stream4[A, B, C, D](stream4.name, Some(frequencyRequirement), stream4.latencyRequirement)
+  def addFrequencyRequirement[A : ClassTag, B : ClassTag, C : ClassTag, D : ClassTag, E : ClassTag](stream5: Stream5[A, B, C, D, E], frequencyRequirement: FrequencyRequirement): Stream5[A, B, C, D, E] = Stream5[A, B, C, D, E](stream5.name, Some(frequencyRequirement), stream5.latencyRequirement)
+  def addFrequencyRequirement[A : ClassTag, B : ClassTag, C : ClassTag, D : ClassTag, E : ClassTag, F : ClassTag](stream6: Stream6[A, B, C, D, E, F], frequencyRequirement: FrequencyRequirement): Stream6[A, B, C, D, E, F] = Stream6[A, B, C, D, E, F](stream6.name, Some(frequencyRequirement), stream6.latencyRequirement)
+  def addFrequencyRequirement(filter: Filter, frequencyRequirement: FrequencyRequirement): Filter = Filter(filter.subquery, filter.operator, filter.operand1, filter.operand2, Some(frequencyRequirement), filter.latencyRequirement)
+  def addFrequencyRequirement(select: Select, frequencyRequirement: FrequencyRequirement): Select = Select(select.subquery, select.elementIds, Some(frequencyRequirement), select.latencyRequirement)
+  def addFrequencyRequirement(selfJoin: SelfJoin, frequencyRequirement: FrequencyRequirement): SelfJoin = SelfJoin(selfJoin.subquery, selfJoin.window1, selfJoin.window2, Some(frequencyRequirement), selfJoin.latencyRequirement)
+  def addFrequencyRequirement(join: Join, frequencyRequirement: FrequencyRequirement): Join = Join(join.subquery1, join.window1, join.subquery2, join.window2, Some(frequencyRequirement), join.latencyRequirement)
+
+  def addLatencyRequirement[A : ClassTag](stream1: Stream1[A], latencyRequirement: LatencyRequirement): Stream1[A] = Stream1[A](stream1.name, stream1.frequencyRequirement, Some(latencyRequirement))
+  def addLatencyRequirement[A : ClassTag, B : ClassTag](stream2: Stream2[A, B], latencyRequirement: LatencyRequirement): Stream2[A, B] = Stream2[A, B](stream2.name, stream2.frequencyRequirement, Some(latencyRequirement))
+  def addLatencyRequirement[A : ClassTag, B : ClassTag, C : ClassTag](stream3: Stream3[A, B, C], latencyRequirement: LatencyRequirement): Stream3[A, B, C] = Stream3[A, B, C](stream3.name, stream3.frequencyRequirement, Some(latencyRequirement))
+  def addLatencyRequirement[A : ClassTag, B : ClassTag, C : ClassTag, D : ClassTag](stream4: Stream4[A, B, C, D], latencyRequirement: LatencyRequirement): Stream4[A, B, C, D] = Stream4[A, B, C, D](stream4.name, stream4.frequencyRequirement, Some(latencyRequirement))
+  def addLatencyRequirement[A : ClassTag, B : ClassTag, C : ClassTag, D : ClassTag, E : ClassTag](stream5: Stream5[A, B, C, D, E], latencyRequirement: LatencyRequirement): Stream5[A, B, C, D, E] = Stream5[A, B, C, D, E](stream5.name, stream5.frequencyRequirement, Some(latencyRequirement))
+  def addLatencyRequirement[A : ClassTag, B : ClassTag, C : ClassTag, D : ClassTag, E : ClassTag, F : ClassTag](stream6: Stream6[A, B, C, D, E, F], latencyRequirement: LatencyRequirement): Stream6[A, B, C, D, E, F] = Stream6[A, B, C, D, E, F](stream6.name, stream6.frequencyRequirement, Some(latencyRequirement))
+  def addLatencyRequirement(filter: Filter, latencyRequirement: LatencyRequirement): Filter = Filter(filter.subquery, filter.operator, filter.operand1, filter.operand2, filter.frequencyRequirement, Some(latencyRequirement))
+  def addLatencyRequirement(select: Select, latencyRequirement: LatencyRequirement): Select = Select(select.subquery, select.elementIds, select.frequencyRequirement, Some(latencyRequirement))
+  def addLatencyRequirement(selfJoin: SelfJoin, latencyRequirement: LatencyRequirement): SelfJoin = SelfJoin(selfJoin.subquery, selfJoin.window1, selfJoin.window2, selfJoin.frequencyRequirement, Some(latencyRequirement))
+  def addLatencyRequirement(join: Join, latencyRequirement: LatencyRequirement): Join = Join(join.subquery1, join.window1, join.subquery2, join.window2, join.frequencyRequirement, Some(latencyRequirement))
+
 }
