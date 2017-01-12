@@ -24,6 +24,8 @@ case class JoinNode(
   var childNode2Created: Boolean = false
 
   override def receive: Receive = {
+    case DependenciesRequest =>
+      sender ! DependenciesResponse(Seq(childNode1, childNode2))
     case Created if sender() == childNode1 =>
       childNode1Created = true
       if (childNode2Created) emitCreated()

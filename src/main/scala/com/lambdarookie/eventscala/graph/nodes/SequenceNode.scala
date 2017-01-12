@@ -28,6 +28,8 @@ case class SequenceNode(
   var subscription2Acknowledged: Boolean = false
 
   override def receive: Receive = {
+    case DependenciesRequest =>
+      sender ! DependenciesResponse(Seq.empty)
     case AcknowledgeSubscription if sender() == queryPublishers(0) =>
       subscription1Acknowledged = true
       if (subscription2Acknowledged) emitCreated()

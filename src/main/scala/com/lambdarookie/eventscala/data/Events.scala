@@ -1,8 +1,13 @@
 package com.lambdarookie.eventscala.data
 
+import akka.actor.ActorRef
+
 object Events {
 
   case object Created
+
+  case object DependenciesRequest
+  case class DependenciesResponse(dependencies: Seq[ActorRef])
 
   sealed trait Event
   case class Event1(e1: Any)                                              extends Event

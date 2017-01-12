@@ -16,6 +16,8 @@ case class FilterNode(
   extends UnaryNode {
 
   override def receive: Receive = {
+    case DependenciesRequest =>
+      sender ! DependenciesResponse(Seq(childNode))
     case Created if sender() == childNode =>
       emitCreated()
     case event: Event if sender() == childNode =>
