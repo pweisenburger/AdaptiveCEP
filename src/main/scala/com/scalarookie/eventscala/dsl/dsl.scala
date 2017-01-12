@@ -32,25 +32,43 @@ package object dsl {
   // Queries in general ------------------------------------------------------------------------------------------------
 
   case class QueryHelper(query: Query) {
-    def join(query2: Query, frequencyRequirement: Option[FrequencyRequirement], latencyRequirement: Option[LatencyRequirement]) = {
-      require(query != query2)
-      JoinHelper(query, query2, frequencyRequirement, latencyRequirement)
+    def join(query2: Query) = { require(query != query2); JoinHelper(query, query2, None, None) }
+    def selfJoin(query2: Query) = { require(query == query2); SelfJoinHelper(query, None, None) }
+    def select(elementIds: List[Int]) = Select(query, elementIds, None, None)
+    def where(tuple: (Operator, Either[Int, Any], Either[Int, Any])) = Filter(query, tuple._1, tuple._2, tuple._3, None, None)
+    def frequency(frequencyRequirement: FrequencyRequirement): QueryHelper = query match {
+      case s@Stream1(_, _, _) => Query.addFrequencyRequirement(s, frequencyRequirement)
+      case s@Stream2(_, _, _) => Query.addFrequencyRequirement(s, frequencyRequirement)
+      case s@Stream3(_, _, _) => Query.addFrequencyRequirement(s, frequencyRequirement)
+      case s@Stream4(_, _, _) => Query.addFrequencyRequirement(s, frequencyRequirement)
+      case s@Stream5(_, _, _) => Query.addFrequencyRequirement(s, frequencyRequirement)
+      case s@Stream6(_, _, _) => Query.addFrequencyRequirement(s, frequencyRequirement)
+      case f@Filter(_, _, _, _, _, _) => Query.addFrequencyRequirement(f, frequencyRequirement)
+      case s@Select(_, _, _, _)       => Query.addFrequencyRequirement(s, frequencyRequirement)
+      case s@SelfJoin(_, _, _, _, _)  => Query.addFrequencyRequirement(s, frequencyRequirement)
+      case j@Join(_, _, _, _, _, _)   => Query.addFrequencyRequirement(j, frequencyRequirement)
     }
-    def selfJoin(query2: Query, frequencyRequirement: Option[FrequencyRequirement], latencyRequirement: Option[LatencyRequirement]) = {
-      require(query == query2)
-      SelfJoinHelper(query, frequencyRequirement, latencyRequirement)
+    def latency(latencyRequirement: LatencyRequirement): QueryHelper = query match {
+      case s@Stream1(_, _, _) => Query.addLatencyRequirement(s, latencyRequirement)
+      case s@Stream2(_, _, _) => Query.addLatencyRequirement(s, latencyRequirement)
+      case s@Stream3(_, _, _) => Query.addLatencyRequirement(s, latencyRequirement)
+      case s@Stream4(_, _, _) => Query.addLatencyRequirement(s, latencyRequirement)
+      case s@Stream5(_, _, _) => Query.addLatencyRequirement(s, latencyRequirement)
+      case s@Stream6(_, _, _) => Query.addLatencyRequirement(s, latencyRequirement)
+      case f@Filter(_, _, _, _, _, _) => Query.addLatencyRequirement(f, latencyRequirement)
+      case s@Select(_, _, _, _)       => Query.addLatencyRequirement(s, latencyRequirement)
+      case s@SelfJoin(_, _, _, _, _)  => Query.addLatencyRequirement(s, latencyRequirement)
+      case j@Join(_, _, _, _, _, _)   => Query.addLatencyRequirement(j, latencyRequirement)
     }
-    def select(elementIds: List[Int], frequencyRequirement: Option[FrequencyRequirement], latencyRequirement: Option[LatencyRequirement]) =
-      Select(query, elementIds, frequencyRequirement, latencyRequirement)
-    def where(tuple: (Operator, Either[Int, Any], Either[Int, Any]), frequencyRequirement: Option[FrequencyRequirement], latencyRequirement: Option[LatencyRequirement]) =
-      Filter(query, tuple._1, tuple._2, tuple._3, frequencyRequirement, latencyRequirement)
   }
 
-  implicit def stream2QueryHelper(stream: Stream): QueryHelper = QueryHelper(stream)
   implicit def join2QueryHelper(join: Join): QueryHelper = QueryHelper(join)
   implicit def selfJoin2QueryHelper(selfJoin: SelfJoin): QueryHelper = QueryHelper(selfJoin)
-  implicit def select2QueryHelper(select: Select): QueryHelper = QueryHelper(select)
   implicit def filter2QueryHelper(filter: Filter): QueryHelper = QueryHelper(filter)
+  implicit def select2QueryHelper(select: Select): QueryHelper = QueryHelper(select)
+  implicit def stream2QueryHelper(stream: Stream): QueryHelper = QueryHelper(stream)
+
+  implicit def queryHelper2Query(queryHelper: QueryHelper) = queryHelper.query
 
   // Streams -----------------------------------------------------------------------------------------------------------
 
@@ -61,12 +79,12 @@ package object dsl {
   def stream[A : ClassTag, B : ClassTag, C : ClassTag, D : ClassTag, E : ClassTag] = Stream5Helper[A, B, C, D, E]()
   def stream[A : ClassTag, B : ClassTag, C : ClassTag, D : ClassTag, E : ClassTag, F : ClassTag] = Stream6Helper[A, B, C, D, E, F]()
 
-  case class Stream1Helper[A : ClassTag]() { def from(publisherName: String, frequencyRequirement: Option[FrequencyRequirement], latencyRequirement: Option[LatencyRequirement]) = Stream1[A](publisherName, frequencyRequirement, latencyRequirement) }
-  case class Stream2Helper[A : ClassTag, B : ClassTag]() { def from(publisherName: String, frequencyRequirement: Option[FrequencyRequirement], latencyRequirement: Option[LatencyRequirement]) = Stream2[A, B](publisherName, frequencyRequirement, latencyRequirement) }
-  case class Stream3Helper[A : ClassTag, B : ClassTag, C : ClassTag]() { def from(publisherName: String, frequencyRequirement: Option[FrequencyRequirement], latencyRequirement: Option[LatencyRequirement]) = Stream3[A, B, C](publisherName, frequencyRequirement, latencyRequirement) }
-  case class Stream4Helper[A : ClassTag, B : ClassTag, C : ClassTag, D : ClassTag]() { def from(publisherName: String, frequencyRequirement: Option[FrequencyRequirement], latencyRequirement: Option[LatencyRequirement]) = Stream4[A, B, C, D](publisherName, frequencyRequirement, latencyRequirement) }
-  case class Stream5Helper[A : ClassTag, B : ClassTag, C : ClassTag, D : ClassTag, E : ClassTag]() { def from(publisherName: String, frequencyRequirement: Option[FrequencyRequirement], latencyRequirement: Option[LatencyRequirement]) = Stream5[A, B, C, D, E](publisherName, frequencyRequirement, latencyRequirement) }
-  case class Stream6Helper[A : ClassTag, B : ClassTag, C : ClassTag, D : ClassTag, E : ClassTag, F : ClassTag]() { def from(publisherName: String, frequencyRequirement: Option[FrequencyRequirement], latencyRequirement: Option[LatencyRequirement]) = Stream6[A, B, C, D, E, F](publisherName, frequencyRequirement, latencyRequirement) }
+  case class Stream1Helper[A : ClassTag]() { def from(publisherName: String) = Stream1[A](publisherName, None, None) }
+  case class Stream2Helper[A : ClassTag, B : ClassTag]() { def from(publisherName: String) = Stream2[A, B](publisherName, None, None) }
+  case class Stream3Helper[A : ClassTag, B : ClassTag, C : ClassTag]() { def from(publisherName: String) = Stream3[A, B, C](publisherName, None, None) }
+  case class Stream4Helper[A : ClassTag, B : ClassTag, C : ClassTag, D : ClassTag]() { def from(publisherName: String) = Stream4[A, B, C, D](publisherName, None, None) }
+  case class Stream5Helper[A : ClassTag, B : ClassTag, C : ClassTag, D : ClassTag, E : ClassTag]() { def from(publisherName: String) = Stream5[A, B, C, D, E](publisherName, None, None) }
+  case class Stream6Helper[A : ClassTag, B : ClassTag, C : ClassTag, D : ClassTag, E : ClassTag, F : ClassTag]() { def from(publisherName: String) = Stream6[A, B, C, D, E, F](publisherName, None, None) }
 
   // Joins -------------------------------------------------------------------------------------------------------------
 
