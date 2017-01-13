@@ -1,9 +1,9 @@
-package com.scalarookie.eventscala.graph
+package com.scalarookie.eventscala.graph.nodes
 
 import akka.actor.ActorRef
 import com.espertech.esper.client._
 import com.scalarookie.eventscala.caseclasses._
-import com.scalarookie.eventscala.qos.{LatencyUnaryNodeStrategy, UnaryNodeStrategy}
+import com.scalarookie.eventscala.qos.{StrategyFactory, UnaryNodeStrategy}
 
 object FilterNode {
 
@@ -33,13 +33,15 @@ object FilterNode {
 }
 
 class FilterNode(filter: Filter,
+                 frequencyStrategyFactory: StrategyFactory,
+                 latencyStrategyFactory: StrategyFactory,
                  publishers: Map[String, ActorRef],
-                 frequencyStrategy: UnaryNodeStrategy,
-                 latencyStrategy: UnaryNodeStrategy)
-  extends UnaryNode(filter,
-                    frequencyStrategy,
-                    latencyStrategy,
-                    publishers) {
+                 callbackIfRoot: Option[Event => Any] = None)
+extends UnaryNode(filter,
+                    frequencyStrategyFactory,
+                    latencyStrategyFactory,
+                    publishers,
+                    callbackIfRoot) {
 
   val operand1Epl: String = FilterNode.getEplFrom(filter.operand1)
   val operand2Epl: String = FilterNode.getEplFrom(filter.operand2)

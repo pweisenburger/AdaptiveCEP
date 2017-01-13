@@ -6,10 +6,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import akka.actor.ActorContext
 import com.scalarookie.eventscala.caseclasses._
 
-trait FrequencyStrategy {
+trait AveragedFrequencyStrategy {
 
   val logging: Boolean
-
   val interval: Int
 
   var currentOutput: Int = 0
@@ -47,23 +46,31 @@ trait FrequencyStrategy {
 
 }
 
-class FrequencyLeafNodeStrategy(val interval: Int, val logging: Boolean) extends FrequencyStrategy with LeafNodeStrategy {
+case class AveragedFrequencyLeafNodeStrategy(interval: Int, logging: Boolean) extends AveragedFrequencyStrategy with LeafNodeStrategy {
 
   override def onCreated(nodeData: LeafNodeData): Unit = onCreated(nodeData.name, nodeData.query, nodeData.context)
   override def onEventEmit(event: Event, nodeData: LeafNodeData): Unit = onEventEmit()
 
 }
 
-class FrequencyUnaryNodeStrategy(val interval: Int, val logging: Boolean) extends FrequencyStrategy with UnaryNodeStrategy {
+case class AveragedFrequencyUnaryNodeStrategy(interval: Int, logging: Boolean) extends AveragedFrequencyStrategy with UnaryNodeStrategy {
 
   override def onCreated(nodeData: UnaryNodeData): Unit = onCreated(nodeData.name, nodeData.query, nodeData.context)
   override def onEventEmit(event: Event, nodeData: UnaryNodeData): Unit = onEventEmit()
 
 }
 
-class FrequencyBinaryNodeStrategy(val interval: Int, val logging: Boolean) extends FrequencyStrategy with BinaryNodeStrategy {
+case class AveragedFrequencyBinaryNodeStrategy(interval: Int, logging: Boolean) extends AveragedFrequencyStrategy with BinaryNodeStrategy {
 
   override def onCreated(nodeData: BinaryNodeData): Unit = onCreated(nodeData.name, nodeData.query, nodeData.context)
   override def onEventEmit(event: Event, nodeData: BinaryNodeData): Unit = onEventEmit()
+
+}
+
+case class AveragedFrequencyStrategyFactory(interval: Int, logging: Boolean) extends StrategyFactory {
+
+  override def getLeafNodeStrategy: LeafNodeStrategy = AveragedFrequencyLeafNodeStrategy(interval, logging)
+  override def getUnaryNodeStrategy: UnaryNodeStrategy = AveragedFrequencyUnaryNodeStrategy(interval, logging)
+  override def getBinaryNodeStrategy: BinaryNodeStrategy = AveragedFrequencyBinaryNodeStrategy(interval, logging)
 
 }

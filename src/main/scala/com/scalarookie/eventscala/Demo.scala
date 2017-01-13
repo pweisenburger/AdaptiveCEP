@@ -1,29 +1,30 @@
 package com.scalarookie.eventscala
 
-import akka.actor.{ActorSystem, Props}
+import akka.actor.{ActorRef, ActorSystem, Props}
 import com.scalarookie.eventscala.caseclasses._
 import com.scalarookie.eventscala.dsl._
-import com.scalarookie.eventscala.graph._
+import com.scalarookie.eventscala.graph.factory._
 import com.scalarookie.eventscala.publishers.RandomPublisher
+import com.scalarookie.eventscala.qos.{AveragedFrequencyStrategyFactory, PathLatencyStrategyFactory}
 
 object Demo extends App {
 
-  val actorSystem = ActorSystem()
+  implicit val actorSystem = ActorSystem()
 
-  val publisherA = actorSystem.actorOf(Props(
+  val publisherA: ActorRef = actorSystem.actorOf(Props(
     RandomPublisher(id => Event2[Integer, String](id, id.toString))), "A")
-  val publisherB = actorSystem.actorOf(Props(
+  val publisherB: ActorRef = actorSystem.actorOf(Props(
     RandomPublisher(id => Event2[String, Integer](id.toString, id))), "B")
-  val publisherC = actorSystem.actorOf(Props(
+  val publisherC: ActorRef = actorSystem.actorOf(Props(
     RandomPublisher(id => Event1[java.lang.Boolean](if (id % 2 == 0) true else false))), "C")
 
-  val publishers = Map("A" -> publisherA, "B" -> publisherB, "C" -> publisherC)
+  val publishers: Map[String, ActorRef] = Map("A" -> publisherA, "B" -> publisherB, "C" -> publisherC)
 
   val subquery: Query =
     stream[String, Integer].from("B")
     .select(elements(2))
 
-  val query: Query =
+  val query1: Query =
     stream[Integer, String].from("A")
     .join(subquery).in(slidingWindow(3 instances), tumblingWindow(3 seconds))
     .join(stream[java.lang.Boolean].from("C")).in(slidingWindow(1 instances), slidingWindow(1 instances))
@@ -47,8 +48,11 @@ object Demo extends App {
       .select(elements(1))
       .where(element(1) >= literal(3))
 
-  val graph = actorSystem.actorOf(Props(
-    new RootNode(query, publishers, event => println(s"COMPLEX EVENT:\t\t$event"))),
-    "root")
+  val graph = GraphFactory(
+    query = query1,
+    callback = event => println(s"COMPLEX EVENT:\t\t$event"),
+    frequencyStrategyFactory = AveragedFrequencyStrategyFactory(interval = 5, logging = false),
+    latencyStrategyFactory = PathLatencyStrategyFactory(interval = 10, logging = false),
+    publishers = publishers)
 
 }
