@@ -1,9 +1,9 @@
-package com.scalarookie.eventscala.graph
+package com.scalarookie.eventscala.graph.nodes
 
 import akka.actor.ActorRef
 import com.espertech.esper.client._
 import com.scalarookie.eventscala.caseclasses._
-import com.scalarookie.eventscala.qos.{BinaryNodeStrategy, LatencyBinaryNodeStrategy}
+import com.scalarookie.eventscala.qos.StrategyFactory
 
 object JoinNode {
 
@@ -17,13 +17,15 @@ object JoinNode {
 }
 
 class JoinNode(join: Join,
+               frequencyStrategyFactory: StrategyFactory,
+               latencyStrategyFactory: StrategyFactory,
                publishers: Map[String, ActorRef],
-               frequencyStrategy: BinaryNodeStrategy,
-               latencyStrategy: BinaryNodeStrategy)
-  extends BinaryNode(join,
-                     frequencyStrategy,
-                     latencyStrategy,
-                     publishers) {
+               callbackIfRoot: Option[Event => Any] = None)
+extends BinaryNode(join,
+                   frequencyStrategyFactory,
+                   latencyStrategyFactory,
+                   publishers,
+                   callbackIfRoot) {
 
   val window1Epl: String = JoinNode.getEplFrom(join.window1)
   val window2Epl: String = JoinNode.getEplFrom(join.window2)

@@ -1,4 +1,4 @@
-package com.scalarookie.eventscala.graph
+package com.scalarookie.eventscala.graph.nodes
 
 import com.espertech.esper.client._
 

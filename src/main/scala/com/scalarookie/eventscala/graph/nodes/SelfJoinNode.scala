@@ -1,18 +1,20 @@
-package com.scalarookie.eventscala.graph
+package com.scalarookie.eventscala.graph.nodes
 
 import akka.actor.ActorRef
 import com.espertech.esper.client._
 import com.scalarookie.eventscala.caseclasses._
-import com.scalarookie.eventscala.qos.{LatencyUnaryNodeStrategy, UnaryNodeStrategy}
+import com.scalarookie.eventscala.qos.{StrategyFactory, UnaryNodeStrategy}
 
 class SelfJoinNode(selfJoin: SelfJoin,
+                   frequencyStrategyFactory: StrategyFactory,
+                   latencyStrategyFactory: StrategyFactory,
                    publishers: Map[String, ActorRef],
-                   frequencyStrategy: UnaryNodeStrategy,
-                   latencyStrategy: UnaryNodeStrategy)
-  extends UnaryNode(selfJoin,
-                    frequencyStrategy,
-                    latencyStrategy,
-                    publishers) {
+                   callbackIfRoot: Option[Event => Any] = None)
+extends UnaryNode(selfJoin,
+                  frequencyStrategyFactory,
+                  latencyStrategyFactory,
+                  publishers,
+                  callbackIfRoot) {
 
   val window1Epl: String = JoinNode.getEplFrom(selfJoin.window1)
   val window2Epl: String = JoinNode.getEplFrom(selfJoin.window2)

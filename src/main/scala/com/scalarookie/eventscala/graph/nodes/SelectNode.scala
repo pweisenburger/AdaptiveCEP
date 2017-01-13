@@ -1,18 +1,20 @@
-package com.scalarookie.eventscala.graph
+package com.scalarookie.eventscala.graph.nodes
 
 import akka.actor.ActorRef
 import com.espertech.esper.client._
 import com.scalarookie.eventscala.caseclasses._
-import com.scalarookie.eventscala.qos.{LatencyUnaryNodeStrategy, UnaryNodeStrategy}
+import com.scalarookie.eventscala.qos.{StrategyFactory, UnaryNodeStrategy}
 
 class SelectNode(select: Select,
+                 frequencyStrategyFactory: StrategyFactory,
+                 latencyStrategyFactory: StrategyFactory,
                  publishers: Map[String, ActorRef],
-                 frequencyStrategy: UnaryNodeStrategy,
-                 latencyStrategy: UnaryNodeStrategy)
+                 callbackIfRoot: Option[Event => Any] = None)
   extends UnaryNode(select,
-                    frequencyStrategy,
-                    latencyStrategy,
-                    publishers) {
+                    frequencyStrategyFactory,
+                    latencyStrategyFactory,
+                    publishers,
+                    callbackIfRoot) {
 
   val elementIdsEpl: String = select.elementIds.map(i => s"sq.e$i").mkString(", ")
 

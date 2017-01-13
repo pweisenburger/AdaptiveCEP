@@ -30,3 +30,11 @@ trait BinaryNodeStrategy {
   def onMessageReceive(message: Any, nodeData: BinaryNodeData): Unit = ()
 
 }
+
+trait StrategyFactory {
+
+  def getLeafNodeStrategy: LeafNodeStrategy
+  def getUnaryNodeStrategy: UnaryNodeStrategy
+  def getBinaryNodeStrategy: BinaryNodeStrategy
+
+}

@@ -6,13 +6,12 @@ import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.ExecutionContext.Implicits.global
 import akka.actor.ActorRef
 import com.scalarookie.eventscala.caseclasses._
-import LatencyStrategy._
 
 case class ChildLatencyRequest(time: Instant)
 case class ChildLatencyResponse(childNode: ActorRef, requestTime: Instant)
 case class PathLatency(childNode: ActorRef, duration: Duration)
 
-object LatencyStrategy {
+trait PathLatencyStrategy {
 
   def latencyRequirementDefinedAndNotMet(latency: Duration, latencyRequirement: Option[LatencyRequirement]): Boolean = {
     if (latencyRequirement.isDefined) {
@@ -32,7 +31,7 @@ object LatencyStrategy {
 
 }
 
-class LatencyLeafNodeStrategy(interval: Int, logging: Boolean) extends LeafNodeStrategy {
+class PathLatencyLeafNodeStrategy extends PathLatencyStrategy with LeafNodeStrategy {
 
   override def onMessageReceive(message: Any, data: LeafNodeData): Unit = message match {
     case ChildLatencyRequest(requestTime) =>
@@ -42,7 +41,7 @@ class LatencyLeafNodeStrategy(interval: Int, logging: Boolean) extends LeafNodeS
 
 }
 
-class LatencyUnaryNodeStrategy(interval: Int, logging: Boolean) extends UnaryNodeStrategy {
+class PathLatencyUnaryNodeStrategy(interval: Int, logging: Boolean) extends PathLatencyStrategy with UnaryNodeStrategy {
 
   val clock: Clock = Clock.systemDefaultZone
   var childNodeLatency: Option[Duration] = None
@@ -91,7 +90,7 @@ class LatencyUnaryNodeStrategy(interval: Int, logging: Boolean) extends UnaryNod
 
 }
 
-class LatencyBinaryNodeStrategy(interval: Int, logging: Boolean) extends BinaryNodeStrategy {
+class PathLatencyBinaryNodeStrategy(interval: Int, logging: Boolean) extends PathLatencyStrategy with BinaryNodeStrategy {
 
   val clock: Clock = Clock.systemDefaultZone
   var childNode1Latency: Option[Duration] = None
@@ -131,12 +130,14 @@ class LatencyBinaryNodeStrategy(interval: Int, logging: Boolean) extends BinaryN
           if (logging) println(s"LATENCY LOG:\t\t${nodeData.name}: $pathLatency1")
           if (latencyRequirementDefinedAndNotMet(pathLatency1, nodeData.query.latencyRequirement)) {
             nodeData.query.latencyRequirement.get.callback(nodeData.name)
-          }        } else {
+          }
+        } else {
           nodeData.context.parent ! PathLatency(nodeData.context.self, pathLatency2)
           if (logging) println(s"LATENCY LOG:\t\t${nodeData.name}: $pathLatency2")
           if (latencyRequirementDefinedAndNotMet(pathLatency2, nodeData.query.latencyRequirement)) {
             nodeData.query.latencyRequirement.get.callback(nodeData.name)
-          }        }
+          }
+        }
         childNode1Latency = None
         childNode2Latency = None
         childNode1PathLatency = None
@@ -158,17 +159,27 @@ class LatencyBinaryNodeStrategy(interval: Int, logging: Boolean) extends BinaryN
           if (logging) println(s"LATENCY LOG:\t\t${nodeData.name}: $pathLatency1")
           if (latencyRequirementDefinedAndNotMet(pathLatency1, nodeData.query.latencyRequirement)) {
             nodeData.query.latencyRequirement.get.callback(nodeData.name)
-          }        } else {
+          }
+        } else {
           nodeData.context.parent ! PathLatency(nodeData.context.self, pathLatency2)
           if (logging) println(s"LATENCY LOG:\t\t${nodeData.name}: $pathLatency2")
           if (latencyRequirementDefinedAndNotMet(pathLatency2, nodeData.query.latencyRequirement)) {
             nodeData.query.latencyRequirement.get.callback(nodeData.name)
-          }        }
+          }
+        }
         childNode1Latency = None
         childNode2Latency = None
         childNode1PathLatency = None
         childNode2PathLatency = None
       }
   }
+
+}
+
+case class PathLatencyStrategyFactory(interval: Int, logging: Boolean) extends StrategyFactory {
+
+  override def getLeafNodeStrategy: LeafNodeStrategy = new PathLatencyLeafNodeStrategy
+  override def getUnaryNodeStrategy: UnaryNodeStrategy = new PathLatencyUnaryNodeStrategy(interval, logging)
+  override def getBinaryNodeStrategy: BinaryNodeStrategy = new PathLatencyBinaryNodeStrategy(interval, logging)
 
 }
