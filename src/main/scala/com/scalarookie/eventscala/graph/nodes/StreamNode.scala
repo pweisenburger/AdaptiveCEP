@@ -2,8 +2,8 @@ package com.scalarookie.eventscala.graph.nodes
 
 import akka.actor.ActorRef
 import com.scalarookie.eventscala.caseclasses._
-import com.scalarookie.eventscala.publishers.PublisherActor._
-import com.scalarookie.eventscala.qos._
+import com.scalarookie.eventscala.graph.publishers.PublisherActor._
+import com.scalarookie.eventscala.graph.qos._
 
 class StreamNode(stream: Stream,
                  frequencyStrategyFactory: StrategyFactory,

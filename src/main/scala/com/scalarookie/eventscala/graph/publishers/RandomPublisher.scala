@@ -1,4 +1,4 @@
-package com.scalarookie.eventscala.publishers
+package com.scalarookie.eventscala.graph.publishers
 
 import java.util.concurrent.TimeUnit
 import scala.util.Random

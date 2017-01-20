@@ -3,7 +3,7 @@ package com.scalarookie.eventscala.graph.nodes
 import akka.actor.ActorRef
 import com.espertech.esper.client._
 import com.scalarookie.eventscala.caseclasses._
-import com.scalarookie.eventscala.qos.StrategyFactory
+import com.scalarookie.eventscala.graph.qos.StrategyFactory
 
 object JoinNode {
 

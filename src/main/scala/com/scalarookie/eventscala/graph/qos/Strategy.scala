@@ -1,4 +1,4 @@
-package com.scalarookie.eventscala.qos
+package com.scalarookie.eventscala.graph.qos
 
 import akka.actor.{ActorContext, ActorRef}
 import com.scalarookie.eventscala.caseclasses._

@@ -2,7 +2,7 @@ package com.scalarookie.eventscala.graph.nodes
 
 import akka.actor.{Actor, ActorRef, Props}
 import com.scalarookie.eventscala.caseclasses._
-import com.scalarookie.eventscala.qos._
+import com.scalarookie.eventscala.graph.qos._
 
 abstract class Node(publishers: Map[String, ActorRef]) extends Actor {
 

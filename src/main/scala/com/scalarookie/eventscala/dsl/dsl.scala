@@ -32,10 +32,10 @@ package object dsl {
   // Queries in general ------------------------------------------------------------------------------------------------
 
   case class QueryHelper(query: Query) {
-    def join(query2: Query) = { require(query != query2); JoinHelper(query, query2, None, None) }
-    def selfJoin(query2: Query) = { require(query == query2); SelfJoinHelper(query, None, None) }
     def select(elementIds: List[Int]) = Select(query, elementIds, None, None)
     def where(tuple: (Operator, Either[Int, Any], Either[Int, Any])) = Filter(query, tuple._1, tuple._2, tuple._3, None, None)
+    def selfJoin = SelfJoinHelper(query, None, None)
+    def join(query2: Query) = { require(query != query2); JoinHelper(query, query2, None, None) }
     def frequency(frequencyRequirement: FrequencyRequirement): QueryHelper = query match {
       case s@Stream1(_, _, _) => Query.addFrequencyRequirement(s, frequencyRequirement)
       case s@Stream2(_, _, _) => Query.addFrequencyRequirement(s, frequencyRequirement)

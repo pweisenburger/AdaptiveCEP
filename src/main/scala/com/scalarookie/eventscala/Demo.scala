@@ -3,9 +3,9 @@ package com.scalarookie.eventscala
 import akka.actor.{ActorRef, ActorSystem, Props}
 import com.scalarookie.eventscala.caseclasses._
 import com.scalarookie.eventscala.dsl._
-import com.scalarookie.eventscala.graph.factory._
-import com.scalarookie.eventscala.publishers.RandomPublisher
-import com.scalarookie.eventscala.qos.{AveragedFrequencyStrategyFactory, PathLatencyStrategyFactory}
+import com.scalarookie.eventscala.graph.factory.{GraphFactory, _}
+import com.scalarookie.eventscala.graph.publishers.{RandomPublisher, TestPublisher}
+import com.scalarookie.eventscala.graph.qos.{AveragedFrequencyStrategyFactory, DummyStrategyFactory, PathLatencyStrategyFactory}
 
 object Demo extends App {
 
@@ -38,7 +38,7 @@ object Demo extends App {
 
   val query2: Query =
     stream[Integer, String].from("A")
-      .selfJoin(stream[Integer, String].from("A")).in(tumblingWindow(1 instances), tumblingWindow(1 instances))
+      .selfJoin.in(tumblingWindow(1 instances), tumblingWindow(1 instances))
 
   val query3: Query =
     stream[Integer, String].from("A")

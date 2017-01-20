@@ -1,4 +1,4 @@
-package com.scalarookie.eventscala.qos
+package com.scalarookie.eventscala.graph.qos
 
 import java.time.{Clock, Duration, Instant}
 import java.util.concurrent.TimeUnit
