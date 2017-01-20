@@ -1,4 +1,4 @@
-package com.scalarookie.eventscala.qos
+package com.scalarookie.eventscala.graph.qos
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.FiniteDuration

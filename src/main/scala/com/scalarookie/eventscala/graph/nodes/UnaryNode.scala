@@ -3,7 +3,7 @@ package com.scalarookie.eventscala.graph.nodes
 import akka.actor.ActorRef
 import com.espertech.esper.client.{EventBean, UpdateListener}
 import com.scalarookie.eventscala.caseclasses._
-import com.scalarookie.eventscala.qos.{StrategyFactory, UnaryNodeData, UnaryNodeStrategy}
+import com.scalarookie.eventscala.graph.qos.{StrategyFactory, UnaryNodeData, UnaryNodeStrategy}
 
 abstract class UnaryNode(query: UnaryQuery,
                          frequencyStrategyFactory: StrategyFactory,
@@ -40,7 +40,7 @@ abstract class UnaryNode(query: UnaryQuery,
 
   override def receive: Receive = {
     case event: Event if sender == subqueryNode =>
-      sendEvent("subquery", Event.getArrayOfValuesFrom(event))
+      sendEventToEngine("subquery", Event.getArrayOfValuesFrom(event))
     case Created =>
       context.parent ! Created
       frequencyStrategy.onCreated(nodeData)
@@ -49,5 +49,8 @@ abstract class UnaryNode(query: UnaryQuery,
       frequencyStrategy.onMessageReceive(unhandledMessage, nodeData)
       latencyStrategy.onMessageReceive(unhandledMessage, nodeData)
   }
+
+  override def postStop(): Unit =
+    destoryServiceProvider()
 
 }

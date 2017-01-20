@@ -1,4 +1,4 @@
-package com.scalarookie.eventscala.publishers
+package com.scalarookie.eventscala.graph.publishers
 
 import akka.actor.{Actor, ActorRef}
 import PublisherActor._
@@ -17,9 +17,9 @@ trait PublisherActor extends Actor {
 
   override def receive: Receive = {
     case Subscribe =>
-      this.subscribers = this.subscribers + sender
+      subscribers = subscribers + sender
     case Unsubscribe =>
-      this.subscribers = this.subscribers - sender
+      subscribers = subscribers - sender
   }
 
 }
