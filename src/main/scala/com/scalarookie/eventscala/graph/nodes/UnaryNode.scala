@@ -39,12 +39,12 @@ abstract class UnaryNode(query: UnaryQuery,
     })
 
   override def receive: Receive = {
-    case event: Event if sender == subqueryNode =>
-      sendEventToEngine("subquery", Event.getArrayOfValuesFrom(event))
-    case Created =>
-      context.parent ! Created
+    case GraphCreated =>
+      if (callbackIfRoot.isDefined) callbackIfRoot.get.apply(GraphCreated) else context.parent ! GraphCreated
       frequencyStrategy.onCreated(nodeData)
       latencyStrategy.onCreated(nodeData)
+    case event: Event if sender == subqueryNode =>
+      sendEventToEngine("subquery", Event.getArrayOfValuesFrom(event))
     case unhandledMessage =>
       frequencyStrategy.onMessageReceive(unhandledMessage, nodeData)
       latencyStrategy.onMessageReceive(unhandledMessage, nodeData)

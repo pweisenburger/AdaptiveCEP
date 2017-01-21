@@ -45,18 +45,18 @@ abstract class BinaryNode(query: BinaryQuery,
     })
 
   override def receive: Receive = {
-    case event: Event if sender == subquery1Node =>
-      sendEventToEngine("subquery1", Event.getArrayOfValuesFrom(event))
-    case event: Event if sender == subquery2Node =>
-      sendEventToEngine("subquery2", Event.getArrayOfValuesFrom(event))
-    case Created =>
+    case GraphCreated =>
       if (oneChildCreated) {
-        context.parent ! Created
+        if (callbackIfRoot.isDefined) callbackIfRoot.get.apply(GraphCreated) else context.parent ! GraphCreated
         frequencyStrategy.onCreated(nodeData)
         latencyStrategy.onCreated(nodeData)
       } else {
         oneChildCreated = true
       }
+    case event: Event if sender == subquery1Node =>
+      sendEventToEngine("subquery1", Event.getArrayOfValuesFrom(event))
+    case event: Event if sender == subquery2Node =>
+      sendEventToEngine("subquery2", Event.getArrayOfValuesFrom(event))
     case unhandledMessage =>
       frequencyStrategy.onMessageReceive(unhandledMessage, nodeData)
       latencyStrategy.onMessageReceive(unhandledMessage, nodeData)

@@ -6,20 +6,19 @@ import PublisherActor._
 object PublisherActor {
 
   case object Subscribe
-  case object Unsubscribe
+  case object AckSubscription
 
 }
 
 trait PublisherActor extends Actor {
 
   var subscribers: Set[ActorRef] =
-    scala.collection.immutable.Set.empty
+    scala.collection.immutable.Set.empty[ActorRef]
 
   override def receive: Receive = {
     case Subscribe =>
-      subscribers = subscribers + sender
-    case Unsubscribe =>
-      subscribers = subscribers - sender
+      subscribers = subscribers + sender()
+      sender() ! AckSubscription
   }
 
 }

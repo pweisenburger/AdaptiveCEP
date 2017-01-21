@@ -3,6 +3,7 @@ package com.scalarookie.eventscala.caseclasses
 import scala.reflect.ClassTag
 
 sealed trait Event
+case object GraphCreated extends Event
 case class Event1[A](t: (A))(implicit val ctA: ClassTag[A]) extends Event
 case class Event2[A, B](t: (A, B))(implicit val ctA: ClassTag[A], val ctB: ClassTag[B]) extends Event
 case class Event3[A, B, C](t: (A, B, C))(implicit val ctA: ClassTag[A], val ctB: ClassTag[B], val ctC: ClassTag[C]) extends Event
@@ -12,7 +13,8 @@ case class Event6[A, B, C, D, E, F](t: (A, B, C, D, E, F))(implicit val ctA: Cla
 
 object Event {
 
-    def getArrayOfValuesFrom(event: Event): Array[AnyRef] = event match {
+  def getArrayOfValuesFrom(event: Event): Array[AnyRef] = event match {
+    case GraphCreated => sys.error("Panic! This should never happen!")
     case e: Event1[_] => Array(e.t.asInstanceOf[AnyRef])
     case e: Event2[_, _] => Array(e.t._1.asInstanceOf[AnyRef], e.t._2.asInstanceOf[AnyRef])
     case e: Event3[_, _, _] => Array(e.t._1.asInstanceOf[AnyRef], e.t._2.asInstanceOf[AnyRef], e.t._3.asInstanceOf[AnyRef])

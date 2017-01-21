@@ -1,5 +1,7 @@
 package com.scalarookie.eventscala
 
+import java.util.concurrent.TimeUnit
+
 import akka.actor.{ActorRef, ActorSystem, Props, Terminated}
 import akka.testkit.{TestKit, TestProbe}
 import com.scalarookie.eventscala.caseclasses._
@@ -9,6 +11,8 @@ import com.scalarookie.eventscala.graph.publishers.TestPublisher
 import com.scalarookie.eventscala.graph.qos.DummyStrategyFactory
 import org.scalatest.{BeforeAndAfterAll, FunSuiteLike}
 
+import scala.concurrent.duration.{Duration, FiniteDuration}
+
 class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLike with BeforeAndAfterAll {
 
   def this() = this(ActorSystem())
@@ -16,7 +20,7 @@ class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLik
   def getTestPublisher(name: String): ActorRef =
     _system.actorOf(Props(TestPublisher()), name)
 
-  def getGraph(query: Query, publishers: Map[String, ActorRef], testActor: ActorRef): ActorRef = GraphFactory(
+  def getTestGraph(query: Query, publishers: Map[String, ActorRef], testActor: ActorRef): ActorRef = GraphFactory(
     query,
     event => testActor ! event,
     DummyStrategyFactory(),
@@ -40,7 +44,8 @@ class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLik
   test("LeafNode - StreamNode - 1") {
     val a: ActorRef = getTestPublisher("A")
     val query: Query = stream [String] from "A"
-    val graph: ActorRef = getGraph(query, Map("A" -> a), testActor)
+    val graph: ActorRef = getTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(GraphCreated)
     a ! Event1[String]("42")
     expectMsg(Event1[String]("42"))
     stopActors(a, graph)
@@ -49,7 +54,8 @@ class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLik
   test("LeafNode - StreamNode - 2") {
     val a: ActorRef = getTestPublisher("A")
     val query: Query = stream [Integer, Integer] from "A"
-    val graph: ActorRef = getGraph(query, Map("A" -> a), testActor)
+    val graph: ActorRef = getTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(GraphCreated)
     a ! Event2[Integer, Integer](42, 42)
     expectMsg(Event2[Integer, Integer](42, 42))
     stopActors(a, graph)
@@ -58,7 +64,8 @@ class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLik
   test("LeafNode - StreamNode - 3") {
     val a: ActorRef = getTestPublisher("A")
     val query: Query = stream [java.lang.Long, java.lang.Long, java.lang.Long] from "A"
-    val graph: ActorRef = getGraph(query, Map("A" -> a), testActor)
+    val graph: ActorRef = getTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(GraphCreated)
     a ! Event3[java.lang.Long, java.lang.Long, java.lang.Long](42l, 42l, 42l)
     expectMsg(Event3[java.lang.Long, java.lang.Long, java.lang.Long](42l, 42l, 42l))
     stopActors(a, graph)
@@ -67,7 +74,8 @@ class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLik
   test("LeafNode - StreamNode - 4") {
     val a: ActorRef = getTestPublisher("A")
     val query: Query = stream [java.lang.Float, java.lang.Float, java.lang.Float, java.lang.Float] from "A"
-    val graph: ActorRef = getGraph(query, Map("A" -> a), testActor)
+    val graph: ActorRef = getTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(GraphCreated)
     a ! Event4[java.lang.Float, java.lang.Float, java.lang.Float, java.lang.Float](42f, 42f, 42f, 42f)
     expectMsg(Event4[java.lang.Float, java.lang.Float, java.lang.Float, java.lang.Float](42f, 42f, 42f, 42f))
     stopActors(a, graph)
@@ -76,7 +84,8 @@ class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLik
   test("LeafNode - StreamNode - 5") {
     val a: ActorRef = getTestPublisher("A")
     val query: Query = stream [java.lang.Double, java.lang.Double, java.lang.Double, java.lang.Double, java.lang.Double] from "A"
-    val graph: ActorRef = getGraph(query, Map("A" -> a), testActor)
+    val graph: ActorRef = getTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(GraphCreated)
     a ! Event5[java.lang.Double, java.lang.Double, java.lang.Double, java.lang.Double, java.lang.Double](42.0, 42.0, 42.0, 42.0, 42.0)
     expectMsg(Event5[java.lang.Double, java.lang.Double, java.lang.Double, java.lang.Double, java.lang.Double](42.0, 42.0, 42.0, 42.0, 42.0))
     stopActors(a, graph)
@@ -85,7 +94,8 @@ class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLik
   test("LeafNode - StreamNode - 6") {
     val a: ActorRef = getTestPublisher("A")
     val query: Query = stream [java.lang.Boolean, java.lang.Boolean, java.lang.Boolean, java.lang.Boolean, java.lang.Boolean, java.lang.Boolean] from "A"
-    val graph: ActorRef = getGraph(query, Map("A" -> a), testActor)
+    val graph: ActorRef = getTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(GraphCreated)
     a ! Event6[java.lang.Boolean, java.lang.Boolean, java.lang.Boolean, java.lang.Boolean, java.lang.Boolean, java.lang.Boolean](true, true, true, true, true, true)
     expectMsg(Event6[java.lang.Boolean, java.lang.Boolean, java.lang.Boolean, java.lang.Boolean, java.lang.Boolean, java.lang.Boolean](true, true, true, true, true, true))
     stopActors(a, graph)
@@ -94,7 +104,8 @@ class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLik
   test("UnaryNode - FilterNode - 1") {
     val a: ActorRef = getTestPublisher("A")
     val query: Query = stream [Integer, Integer] from "A" where element(1) >= element(2)
-    val graph: ActorRef = getGraph(query, Map("A" -> a), testActor)
+    val graph: ActorRef = getTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(GraphCreated)
     a ! Event2[Integer, Integer](41, 42)
     a ! Event2[Integer, Integer](42, 42)
     a ! Event2[Integer, Integer](43, 42)
@@ -106,7 +117,8 @@ class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLik
   test("UnaryNode - FilterNode - 2") {
     val a: ActorRef = getTestPublisher("A")
     val query: Query = stream [Integer, Integer] from "A" where element(1) <= element(2)
-    val graph: ActorRef = getGraph(query, Map("A" -> a), testActor)
+    val graph: ActorRef = getTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(GraphCreated)
     a ! Event2[Integer, Integer](41, 42)
     a ! Event2[Integer, Integer](42, 42)
     a ! Event2[Integer, Integer](43, 42)
@@ -118,7 +130,8 @@ class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLik
   test("UnaryNode - FilterNode - 3") {
     val a: ActorRef = getTestPublisher("A")
     val query: Query = stream [java.lang.Long] from "A" where element(1) === literal(42l)
-    val graph: ActorRef = getGraph(query, Map("A" -> a), testActor)
+    val graph: ActorRef = getTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(GraphCreated)
     a ! Event1[java.lang.Long](41l)
     a ! Event1[java.lang.Long](42l)
     expectMsg(Event1[java.lang.Long](42l))
@@ -128,7 +141,8 @@ class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLik
   test("UnaryNode - FilterNode - 4") {
     val a: ActorRef = getTestPublisher("A")
     val query: Query = stream [java.lang.Float] from "A" where element(1) > literal(41f)
-    val graph: ActorRef = getGraph(query, Map("A" -> a), testActor)
+    val graph: ActorRef = getTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(GraphCreated)
     a ! Event1[java.lang.Float](41f)
     a ! Event1[java.lang.Float](42f)
     expectMsg(Event1[java.lang.Float](42f))
@@ -138,9 +152,10 @@ class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLik
   test("UnaryNode - FilterNode - 5") {
     val a: ActorRef = getTestPublisher("A")
     val query: Query = stream [java.lang.Double] from "A" where element(1) < literal(42.0)
-    val graph: ActorRef = getGraph(query, Map("A" -> a), testActor)
-    Event1[java.lang.Double](41.0)
-    Event1[java.lang.Double](42.0)
+    val graph: ActorRef = getTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(GraphCreated)
+    a ! Event1[java.lang.Double](41.0)
+    a ! Event1[java.lang.Double](42.0)
     expectMsg(Event1[java.lang.Double](41.0))
     stopActors(a, graph)
   }
@@ -148,7 +163,8 @@ class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLik
   test("UnaryNode - FilterNode - 6") {
     val a: ActorRef = getTestPublisher("A")
     val query: Query = stream [java.lang.Boolean] from "A" where element(1) =!= literal(true)
-    val graph: ActorRef = getGraph(query, Map("A" -> a), testActor)
+    val graph: ActorRef = getTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(GraphCreated)
     a ! Event1[java.lang.Boolean](true)
     a ! Event1[java.lang.Boolean](false)
     expectMsg(Event1[java.lang.Boolean](false))
@@ -158,7 +174,8 @@ class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLik
   test("UnaryNode - SelectNode - 1") {
     val a: ActorRef = getTestPublisher("A")
     val query: Query = stream [Integer, Integer] from "A" select elements(1)
-    val graph: ActorRef = getGraph(query, Map("A" -> a), testActor)
+    val graph: ActorRef = getTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(GraphCreated)
     a ! Event2[Integer, Integer](21, 42)
     a ! Event2[Integer, Integer](42, 21)
     expectMsg(Event1[Integer](21))
@@ -169,7 +186,8 @@ class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLik
   test("UnaryNode - SelectNode - 2") {
     val a: ActorRef = getTestPublisher("A")
     val query: Query = stream [String, String, String, String] from "A" select elements(2, 4)
-    val graph: ActorRef = getGraph(query, Map("A" -> a), testActor)
+    val graph: ActorRef = getTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(GraphCreated)
     a ! Event4[String, String, String, String]("a", "b", "c", "d")
     a ! Event4[String, String, String, String]("e", "f", "g", "h")
     expectMsg(Event2[String, String]("b", "d"))
@@ -181,7 +199,8 @@ class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLik
     val a: ActorRef = getTestPublisher("A")
     val query: Query =
       stream[String, String].from("A").selfJoin.in(tumblingWindow(3 instances), tumblingWindow(2 instances))
-    val graph: ActorRef = getGraph(query, Map("A" -> a), testActor)
+    val graph: ActorRef = getTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(GraphCreated)
     a ! Event2[String, String]("a", "b")
     a ! Event2[String, String]("c", "d")
     a ! Event2[String, String]("e", "f")
@@ -198,7 +217,8 @@ class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLik
     val a: ActorRef = getTestPublisher("A")
     val sq = stream [String, String] from "A"
     val query: Query = sq.selfJoin.in(slidingWindow(3 instances), slidingWindow(2 instances))
-    val graph: ActorRef = getGraph(query, Map("A" -> a), testActor)
+    val graph: ActorRef = getTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(GraphCreated)
     a ! Event2[String, String]("a", "b")
     a ! Event2[String, String]("c", "d")
     a ! Event2[String, String]("e", "f")
@@ -219,7 +239,8 @@ class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLik
     val sq1 = stream [String, java.lang.Boolean, String] from "A"
     val sq2 = stream [Integer, Integer] from "B"
     val query: Query = sq1 join sq2 in (tumblingWindow(3 instances), tumblingWindow(2 instances))
-    val graph: ActorRef = getGraph(query, Map("A" -> a, "B" -> b), testActor)
+    val graph: ActorRef = getTestGraph(query, Map("A" -> a, "B" -> b), testActor)
+    expectMsg(GraphCreated)
     a ! Event3[String, java.lang.Boolean, String]("a", true, "b")
     a ! Event3[String, java.lang.Boolean, String]("c", true, "d")
     a ! Event3[String, java.lang.Boolean, String]("e", true, "f")
@@ -250,7 +271,8 @@ class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLik
     val sq1 = stream [String, java.lang.Boolean, String] from "A"
     val sq2 = stream [Integer, Integer] from "B"
     val query: Query = sq1 join sq2 in (tumblingWindow(3 instances), tumblingWindow(2 instances))
-    val graph: ActorRef = getGraph(query, Map("A" -> a, "B" -> b), testActor)
+    val graph: ActorRef = getTestGraph(query, Map("A" -> a, "B" -> b), testActor)
+    expectMsg(GraphCreated)
     b ! Event2[Integer, Integer](1, 2)
     b ! Event2[Integer, Integer](3, 4)
     b ! Event2[Integer, Integer](5, 6)
@@ -275,7 +297,8 @@ class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLik
     val sq1 = stream [String, java.lang.Boolean, String] from "A"
     val sq2 = stream [Integer, Integer] from "B"
     val query: Query = sq1 join sq2 in (slidingWindow(3 instances), slidingWindow(2 instances))
-    val graph: ActorRef = getGraph(query, Map("A" -> a, "B" -> b), testActor)
+    val graph: ActorRef = getTestGraph(query, Map("A" -> a, "B" -> b), testActor)
+    expectMsg(GraphCreated)
     a ! Event3[String, java.lang.Boolean, String]("a", true, "b")
     a ! Event3[String, java.lang.Boolean, String]("c", true, "d")
     a ! Event3[String, java.lang.Boolean, String]("e", true, "f")
@@ -307,7 +330,8 @@ class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLik
     val sq1 = stream [String, java.lang.Boolean, String] from "A"
     val sq2 = stream [Integer, Integer] from "B"
     val query: Query = sq1 join sq2 in (slidingWindow(3 instances), slidingWindow(2 instances))
-    val graph: ActorRef = getGraph(query, Map("A" -> a, "B" -> b), testActor)
+    val graph: ActorRef = getTestGraph(query, Map("A" -> a, "B" -> b), testActor)
+    expectMsg(GraphCreated)
     b ! Event2[Integer, Integer](1, 2)
     b ! Event2[Integer, Integer](3, 4)
     b ! Event2[Integer, Integer](5, 6)

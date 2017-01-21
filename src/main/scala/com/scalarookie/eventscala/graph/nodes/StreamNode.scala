@@ -19,14 +19,14 @@ class StreamNode(stream: Stream,
 
   publisher ! Subscribe
 
-  context.parent ! Created
-
   val nodeData: LeafNodeData = LeafNodeData(stream.name, stream, context)
 
   frequencyStrategy.onCreated(nodeData)
   latencyStrategy.onCreated(nodeData)
 
   override def receive: Receive = {
+    case AckSubscription =>
+      if (callbackIfRoot.isDefined) callbackIfRoot.get.apply(GraphCreated) else context.parent ! GraphCreated
     case event: Event if sender == publisher =>
       if (callbackIfRoot.isDefined) callbackIfRoot.get.apply(event) else context.parent ! event
       frequencyStrategy.onEventEmit(event, nodeData)
