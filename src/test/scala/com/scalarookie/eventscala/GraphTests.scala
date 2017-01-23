@@ -1,8 +1,6 @@
 package com.scalarookie.eventscala
 
-import java.util.concurrent.TimeUnit
-
-import akka.actor.{ActorRef, ActorSystem, Props, Terminated}
+import akka.actor.{ActorRef, ActorSystem, PoisonPill, Props}
 import akka.testkit.{TestKit, TestProbe}
 import com.scalarookie.eventscala.caseclasses._
 import com.scalarookie.eventscala.dsl._
@@ -11,35 +9,31 @@ import com.scalarookie.eventscala.graph.publishers.TestPublisher
 import com.scalarookie.eventscala.graph.qos.DummyStrategyFactory
 import org.scalatest.{BeforeAndAfterAll, FunSuiteLike}
 
-import scala.concurrent.duration.{Duration, FiniteDuration}
-
-class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLike with BeforeAndAfterAll {
-
-  def this() = this(ActorSystem())
+class GraphTests() extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAndAfterAll {
 
   def getTestPublisher(name: String): ActorRef =
-    _system.actorOf(Props(TestPublisher()), name)
+    system.actorOf(Props(TestPublisher()), name)
 
   def getTestGraph(query: Query, publishers: Map[String, ActorRef], testActor: ActorRef): ActorRef = GraphFactory(
     query,
     event => testActor ! event,
     DummyStrategyFactory(),
     DummyStrategyFactory(),
-    publishers)(_system)
+    publishers)(system)
 
-  // Courtesy: http://stackoverflow.com/questions/41704110/how-to-stop-all-actors-and-wait-for-them-to-terminate
+  // Source: http://doc.akka.io/docs/akka/current/scala/testing.html#Watching_Other_Actors_from_Probes
   def stopActor(actor: ActorRef): Unit = {
     val probe = TestProbe()
-    probe.watch(actor)
-    _system.stop(actor)
-    probe.expectMsgType[Terminated]
+    probe watch actor
+    actor ! PoisonPill
+    probe.expectTerminated(actor)
   }
 
   def stopActors(actors: ActorRef*): Unit =
     actors.foreach(stopActor)
 
   override def afterAll(): Unit =
-    TestKit.shutdownActorSystem(_system)
+    system.terminate()
 
   test("LeafNode - StreamNode - 1") {
     val a: ActorRef = getTestPublisher("A")
@@ -246,6 +240,7 @@ class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLik
     a ! Event3[String, java.lang.Boolean, String]("e", true, "f")
     a ! Event3[String, java.lang.Boolean, String]("g", true, "h")
     a ! Event3[String, java.lang.Boolean, String]("i", true, "j")
+    Thread.sleep(2000)
     b ! Event2[Integer, Integer](1, 2)
     b ! Event2[Integer, Integer](3, 4)
     b ! Event2[Integer, Integer](5, 6)
@@ -266,8 +261,8 @@ class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLik
   }
 
   test("BinaryNode - JoinNode - 2") {
-    val b: ActorRef = getTestPublisher("B")
     val a: ActorRef = getTestPublisher("A")
+    val b: ActorRef = getTestPublisher("B")
     val sq1 = stream [String, java.lang.Boolean, String] from "A"
     val sq2 = stream [Integer, Integer] from "B"
     val query: Query = sq1 join sq2 in (tumblingWindow(3 instances), tumblingWindow(2 instances))
@@ -277,6 +272,7 @@ class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLik
     b ! Event2[Integer, Integer](3, 4)
     b ! Event2[Integer, Integer](5, 6)
     b ! Event2[Integer, Integer](7, 8)
+    Thread.sleep(2000)
     a ! Event3[String, java.lang.Boolean, String]("a", true, "b")
     a ! Event3[String, java.lang.Boolean, String]("c", true, "d")
     a ! Event3[String, java.lang.Boolean, String]("e", true, "f")
@@ -288,10 +284,10 @@ class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLik
     expectMsg(Event5[String, java.lang.Boolean, String, Integer, Integer]("c", true, "d", 7, 8))
     expectMsg(Event5[String, java.lang.Boolean, String, Integer, Integer]("e", true, "f", 5, 6))
     expectMsg(Event5[String, java.lang.Boolean, String, Integer, Integer]("e", true, "f", 7, 8))
+    stopActors(a, b, graph)
   }
 
-
-  test("BinaryNode - JoinNode - 3") {
+  test ("BinaryNode - JoinNode - 3") {
     val a: ActorRef = getTestPublisher("A")
     val b: ActorRef = getTestPublisher("B")
     val sq1 = stream [String, java.lang.Boolean, String] from "A"
@@ -304,6 +300,7 @@ class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLik
     a ! Event3[String, java.lang.Boolean, String]("e", true, "f")
     a ! Event3[String, java.lang.Boolean, String]("g", true, "h")
     a ! Event3[String, java.lang.Boolean, String]("i", true, "j")
+    Thread.sleep(2000)
     b ! Event2[Integer, Integer](1, 2)
     b ! Event2[Integer, Integer](3, 4)
     b ! Event2[Integer, Integer](5, 6)
@@ -323,10 +320,9 @@ class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLik
     stopActors(a, b, graph)
   }
 
-
   test("BinaryNode - JoinNode - 4") {
-    val b: ActorRef = getTestPublisher("B")
     val a: ActorRef = getTestPublisher("A")
+    val b: ActorRef = getTestPublisher("B")
     val sq1 = stream [String, java.lang.Boolean, String] from "A"
     val sq2 = stream [Integer, Integer] from "B"
     val query: Query = sq1 join sq2 in (slidingWindow(3 instances), slidingWindow(2 instances))
@@ -336,6 +332,7 @@ class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLik
     b ! Event2[Integer, Integer](3, 4)
     b ! Event2[Integer, Integer](5, 6)
     b ! Event2[Integer, Integer](7, 8)
+    Thread.sleep(2000)
     a ! Event3[String, java.lang.Boolean, String]("a", true, "b")
     a ! Event3[String, java.lang.Boolean, String]("c", true, "d")
     a ! Event3[String, java.lang.Boolean, String]("e", true, "f")
@@ -352,6 +349,41 @@ class GraphTests(_system: ActorSystem) extends TestKit(_system) with FunSuiteLik
     expectMsg(Event5[String, java.lang.Boolean, String, Integer, Integer]("i", true, "j", 5, 6))
     expectMsg(Event5[String, java.lang.Boolean, String, Integer, Integer]("i", true, "j", 7, 8))
     stopActors(a, b, graph)
+  }
+
+  test("Complex") {
+    val a: ActorRef = getTestPublisher("A")
+    val b: ActorRef = getTestPublisher("B")
+    val c: ActorRef = getTestPublisher("C")
+    val sq1 = stream [String, String] from "A"
+    val sq2 = stream [Integer, Integer] from "B"
+    val sq3 = stream [String] from "C"
+    val sq4 = sq1.join(sq2).in(tumblingWindow(3 instances), tumblingWindow(2 instances))
+    val sq5 = sq3.selfJoin.in(tumblingWindow(3 instances), tumblingWindow(2 instances))
+    val sq6 = sq4.join(sq5).in(tumblingWindow(1 instances), tumblingWindow(4 instances))
+    val sq7 = sq6.where(element(3) < element(4))
+    val query: Query = sq7.select(elements(1, 6))
+    val graph: ActorRef = getTestGraph(query, Map("A" -> a, "B" -> b, "C" -> c), testActor)
+    expectMsg(GraphCreated)
+    b ! Event2[Integer, Integer](1, 2)
+    b ! Event2[Integer, Integer](3, 4)
+    b ! Event2[Integer, Integer](5, 6)
+    b ! Event2[Integer, Integer](7, 8)
+    Thread.sleep(2000)
+    a ! Event2[String, String]("a", "b")
+    a ! Event2[String, String]("c", "d")
+    a ! Event2[String, String]("e", "f")
+    a ! Event2[String, String]("g", "h")
+    a ! Event2[String, String]("i", "j")
+    Thread.sleep(2000)
+    c ! Event1[String]("a")
+    c ! Event1[String]("b")
+    c ! Event1[String]("c")
+    expectMsg(Event2[String, String]("e", "a"))
+    expectMsg(Event2[String, String]("e", "b"))
+    expectMsg(Event2[String, String]("e", "a"))
+    expectMsg(Event2[String, String]("e", "b"))
+    stopActors(a, b, c, graph)
   }
 
 }
