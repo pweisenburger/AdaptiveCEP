@@ -44,13 +44,13 @@ abstract class UnaryNode(query: UnaryQuery,
       frequencyStrategy.onCreated(nodeData)
       latencyStrategy.onCreated(nodeData)
     case event: Event if sender == subqueryNode =>
-      sendEventToEngine("subquery", Event.getArrayOfValuesFrom(event))
+      sendEventToEsperEngine("subquery", Event.getArrayOfValuesFrom(event))
     case unhandledMessage =>
       frequencyStrategy.onMessageReceive(unhandledMessage, nodeData)
       latencyStrategy.onMessageReceive(unhandledMessage, nodeData)
   }
 
   override def postStop(): Unit =
-    destoryServiceProvider()
+    destroyEsperServiceProvider()
 
 }

@@ -50,7 +50,7 @@ object Demo extends App {
 
   val graph = GraphFactory(
     query = query1,
-    callback = event => println(s"COMPLEX EVENT:\t\t$event"),
+    callback = event => println(s"EVENT RECEIVED:\t\t$event"),
     frequencyStrategyFactory = AveragedFrequencyStrategyFactory(interval = 5, logging = false),
     latencyStrategyFactory = PathLatencyStrategyFactory(interval = 10, logging = false),
     publishers = publishers)

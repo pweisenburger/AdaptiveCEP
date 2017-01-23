@@ -19,10 +19,10 @@ trait EsperEngine {
   def createEplStatement(eplString: String): EPStatement =
     administrator.createEPL(eplString)
 
-  def sendEventToEngine(eventTypeName: String, eventAsArray: Array[AnyRef]): Unit =
+  def sendEventToEsperEngine(eventTypeName: String, eventAsArray: Array[AnyRef]): Unit =
     runtime.sendEvent(eventAsArray, eventTypeName)
 
-  def destoryServiceProvider(): Unit =
+  def destroyEsperServiceProvider(): Unit =
     serviceProvider.destroy()
 
 }

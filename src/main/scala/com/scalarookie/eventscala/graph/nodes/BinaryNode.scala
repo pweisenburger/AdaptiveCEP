@@ -54,15 +54,15 @@ abstract class BinaryNode(query: BinaryQuery,
         oneChildCreated = true
       }
     case event: Event if sender == subquery1Node =>
-      sendEventToEngine("subquery1", Event.getArrayOfValuesFrom(event))
+      sendEventToEsperEngine("subquery1", Event.getArrayOfValuesFrom(event))
     case event: Event if sender == subquery2Node =>
-      sendEventToEngine("subquery2", Event.getArrayOfValuesFrom(event))
+      sendEventToEsperEngine("subquery2", Event.getArrayOfValuesFrom(event))
     case unhandledMessage =>
       frequencyStrategy.onMessageReceive(unhandledMessage, nodeData)
       latencyStrategy.onMessageReceive(unhandledMessage, nodeData)
   }
 
   override def postStop(): Unit =
-    destoryServiceProvider()
+    destroyEsperServiceProvider()
 
 }
