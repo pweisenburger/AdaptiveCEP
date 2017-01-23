@@ -4,8 +4,8 @@ import akka.actor.{ActorRef, ActorSystem, Props}
 import com.scalarookie.eventscala.caseclasses._
 import com.scalarookie.eventscala.dsl._
 import com.scalarookie.eventscala.graph.factory.{GraphFactory, _}
-import com.scalarookie.eventscala.graph.publishers.{RandomPublisher, TestPublisher}
-import com.scalarookie.eventscala.graph.qos.{AveragedFrequencyStrategyFactory, DummyStrategyFactory, PathLatencyStrategyFactory}
+import com.scalarookie.eventscala.graph.publishers.{RandomPublisher}
+import com.scalarookie.eventscala.graph.qos.{AveragedFrequencyStrategyFactory, PathLatencyStrategyFactory}
 
 object Demo extends App {
 
