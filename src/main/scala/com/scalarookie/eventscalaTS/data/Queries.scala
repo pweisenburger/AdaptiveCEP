@@ -1,10 +1,9 @@
-package com.scalarookie.eventscala.caseclasses
+package com.scalarookie.eventscalaTS.data
 
 import java.time.Duration
+import com.scalarookie.eventscalaTS.data.Events._
 
-import com.scalarookie.eventscala.caseclasses.Event2._
-
-object Query2 {
+object Queries {
 
   sealed trait Operator
   case object Equal        extends Operator
@@ -17,31 +16,37 @@ object Query2 {
   case class LatencyRequirement   (operator: Operator, duration: Duration,           callback: String => Any)
   case class FrequencyRequirement (operator: Operator, instances: Int, seconds: Int, callback: String => Any)
 
+  sealed trait Window
+  case class SlidingInstances  (instances: Int) extends Window
+  case class TumblingInstances (instances: Int) extends Window
+  case class SlidingSeconds    (seconds: Int)   extends Window
+  case class TumblingSeconds   (seconds: Int)   extends Window
+
   sealed trait Query { val fr: Option[FrequencyRequirement]; val lr: Option[LatencyRequirement] }
 
-  sealed trait LeadNode   extends Query
-  sealed trait UnaryNode  extends Query { val sq: Query }
-  sealed trait BinaryNode extends Query { val sq1: Query; val sq2: Query }
+  sealed trait LeafQuery   extends Query
+  sealed trait UnaryQuery  extends Query { val sq: Query }
+  sealed trait BinaryQuery extends Query { val sq1: Query; val sq2: Query }
 
-  sealed trait StreamQuery   extends Query
-  sealed trait FilterQuery   extends UnaryNode { val cond: Event => Boolean }
-  sealed trait SelectQuery   extends UnaryNode
-  sealed trait SelfJoinQuery extends UnaryNode
-  sealed trait JoinQuery     extends BinaryNode
+  sealed trait StreamQuery   extends LeafQuery
+  sealed trait FilterQuery   extends UnaryQuery
+  sealed trait SelectQuery   extends UnaryQuery
+  sealed trait SelfJoinQuery extends UnaryQuery
+  sealed trait JoinQuery     extends BinaryQuery
 
-  sealed trait Query1[A]
-  sealed trait Query2[A, B]
-  sealed trait Query3[A, B, C]
-  sealed trait Query4[A, B, C, D]
-  sealed trait Query5[A, B, C, D, E]
-  sealed trait Query6[A, B, C, D, E, F]
+  sealed trait Query1[A]                extends Query
+  sealed trait Query2[A, B]             extends Query
+  sealed trait Query3[A, B, C]          extends Query
+  sealed trait Query4[A, B, C, D]       extends Query
+  sealed trait Query5[A, B, C, D, E]    extends Query
+  sealed trait Query6[A, B, C, D, E, F] extends Query
 
-  case class Stream1[A]                (name: String, fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query1[A]                with StreamQuery
-  case class Stream2[A, B]             (name: String, fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query2[A, B]             with StreamQuery
-  case class Stream3[A, B, C]          (name: String, fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query3[A, B, C]          with StreamQuery
-  case class Stream4[A, B, C, D]       (name: String, fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query4[A, B, C, D]       with StreamQuery
-  case class Stream5[A, B, C, D, E]    (name: String, fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query5[A, B, C, D, E]    with StreamQuery
-  case class Stream6[A, B, C, D, E, F] (name: String, fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query6[A, B, C, D, E, F] with StreamQuery
+  case class Stream1[A]                (publisherName: String, fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query1[A]                with StreamQuery
+  case class Stream2[A, B]             (publisherName: String, fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query2[A, B]             with StreamQuery
+  case class Stream3[A, B, C]          (publisherName: String, fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query3[A, B, C]          with StreamQuery
+  case class Stream4[A, B, C, D]       (publisherName: String, fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query4[A, B, C, D]       with StreamQuery
+  case class Stream5[A, B, C, D, E]    (publisherName: String, fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query5[A, B, C, D, E]    with StreamQuery
+  case class Stream6[A, B, C, D, E, F] (publisherName: String, fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query6[A, B, C, D, E, F] with StreamQuery
 
   case class KeepEventsWith1[A]                (sq: Query1[A],                cond: Event1[A] => Boolean,                fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query1[A]                with FilterQuery
   case class KeepEventsWith2[A, B]             (sq: Query2[A, B],             cond: Event2[A, B] => Boolean,             fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query2[A, B]             with FilterQuery
@@ -70,12 +75,6 @@ object Query2 {
   case class RemoveElement4Of6[A, B, C, D, E, F] (sq: Query6[A, B, C, D, E, F], fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query5[A, B, C, E, F] with SelectQuery
   case class RemoveElement5Of6[A, B, C, D, E, F] (sq: Query6[A, B, C, D, E, F], fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query5[A, B, C, D, F] with SelectQuery
   case class RemoveElement6Of6[A, B, C, D, E, F] (sq: Query6[A, B, C, D, E, F], fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query5[A, B, C, D, E] with SelectQuery
-
-  sealed trait Window
-  case class SlidingInstances  (instances: Int) extends Window
-  case class TumblingInstances (instances: Int) extends Window
-  case class SlidingSeconds    (seconds: Int)   extends Window
-  case class TumblingSeconds   (seconds: Int)   extends Window
 
   case class SelfJoin11[A]       (sq: Query1[A],       w1: Window, w2: Window, fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query2[A, A]             with SelfJoinQuery
   case class SelfJoin22[A, B]    (sq: Query2[A, B],    w1: Window, w2: Window, fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query4[A, B, A, B]       with SelfJoinQuery
