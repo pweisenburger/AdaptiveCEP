@@ -1,7 +1,6 @@
 package com.scalarookie.eventscalaTS.data
 
 import java.time.Duration
-import com.scalarookie.eventscalaTS.data.Events._
 
 object Queries {
 
@@ -19,8 +18,8 @@ object Queries {
   sealed trait Window
   case class SlidingInstances  (instances: Int) extends Window
   case class TumblingInstances (instances: Int) extends Window
-  case class SlidingSeconds    (seconds: Int)   extends Window
-  case class TumblingSeconds   (seconds: Int)   extends Window
+  case class SlidingTime       (seconds: Int)   extends Window
+  case class TumblingTime      (seconds: Int)   extends Window
 
   sealed trait Query { val fr: Option[FrequencyRequirement]; val lr: Option[LatencyRequirement] }
 
@@ -28,11 +27,11 @@ object Queries {
   sealed trait UnaryQuery  extends Query { val sq: Query }
   sealed trait BinaryQuery extends Query { val sq1: Query; val sq2: Query }
 
-  sealed trait StreamQuery   extends LeafQuery
-  sealed trait FilterQuery   extends UnaryQuery
+  sealed trait StreamQuery   extends LeafQuery   { val publisherName: String }
+  sealed trait FilterQuery   extends UnaryQuery  // TODO Find a way to do sth like { val cond: A, ... => Boolean }!
   sealed trait SelectQuery   extends UnaryQuery
-  sealed trait SelfJoinQuery extends UnaryQuery
-  sealed trait JoinQuery     extends BinaryQuery
+  sealed trait SelfJoinQuery extends UnaryQuery  { val w1: Window; val w2: Window }
+  sealed trait JoinQuery     extends BinaryQuery { val w1: Window; val w2: Window }
 
   sealed trait Query1[A]                extends Query
   sealed trait Query2[A, B]             extends Query
@@ -48,12 +47,12 @@ object Queries {
   case class Stream5[A, B, C, D, E]    (publisherName: String, fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query5[A, B, C, D, E]    with StreamQuery
   case class Stream6[A, B, C, D, E, F] (publisherName: String, fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query6[A, B, C, D, E, F] with StreamQuery
 
-  case class KeepEventsWith1[A]                (sq: Query1[A],                cond: Event1[A] => Boolean,                fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query1[A]                with FilterQuery
-  case class KeepEventsWith2[A, B]             (sq: Query2[A, B],             cond: Event2[A, B] => Boolean,             fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query2[A, B]             with FilterQuery
-  case class KeepEventsWith3[A, B, C]          (sq: Query3[A, B, C],          cond: Event3[A, B, C] => Boolean,          fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query3[A, B, C]          with FilterQuery
-  case class KeepEventsWith4[A, B, C, D]       (sq: Query4[A, B, C, D],       cond: Event4[A, B, C, D] => Boolean,       fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query4[A, B, C, D]       with FilterQuery
-  case class KeepEventsWith5[A, B, C, D, E]    (sq: Query5[A, B, C, D, E],    cond: Event5[A, B, C, D, E] => Boolean,    fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query5[A, B, C, D, E]    with FilterQuery
-  case class KeepEventsWith6[A, B, C, D, E, F] (sq: Query6[A, B, C, D, E, F], cond: Event6[A, B, C, D, E, F] => Boolean, fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query6[A, B, C, D, E, F] with FilterQuery
+  case class KeepEventsWith1[A]                (sq: Query1[A],                cond: (A) => Boolean,                fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query1[A]                with FilterQuery
+  case class KeepEventsWith2[A, B]             (sq: Query2[A, B],             cond: (A, B) => Boolean,             fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query2[A, B]             with FilterQuery
+  case class KeepEventsWith3[A, B, C]          (sq: Query3[A, B, C],          cond: (A, B, C) => Boolean,          fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query3[A, B, C]          with FilterQuery
+  case class KeepEventsWith4[A, B, C, D]       (sq: Query4[A, B, C, D],       cond: (A, B, C, D) => Boolean,       fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query4[A, B, C, D]       with FilterQuery
+  case class KeepEventsWith5[A, B, C, D, E]    (sq: Query5[A, B, C, D, E],    cond: (A, B, C, D, E) => Boolean,    fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query5[A, B, C, D, E]    with FilterQuery
+  case class KeepEventsWith6[A, B, C, D, E, F] (sq: Query6[A, B, C, D, E, F], cond: (A, B, C, D, E, F) => Boolean, fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query6[A, B, C, D, E, F] with FilterQuery
 
   case class RemoveElement1Of2[A, B]             (sq: Query2[A, B],             fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query1[B]             with SelectQuery
   case class RemoveElement2Of2[A, B]             (sq: Query2[A, B],             fr: Option[FrequencyRequirement], lr: Option[LatencyRequirement]) extends Query1[A]             with SelectQuery

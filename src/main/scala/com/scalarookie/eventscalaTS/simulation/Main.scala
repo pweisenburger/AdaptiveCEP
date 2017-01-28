@@ -12,22 +12,36 @@ object Main extends App {
   val actorSystem: ActorSystem = ActorSystem()
 
   val publisherA: ActorRef = actorSystem.actorOf(Props(TestPublisher()), "A")
+  val publisherB: ActorRef = actorSystem.actorOf(Props(TestPublisher()), "B")
 
-  val query: Query1[Int] =
+  val query1: Query1[Int] =
     stream[Int, Int]("A", None, None)
-    .keepEventsWith(event => event.e1 != event.e2, None, None)
+    .keepEventsWith(_ != _, None, None)
+    .removeElement2(None, None)
+
+  val query2: Query1[Int] =
+    stream[Int]("A", None, None)
+    .join(
+      stream[Int]("B", None, None),
+      tumblingWindow(1.instances),
+      tumblingWindow(1.instances),
+      None, None)
+    .keepEventsWith(
+      _ > _,
+      None, None)
     .removeElement1(None, None)
 
   val graph: ActorRef = actorSystem.actorOf(Props(SelectNode(
-    query.asInstanceOf[SelectQuery],
-    Map("A" -> publisherA),
+    query2.asInstanceOf[SelectQuery],
+    Map("A" -> publisherA, "B" -> publisherB),
     Some(println))),
-    "select")
+    "join")
 
   Thread.sleep(2000)
 
-  publisherA ! Event2(41, 42)
-  publisherA ! Event2(42, 42)
-  publisherA ! Event2(43, 42)
+  publisherA ! Event1(42)
+  publisherB ! Event1(13)
+  publisherB ! Event1(21)
+
 
 }

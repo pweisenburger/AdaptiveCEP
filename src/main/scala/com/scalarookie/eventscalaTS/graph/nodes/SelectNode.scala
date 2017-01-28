@@ -12,7 +12,7 @@ case class SelectNode(
     callbackIfRoot: Option[Either[GraphCreated.type, Event] => Any])
   extends Node {
 
-  val childNode: ActorRef = createChildActor(1, query.sq, publishers)
+  val childNode: ActorRef = createChildNode(1, query.sq, publishers)
 
   val elementToBeRemoved: Int = query match {
     case RemoveElement1Of2(_, _, _) => 1
@@ -37,48 +37,52 @@ case class SelectNode(
     case RemoveElement6Of6(_, _, _) => 6
   }
 
+  def emitGraphCreated(): Unit = {
+    if (callbackIfRoot.isDefined) callbackIfRoot.get.apply(Left(GraphCreated)) else context.parent ! GraphCreated
+  }
+
   def emitEvent(event: Event): Unit = {
     if (callbackIfRoot.isDefined) callbackIfRoot.get.apply(Right(event)) else context.parent ! event
   }
 
-  def handleEvent2[A, B](e1: A, e2: B): Unit = elementToBeRemoved match {
-    case 1 => emitEvent(Event1[B](e2))
-    case 2 => emitEvent(Event1[A](e1))
+  def handleEvent2(e1: Any, e2: Any): Unit = elementToBeRemoved match {
+    case 1 => emitEvent(Event1(e2))
+    case 2 => emitEvent(Event1(e1))
   }
 
-  def handleEvent3[A, B, C](e1: A, e2: B, e3: C): Unit = elementToBeRemoved match {
-    case 1 => emitEvent(Event2[B, C](e2, e3))
-    case 2 => emitEvent(Event2[A, C](e1, e3))
-    case 3 => emitEvent(Event2[A, B](e1, e2))
+  def handleEvent3(e1: Any, e2: Any, e3: Any): Unit = elementToBeRemoved match {
+    case 1 => emitEvent(Event2(e2, e3))
+    case 2 => emitEvent(Event2(e1, e3))
+    case 3 => emitEvent(Event2(e1, e2))
   }
 
-  def handleEvent4[A, B, C, D](e1: A, e2: B, e3: C, e4: D): Unit = elementToBeRemoved match {
-    case 1 => emitEvent(Event3[B, C, D](e2, e3, e4))
-    case 2 => emitEvent(Event3[A, C, D](e1, e3, e4))
-    case 3 => emitEvent(Event3[A, B, D](e1, e2, e4))
-    case 4 => emitEvent(Event3[A, B, C](e1, e2, e3))
+  def handleEvent4(e1: Any, e2: Any, e3: Any, e4: Any): Unit = elementToBeRemoved match {
+    case 1 => emitEvent(Event3(e2, e3, e4))
+    case 2 => emitEvent(Event3(e1, e3, e4))
+    case 3 => emitEvent(Event3(e1, e2, e4))
+    case 4 => emitEvent(Event3(e1, e2, e3))
   }
 
-  def handleEvent5[A, B, C, D, E](e1: A, e2: B, e3: C, e4: D, e5: E): Unit = elementToBeRemoved match {
-    case 1 => emitEvent(Event4[B, C, D, E](e2, e3, e4, e5))
-    case 2 => emitEvent(Event4[A, C, D, E](e1, e3, e4, e5))
-    case 3 => emitEvent(Event4[A, B, D, E](e1, e2, e4, e5))
-    case 4 => emitEvent(Event4[A, B, C, E](e1, e2, e3, e5))
-    case 5 => emitEvent(Event4[A, B, C, D](e1, e2, e3, e4))
+  def handleEvent5(e1: Any, e2: Any, e3: Any, e4: Any, e5: Any): Unit = elementToBeRemoved match {
+    case 1 => emitEvent(Event4(e2, e3, e4, e5))
+    case 2 => emitEvent(Event4(e1, e3, e4, e5))
+    case 3 => emitEvent(Event4(e1, e2, e4, e5))
+    case 4 => emitEvent(Event4(e1, e2, e3, e5))
+    case 5 => emitEvent(Event4(e1, e2, e3, e4))
   }
 
-  def handleEvent6[A, B, C, D, E, F](e1: A, e2: B, e3: C, e4: D, e5: E, e6: F): Unit = elementToBeRemoved match {
-    case 1 => emitEvent(Event5[B, C, D, E, F](e2, e3, e4, e5, e6))
-    case 2 => emitEvent(Event5[A, C, D, E, F](e1, e3, e4, e5, e6))
-    case 3 => emitEvent(Event5[A, B, D, E, F](e1, e2, e4, e5, e6))
-    case 4 => emitEvent(Event5[A, B, C, E, F](e1, e2, e3, e5, e6))
-    case 5 => emitEvent(Event5[A, B, C, D, F](e1, e2, e3, e4, e6))
-    case 6 => emitEvent(Event5[A, B, C, D, E](e1, e2, e3, e4, e5))
+  def handleEvent6(e1: Any, e2: Any, e3: Any, e4: Any, e5: Any, e6: Any): Unit = elementToBeRemoved match {
+    case 1 => emitEvent(Event5(e2, e3, e4, e5, e6))
+    case 2 => emitEvent(Event5(e1, e3, e4, e5, e6))
+    case 3 => emitEvent(Event5(e1, e2, e4, e5, e6))
+    case 4 => emitEvent(Event5(e1, e2, e3, e5, e6))
+    case 5 => emitEvent(Event5(e1, e2, e3, e4, e6))
+    case 6 => emitEvent(Event5(e1, e2, e3, e4, e5))
   }
 
   override def receive: Receive = {
     case GraphCreated if sender() == childNode =>
-      if (callbackIfRoot.isDefined) callbackIfRoot.get.apply(Left(GraphCreated)) else context.parent ! GraphCreated
+      emitGraphCreated()
     case event: Event if sender() == childNode => event match {
       case Event2(e1, e2) => handleEvent2(e1, e2)
       case Event3(e1, e2, e3) => handleEvent3(e1, e2, e3)
