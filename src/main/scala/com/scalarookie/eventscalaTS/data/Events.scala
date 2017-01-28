@@ -5,11 +5,11 @@ object Events {
   case object GraphCreated
 
   sealed trait Event
-  case class Event1[A]                (e1: A)                                    extends Event
-  case class Event2[A, B]             (e1: A, e2: B)                             extends Event
-  case class Event3[A, B, C]          (e1: A, e2: B, e3: C)                      extends Event
-  case class Event4[A, B, C, D]       (e1: A, e2: B, e3: C, e4: D)               extends Event
-  case class Event5[A, B, C, D, E]    (e1: A, e2: B, e3: C, e4: D, e5: E)        extends Event
-  case class Event6[A, B, C, D, E, F] (e1: A, e2: B, e3: C, e4: D, e5: E, e6: F) extends Event
+  case class Event1(e1: Any)                                              extends Event
+  case class Event2(e1: Any, e2: Any)                                     extends Event
+  case class Event3(e1: Any, e2: Any, e3: Any)                            extends Event
+  case class Event4(e1: Any, e2: Any, e3: Any, e4: Any)                   extends Event
+  case class Event5(e1: Any, e2: Any, e3: Any, e4: Any, e5: Any)          extends Event
+  case class Event6(e1: Any, e2: Any, e3: Any, e4: Any, e5: Any, e6: Any) extends Event
 
 }
