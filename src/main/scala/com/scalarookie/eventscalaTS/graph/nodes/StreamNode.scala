@@ -17,13 +17,17 @@ case class StreamNode(
 
   publisher ! Subscribe
 
+  def emitGraphCreated(): Unit = {
+    if (callbackIfRoot.isDefined) callbackIfRoot.get.apply(Left(GraphCreated)) else context.parent ! GraphCreated
+  }
+
   def emitEvent(event: Event): Unit = {
     if (callbackIfRoot.isDefined) callbackIfRoot.get.apply(Right(event)) else context.parent ! event
   }
 
   override def receive: Receive = {
     case AcknowledgeSubscription if sender() == publisher =>
-      if (callbackIfRoot.isDefined) callbackIfRoot.get.apply(Left(GraphCreated)) else context.parent ! GraphCreated
+      emitGraphCreated()
     case event: Event if sender() == publisher =>
       emitEvent(event)
   }
