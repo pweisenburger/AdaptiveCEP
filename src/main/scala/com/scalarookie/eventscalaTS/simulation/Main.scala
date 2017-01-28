@@ -14,12 +14,7 @@ object Main extends App {
   val publisherA: ActorRef = actorSystem.actorOf(Props(TestPublisher()), "A")
   val publisherB: ActorRef = actorSystem.actorOf(Props(TestPublisher()), "B")
 
-  val query1: Query1[Int] =
-    stream[Int, Int]("A", None, None)
-    .keepEventsWith(_ != _, None, None)
-    .removeElement2(None, None)
-
-  val query2: Query1[Int] =
+  val query: Query2[Int, Int] =
     stream[Int]("A", None, None)
     .join(
       stream[Int]("B", None, None),
@@ -30,12 +25,16 @@ object Main extends App {
       _ > _,
       None, None)
     .removeElement1(None, None)
+    .selfJoin(
+      tumblingWindow(1.instances),
+      tumblingWindow(1.instances),
+      None, None)
 
-  val graph: ActorRef = actorSystem.actorOf(Props(SelectNode(
-    query2.asInstanceOf[SelectQuery],
+  val graph: ActorRef = actorSystem.actorOf(Props(SelfJoinNode(
+    query.asInstanceOf[SelfJoinQuery],
     Map("A" -> publisherA, "B" -> publisherB),
     Some(println))),
-    "join")
+    "selfjoin")
 
   Thread.sleep(2000)
 
