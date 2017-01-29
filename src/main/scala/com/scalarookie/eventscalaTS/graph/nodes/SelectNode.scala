@@ -15,26 +15,26 @@ case class SelectNode(
   val childNode: ActorRef = createChildNode(1, query.sq, publishers)
 
   val elementToBeRemoved: Int = query match {
-    case RemoveElement1Of2(_, _, _) => 1
-    case RemoveElement1Of3(_, _, _) => 1
-    case RemoveElement1Of4(_, _, _) => 1
-    case RemoveElement1Of5(_, _, _) => 1
-    case RemoveElement1Of6(_, _, _) => 1
-    case RemoveElement2Of2(_, _, _) => 2
-    case RemoveElement2Of3(_, _, _) => 2
-    case RemoveElement2Of4(_, _, _) => 2
-    case RemoveElement2Of5(_, _, _) => 2
-    case RemoveElement2Of6(_, _, _) => 2
-    case RemoveElement3Of3(_, _, _) => 3
-    case RemoveElement3Of4(_, _, _) => 3
-    case RemoveElement3Of5(_, _, _) => 3
-    case RemoveElement3Of6(_, _, _) => 3
-    case RemoveElement4Of4(_, _, _) => 4
-    case RemoveElement4Of5(_, _, _) => 4
-    case RemoveElement4Of6(_, _, _) => 4
-    case RemoveElement5Of5(_, _, _) => 5
-    case RemoveElement5Of6(_, _, _) => 5
-    case RemoveElement6Of6(_, _, _) => 6
+    case RemoveElement1Of2(_, _) => 1
+    case RemoveElement1Of3(_, _) => 1
+    case RemoveElement1Of4(_, _) => 1
+    case RemoveElement1Of5(_, _) => 1
+    case RemoveElement1Of6(_, _) => 1
+    case RemoveElement2Of2(_, _) => 2
+    case RemoveElement2Of3(_, _) => 2
+    case RemoveElement2Of4(_, _) => 2
+    case RemoveElement2Of5(_, _) => 2
+    case RemoveElement2Of6(_, _) => 2
+    case RemoveElement3Of3(_, _) => 3
+    case RemoveElement3Of4(_, _) => 3
+    case RemoveElement3Of5(_, _) => 3
+    case RemoveElement3Of6(_, _) => 3
+    case RemoveElement4Of4(_, _) => 4
+    case RemoveElement4Of5(_, _) => 4
+    case RemoveElement4Of6(_, _) => 4
+    case RemoveElement5Of5(_, _) => 5
+    case RemoveElement5Of6(_, _) => 5
+    case RemoveElement6Of6(_, _) => 6
   }
 
   def emitGraphCreated(): Unit = {
@@ -84,6 +84,7 @@ case class SelectNode(
     case GraphCreated if sender() == childNode =>
       emitGraphCreated()
     case event: Event if sender() == childNode => event match {
+      case Event1(_) => ??? // Simply throw an exception if control flow ever reaches this point -- which should never happen!
       case Event2(e1, e2) => handleEvent2(e1, e2)
       case Event3(e1, e2, e3) => handleEvent3(e1, e2, e3)
       case Event4(e1, e2, e3, e4) => handleEvent4(e1, e2, e3, e4)
