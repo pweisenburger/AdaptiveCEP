@@ -89,12 +89,12 @@ object Dsl {
 
   // General
 
-  def stream[A]                (name: String, qosRequirements: QosRequirement*): Query1[A] =                Stream1 (name, qosRequirements.toSet)
-  def stream[A, B]             (name: String, qosRequirements: QosRequirement*): Query2[A, B] =             Stream2 (name, qosRequirements.toSet)
-  def stream[A, B, C]          (name: String, qosRequirements: QosRequirement*): Query3[A, B, C] =          Stream3 (name, qosRequirements.toSet)
-  def stream[A, B, C, D]       (name: String, qosRequirements: QosRequirement*): Query4[A, B, C, D] =       Stream4 (name, qosRequirements.toSet)
-  def stream[A, B, C, D, E]    (name: String, qosRequirements: QosRequirement*): Query5[A, B, C, D, E] =    Stream5 (name, qosRequirements.toSet)
-  def stream[A, B, C, D, E, F] (name: String, qosRequirements: QosRequirement*): Query6[A, B, C, D, E, F] = Stream6 (name, qosRequirements.toSet)
+  def stream[A]                (publisherName: String, qosRequirements: QosRequirement*): Query1[A] =                Stream1 (name, qosRequirements.toSet)
+  def stream[A, B]             (publisherName: String, qosRequirements: QosRequirement*): Query2[A, B] =             Stream2 (name, qosRequirements.toSet)
+  def stream[A, B, C]          (publisherName: String, qosRequirements: QosRequirement*): Query3[A, B, C] =          Stream3 (name, qosRequirements.toSet)
+  def stream[A, B, C, D]       (publisherName: String, qosRequirements: QosRequirement*): Query4[A, B, C, D] =       Stream4 (name, qosRequirements.toSet)
+  def stream[A, B, C, D, E]    (publisherName: String, qosRequirements: QosRequirement*): Query5[A, B, C, D, E] =    Stream5 (name, qosRequirements.toSet)
+  def stream[A, B, C, D, E, F] (publisherName: String, qosRequirements: QosRequirement*): Query6[A, B, C, D, E, F] = Stream6 (name, qosRequirements.toSet)
 
   case class Query1Helper[A](q: Query1[A]) {
     def keepEventsWith      (                           cond: (A) => Boolean,   qosRequirements: QosRequirement*): Query1[A] =                KeepEventsWith1 (q, cond,       qosRequirements.toSet)
