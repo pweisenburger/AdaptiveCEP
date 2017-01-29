@@ -24,8 +24,8 @@ object JoinNode {
       case _: Query2[_, _] => Array(clazz, clazz)
       case _: Query3[_, _, _] => Array(clazz, clazz, clazz)
       case _: Query4[_, _, _, _] => Array(clazz, clazz, clazz, clazz)
-      case _: Query5[_, _, _, _, _] => Array(clazz, clazz, clazz, clazz)
-      case _: Query6[_, _, _, _, _, _] => Array(clazz, clazz, clazz, clazz, clazz)
+      case _: Query5[_, _, _, _, _] => Array(clazz, clazz, clazz, clazz, clazz)
+      case _: Query6[_, _, _, _, _, _] => Array(clazz, clazz, clazz, clazz, clazz, clazz)
     }
   }
 
@@ -97,8 +97,8 @@ case class JoinNode(
     destroyServiceProvider()
   }
 
-  addEventType("sq1", createArrayOfNames(query.sq1), createArrayOfClasses(query.sq2))
-  addEventType("sq2", createArrayOfNames(query.sq1), createArrayOfClasses(query.sq2))
+  addEventType("sq1", createArrayOfNames(query.sq1), createArrayOfClasses(query.sq1))
+  addEventType("sq2", createArrayOfNames(query.sq2), createArrayOfClasses(query.sq2))
 
   val epStatement: EPStatement = createEpStatement(
     s"select * from " +
