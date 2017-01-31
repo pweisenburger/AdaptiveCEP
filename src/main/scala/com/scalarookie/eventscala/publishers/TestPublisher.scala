@@ -1,6 +1,6 @@
-package com.scalarookie.eventscalaTS.graph.publishers
+package com.scalarookie.eventscala.publishers
 
-import com.scalarookie.eventscalaTS.graph.publishers.Publisher.Subscribe
+import com.scalarookie.eventscala.publishers.Publisher.Subscribe
 
 case class TestPublisher() extends Publisher {
 

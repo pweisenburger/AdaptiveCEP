@@ -16,13 +16,13 @@ trait EsperEngine {
   def addEventType(eventTypeName: String, elementNames: Array[String], elementClasses: Array[Class[_]]): Unit =
     configuration.addEventType(eventTypeName, elementNames, elementClasses.asInstanceOf[Array[AnyRef]])
 
-  def createEplStatement(eplString: String): EPStatement =
+  def createEpStatement(eplString: String): EPStatement =
     administrator.createEPL(eplString)
 
-  def sendEventToEsperEngine(eventTypeName: String, eventAsArray: Array[AnyRef]): Unit =
+  def sendEvent(eventTypeName: String, eventAsArray: Array[AnyRef]): Unit =
     runtime.sendEvent(eventAsArray, eventTypeName)
 
-  def destroyEsperServiceProvider(): Unit =
+  def destroyServiceProvider(): Unit =
     serviceProvider.destroy()
 
 }

@@ -1,13 +1,14 @@
 package com.scalarookie.eventscala.graph.qos
 
 import akka.actor.{ActorContext, ActorRef}
-import com.scalarookie.eventscala.caseclasses._
+import com.scalarookie.eventscala.data.Queries._
+import com.scalarookie.eventscala.data.Events._
 
 case class LeafNodeData(name: String, query: Query, context: ActorContext)
 case class UnaryNodeData(name: String, query: Query, context: ActorContext, childNode: ActorRef)
 case class BinaryNodeData(name: String, query: Query, context: ActorContext, childNode1: ActorRef, childNode2: ActorRef)
 
-trait LeafNodeStrategy {
+trait LeafNodeMonitor {
 
   def onCreated(nodeData: LeafNodeData): Unit = ()
   def onEventEmit(event: Event, nodeData: LeafNodeData): Unit = ()
@@ -15,7 +16,7 @@ trait LeafNodeStrategy {
 
 }
 
-trait UnaryNodeStrategy {
+trait UnaryNodeMonitor {
 
   def onCreated(nodeData: UnaryNodeData): Unit = ()
   def onEventEmit(event: Event, nodeData: UnaryNodeData): Unit = ()
@@ -23,7 +24,7 @@ trait UnaryNodeStrategy {
 
 }
 
-trait BinaryNodeStrategy {
+trait BinaryNodeMonitor {
 
   def onCreated(nodeData: BinaryNodeData): Unit = ()
   def onEventEmit(event: Event, nodeData: BinaryNodeData): Unit = ()
@@ -31,10 +32,10 @@ trait BinaryNodeStrategy {
 
 }
 
-trait StrategyFactory {
+trait MonitorFactory {
 
-  def getLeafNodeStrategy: LeafNodeStrategy
-  def getUnaryNodeStrategy: UnaryNodeStrategy
-  def getBinaryNodeStrategy: BinaryNodeStrategy
+  def createLeafNodeMonitor: LeafNodeMonitor
+  def createUnaryNodeMonitor: UnaryNodeMonitor
+  def createBinaryNodeMonitor: BinaryNodeMonitor
 
 }

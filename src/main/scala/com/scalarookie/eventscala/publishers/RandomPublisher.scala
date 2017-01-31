@@ -1,21 +1,22 @@
-package com.scalarookie.eventscala.graph.publishers
+package com.scalarookie.eventscala.publishers
 
 import java.util.concurrent.TimeUnit
 import scala.util.Random
-import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.FiniteDuration
+import com.scalarookie.eventscala.data.Events._
 
-case class RandomPublisher[T](createEventFromId: Integer => T) extends PublisherActor {
+case class RandomPublisher(createEventFromId: Integer => Event) extends Publisher {
 
   val publisherName: String = self.path.name
 
   def publish(id: Integer): Unit = {
-    val event = createEventFromId(id)
+    val event: Event = createEventFromId(id)
     subscribers.foreach(_ ! event)
-    println(s"EVENT IN STREAM $publisherName:\t$event")
+    println(s"STREAM $publisherName:\t$event")
     context.system.scheduler.scheduleOnce(
       delay = FiniteDuration(Random.nextInt(5000), TimeUnit.MILLISECONDS),
-      runnable = new Runnable { override def run(): Unit = publish(id + 1) }
+      runnable = () => publish(id + 1)
     )
   }
 

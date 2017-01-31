@@ -1,16 +1,16 @@
-package com.scalarookie.eventscala.graph.publishers
+package com.scalarookie.eventscala.publishers
 
 import akka.actor.{Actor, ActorRef}
-import PublisherActor._
+import Publisher._
 
-object PublisherActor {
+object Publisher {
 
   case object Subscribe
-  case object AckSubscription
+  case object AcknowledgeSubscription
 
 }
 
-trait PublisherActor extends Actor {
+trait Publisher extends Actor {
 
   var subscribers: Set[ActorRef] =
     scala.collection.immutable.Set.empty[ActorRef]
@@ -18,7 +18,7 @@ trait PublisherActor extends Actor {
   override def receive: Receive = {
     case Subscribe =>
       subscribers = subscribers + sender()
-      sender() ! AckSubscription
+      sender() ! AcknowledgeSubscription
   }
 
 }
