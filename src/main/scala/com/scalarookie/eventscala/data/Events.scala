@@ -1,4 +1,4 @@
-package com.scalarookie.eventscalaTS.data
+package com.scalarookie.eventscala.data
 
 object Events {
 

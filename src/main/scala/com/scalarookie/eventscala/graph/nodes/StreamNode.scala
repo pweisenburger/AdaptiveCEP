@@ -1,39 +1,50 @@
 package com.scalarookie.eventscala.graph.nodes
 
 import akka.actor.ActorRef
-import com.scalarookie.eventscala.caseclasses._
-import com.scalarookie.eventscala.graph.publishers.PublisherActor._
+import com.scalarookie.eventscala.data.Events._
+import com.scalarookie.eventscala.data.Queries._
+import com.scalarookie.eventscala.publishers.Publisher._
 import com.scalarookie.eventscala.graph.qos._
 
-class StreamNode(stream: Stream,
-                 frequencyStrategyFactory: StrategyFactory,
-                 latencyStrategyFactory: StrategyFactory,
-                 publishers: Map[String, ActorRef],
-                 callbackIfRoot: Option[Event => Any] = None)
-  extends Node(publishers) {
+case class StreamNode(
+    query: StreamQuery,
+    publishers: Map[String, ActorRef],
+    frequencyMonitorFactory: MonitorFactory,
+    latencyMonitorFactory: MonitorFactory,
+    callbackIfRoot: Option[Either[GraphCreated.type, Event] => Any])
+  extends Node {
 
-  val frequencyStrategy: LeafNodeStrategy = frequencyStrategyFactory.getLeafNodeStrategy
-  val latencyStrategy: LeafNodeStrategy = latencyStrategyFactory.getLeafNodeStrategy
+  val publisher: ActorRef = publishers(query.publisherName)
 
-  val publisher: ActorRef = publishers(stream.name)
+  val nodeData: LeafNodeData = LeafNodeData(name, query, context)
+
+  val frequencyMonitor: LeafNodeMonitor = frequencyMonitorFactory.createLeafNodeMonitor
+  val latencyMonitor: LeafNodeMonitor = latencyMonitorFactory.createLeafNodeMonitor
+  //val frequencyReqs: Set[FrequencyRequirement] = query.requirements collect { case fr: FrequencyRequirement => fr }
+  //val latencyReqs: Set[LatencyRequirement] = query.requirements collect { case lr: LatencyRequirement => lr }
 
   publisher ! Subscribe
 
-  val nodeData: LeafNodeData = LeafNodeData(stream.name, stream, context)
+  def emitGraphCreated(): Unit = {
+    if (callbackIfRoot.isDefined) callbackIfRoot.get.apply(Left(GraphCreated)) else context.parent ! GraphCreated
+    frequencyMonitor.onCreated(nodeData)
+    latencyMonitor.onCreated(nodeData)
+  }
 
-  frequencyStrategy.onCreated(nodeData)
-  latencyStrategy.onCreated(nodeData)
+  def emitEvent(event: Event): Unit = {
+    if (callbackIfRoot.isDefined) callbackIfRoot.get.apply(Right(event)) else context.parent ! event
+    frequencyMonitor.onEventEmit(event, nodeData)
+    latencyMonitor.onEventEmit(event, nodeData)
+  }
 
   override def receive: Receive = {
-    case AckSubscription =>
-      if (callbackIfRoot.isDefined) callbackIfRoot.get.apply(GraphCreated) else context.parent ! GraphCreated
-    case event: Event if sender == publisher =>
-      if (callbackIfRoot.isDefined) callbackIfRoot.get.apply(event) else context.parent ! event
-      frequencyStrategy.onEventEmit(event, nodeData)
-      latencyStrategy.onEventEmit(event, nodeData)
+    case AcknowledgeSubscription if sender() == publisher =>
+      emitGraphCreated()
+    case event: Event if sender() == publisher =>
+      emitEvent(event)
     case unhandledMessage =>
-      frequencyStrategy.onMessageReceive(unhandledMessage, nodeData)
-      latencyStrategy.onMessageReceive(unhandledMessage, nodeData)
+      frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
+      latencyMonitor.onMessageReceive(unhandledMessage, nodeData)
   }
 
 }
