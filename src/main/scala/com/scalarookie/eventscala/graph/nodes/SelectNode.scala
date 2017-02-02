@@ -3,6 +3,7 @@ package com.scalarookie.eventscala.graph.nodes
 import akka.actor.ActorRef
 import com.scalarookie.eventscala.data.Events._
 import com.scalarookie.eventscala.data.Queries._
+import com.scalarookie.eventscala.graph.nodes.traits._
 import com.scalarookie.eventscala.graph.qos._
 
 case class SelectNode(
@@ -12,14 +13,7 @@ case class SelectNode(
     latencyMonitorFactory: MonitorFactory,
     createdCallback: Option[() => Any],
     eventCallback: Option[(Event) => Any])
-  extends Node {
-
-  val childNode: ActorRef = createChildNode(1, query.sq)
-
-  val nodeData: UnaryNodeData = UnaryNodeData(name, query, context, childNode)
-
-  val frequencyMonitor: UnaryNodeMonitor = frequencyMonitorFactory.createUnaryNodeMonitor
-  val latencyMonitor: UnaryNodeMonitor = latencyMonitorFactory.createUnaryNodeMonitor
+  extends UnaryNode {
 
   val elementToBeRemoved: Int = query match {
     case RemoveElement1Of2(_, _) => 1
@@ -42,18 +36,6 @@ case class SelectNode(
     case RemoveElement5Of5(_, _) => 5
     case RemoveElement5Of6(_, _) => 5
     case RemoveElement6Of6(_, _) => 6
-  }
-
-  def emitCreated(): Unit = {
-    if (createdCallback.isDefined) createdCallback.get.apply() else context.parent ! Created
-    frequencyMonitor.onCreated(nodeData)
-    latencyMonitor.onCreated(nodeData)
-  }
-
-  def emitEvent(event: Event): Unit = {
-    if (eventCallback.isDefined) eventCallback.get.apply(event) else context.parent ! event
-    frequencyMonitor.onEventEmit(event, nodeData)
-    latencyMonitor.onEventEmit(event, nodeData)
   }
 
   def handleEvent2(e1: Any, e2: Any): Unit = elementToBeRemoved match {

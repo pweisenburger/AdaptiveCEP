@@ -1,7 +1,8 @@
-package com.scalarookie.eventscala.graph.nodes
+package com.scalarookie.eventscala.graph.nodes.traits
 
 import akka.actor.{Actor, ActorRef, Props}
 import com.scalarookie.eventscala.data.Queries._
+import com.scalarookie.eventscala.graph.nodes._
 import com.scalarookie.eventscala.graph.qos.MonitorFactory
 
 trait Node extends Actor {
