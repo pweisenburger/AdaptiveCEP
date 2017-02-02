@@ -4,6 +4,7 @@ import akka.actor.ActorRef
 import com.espertech.esper.client._
 import com.scalarookie.eventscala.data.Events._
 import com.scalarookie.eventscala.data.Queries._
+import com.scalarookie.eventscala.graph.nodes.traits._
 import com.scalarookie.eventscala.graph.qos._
 import JoinNode._
 
@@ -30,7 +31,7 @@ object JoinNode {
     }
   }
 
-  def castToAnyRef(any: Any): AnyRef = {
+  def toAnyRef(any: Any): AnyRef = {
     // Yep, you can do that!
     // https://stackoverflow.com/questions/25931611/why-anyval-can-be-converted-into-anyref-at-run-time-in-scala
     any.asInstanceOf[AnyRef]
@@ -52,55 +53,35 @@ case class JoinNode(
     latencyMonitorFactory: MonitorFactory,
     createdCallback: Option[() => Any],
     eventCallback: Option[(Event) => Any])
-  extends Node with EsperEngine {
+  extends BinaryNode with EsperEngine {
 
-  val childNode1: ActorRef = createChildNode(1, query.sq1)
-  val childNode2: ActorRef = createChildNode(2, query.sq2)
-
-  var graphCreatedFromChildNode1: Boolean = false
-  var graphCreatedFromChildNode2: Boolean = false
-
-  val nodeData: BinaryNodeData = BinaryNodeData(name, query, context, childNode1, childNode2)
-
-  val frequencyMonitor: BinaryNodeMonitor = frequencyMonitorFactory.createBinaryNodeMonitor
-  val latencyMonitor: BinaryNodeMonitor = latencyMonitorFactory.createBinaryNodeMonitor
+  var childNode1Created: Boolean = false
+  var childNode2Created: Boolean = false
 
   override val esperServiceProviderUri: String = name
 
-  def emitCreated(): Unit = {
-    if (createdCallback.isDefined) createdCallback.get.apply() else context.parent ! Created
-    frequencyMonitor.onCreated(nodeData)
-    latencyMonitor.onCreated(nodeData)
-  }
-
-  def emitEvent(event: Event): Unit = {
-    if (eventCallback.isDefined) eventCallback.get.apply(event) else context.parent ! event
-    frequencyMonitor.onEventEmit(event, nodeData)
-    latencyMonitor.onEventEmit(event, nodeData)
-  }
-
   override def receive: Receive = {
     case Created if sender() == childNode1 =>
-      graphCreatedFromChildNode1 = true
-      if (graphCreatedFromChildNode2) emitCreated()
+      childNode1Created = true
+      if (childNode2Created) emitCreated()
     case Created if sender() == childNode2 =>
-      graphCreatedFromChildNode2 = true
-      if (graphCreatedFromChildNode1) emitCreated()
+      childNode2Created = true
+      if (childNode1Created) emitCreated()
     case event: Event if sender() == childNode1 => event match {
-      case Event1(e1) => sendEvent("sq1", Array(castToAnyRef(e1)))
-      case Event2(e1, e2) => sendEvent("sq1", Array(castToAnyRef(e1), castToAnyRef(e2)))
-      case Event3(e1, e2, e3) => sendEvent("sq1", Array(castToAnyRef(e1), castToAnyRef(e2), castToAnyRef(e3)))
-      case Event4(e1, e2, e3, e4) => sendEvent("sq1", Array(castToAnyRef(e1), castToAnyRef(e2), castToAnyRef(e3), castToAnyRef(e4)))
-      case Event5(e1, e2, e3, e4, e5) => sendEvent("sq1", Array(castToAnyRef(e1), castToAnyRef(e2), castToAnyRef(e3), castToAnyRef(e4), castToAnyRef(e5)))
-      case Event6(e1, e2, e3, e4, e5, e6) => sendEvent("sq1", Array(castToAnyRef(e1), castToAnyRef(e2), castToAnyRef(e3), castToAnyRef(e4), castToAnyRef(e5), castToAnyRef(e6)))
+      case Event1(e1) => sendEvent("sq1", Array(toAnyRef(e1)))
+      case Event2(e1, e2) => sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2)))
+      case Event3(e1, e2, e3) => sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3)))
+      case Event4(e1, e2, e3, e4) => sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4)))
+      case Event5(e1, e2, e3, e4, e5) => sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5)))
+      case Event6(e1, e2, e3, e4, e5, e6) => sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5), toAnyRef(e6)))
     }
     case event: Event if sender() == childNode2 => event match {
-      case Event1(e1) => sendEvent("sq2", Array(castToAnyRef(e1)))
-      case Event2(e1, e2) => sendEvent("sq2", Array(castToAnyRef(e1), castToAnyRef(e2)))
-      case Event3(e1, e2, e3) => sendEvent("sq2", Array(castToAnyRef(e1), castToAnyRef(e2), castToAnyRef(e3)))
-      case Event4(e1, e2, e3, e4) => sendEvent("sq2", Array(castToAnyRef(e1), castToAnyRef(e2), castToAnyRef(e3), castToAnyRef(e4)))
-      case Event5(e1, e2, e3, e4, e5) => sendEvent("sq2", Array(castToAnyRef(e1), castToAnyRef(e2), castToAnyRef(e3), castToAnyRef(e4), castToAnyRef(e5)))
-      case Event6(e1, e2, e3, e4, e5, e6) => sendEvent("sq2", Array(castToAnyRef(e1), castToAnyRef(e2), castToAnyRef(e3), castToAnyRef(e4), castToAnyRef(e5), castToAnyRef(e6)))
+      case Event1(e1) => sendEvent("sq2", Array(toAnyRef(e1)))
+      case Event2(e1, e2) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2)))
+      case Event3(e1, e2, e3) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3)))
+      case Event4(e1, e2, e3, e4) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4)))
+      case Event5(e1, e2, e3, e4, e5) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5)))
+      case Event6(e1, e2, e3, e4, e5, e6) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5), toAnyRef(e6)))
     }
     case unhandledMessage =>
       frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
