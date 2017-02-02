@@ -11,7 +11,8 @@ case class StreamNode(
     publishers: Map[String, ActorRef],
     frequencyMonitorFactory: MonitorFactory,
     latencyMonitorFactory: MonitorFactory,
-    callbackIfRoot: Option[Either[GraphCreated.type, Event] => Any])
+    createdCallback: Option[() => Any],
+    eventCallback: Option[(Event) => Any])
   extends Node {
 
   val publisher: ActorRef = publishers(query.publisherName)
@@ -20,26 +21,24 @@ case class StreamNode(
 
   val frequencyMonitor: LeafNodeMonitor = frequencyMonitorFactory.createLeafNodeMonitor
   val latencyMonitor: LeafNodeMonitor = latencyMonitorFactory.createLeafNodeMonitor
-  //val frequencyReqs: Set[FrequencyRequirement] = query.requirements collect { case fr: FrequencyRequirement => fr }
-  //val latencyReqs: Set[LatencyRequirement] = query.requirements collect { case lr: LatencyRequirement => lr }
 
   publisher ! Subscribe
 
-  def emitGraphCreated(): Unit = {
-    if (callbackIfRoot.isDefined) callbackIfRoot.get.apply(Left(GraphCreated)) else context.parent ! GraphCreated
+  def emitCreated(): Unit = {
+    if (createdCallback.isDefined) createdCallback.get.apply() else context.parent ! Created
     frequencyMonitor.onCreated(nodeData)
     latencyMonitor.onCreated(nodeData)
   }
 
   def emitEvent(event: Event): Unit = {
-    if (callbackIfRoot.isDefined) callbackIfRoot.get.apply(Right(event)) else context.parent ! event
+    if (eventCallback.isDefined) eventCallback.get.apply(event) else context.parent ! event
     frequencyMonitor.onEventEmit(event, nodeData)
     latencyMonitor.onEventEmit(event, nodeData)
   }
 
   override def receive: Receive = {
     case AcknowledgeSubscription if sender() == publisher =>
-      emitGraphCreated()
+      emitCreated()
     case event: Event if sender() == publisher =>
       emitEvent(event)
     case unhandledMessage =>

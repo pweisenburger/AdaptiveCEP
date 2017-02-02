@@ -50,7 +50,8 @@ case class JoinNode(
     publishers: Map[String, ActorRef],
     frequencyMonitorFactory: MonitorFactory,
     latencyMonitorFactory: MonitorFactory,
-    callbackIfRoot: Option[Either[GraphCreated.type, Event] => Any])
+    createdCallback: Option[() => Any],
+    eventCallback: Option[(Event) => Any])
   extends Node with EsperEngine {
 
   val childNode1: ActorRef = createChildNode(1, query.sq1)
@@ -63,30 +64,28 @@ case class JoinNode(
 
   val frequencyMonitor: BinaryNodeMonitor = frequencyMonitorFactory.createBinaryNodeMonitor
   val latencyMonitor: BinaryNodeMonitor = latencyMonitorFactory.createBinaryNodeMonitor
-  //val frequencyReqs: Set[FrequencyRequirement] = query.requirements collect { case fr: FrequencyRequirement => fr }
-  //val latencyReqs: Set[LatencyRequirement] = query.requirements collect { case lr: LatencyRequirement => lr }
 
   override val esperServiceProviderUri: String = name
 
-  def emitGraphCreated(): Unit = {
-    if (callbackIfRoot.isDefined) callbackIfRoot.get.apply(Left(GraphCreated)) else context.parent ! GraphCreated
+  def emitCreated(): Unit = {
+    if (createdCallback.isDefined) createdCallback.get.apply() else context.parent ! Created
     frequencyMonitor.onCreated(nodeData)
     latencyMonitor.onCreated(nodeData)
   }
 
   def emitEvent(event: Event): Unit = {
-    if (callbackIfRoot.isDefined) callbackIfRoot.get.apply(Right(event)) else context.parent ! event
+    if (eventCallback.isDefined) eventCallback.get.apply(event) else context.parent ! event
     frequencyMonitor.onEventEmit(event, nodeData)
     latencyMonitor.onEventEmit(event, nodeData)
   }
 
   override def receive: Receive = {
-    case GraphCreated if sender() == childNode1 =>
+    case Created if sender() == childNode1 =>
       graphCreatedFromChildNode1 = true
-      if (graphCreatedFromChildNode2) emitGraphCreated()
-    case GraphCreated if sender() == childNode2 =>
+      if (graphCreatedFromChildNode2) emitCreated()
+    case Created if sender() == childNode2 =>
       graphCreatedFromChildNode2 = true
-      if (graphCreatedFromChildNode1) emitGraphCreated()
+      if (graphCreatedFromChildNode1) emitCreated()
     case event: Event if sender() == childNode1 => event match {
       case Event1(e1) => sendEvent("sq1", Array(castToAnyRef(e1)))
       case Event2(e1, e2) => sendEvent("sq1", Array(castToAnyRef(e1), castToAnyRef(e2)))

@@ -10,7 +10,8 @@ case class SelectNode(
     publishers: Map[String, ActorRef],
     frequencyMonitorFactory: MonitorFactory,
     latencyMonitorFactory: MonitorFactory,
-    callbackIfRoot: Option[Either[GraphCreated.type, Event] => Any])
+    createdCallback: Option[() => Any],
+    eventCallback: Option[(Event) => Any])
   extends Node {
 
   val childNode: ActorRef = createChildNode(1, query.sq)
@@ -19,8 +20,6 @@ case class SelectNode(
 
   val frequencyMonitor: UnaryNodeMonitor = frequencyMonitorFactory.createUnaryNodeMonitor
   val latencyMonitor: UnaryNodeMonitor = latencyMonitorFactory.createUnaryNodeMonitor
-  //val frequencyReqs: Set[FrequencyRequirement] = query.requirements collect { case fr: FrequencyRequirement => fr }
-  //val latencyReqs: Set[LatencyRequirement] = query.requirements collect { case lr: LatencyRequirement => lr }
 
   val elementToBeRemoved: Int = query match {
     case RemoveElement1Of2(_, _) => 1
@@ -45,14 +44,14 @@ case class SelectNode(
     case RemoveElement6Of6(_, _) => 6
   }
 
-  def emitGraphCreated(): Unit = {
-    if (callbackIfRoot.isDefined) callbackIfRoot.get.apply(Left(GraphCreated)) else context.parent ! GraphCreated
+  def emitCreated(): Unit = {
+    if (createdCallback.isDefined) createdCallback.get.apply() else context.parent ! Created
     frequencyMonitor.onCreated(nodeData)
     latencyMonitor.onCreated(nodeData)
   }
 
   def emitEvent(event: Event): Unit = {
-    if (callbackIfRoot.isDefined) callbackIfRoot.get.apply(Right(event)) else context.parent ! event
+    if (eventCallback.isDefined) eventCallback.get.apply(event) else context.parent ! event
     frequencyMonitor.onEventEmit(event, nodeData)
     latencyMonitor.onEventEmit(event, nodeData)
   }
@@ -93,8 +92,8 @@ case class SelectNode(
   }
 
   override def receive: Receive = {
-    case GraphCreated if sender() == childNode =>
-      emitGraphCreated()
+    case Created if sender() == childNode =>
+      emitCreated()
     case event: Event if sender() == childNode => event match {
       case Event1(_) => ??? // Simply throw an exception if control flow ever reaches this point -- which should never happen!
       case Event2(e1, e2) => handleEvent2(e1, e2)
