@@ -10,7 +10,8 @@ case class FilterNode(
     publishers: Map[String, ActorRef],
     frequencyMonitorFactory: MonitorFactory,
     latencyMonitorFactory: MonitorFactory,
-    callbackIfRoot: Option[Either[GraphCreated.type, Event] => Any])
+    createdCallback: Option[() => Any],
+    eventCallback: Option[(Event) => Any])
   extends Node {
 
   val childNode: ActorRef = createChildNode(1, query.sq)
@@ -19,17 +20,15 @@ case class FilterNode(
 
   val frequencyMonitor: UnaryNodeMonitor = frequencyMonitorFactory.createUnaryNodeMonitor
   val latencyMonitor: UnaryNodeMonitor = latencyMonitorFactory.createUnaryNodeMonitor
-  //val frequencyReqs: Set[FrequencyRequirement] = query.requirements collect { case fr: FrequencyRequirement => fr }
-  //val latencyReqs: Set[LatencyRequirement] = query.requirements collect { case lr: LatencyRequirement => lr }
 
-  def emitGraphCreated(): Unit = {
-    if (callbackIfRoot.isDefined) callbackIfRoot.get.apply(Left(GraphCreated)) else context.parent ! GraphCreated
+  def emitCreated(): Unit = {
+    if (createdCallback.isDefined) createdCallback.get.apply() else context.parent ! Created
     frequencyMonitor.onCreated(nodeData)
     latencyMonitor.onCreated(nodeData)
   }
 
   def emitEvent(event: Event): Unit = {
-    if (callbackIfRoot.isDefined) callbackIfRoot.get.apply(Right(event)) else context.parent ! event
+    if (eventCallback.isDefined) eventCallback.get.apply(event) else context.parent ! event
     frequencyMonitor.onEventEmit(event, nodeData)
     latencyMonitor.onEventEmit(event, nodeData)
   }
@@ -53,8 +52,8 @@ case class FilterNode(
     if (query.asInstanceOf[KeepEventsWith6[Any, Any, Any, Any, Any, Any]].cond(e1, e2, e3, e4, e5, e6)) emitEvent(Event6(e1, e2, e3, e4, e5, e6))
 
   override def receive: Receive = {
-    case GraphCreated if sender() == childNode =>
-      emitGraphCreated()
+    case Created if sender() == childNode =>
+      emitCreated()
     case event: Event if sender() == childNode => event match {
       case Event1(e1) => handleEvent1(e1)
       case Event2(e1, e2) => handleEvent2(e1, e2)
