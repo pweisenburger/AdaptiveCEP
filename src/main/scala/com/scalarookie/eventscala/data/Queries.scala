@@ -2,6 +2,8 @@ package com.scalarookie.eventscala.data
 
 import java.time.Duration
 
+import com.scalarookie.eventscala.data.Events.Event
+
 object Queries {
 
   sealed trait Operator
@@ -29,7 +31,7 @@ object Queries {
   sealed trait BinaryQuery extends Query { val sq1: Query; val sq2: Query }
 
   sealed trait StreamQuery   extends LeafQuery   { val publisherName: String }
-  sealed trait FilterQuery   extends UnaryQuery  // TODO Find a way to do sth like { val cond: A, ... => Boolean }!
+  sealed trait FilterQuery   extends UnaryQuery  { val cond: Event => Boolean }
   sealed trait SelectQuery   extends UnaryQuery
   sealed trait SelfJoinQuery extends UnaryQuery  { val w1: Window; val w2: Window }
   sealed trait JoinQuery     extends BinaryQuery { val w1: Window; val w2: Window }
@@ -48,12 +50,12 @@ object Queries {
   case class Stream5[A, B, C, D, E]    (publisherName: String, requirements: Set[Requirement]) extends Query5[A, B, C, D, E]    with StreamQuery
   case class Stream6[A, B, C, D, E, F] (publisherName: String, requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with StreamQuery
 
-  case class KeepEventsWith1[A]                (sq: Query1[A],                cond: (A) => Boolean,                requirements: Set[Requirement]) extends Query1[A]                with FilterQuery
-  case class KeepEventsWith2[A, B]             (sq: Query2[A, B],             cond: (A, B) => Boolean,             requirements: Set[Requirement]) extends Query2[A, B]             with FilterQuery
-  case class KeepEventsWith3[A, B, C]          (sq: Query3[A, B, C],          cond: (A, B, C) => Boolean,          requirements: Set[Requirement]) extends Query3[A, B, C]          with FilterQuery
-  case class KeepEventsWith4[A, B, C, D]       (sq: Query4[A, B, C, D],       cond: (A, B, C, D) => Boolean,       requirements: Set[Requirement]) extends Query4[A, B, C, D]       with FilterQuery
-  case class KeepEventsWith5[A, B, C, D, E]    (sq: Query5[A, B, C, D, E],    cond: (A, B, C, D, E) => Boolean,    requirements: Set[Requirement]) extends Query5[A, B, C, D, E]    with FilterQuery
-  case class KeepEventsWith6[A, B, C, D, E, F] (sq: Query6[A, B, C, D, E, F], cond: (A, B, C, D, E, F) => Boolean, requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with FilterQuery
+  case class KeepEventsWith1[A]                (sq: Query1[A],                cond: Event => Boolean, requirements: Set[Requirement]) extends Query1[A]                with FilterQuery
+  case class KeepEventsWith2[A, B]             (sq: Query2[A, B],             cond: Event => Boolean, requirements: Set[Requirement]) extends Query2[A, B]             with FilterQuery
+  case class KeepEventsWith3[A, B, C]          (sq: Query3[A, B, C],          cond: Event => Boolean, requirements: Set[Requirement]) extends Query3[A, B, C]          with FilterQuery
+  case class KeepEventsWith4[A, B, C, D]       (sq: Query4[A, B, C, D],       cond: Event => Boolean, requirements: Set[Requirement]) extends Query4[A, B, C, D]       with FilterQuery
+  case class KeepEventsWith5[A, B, C, D, E]    (sq: Query5[A, B, C, D, E],    cond: Event => Boolean, requirements: Set[Requirement]) extends Query5[A, B, C, D, E]    with FilterQuery
+  case class KeepEventsWith6[A, B, C, D, E, F] (sq: Query6[A, B, C, D, E, F], cond: Event => Boolean, requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with FilterQuery
 
   case class RemoveElement1Of2[A, B]             (sq: Query2[A, B],             requirements: Set[Requirement]) extends Query1[B]             with SelectQuery
   case class RemoveElement2Of2[A, B]             (sq: Query2[A, B],             requirements: Set[Requirement]) extends Query1[A]             with SelectQuery

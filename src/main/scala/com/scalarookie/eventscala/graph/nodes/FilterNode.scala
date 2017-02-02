@@ -33,35 +33,11 @@ case class FilterNode(
     latencyMonitor.onEventEmit(event, nodeData)
   }
 
-  def handleEvent1(e1: Any): Unit =
-    if (query.asInstanceOf[KeepEventsWith1[Any]].cond(e1)) emitEvent(Event1(e1))
-
-  def handleEvent2(e1: Any, e2: Any): Unit =
-    if (query.asInstanceOf[KeepEventsWith2[Any, Any]].cond(e1, e2)) emitEvent(Event2(e1, e2))
-
-  def handleEvent3(e1: Any, e2: Any, e3: Any): Unit =
-    if (query.asInstanceOf[KeepEventsWith3[Any, Any, Any]].cond(e1, e2, e3)) emitEvent(Event3(e1, e2, e3))
-
-  def handleEvent4(e1: Any, e2: Any, e3: Any, e4: Any): Unit =
-    if (query.asInstanceOf[KeepEventsWith4[Any, Any, Any, Any]].cond(e1, e2, e3, e4)) emitEvent(Event4(e1, e2, e3, e4))
-
-  def handleEvent5(e1: Any, e2: Any, e3: Any, e4: Any, e5: Any): Unit =
-    if (query.asInstanceOf[KeepEventsWith5[Any, Any, Any, Any, Any]].cond(e1, e2, e3, e4, e5)) emitEvent(Event5(e1, e2, e3, e4, e5))
-
-  def handleEvent6(e1: Any, e2: Any, e3: Any, e4: Any, e5: Any, e6: Any): Unit =
-    if (query.asInstanceOf[KeepEventsWith6[Any, Any, Any, Any, Any, Any]].cond(e1, e2, e3, e4, e5, e6)) emitEvent(Event6(e1, e2, e3, e4, e5, e6))
-
   override def receive: Receive = {
     case Created if sender() == childNode =>
       emitCreated()
-    case event: Event if sender() == childNode => event match {
-      case Event1(e1) => handleEvent1(e1)
-      case Event2(e1, e2) => handleEvent2(e1, e2)
-      case Event3(e1, e2, e3) => handleEvent3(e1, e2, e3)
-      case Event4(e1, e2, e3, e4) => handleEvent4(e1, e2, e3, e4)
-      case Event5(e1, e2, e3, e4, e5) => handleEvent5(e1, e2, e3, e4, e5)
-      case Event6(e1, e2, e3, e4, e5, e6) => handleEvent6(e1, e2, e3, e4, e5, e6)
-    }
+    case event: Event if sender() == childNode =>
+      if (query.cond(event)) emitEvent(event)
     case unhandledMessage =>
       frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
       latencyMonitor.onMessageReceive(unhandledMessage, nodeData)
