@@ -83,7 +83,7 @@ object GraphFactory {
       frequencyMonitorFactory,
       latencyMonitorFactory,
       createdCallback,
-      generalize(eventCallback))
+      toFunEventAny(eventCallback))
 
   def create[A, B](
       actorSystem: ActorSystem,
@@ -100,7 +100,7 @@ object GraphFactory {
       frequencyMonitorFactory,
       latencyMonitorFactory,
       createdCallback,
-      generalize(eventCallback))
+      toFunEventAny(eventCallback))
 
   def create[A, B, C](
       actorSystem: ActorSystem,
@@ -117,7 +117,7 @@ object GraphFactory {
       frequencyMonitorFactory,
       latencyMonitorFactory,
       createdCallback,
-      generalize(eventCallback))
+      toFunEventAny(eventCallback))
 
   def create[A, B, C, D](
       actorSystem: ActorSystem,
@@ -134,7 +134,7 @@ object GraphFactory {
       frequencyMonitorFactory,
       latencyMonitorFactory,
       createdCallback,
-      generalize(eventCallback))
+      toFunEventAny(eventCallback))
 
   def create[A, B, C, D, E](
       actorSystem: ActorSystem,
@@ -151,7 +151,7 @@ object GraphFactory {
       frequencyMonitorFactory,
       latencyMonitorFactory,
       createdCallback,
-      generalize(eventCallback))
+      toFunEventAny(eventCallback))
 
   def create[A, B, C, D, E, F](
       actorSystem: ActorSystem,
@@ -168,6 +168,6 @@ object GraphFactory {
       frequencyMonitorFactory,
       latencyMonitorFactory,
       createdCallback,
-      generalize(eventCallback))
+      toFunEventAny(eventCallback))
 
 }
