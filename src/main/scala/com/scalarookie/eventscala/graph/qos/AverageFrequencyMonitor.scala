@@ -15,8 +15,9 @@ trait AveragedFrequencyMonitor {
 
   var currentOutput: Option[Int] = None
 
-  def onCreated(nodeName: String, query: Query, context: ActorContext): Unit = {
+  def onCreated(name: String, query: Query, context: ActorContext): Unit = {
     val requirements: Set[FrequencyRequirement] = query.requirements.collect{ case fr: FrequencyRequirement => fr }
+    val callbackNodeData: NodeData = NodeData(name, query, context)
     currentOutput = Some(0)
     if (requirements.nonEmpty) {
       context.system.scheduler.schedule(
@@ -29,15 +30,15 @@ trait AveragedFrequencyMonitor {
             val divisor: Int = interval / requirement.seconds
             val frequency: Int = currentOutput.get / divisor
             if (logging) println(
-              s"FREQUENCY:\tOn average, node `$nodeName` emits $frequency events every ${requirement.seconds} seconds." +
+              s"FREQUENCY:\tOn average, node `$name` emits $frequency events every ${requirement.seconds} seconds." +
               s"(Calculated every $interval seconds.)")
             requirement.operator match {
-              case Equal =>        if (!(frequency == requirement.instances)) requirement.callback(nodeName)
-              case NotEqual =>     if (!(frequency != requirement.instances)) requirement.callback(nodeName)
-              case Greater =>      if (!(frequency >  requirement.instances)) requirement.callback(nodeName)
-              case GreaterEqual => if (!(frequency >= requirement.instances)) requirement.callback(nodeName)
-              case Smaller =>      if (!(frequency <  requirement.instances)) requirement.callback(nodeName)
-              case SmallerEqual => if (!(frequency <= requirement.instances)) requirement.callback(nodeName)
+              case Equal =>        if (!(frequency == requirement.instances)) requirement.callback(callbackNodeData)
+              case NotEqual =>     if (!(frequency != requirement.instances)) requirement.callback(callbackNodeData)
+              case Greater =>      if (!(frequency >  requirement.instances)) requirement.callback(callbackNodeData)
+              case GreaterEqual => if (!(frequency >= requirement.instances)) requirement.callback(callbackNodeData)
+              case Smaller =>      if (!(frequency <  requirement.instances)) requirement.callback(callbackNodeData)
+              case SmallerEqual => if (!(frequency <= requirement.instances)) requirement.callback(callbackNodeData)
             }
           })
           currentOutput = Some(0)

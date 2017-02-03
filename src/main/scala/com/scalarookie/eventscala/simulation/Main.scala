@@ -27,12 +27,12 @@ object Main extends App {
       slidingWindow(2.seconds))
     .keepEventsWith(_ < _)
     .removeElement1(
-      latency < timespan(1.milliseconds) otherwise { (name) => println(s"PROBLEM:\tEvents reach node `$name` too slow!") })
+      latency < timespan(1.milliseconds) otherwise { (nodeData) => println(s"PROBLEM:\tEvents reach node `${nodeData.name}` too slow!") })
     .selfJoin(
       tumblingWindow(1.instances),
       tumblingWindow(1.instances),
-      frequency > ratio( 3.instances,  5.seconds) otherwise { (name) => println(s"PROBLEM:\tNode `$name` emits too few events!") },
-      frequency < ratio(12.instances, 15.seconds) otherwise { (name) => println(s"PROBLEM:\tNode `$name` emits too many events!") })
+      frequency > ratio( 3.instances,  5.seconds) otherwise { (nodeData) => println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!") },
+      frequency < ratio(12.instances, 15.seconds) otherwise { (nodeData) => println(s"PROBLEM:\tNode `${nodeData.name}` emits too many events!") })
 
   val graph: ActorRef = GraphFactory.create(
     actorSystem =             actorSystem,
