@@ -50,7 +50,7 @@ object Dsl {
   }
 
   case class FrequencyHelper2(operator: Operator, ratio: Ratio) {
-    def otherwise(callback: String => Any): FrequencyRequirement =
+    def otherwise(callback: NodeData => Any): FrequencyRequirement =
       FrequencyRequirement(operator, ratio.instances.i, ratio.seconds.i, callback)
   }
 
@@ -74,7 +74,8 @@ object Dsl {
   }
 
   case class LatencyHelper2(operator: Operator, duration: Duration) {
-    def otherwise(callback: String => Any): LatencyRequirement = LatencyRequirement(operator, duration, callback)
+    def otherwise(callback: NodeData => Any): LatencyRequirement =
+      LatencyRequirement(operator, duration, callback)
   }
 
   // Windows

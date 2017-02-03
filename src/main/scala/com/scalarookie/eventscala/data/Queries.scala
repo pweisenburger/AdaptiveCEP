@@ -2,6 +2,7 @@ package com.scalarookie.eventscala.data
 
 import java.time.Duration
 
+import akka.actor.ActorContext
 import com.scalarookie.eventscala.data.Events.Event
 
 object Queries {
@@ -14,9 +15,11 @@ object Queries {
   case object Smaller      extends Operator
   case object SmallerEqual extends Operator
 
+  case class NodeData(name: String, query: Query, context: ActorContext)
+
   sealed trait Requirement
-  case class LatencyRequirement   (operator: Operator, duration: Duration,           callback: String => Any) extends Requirement
-  case class FrequencyRequirement (operator: Operator, instances: Int, seconds: Int, callback: String => Any) extends Requirement
+  case class LatencyRequirement   (operator: Operator, duration: Duration,           callback: NodeData => Any) extends Requirement
+  case class FrequencyRequirement (operator: Operator, instances: Int, seconds: Int, callback: NodeData => Any) extends Requirement
 
   sealed trait Window
   case class SlidingInstances  (instances: Int) extends Window
