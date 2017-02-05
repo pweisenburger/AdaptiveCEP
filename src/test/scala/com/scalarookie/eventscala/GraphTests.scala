@@ -6,7 +6,7 @@ import org.scalatest.{BeforeAndAfterAll, FunSuiteLike}
 import com.scalarookie.eventscala.data.Events._
 import com.scalarookie.eventscala.data.Queries._
 import com.scalarookie.eventscala.dsl.Dsl._
-import com.scalarookie.eventscala.graph.factory.GraphFactory
+import com.scalarookie.eventscala.graph.factory._
 import com.scalarookie.eventscala.publishers._
 import com.scalarookie.eventscala.graph.qos._
 
@@ -375,6 +375,46 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     expectMsg(Event5("i", true, "j", 5, 6))
     expectMsg(Event5("i", true, "j", 7, 8))
     stopActors(a, b, graph)
+  }
+
+  test("DisjunctionNode - 1") {
+    val a: ActorRef = createTestPublisher("A")
+    val b: ActorRef = createTestPublisher("B")
+    val query: Query2[Either[Int, String], Either[Int, String]] =
+      stream[Int, Int]("A")
+      .or(stream[String, String]("B"))
+    val graph: ActorRef = createTestGraph(query, Map("A" -> a, "B" -> b), testActor)
+    expectMsg(Created)
+    a ! Event2(21, 42)
+    Thread.sleep(2000)
+    b ! Event2("21", "42")
+    expectMsg(Event2(Left(21), Left(42)))
+    expectMsg(Event2(Right("21"), Right("42")))
+    stopActors(a, b, graph)
+  }
+
+  test("DisjunctionNode - 2") {
+    val a: ActorRef = createTestPublisher("A")
+    val b: ActorRef = createTestPublisher("B")
+    val c: ActorRef = createTestPublisher("C")
+    val query:
+      Query3[Either[Either[Int, String], Boolean],
+             Either[Either[Int, String], Boolean],
+             Either[Unit,                Boolean]] =
+      stream[Int, Int]("A")
+        .or(stream[String, String]("B"))
+        .or(stream[Boolean, Boolean, Boolean]("C"))
+    val graph: ActorRef = createTestGraph(query, Map("A" -> a, "B" -> b, "C" -> c), testActor)
+    expectMsg(Created)
+    a ! Event2(21, 42)
+    Thread.sleep(2000)
+    b ! Event2("21", "42")
+    Thread.sleep(2000)
+    c ! Event3(true, false, true)
+    expectMsg(Event3(Left(Left(21)), Left(Left(42)), Left(())))
+    expectMsg(Event3(Left(Right("21")), Left(Right("42")), Left(())))
+    expectMsg(Event3(Right(true), Right(false), Right(true)))
+    stopActors(a, b, c, graph)
   }
 
   test("Complex") {
