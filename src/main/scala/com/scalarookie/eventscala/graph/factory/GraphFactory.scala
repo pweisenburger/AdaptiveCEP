@@ -65,6 +65,16 @@ object GraphFactory {
           Some(createdCallback),
           Some(eventCallback))),
         "join")
+    case disjunctionQuery: DisjunctionQuery =>
+      actorSystem.actorOf(Props(
+        DisjunctionNode(
+          disjunctionQuery,
+          publishers,
+          frequencyMonitorFactory,
+          latencyMonitorFactory,
+          Some(createdCallback),
+          Some(eventCallback))),
+        "disjunction")
   }
 
   // Source: https://stackoverflow.com/questions/21147001/why-scala-doesnt-infer-type-from-generic-type-parameters

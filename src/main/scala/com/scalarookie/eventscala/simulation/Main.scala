@@ -35,7 +35,7 @@ object Main extends App {
       tumblingWindow(1.instances),
       frequency > ratio( 3.instances,  5.seconds) otherwise { (nodeData) => println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!") },
       frequency < ratio(12.instances, 15.seconds) otherwise { (nodeData) => println(s"PROBLEM:\tNode `${nodeData.name}` emits too many events!") })
-    .or(stream[String]("B"))
+    .or(stream[String]("C"))
 
   val graph: ActorRef = GraphFactory.create(
     actorSystem =             actorSystem,
