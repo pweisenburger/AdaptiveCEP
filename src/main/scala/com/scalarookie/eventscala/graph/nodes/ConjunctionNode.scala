@@ -7,10 +7,9 @@ import com.scalarookie.eventscala.data.Queries._
 import com.scalarookie.eventscala.graph.nodes.traits._
 import com.scalarookie.eventscala.graph.nodes.traits.EsperEngine._
 import com.scalarookie.eventscala.graph.qos._
-import JoinNode._
 
-case class JoinNode(
-    query: JoinQuery,
+case class ConjunctionNode(
+    query: ConjunctionQuery,
     publishers: Map[String, ActorRef],
     frequencyMonitorFactory: MonitorFactory,
     latencyMonitorFactory: MonitorFactory,
@@ -58,10 +57,7 @@ case class JoinNode(
   addEventType("sq1", createArrayOfNames(query.sq1), createArrayOfClasses(query.sq1))
   addEventType("sq2", createArrayOfNames(query.sq2), createArrayOfClasses(query.sq2))
 
-  val epStatement: EPStatement = createEpStatement(
-    s"select * from " +
-    s"sq1.${createWindowEplString(query.w1)} as sq1, " +
-    s"sq2.${createWindowEplString(query.w2)} as sq2")
+  val epStatement: EPStatement = createEpStatement("select * from pattern [every (sq1=sq1 and sq2=sq2)]")
 
   val updateListener: UpdateListener = (newEventBeans: Array[EventBean], _) => newEventBeans.foreach(eventBean => {
     val values: Array[Any] =
@@ -78,16 +74,5 @@ case class JoinNode(
   })
 
   epStatement.addListener(updateListener)
-
-}
-
-object JoinNode {
-
-  def createWindowEplString(window: Window): String = window match {
-    case SlidingInstances(instances) => s"win:length($instances)"
-    case TumblingInstances(instances) => s"win:length_batch($instances)"
-    case SlidingTime(seconds) => s"win:time($seconds)"
-    case TumblingTime(seconds) => s"win:time_batch($seconds)"
-  }
 
 }

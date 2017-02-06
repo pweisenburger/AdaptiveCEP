@@ -1,6 +1,7 @@
 package com.scalarookie.eventscala.graph.nodes.traits
 
 import com.espertech.esper.client._
+import com.scalarookie.eventscala.data.Queries._
 
 trait EsperEngine {
 
@@ -24,5 +25,36 @@ trait EsperEngine {
 
   def destroyServiceProvider(): Unit =
     serviceProvider.destroy()
+
+}
+
+object EsperEngine {
+
+  def createArrayOfNames(query: Query): Array[String] = query match {
+    case _: Query1[_] => Array("e1")
+    case _: Query2[_, _] => Array("e1", "e2")
+    case _: Query3[_, _, _] => Array("e1", "e2", "e3")
+    case _: Query4[_, _, _, _] => Array("e1", "e2", "e3", "e4")
+    case _: Query5[_, _, _, _, _] => Array("e1", "e2", "e3", "e4", "e5")
+    case _: Query6[_, _, _, _, _, _] => Array("e1", "e2", "e3", "e4", "e5", "e6")
+  }
+
+  def createArrayOfClasses(query: Query): Array[Class[_]] = {
+    val clazz: Class[_] = classOf[AnyRef]
+    query match {
+      case _: Query1[_] => Array(clazz)
+      case _: Query2[_, _] => Array(clazz, clazz)
+      case _: Query3[_, _, _] => Array(clazz, clazz, clazz)
+      case _: Query4[_, _, _, _] => Array(clazz, clazz, clazz, clazz)
+      case _: Query5[_, _, _, _, _] => Array(clazz, clazz, clazz, clazz, clazz)
+      case _: Query6[_, _, _, _, _, _] => Array(clazz, clazz, clazz, clazz, clazz, clazz)
+    }
+  }
+
+  def toAnyRef(any: Any): AnyRef = {
+    // Yep, you can do that!
+    // https://stackoverflow.com/questions/25931611/why-anyval-can-be-converted-into-anyref-at-run-time-in-scala
+    any.asInstanceOf[AnyRef]
+  }
 
 }
