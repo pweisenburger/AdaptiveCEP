@@ -5,6 +5,7 @@ import com.espertech.esper.client._
 import com.scalarookie.eventscala.data.Events._
 import com.scalarookie.eventscala.data.Queries._
 import com.scalarookie.eventscala.graph.nodes.traits._
+import com.scalarookie.eventscala.graph.nodes.traits.EsperEngine._
 import com.scalarookie.eventscala.graph.qos._
 import JoinNode._
 

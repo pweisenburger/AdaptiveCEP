@@ -68,6 +68,16 @@ trait Node extends Actor {
           None,
           None)),
         s"$name-$id-join")
+    case conjunctionQuery: ConjunctionQuery =>
+      context.actorOf(Props(
+        ConjunctionNode(
+          conjunctionQuery,
+          publishers,
+          frequencyMonitorFactory,
+          latencyMonitorFactory,
+          None,
+          None)),
+        s"$name-$id-conjunction")
     case disjunctionQuery: DisjunctionQuery =>
       context.actorOf(Props(
         DisjunctionNode(
