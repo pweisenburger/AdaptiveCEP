@@ -14,14 +14,16 @@ object Main extends App {
 
   val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id))),             "A")
   val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id * 2))),         "B")
-  val publisherC: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(s"String($id)"))), "C")
+  val publisherC: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id.toFloat))),     "C")
+  val publisherD: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(s"String($id)"))), "D")
 
   val publishers: Map[String, ActorRef] = Map(
     "A" -> publisherA,
     "B" -> publisherB,
-    "C" -> publisherC)
+    "C" -> publisherC,
+    "D" -> publisherD)
 
-  val sampleQuery: Query2[Either[Int, String], Either[Int, Unit]] =
+  val sampleQuery: Query3[Either[Int, String], Either[Int, X], Either[Float, X]] =
     stream[Int]("A")
     .join(
       stream[Int]("B"),
@@ -35,7 +37,8 @@ object Main extends App {
       tumblingWindow(1.instances),
       frequency > ratio( 3.instances,  5.seconds) otherwise { (nodeData) => println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!") },
       frequency < ratio(12.instances, 15.seconds) otherwise { (nodeData) => println(s"PROBLEM:\tNode `${nodeData.name}` emits too many events!") })
-    .or(stream[String]("C"))
+    .and(stream[Float]("C"))
+    .or(stream[String]("D"))
 
   val graph: ActorRef = GraphFactory.create(
     actorSystem =             actorSystem,
@@ -45,9 +48,9 @@ object Main extends App {
     latencyMonitorFactory =   PathLatencyMonitorFactory       (interval =  5, logging = true),
     createdCallback =         () => println("STATUS:\tGraph has been created."))(
     eventCallback =           {
-      case (Left(i1), Left(i2)) =>  println(s"COMPLEX EVENT:\tEvent2($i1,$i2)")
-      case (Right(s), _)        =>  println(s"COMPLEX EVENT:\tEvent1($s)")
-      case _ =>                     // This is necessary to avoid warnings about non-exhaustive `match`.
+      case (Left(i1), Left(i2), Left(f)) =>  println(s"COMPLEX EVENT:\tEvent3($i1,$i2,$f)")
+      case (Right(s), _, _)              =>  println(s"COMPLEX EVENT:\tEvent1($s)")
+      case _                             =>  // This is necessary to avoid warnings about non-exhaustive `match`.
     })
   
 }

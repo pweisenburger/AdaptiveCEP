@@ -38,6 +38,7 @@ object Queries {
   sealed trait SelectQuery      extends UnaryQuery
   sealed trait SelfJoinQuery    extends UnaryQuery  { val w1: Window; val w2: Window }
   sealed trait JoinQuery        extends BinaryQuery { val w1: Window; val w2: Window }
+  sealed trait ConjunctionQuery extends BinaryQuery
   sealed trait DisjunctionQuery extends BinaryQuery
 
   sealed trait Query1[A]                extends Query
@@ -101,6 +102,22 @@ object Queries {
   case class Join33[A, B, C, D, E, F] (sq1: Query3[A, B, C],       sq2: Query3[D, E, F],       w1: Window, w2: Window, requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with JoinQuery
   case class Join42[A, B, C, D, E, F] (sq1: Query4[A, B, C, D],    sq2: Query2[E, F],          w1: Window, w2: Window, requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with JoinQuery
   case class Join51[A, B, C, D, E, F] (sq1: Query5[A, B, C, D, E], sq2: Query1[F],             w1: Window, w2: Window, requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with JoinQuery
+
+  case class Conjunction11[A, B]             (sq1: Query1[A],             sq2: Query1[B],             requirements: Set[Requirement]) extends Query2[A, B]             with ConjunctionQuery
+  case class Conjunction12[A, B, C]          (sq1: Query1[A],             sq2: Query2[B, C],          requirements: Set[Requirement]) extends Query3[A, B, C]          with ConjunctionQuery
+  case class Conjunction21[A, B, C]          (sq1: Query2[A, B],          sq2: Query1[C],             requirements: Set[Requirement]) extends Query3[A, B, C]          with ConjunctionQuery
+  case class Conjunction13[A, B, C, D]       (sq1: Query1[A],             sq2: Query3[B, C, D],       requirements: Set[Requirement]) extends Query4[A, B, C, D]       with ConjunctionQuery
+  case class Conjunction22[A, B, C, D]       (sq1: Query2[A, B],          sq2: Query2[C, D],          requirements: Set[Requirement]) extends Query4[A, B, C, D]       with ConjunctionQuery
+  case class Conjunction31[A, B, C, D]       (sq1: Query3[A, B, C],       sq2: Query1[D],             requirements: Set[Requirement]) extends Query4[A, B, C, D]       with ConjunctionQuery
+  case class Conjunction14[A, B, C, D, E]    (sq1: Query1[A],             sq2: Query4[B, C, D, E],    requirements: Set[Requirement]) extends Query5[A, B, C, D, E]    with ConjunctionQuery
+  case class Conjunction23[A, B, C, D, E]    (sq1: Query2[A, B],          sq2: Query3[C, D, E],       requirements: Set[Requirement]) extends Query5[A, B, C, D, E]    with ConjunctionQuery
+  case class Conjunction32[A, B, C, D, E]    (sq1: Query3[A, B, C],       sq2: Query2[D, E],          requirements: Set[Requirement]) extends Query5[A, B, C, D, E]    with ConjunctionQuery
+  case class Conjunction41[A, B, C, D, E]    (sq1: Query4[A, B, C, D],    sq2: Query1[E],             requirements: Set[Requirement]) extends Query5[A, B, C, D, E]    with ConjunctionQuery
+  case class Conjunction15[A, B, C, D, E, F] (sq1: Query1[A],             sq2: Query5[B, C, D, E, F], requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with ConjunctionQuery
+  case class Conjunction24[A, B, C, D, E, F] (sq1: Query2[A, B],          sq2: Query4[C, D, E, F],    requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with ConjunctionQuery
+  case class Conjunction33[A, B, C, D, E, F] (sq1: Query3[A, B, C],       sq2: Query3[D, E, F],       requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with ConjunctionQuery
+  case class Conjunction42[A, B, C, D, E, F] (sq1: Query4[A, B, C, D],    sq2: Query2[E, F],          requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with ConjunctionQuery
+  case class Conjunction51[A, B, C, D, E, F] (sq1: Query5[A, B, C, D, E], sq2: Query1[F],             requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with ConjunctionQuery
 
   type X = Unit
   case class Disjunction11[A, B]                               (sq1: Query1[A],                sq2: Query1[B],                requirements: Set[Requirement]) extends Query1[Either[A, B]]                                                                       with DisjunctionQuery
