@@ -32,6 +32,22 @@ object Dsl {
 
   implicit def intToInstancesHelper(i: Int): InstancesHelper = InstancesHelper(i)
 
+  // Windows
+
+  def slidingWindow  (instances: Instances): Window = SlidingInstances  (instances.i)
+  def slidingWindow  (seconds: Seconds):     Window = SlidingTime       (seconds.i)
+  def tumblingWindow (instances: Instances): Window = TumblingInstances (instances.i)
+  def tumblingWindow (seconds: Seconds):     Window = TumblingTime      (seconds.i)
+
+  // NoReqStreams
+
+  def noReqStream[A]                (publisherName: String): NoReqStream1[A] =                NoReqStream1 (publisherName)
+  def noReqStream[A, B]             (publisherName: String): NoReqStream2[A, B] =             NoReqStream2 (publisherName)
+  def noReqStream[A, B, C]          (publisherName: String): NoReqStream3[A, B, C] =          NoReqStream3 (publisherName)
+  def noReqStream[A, B, C, D]       (publisherName: String): NoReqStream4[A, B, C, D] =       NoReqStream4 (publisherName)
+  def noReqStream[A, B, C, D, E]    (publisherName: String): NoReqStream5[A, B, C, D, E] =    NoReqStream5 (publisherName)
+  def noReqStream[A, B, C, D, E, F] (publisherName: String): NoReqStream6[A, B, C, D, E, F] = NoReqStream6 (publisherName)
+
   // FrequencyRequirement
 
   case class Ratio(instances: Instances, seconds: Seconds)
@@ -78,13 +94,6 @@ object Dsl {
       LatencyRequirement(operator, duration, callback)
   }
 
-  // Windows
-
-  def slidingWindow  (instances: Instances): Window = SlidingInstances  (instances.i)
-  def slidingWindow  (seconds: Seconds):     Window = SlidingTime       (seconds.i)
-  def tumblingWindow (instances: Instances): Window = TumblingInstances (instances.i)
-  def tumblingWindow (seconds: Seconds):     Window = TumblingTime      (seconds.i)
-
   // Streams
 
   def stream[A]                (publisherName: String, requirements: Requirement*): Query1[A] =                Stream1 (publisherName, requirements.toSet)
@@ -93,6 +102,61 @@ object Dsl {
   def stream[A, B, C, D]       (publisherName: String, requirements: Requirement*): Query4[A, B, C, D] =       Stream4 (publisherName, requirements.toSet)
   def stream[A, B, C, D, E]    (publisherName: String, requirements: Requirement*): Query5[A, B, C, D, E] =    Stream5 (publisherName, requirements.toSet)
   def stream[A, B, C, D, E, F] (publisherName: String, requirements: Requirement*): Query6[A, B, C, D, E, F] = Stream6 (publisherName, requirements.toSet)
+
+  // Sequences
+
+  case class Sequence1Helper[A](s: NoReqStream1[A]) {
+    def ->[B]             (s2: NoReqStream1[B]            ): (NoReqStream1[A], NoReqStream1[B]) =             (s, s2)
+    def ->[B, C]          (s2: NoReqStream2[B, C]         ): (NoReqStream1[A], NoReqStream2[B, C]) =          (s, s2)
+    def ->[B, C, D]       (s2: NoReqStream3[B, C, D]      ): (NoReqStream1[A], NoReqStream3[B, C, D]) =       (s, s2)
+    def ->[B, C, D, E]    (s2: NoReqStream4[B, C, D, E]   ): (NoReqStream1[A], NoReqStream4[B, C, D, E]) =    (s, s2)
+    def ->[B, C, D, E, F] (s2: NoReqStream5[B, C, D, E, F]): (NoReqStream1[A], NoReqStream5[B, C, D, E, F]) = (s, s2)
+  }
+
+  case class Sequence2Helper[A, B](s: NoReqStream2[A, B]) {
+    def ->[C]          (s2: NoReqStream1[C]         ): (NoReqStream2[A, B], NoReqStream1[C]) =          (s, s2)
+    def ->[C, D]       (s2: NoReqStream2[C, D]      ): (NoReqStream2[A, B], NoReqStream2[C, D]) =       (s, s2)
+    def ->[C, D, E]    (s2: NoReqStream3[C, D, E]   ): (NoReqStream2[A, B], NoReqStream3[C, D, E]) =    (s, s2)
+    def ->[C, D, E, F] (s2: NoReqStream4[C, D, E, F]): (NoReqStream2[A, B], NoReqStream4[C, D, E, F]) = (s, s2)
+  }
+
+  case class Sequence3Helper[A, B, C](s: NoReqStream3[A, B, C]) {
+    def ->[D]       (s2: NoReqStream1[D]      ): (NoReqStream3[A, B, C], NoReqStream1[D]) =       (s, s2)
+    def ->[D, E]    (s2: NoReqStream2[D, E]   ): (NoReqStream3[A, B, C], NoReqStream2[D, E]) =    (s, s2)
+    def ->[D, E, F] (s2: NoReqStream3[D, E, F]): (NoReqStream3[A, B, C], NoReqStream3[D, E, F]) = (s, s2)
+  }
+
+  case class Sequence4Helper[A, B, C, D](s: NoReqStream4[A, B, C, D]) {
+    def ->[E]    (s2: NoReqStream1[E]   ): (NoReqStream4[A, B, C, D], NoReqStream1[E]) =    (s, s2)
+    def ->[E, F] (s2: NoReqStream2[E, F]): (NoReqStream4[A, B, C, D], NoReqStream2[E, F]) = (s, s2)
+  }
+
+  case class Sequence5Helper[A, B, C, D, E](s: NoReqStream5[A, B, C, D, E]) {
+    def ->[F] (s2: NoReqStream1[F]): (NoReqStream5[A, B, C, D, E], NoReqStream1[F]) = (s, s2)
+  }
+
+  implicit def noReqStream1ToSequence1Helper[A]             (s: NoReqStream1[A]):             Sequence1Helper[A] =             Sequence1Helper(s)
+  implicit def noReqStream2ToSequence2Helper[A, B]          (s: NoReqStream2[A, B]):          Sequence2Helper[A, B] =          Sequence2Helper(s)
+  implicit def noReqStream3ToSequence3Helper[A, B, C]       (s: NoReqStream3[A, B, C]):       Sequence3Helper[A, B, C] =       Sequence3Helper(s)
+  implicit def noReqStream4ToSequence4Helper[A, B, C, D]    (s: NoReqStream4[A, B, C, D]):    Sequence4Helper[A, B, C, D] =    Sequence4Helper(s)
+  implicit def noReqStream5ToSequence5Helper[A, B, C, D, E] (s: NoReqStream5[A, B, C, D, E]): Sequence5Helper[A, B, C, D, E] = Sequence5Helper(s)
+
+  def sequence[A, B]             (tuple: (NoReqStream1[A],             NoReqStream1[B]),             requirements: Requirement*): Sequence11[A, B] =             Sequence11 (tuple._1, tuple._2, requirements.toSet)
+  def sequence[A, B, C]          (tuple: (NoReqStream1[A],             NoReqStream2[B, C]),          requirements: Requirement*): Sequence12[A, B, C] =          Sequence12 (tuple._1, tuple._2, requirements.toSet)
+  def sequence[A, B, C]          (tuple: (NoReqStream2[A, B],          NoReqStream1[C]),             requirements: Requirement*): Sequence21[A, B, C] =          Sequence21 (tuple._1, tuple._2, requirements.toSet)
+  def sequence[A, B, C, D]       (tuple: (NoReqStream1[A],             NoReqStream3[B, C, D]),       requirements: Requirement*): Sequence13[A, B, C, D] =       Sequence13 (tuple._1, tuple._2, requirements.toSet)
+  def sequence[A, B, C, D]       (tuple: (NoReqStream2[A, B],          NoReqStream2[C, D]),          requirements: Requirement*): Sequence22[A, B, C, D] =       Sequence22 (tuple._1, tuple._2, requirements.toSet)
+  def sequence[A, B, C, D]       (tuple: (NoReqStream3[A, B, C],       NoReqStream1[D]),             requirements: Requirement*): Sequence31[A, B, C, D] =       Sequence31 (tuple._1, tuple._2, requirements.toSet)
+  def sequence[A, B, C, D, E]    (tuple: (NoReqStream1[A],             NoReqStream4[B, C, D, E]),    requirements: Requirement*): Sequence14[A, B, C, D, E] =    Sequence14 (tuple._1, tuple._2, requirements.toSet)
+  def sequence[A, B, C, D, E]    (tuple: (NoReqStream2[A, B],          NoReqStream3[C, D, E]),       requirements: Requirement*): Sequence23[A, B, C, D, E] =    Sequence23 (tuple._1, tuple._2, requirements.toSet)
+  def sequence[A, B, C, D, E]    (tuple: (NoReqStream3[A, B, C],       NoReqStream2[D, E]),          requirements: Requirement*): Sequence32[A, B, C, D, E] =    Sequence32 (tuple._1, tuple._2, requirements.toSet)
+  def sequence[A, B, C, D, E]    (tuple: (NoReqStream4[A, B, C, D],    NoReqStream1[E]),             requirements: Requirement*): Sequence41[A, B, C, D, E] =    Sequence41 (tuple._1, tuple._2, requirements.toSet)
+  def sequence[A, B, C, D, E, F] (tuple: (NoReqStream1[A],             NoReqStream5[B, C, D, E, F]), requirements: Requirement*): Sequence15[A, B, C, D, E, F] = Sequence15 (tuple._1, tuple._2, requirements.toSet)
+  def sequence[A, B, C, D, E, F] (tuple: (NoReqStream2[A, B],          NoReqStream4[C, D, E, F]),    requirements: Requirement*): Sequence24[A, B, C, D, E, F] = Sequence24 (tuple._1, tuple._2, requirements.toSet)
+  def sequence[A, B, C, D, E, F] (tuple: (NoReqStream3[A, B, C],       NoReqStream3[D, E, F]),       requirements: Requirement*): Sequence33[A, B, C, D, E, F] = Sequence33 (tuple._1, tuple._2, requirements.toSet)
+  def sequence[A, B, C, D, E, F] (tuple: (NoReqStream4[A, B, C, D],    NoReqStream2[E, F]),          requirements: Requirement*): Sequence42[A, B, C, D, E, F] = Sequence42 (tuple._1, tuple._2, requirements.toSet)
+  def sequence[A, B, C, D, E, F] (tuple: (NoReqStream5[A, B, C, D, E], NoReqStream1[F]),             requirements: Requirement*): Sequence51[A, B, C, D, E, F] = Sequence51 (tuple._1, tuple._2, requirements.toSet)
+
 
   // Operators
 
