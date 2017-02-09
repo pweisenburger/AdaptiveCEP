@@ -3,9 +3,23 @@ package com.scalarookie.eventscala.data
 import java.time.Duration
 
 import akka.actor.ActorContext
-import com.scalarookie.eventscala.data.Events.Event
+import com.scalarookie.eventscala.data.Events._
 
 object Queries {
+
+  sealed trait NoReqStream
+  case class NoReqStream1[A]                (publisherName: String) extends NoReqStream
+  case class NoReqStream2[A, B]             (publisherName: String) extends NoReqStream
+  case class NoReqStream3[A, B, C]          (publisherName: String) extends NoReqStream
+  case class NoReqStream4[A, B, C, D]       (publisherName: String) extends NoReqStream
+  case class NoReqStream5[A, B, C, D, E]    (publisherName: String) extends NoReqStream
+  case class NoReqStream6[A, B, C, D, E, F] (publisherName: String) extends NoReqStream
+
+  sealed trait Window
+  case class SlidingInstances  (instances: Int) extends Window
+  case class TumblingInstances (instances: Int) extends Window
+  case class SlidingTime       (seconds: Int)   extends Window
+  case class TumblingTime      (seconds: Int)   extends Window
 
   sealed trait Operator
   case object Equal        extends Operator
@@ -21,12 +35,6 @@ object Queries {
   case class LatencyRequirement   (operator: Operator, duration: Duration,           callback: NodeData => Any) extends Requirement
   case class FrequencyRequirement (operator: Operator, instances: Int, seconds: Int, callback: NodeData => Any) extends Requirement
 
-  sealed trait Window
-  case class SlidingInstances  (instances: Int) extends Window
-  case class TumblingInstances (instances: Int) extends Window
-  case class SlidingTime       (seconds: Int)   extends Window
-  case class TumblingTime      (seconds: Int)   extends Window
-
   sealed trait Query { val requirements: Set[Requirement] }
 
   sealed trait LeafQuery   extends Query
@@ -34,6 +42,7 @@ object Queries {
   sealed trait BinaryQuery extends Query { val sq1: Query; val sq2: Query }
 
   sealed trait StreamQuery      extends LeafQuery   { val publisherName: String }
+  sealed trait SequenceQuery    extends LeafQuery   { val s1: NoReqStream; val s2: NoReqStream }
   sealed trait FilterQuery      extends UnaryQuery  { val cond: Event => Boolean }
   sealed trait SelectQuery      extends UnaryQuery
   sealed trait SelfJoinQuery    extends UnaryQuery  { val w1: Window; val w2: Window }
@@ -54,6 +63,22 @@ object Queries {
   case class Stream4[A, B, C, D]       (publisherName: String, requirements: Set[Requirement]) extends Query4[A, B, C, D]       with StreamQuery
   case class Stream5[A, B, C, D, E]    (publisherName: String, requirements: Set[Requirement]) extends Query5[A, B, C, D, E]    with StreamQuery
   case class Stream6[A, B, C, D, E, F] (publisherName: String, requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with StreamQuery
+
+  case class Sequence11[A, B]             (s1: NoReqStream1[A],             s2: NoReqStream1[B],             requirements: Set[Requirement]) extends Query2[A, B]             with SequenceQuery
+  case class Sequence12[A, B, C]          (s1: NoReqStream1[A],             s2: NoReqStream2[B, C],          requirements: Set[Requirement]) extends Query3[A, B, C]          with SequenceQuery
+  case class Sequence21[A, B, C]          (s1: NoReqStream2[A, B],          s2: NoReqStream1[C],             requirements: Set[Requirement]) extends Query3[A, B, C]          with SequenceQuery
+  case class Sequence13[A, B, C, D]       (s1: NoReqStream1[A],             s2: NoReqStream3[B, C, D],       requirements: Set[Requirement]) extends Query4[A, B, C, D]       with SequenceQuery
+  case class Sequence22[A, B, C, D]       (s1: NoReqStream2[A, B],          s2: NoReqStream2[C, D],          requirements: Set[Requirement]) extends Query4[A, B, C, D]       with SequenceQuery
+  case class Sequence31[A, B, C, D]       (s1: NoReqStream3[A, B, C],       s2: NoReqStream1[D],             requirements: Set[Requirement]) extends Query4[A, B, C, D]       with SequenceQuery
+  case class Sequence14[A, B, C, D, E]    (s1: NoReqStream1[A],             s2: NoReqStream4[B, C, D, E],    requirements: Set[Requirement]) extends Query5[A, B, C, D, E]    with SequenceQuery
+  case class Sequence23[A, B, C, D, E]    (s1: NoReqStream2[A, B],          s2: NoReqStream3[C, D, E],       requirements: Set[Requirement]) extends Query5[A, B, C, D, E]    with SequenceQuery
+  case class Sequence32[A, B, C, D, E]    (s1: NoReqStream3[A, B, C],       s2: NoReqStream2[D, E],          requirements: Set[Requirement]) extends Query5[A, B, C, D, E]    with SequenceQuery
+  case class Sequence41[A, B, C, D, E]    (s1: NoReqStream4[A, B, C, D],    s2: NoReqStream1[E],             requirements: Set[Requirement]) extends Query5[A, B, C, D, E]    with SequenceQuery
+  case class Sequence15[A, B, C, D, E, F] (s1: NoReqStream1[A],             s2: NoReqStream5[B, C, D, E, F], requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with SequenceQuery
+  case class Sequence24[A, B, C, D, E, F] (s1: NoReqStream2[A, B],          s2: NoReqStream4[C, D, E, F],    requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with SequenceQuery
+  case class Sequence33[A, B, C, D, E, F] (s1: NoReqStream3[A, B, C],       s2: NoReqStream3[D, E, F],       requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with SequenceQuery
+  case class Sequence42[A, B, C, D, E, F] (s1: NoReqStream4[A, B, C, D],    s2: NoReqStream2[E, F],          requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with SequenceQuery
+  case class Sequence51[A, B, C, D, E, F] (s1: NoReqStream5[A, B, C, D, E], s2: NoReqStream1[F],             requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with SequenceQuery
 
   case class KeepEventsWith1[A]                (sq: Query1[A],                cond: Event => Boolean, requirements: Set[Requirement]) extends Query1[A]                with FilterQuery
   case class KeepEventsWith2[A, B]             (sq: Query2[A, B],             cond: Event => Boolean, requirements: Set[Requirement]) extends Query2[A, B]             with FilterQuery
