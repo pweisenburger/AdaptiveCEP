@@ -87,12 +87,82 @@ object Dsl {
 
   // Streams
 
-  def stream[A]                (publisherName: String, requirements: Requirement*): Query1[A] =                Stream1 (publisherName, requirements.toSet)
-  def stream[A, B]             (publisherName: String, requirements: Requirement*): Query2[A, B] =             Stream2 (publisherName, requirements.toSet)
-  def stream[A, B, C]          (publisherName: String, requirements: Requirement*): Query3[A, B, C] =          Stream3 (publisherName, requirements.toSet)
-  def stream[A, B, C, D]       (publisherName: String, requirements: Requirement*): Query4[A, B, C, D] =       Stream4 (publisherName, requirements.toSet)
-  def stream[A, B, C, D, E]    (publisherName: String, requirements: Requirement*): Query5[A, B, C, D, E] =    Stream5 (publisherName, requirements.toSet)
-  def stream[A, B, C, D, E, F] (publisherName: String, requirements: Requirement*): Query6[A, B, C, D, E, F] = Stream6 (publisherName, requirements.toSet)
+  def stream[A]                (publisherName: String, requirements: Requirement*): Stream1[A] =                Stream1 (publisherName, requirements.toSet)
+  def stream[A, B]             (publisherName: String, requirements: Requirement*): Stream2[A, B] =             Stream2 (publisherName, requirements.toSet)
+  def stream[A, B, C]          (publisherName: String, requirements: Requirement*): Stream3[A, B, C] =          Stream3 (publisherName, requirements.toSet)
+  def stream[A, B, C, D]       (publisherName: String, requirements: Requirement*): Stream4[A, B, C, D] =       Stream4 (publisherName, requirements.toSet)
+  def stream[A, B, C, D, E]    (publisherName: String, requirements: Requirement*): Stream5[A, B, C, D, E] =    Stream5 (publisherName, requirements.toSet)
+  def stream[A, B, C, D, E, F] (publisherName: String, requirements: Requirement*): Stream6[A, B, C, D, E, F] = Stream6 (publisherName, requirements.toSet)
+
+  // Sequences
+
+  case class SequenceStreams11[A, B]             (s1: Stream1[A],             s2: Stream1[B])
+  case class SequenceStreams12[A, B, C]          (s1: Stream1[A],             s2: Stream2[B, C])
+  case class SequenceStreams21[A, B, C]          (s1: Stream2[A, B],          s2: Stream1[C])
+  case class SequenceStreams13[A, B, C, D]       (s1: Stream1[A],             s2: Stream3[B, C, D])
+  case class SequenceStreams22[A, B, C, D]       (s1: Stream2[A, B],          s2: Stream2[C, D])
+  case class SequenceStreams31[A, B, C, D]       (s1: Stream3[A, B, C],       s2: Stream1[D])
+  case class SequenceStreams14[A, B, C, D, E]    (s1: Stream1[A],             s2: Stream4[B, C, D, E])
+  case class SequenceStreams23[A, B, C, D, E]    (s1: Stream2[A, B],          s2: Stream3[C, D, E])
+  case class SequenceStreams32[A, B, C, D, E]    (s1: Stream3[A, B, C],       s2: Stream2[D, E])
+  case class SequenceStreams41[A, B, C, D, E]    (s1: Stream4[A, B, C, D],    s2: Stream1[E])
+  case class SequenceStreams15[A, B, C, D, E, F] (s1: Stream1[A],             s2: Stream5[B, C, D, E, F])
+  case class SequenceStreams24[A, B, C, D, E, F] (s1: Stream2[A, B],          s2: Stream4[C, D, E, F])
+  case class SequenceStreams33[A, B, C, D, E, F] (s1: Stream3[A, B, C],       s2: Stream3[D, E, F])
+  case class SequenceStreams42[A, B, C, D, E, F] (s1: Stream4[A, B, C, D],    s2: Stream2[E, F])
+  case class SequenceStreams51[A, B, C, D, E, F] (s1: Stream5[A, B, C, D, E], s2: Stream1[F])
+
+  def sequence[A, B]             (ss: SequenceStreams11[A, B],             requirements: Requirement*): Sequence11[A, B] =             Sequence11 (ss.s1, ss.s2, requirements.toSet)
+  def sequence[A, B, C]          (ss: SequenceStreams12[A, B, C],          requirements: Requirement*): Sequence12[A, B, C] =          Sequence12 (ss.s1, ss.s2, requirements.toSet)
+  def sequence[A, B, C]          (ss: SequenceStreams21[A, B, C],          requirements: Requirement*): Sequence21[A, B, C] =          Sequence21 (ss.s1, ss.s2, requirements.toSet)
+  def sequence[A, B, C, D]       (ss: SequenceStreams13[A, B, C, D],       requirements: Requirement*): Sequence13[A, B, C, D] =       Sequence13 (ss.s1, ss.s2, requirements.toSet)
+  def sequence[A, B, C, D]       (ss: SequenceStreams22[A, B, C, D],       requirements: Requirement*): Sequence22[A, B, C, D] =       Sequence22 (ss.s1, ss.s2, requirements.toSet)
+  def sequence[A, B, C, D]       (ss: SequenceStreams31[A, B, C, D],       requirements: Requirement*): Sequence31[A, B, C, D] =       Sequence31 (ss.s1, ss.s2, requirements.toSet)
+  def sequence[A, B, C, D, E]    (ss: SequenceStreams14[A, B, C, D, E],    requirements: Requirement*): Sequence14[A, B, C, D, E] =    Sequence14 (ss.s1, ss.s2, requirements.toSet)
+  def sequence[A, B, C, D, E]    (ss: SequenceStreams23[A, B, C, D, E],    requirements: Requirement*): Sequence23[A, B, C, D, E] =    Sequence23 (ss.s1, ss.s2, requirements.toSet)
+  def sequence[A, B, C, D, E]    (ss: SequenceStreams32[A, B, C, D, E],    requirements: Requirement*): Sequence32[A, B, C, D, E] =    Sequence32 (ss.s1, ss.s2, requirements.toSet)
+  def sequence[A, B, C, D, E]    (ss: SequenceStreams41[A, B, C, D, E],    requirements: Requirement*): Sequence41[A, B, C, D, E] =    Sequence41 (ss.s1, ss.s2, requirements.toSet)
+  def sequence[A, B, C, D, E, F] (ss: SequenceStreams15[A, B, C, D, E, F], requirements: Requirement*): Sequence15[A, B, C, D, E, F] = Sequence15 (ss.s1, ss.s2, requirements.toSet)
+  def sequence[A, B, C, D, E, F] (ss: SequenceStreams24[A, B, C, D, E, F], requirements: Requirement*): Sequence24[A, B, C, D, E, F] = Sequence24 (ss.s1, ss.s2, requirements.toSet)
+  def sequence[A, B, C, D, E, F] (ss: SequenceStreams33[A, B, C, D, E, F], requirements: Requirement*): Sequence33[A, B, C, D, E, F] = Sequence33 (ss.s1, ss.s2, requirements.toSet)
+  def sequence[A, B, C, D, E, F] (ss: SequenceStreams42[A, B, C, D, E, F], requirements: Requirement*): Sequence42[A, B, C, D, E, F] = Sequence42 (ss.s1, ss.s2, requirements.toSet)
+  def sequence[A, B, C, D, E, F] (ss: SequenceStreams51[A, B, C, D, E, F], requirements: Requirement*): Sequence51[A, B, C, D, E, F] = Sequence51 (ss.s1, ss.s2, requirements.toSet)
+
+  case class Sequence1Helper[A](s: Stream1[A]) {
+    def ->[B]             (s2: Stream1[B]            ): SequenceStreams11[A, B] =             SequenceStreams11 (s, s2)
+    def ->[B, C]          (s2: Stream2[B, C]         ): SequenceStreams12[A, B, C] =          SequenceStreams12 (s, s2)
+    def ->[B, C, D]       (s2: Stream3[B, C, D]      ): SequenceStreams13[A, B, C, D] =       SequenceStreams13 (s, s2)
+    def ->[B, C, D, E]    (s2: Stream4[B, C, D, E]   ): SequenceStreams14[A, B, C, D, E] =    SequenceStreams14 (s, s2)
+    def ->[B, C, D, E, F] (s2: Stream5[B, C, D, E, F]): SequenceStreams15[A, B, C, D, E, F] = SequenceStreams15 (s, s2)
+  }
+
+  case class Sequence2Helper[A, B](s: Stream2[A, B]) {
+    def ->[C]          (s2: Stream1[C]         ): SequenceStreams21[A, B, C] =          SequenceStreams21 (s, s2)
+    def ->[C, D]       (s2: Stream2[C, D]      ): SequenceStreams22[A, B, C, D] =       SequenceStreams22 (s, s2)
+    def ->[C, D, E]    (s2: Stream3[C, D, E]   ): SequenceStreams23[A, B, C, D, E] =    SequenceStreams23 (s, s2)
+    def ->[C, D, E, F] (s2: Stream4[C, D, E, F]): SequenceStreams24[A, B, C, D, E, F] = SequenceStreams24 (s, s2)
+  }
+
+  case class Sequence3Helper[A, B, C](s: Stream3[A, B, C]) {
+    def ->[D]       (s2: Stream1[D]      ): SequenceStreams31[A, B, C, D] =       SequenceStreams31 (s, s2)
+    def ->[D, E]    (s2: Stream2[D, E]   ): SequenceStreams32[A, B, C, D, E] =    SequenceStreams32 (s, s2)
+    def ->[D, E, F] (s2: Stream3[D, E, F]): SequenceStreams33[A, B, C, D, E, F] = SequenceStreams33 (s, s2)
+  }
+
+  case class Sequence4Helper[A, B, C, D](s: Stream4[A, B, C, D]) {
+    def ->[E]    (s2: Stream1[E]   ): SequenceStreams41[A, B, C, D, E] =    SequenceStreams41 (s, s2)
+    def ->[E, F] (s2: Stream2[E, F]): SequenceStreams42[A, B, C, D, E, F] = SequenceStreams42 (s, s2)
+  }
+
+  case class Sequence5Helper[A, B, C, D, E](s: Stream5[A, B, C, D, E]) {
+    def ->[F] (s2: Stream1[F]): SequenceStreams51[A, B, C, D, E, F] = SequenceStreams51 (s, s2)
+  }
+
+  implicit def stream1ToSequence1Helper[A](s: Stream1[A]): Sequence1Helper[A] = Sequence1Helper(s)
+  implicit def stream2ToSequence2Helper[A, B](s: Stream2[A, B]): Sequence2Helper[A, B] = Sequence2Helper(s)
+  implicit def stream3ToSequence3Helper[A, B, C](s: Stream3[A, B, C]): Sequence3Helper[A, B, C] = Sequence3Helper(s)
+  implicit def stream4ToSequence4Helper[A, B, C, D](s: Stream4[A, B, C, D]): Sequence4Helper[A, B, C, D] = Sequence4Helper(s)
+  implicit def stream5ToSequence5Helper[A, B, C, D, E](s: Stream5[A, B, C, D, E]): Sequence5Helper[A, B, C, D, E] = Sequence5Helper(s)
 
   // Operators
 
