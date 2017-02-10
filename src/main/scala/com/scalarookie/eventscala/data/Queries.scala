@@ -7,7 +7,7 @@ import com.scalarookie.eventscala.data.Events._
 
 object Queries {
 
-  sealed trait NoReqStream
+  sealed trait NoReqStream { val publisherName: String }
   case class NoReqStream1[A]                (publisherName: String) extends NoReqStream
   case class NoReqStream2[A, B]             (publisherName: String) extends NoReqStream
   case class NoReqStream3[A, B, C]          (publisherName: String) extends NoReqStream
