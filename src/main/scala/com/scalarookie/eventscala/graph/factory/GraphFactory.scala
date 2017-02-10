@@ -85,6 +85,16 @@ object GraphFactory {
           Some(createdCallback),
           Some(eventCallback))),
         "disjunction")
+    case sequenceQuery: SequenceQuery =>
+      actorSystem.actorOf(Props(
+        SequenceNode(
+          sequenceQuery,
+          publishers,
+          frequencyMonitorFactory,
+          latencyMonitorFactory,
+          Some(createdCallback),
+          Some(eventCallback))),
+        "sequence")
   }
 
   // Source: https://stackoverflow.com/questions/21147001/why-scala-doesnt-infer-type-from-generic-type-parameters
