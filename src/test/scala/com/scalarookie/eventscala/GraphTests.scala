@@ -452,6 +452,42 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     stopActors(a, b, c, graph)
   }
 
+  test("SequenceNode - 1") {
+    val a: ActorRef = createTestPublisher("A")
+    val b: ActorRef = createTestPublisher("B")
+    val query: Query4[Int, Int, String, String] =
+      sequence(noReqStream[Int, Int]("A") -> noReqStream[String, String]("B"))
+    val graph: ActorRef = createTestGraph(query, Map("A" -> a, "B" -> b), testActor)
+    expectMsg(Created)
+    a ! Event2(21, 42)
+    Thread.sleep(2000)
+    b ! Event2("21", "42")
+    expectMsg(Event4(21, 42, "21", "42"))
+    stopActors(a, b, graph)
+  }
+
+  test("SequenceNode - 2") {
+    val a: ActorRef = createTestPublisher("A")
+    val b: ActorRef = createTestPublisher("B")
+    val query: Query4[Int, Int, String, String] =
+      sequence(noReqStream[Int, Int]("A") -> noReqStream[String, String]("B"))
+    val graph: ActorRef = createTestGraph(query, Map("A" -> a, "B" -> b), testActor)
+    expectMsg(Created)
+    a ! Event2(1, 1)
+    Thread.sleep(2000)
+    a ! Event2(2, 2)
+    Thread.sleep(2000)
+    a ! Event2(3, 3)
+    Thread.sleep(2000)
+    b ! Event2("1", "1")
+    Thread.sleep(2000)
+    b ! Event2("2", "2")
+    Thread.sleep(2000)
+    b ! Event2("3", "3")
+    expectMsg(Event4(1, 1, "1", "1"))
+    stopActors(a, b, graph)
+  }
+
   test("Nested - SP operators") {
     val a: ActorRef = createTestPublisher("A")
     val b: ActorRef = createTestPublisher("B")
@@ -500,10 +536,10 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     val a: ActorRef = createTestPublisher("A")
     val b: ActorRef = createTestPublisher("B")
     val c: ActorRef = createTestPublisher("C")
-    val query: Query2[Either[Int, Boolean], Either[Float, X]] =
+    val query: Query2[Either[Int, Float], Either[Float, Boolean]] =
       stream[Int]("A")
       .and(stream[Float]("B"))
-      .or(stream[Boolean]("C"))
+      .or(sequence(noReqStream[Float]("B") -> noReqStream[Boolean]("C")))
     val graph: ActorRef = createTestGraph(query, Map("A" -> a, "B" -> b, "C" -> c), testActor)
     expectMsg(Created)
     a ! Event1(21)
@@ -514,7 +550,7 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     Thread.sleep(2000)
     c ! Event1(true)
     expectMsg(Event2(Left(21), Left(21.0f)))
-    expectMsg(Event2(Right(true), Right(())))
+    expectMsg(Event2(Right(21.0f), Right(true)))
     stopActors(a, b, graph)
   }
 
