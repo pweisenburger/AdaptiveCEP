@@ -39,13 +39,13 @@
 
 ### Some GitHub Markdown syntax (TO BE DELETED)
 
-    ```scala
-    val q: Query4[Int, String, String, Int] = 
-      stream[Int, String]("A")
-      .join(
-        stream[String, Int]("B"),
-        slidingWindow(3.seconds),
-        tumblingWindow(3.instances))
-    ```
+```scala
+val q: Query4[Int, String, String, Int] = 
+  stream[Int, String]("A")
+  .join(
+    stream[String, Int]("B"),
+    slidingWindow(3.seconds),
+    tumblingWindow(3.instances))
+```
 
-    ![EventScala](logo.png)
+![EventScala](logo.png)
