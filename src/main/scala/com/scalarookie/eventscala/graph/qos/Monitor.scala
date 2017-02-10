@@ -1,8 +1,8 @@
 package com.scalarookie.eventscala.graph.qos
 
 import akka.actor.{ActorContext, ActorRef}
-import com.scalarookie.eventscala.data.Queries._
 import com.scalarookie.eventscala.data.Events._
+import com.scalarookie.eventscala.data.Queries._
 
 case class LeafNodeData(name: String, query: Query, context: ActorContext)
 case class UnaryNodeData(name: String, query: Query, context: ActorContext, childNode: ActorRef)

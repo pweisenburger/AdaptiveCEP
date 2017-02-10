@@ -8,23 +8,29 @@ trait EsperEngine {
   val esperServiceProviderUri: String
 
   val configuration = new Configuration
-  // Using `lazy val`s here is inspired by https://www.lightbend.com/activator/template/akka-with-esper
+
+  // Using `lazy val`s here is inspired by Frank Sauer's template `akka-with-esper`:
+  // https://www.lightbend.com/activator/template/akka-with-esper
   lazy val serviceProvider: EPServiceProvider =
     EPServiceProviderManager.getProvider(esperServiceProviderUri, configuration)
   lazy val runtime: EPRuntime = serviceProvider.getEPRuntime
   lazy val administrator: EPAdministrator = serviceProvider.getEPAdministrator
 
-  def addEventType(eventTypeName: String, elementNames: Array[String], elementClasses: Array[Class[_]]): Unit =
+  def addEventType(eventTypeName: String, elementNames: Array[String], elementClasses: Array[Class[_]]): Unit = {
     configuration.addEventType(eventTypeName, elementNames, elementClasses.asInstanceOf[Array[AnyRef]])
+  }
 
-  def createEpStatement(eplString: String): EPStatement =
+  def createEpStatement(eplString: String): EPStatement = {
     administrator.createEPL(eplString)
+  }
 
-  def sendEvent(eventTypeName: String, eventAsArray: Array[AnyRef]): Unit =
+  def sendEvent(eventTypeName: String, eventAsArray: Array[AnyRef]): Unit = {
     runtime.sendEvent(eventAsArray, eventTypeName)
+  }
 
-  def destroyServiceProvider(): Unit =
+  def destroyServiceProvider(): Unit = {
     serviceProvider.destroy()
+  }
 
 }
 
@@ -52,7 +58,7 @@ object EsperEngine {
   }
 
   def toAnyRef(any: Any): AnyRef = {
-    // Yep, you can do that!
+    // Yep, an `AnyVal` can safely be cast to `AnyRef`:
     // https://stackoverflow.com/questions/25931611/why-anyval-can-be-converted-into-anyref-at-run-time-in-scala
     any.asInstanceOf[AnyRef]
   }

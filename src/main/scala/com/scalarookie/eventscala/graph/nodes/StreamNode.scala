@@ -4,8 +4,8 @@ import akka.actor.ActorRef
 import com.scalarookie.eventscala.data.Events._
 import com.scalarookie.eventscala.data.Queries._
 import com.scalarookie.eventscala.graph.nodes.traits._
-import com.scalarookie.eventscala.publishers.Publisher._
 import com.scalarookie.eventscala.graph.qos._
+import com.scalarookie.eventscala.publishers.Publisher._
 
 case class StreamNode(
     query: StreamQuery,

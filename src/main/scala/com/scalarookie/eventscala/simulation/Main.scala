@@ -29,8 +29,8 @@ object Main extends App {
       stream[Int]("B"),
       slidingWindow(2.seconds),
       slidingWindow(2.seconds))
-    .keepEventsWith(_ < _)
-    .removeElement1(
+    .where(_ < _)
+    .dropElem1(
       latency < timespan(1.milliseconds) otherwise { (nodeData) => println(s"PROBLEM:\tEvents reach node `${nodeData.name}` too slow!") })
     .selfJoin(
       tumblingWindow(1.instances),
@@ -45,7 +45,7 @@ object Main extends App {
     .and(stream[Int]("B"))
     .join(
       sequence(
-        noReqStream[Float]("C") -> noReqStream[String]("D"),
+        nStream[Float]("C") -> nStream[String]("D"),
         frequency > ratio(1.instances, 5.seconds) otherwise { (nodeData) => println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!") }),
       slidingWindow(3.seconds),
       slidingWindow(3.seconds),
@@ -60,12 +60,12 @@ object Main extends App {
     latencyMonitorFactory =   PathLatencyMonitorFactory       (interval =  5, logging = true),
     createdCallback =         () => println("STATUS:\tGraph has been created."))(
     eventCallback =           {
-      // Callback for `query1`
+      // Callback for `query1`:
       case (Left(i1), Left(i2), Left(f)) => println(s"COMPLEX EVENT:\tEvent3($i1,$i2,$f)")
       case (Right(s), _, _)              => println(s"COMPLEX EVENT:\tEvent1($s)")
-      // Callback for `query2`
+      // Callback for `query2`:
       // case (i1, i2, f, s)             => println(s"COMPLEX EVENT:\tEvent4($i1, $i2, $f,$s)")
-      // This is necessary to avoid warnings about non-exhaustive `match`.
+      // This is necessary to avoid warnings about non-exhaustive `match`:
       case _                             =>
     })
   
