@@ -4,8 +4,8 @@ import akka.actor.ActorRef
 import com.espertech.esper.client._
 import com.scalarookie.eventscala.data.Events._
 import com.scalarookie.eventscala.data.Queries._
-import com.scalarookie.eventscala.graph.nodes.traits.EsperEngine._
 import com.scalarookie.eventscala.graph.nodes.traits._
+import com.scalarookie.eventscala.graph.nodes.traits.EsperEngine._
 import com.scalarookie.eventscala.graph.qos._
 import com.scalarookie.eventscala.publishers.Publisher._
 
@@ -84,24 +84,22 @@ case class SequenceNode(
 
 object SequenceNode {
 
-  def createArrayOfNames(noReqStream: NoReqStream): Array[String] = noReqStream match {
-    case _: NoReqStream1[_] => Array("e1")
-    case _: NoReqStream2[_, _] => Array("e1", "e2")
-    case _: NoReqStream3[_, _, _] => Array("e1", "e2", "e3")
-    case _: NoReqStream4[_, _, _, _] => Array("e1", "e2", "e3", "e4")
-    case _: NoReqStream5[_, _, _, _, _] => Array("e1", "e2", "e3", "e4", "e5")
-    case _: NoReqStream6[_, _, _, _, _, _] => Array("e1", "e2", "e3", "e4", "e5", "e6")
+  def createArrayOfNames(noReqStream: NStream): Array[String] = noReqStream match {
+    case _: NStream1[_] => Array("e1")
+    case _: NStream2[_, _] => Array("e1", "e2")
+    case _: NStream3[_, _, _] => Array("e1", "e2", "e3")
+    case _: NStream4[_, _, _, _] => Array("e1", "e2", "e3", "e4")
+    case _: NStream5[_, _, _, _, _] => Array("e1", "e2", "e3", "e4", "e5")
   }
 
-  def createArrayOfClasses(noReqStream: NoReqStream): Array[Class[_]] = {
+  def createArrayOfClasses(noReqStream: NStream): Array[Class[_]] = {
     val clazz: Class[_] = classOf[AnyRef]
     noReqStream match {
-      case _: NoReqStream1[_] => Array(clazz)
-      case _: NoReqStream2[_, _] => Array(clazz, clazz)
-      case _: NoReqStream3[_, _, _] => Array(clazz, clazz, clazz)
-      case _: NoReqStream4[_, _, _, _] => Array(clazz, clazz, clazz, clazz)
-      case _: NoReqStream5[_, _, _, _, _] => Array(clazz, clazz, clazz, clazz, clazz)
-      case _: NoReqStream6[_, _, _, _, _, _] => Array(clazz, clazz, clazz, clazz, clazz, clazz)
+      case _: NStream1[_] => Array(clazz)
+      case _: NStream2[_, _] => Array(clazz, clazz)
+      case _: NStream3[_, _, _] => Array(clazz, clazz, clazz)
+      case _: NStream4[_, _, _, _] => Array(clazz, clazz, clazz, clazz)
+      case _: NStream5[_, _, _, _, _] => Array(clazz, clazz, clazz, clazz, clazz)
     }
   }
 

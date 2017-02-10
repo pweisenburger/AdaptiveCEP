@@ -1,8 +1,7 @@
 package com.scalarookie.eventscala.graph.qos
 
-import java.time.{Clock, Duration, Instant}
+import java.time._
 import java.util.concurrent.TimeUnit
-
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.FiniteDuration
 import akka.actor.ActorRef

@@ -3,7 +3,7 @@ package com.scalarookie.eventscala.graph.nodes.traits
 import akka.actor.{Actor, ActorRef, Props}
 import com.scalarookie.eventscala.data.Queries._
 import com.scalarookie.eventscala.graph.nodes._
-import com.scalarookie.eventscala.graph.qos.MonitorFactory
+import com.scalarookie.eventscala.graph.qos._
 
 trait Node extends Actor {
 
@@ -28,6 +28,16 @@ trait Node extends Actor {
           None,
           None)),
         s"$name-$id-stream")
+    case sequenceQuery: SequenceQuery =>
+      context.actorOf(Props(
+        SequenceNode(
+          sequenceQuery,
+          publishers,
+          frequencyMonitorFactory,
+          latencyMonitorFactory,
+          None,
+          None)),
+        s"$name-$id-sequence")
     case filterQuery: FilterQuery =>
       context.actorOf(Props(
         FilterNode(
@@ -38,16 +48,16 @@ trait Node extends Actor {
           None,
           None)),
         s"$name-$id-filter")
-    case selectQuery: SelectQuery =>
+    case dropElemQuery: DropElemQuery =>
       context.actorOf(Props(
-        SelectNode(
-          selectQuery,
+        DropElemNode(
+          dropElemQuery,
           publishers,
           frequencyMonitorFactory,
           latencyMonitorFactory,
           None,
           None)),
-        s"$name-$id-select")
+        s"$name-$id-dropelem")
     case selfJoinQuery: SelfJoinQuery =>
       context.actorOf(Props(
         SelfJoinNode(
@@ -88,16 +98,7 @@ trait Node extends Actor {
           None,
           None)),
         s"$name-$id-disjunction")
-    case sequenceQuery: SequenceQuery =>
-      context.actorOf(Props(
-        SequenceNode(
-          sequenceQuery,
-          publishers,
-          frequencyMonitorFactory,
-          latencyMonitorFactory,
-          None,
-          None)),
-        s"$name-$id-sequence")
+
   }
 
 }

@@ -25,6 +25,16 @@ object GraphFactory {
           Some(createdCallback),
           Some(eventCallback))),
         "stream")
+    case sequenceQuery: SequenceQuery =>
+      actorSystem.actorOf(Props(
+        SequenceNode(
+          sequenceQuery,
+          publishers,
+          frequencyMonitorFactory,
+          latencyMonitorFactory,
+          Some(createdCallback),
+          Some(eventCallback))),
+        "sequence")
     case filterQuery: FilterQuery =>
       actorSystem.actorOf(Props(
         FilterNode(
@@ -35,16 +45,16 @@ object GraphFactory {
           Some(createdCallback),
           Some(eventCallback))),
         "filter")
-    case selectQuery: SelectQuery =>
+    case dropElemQuery: DropElemQuery =>
       actorSystem.actorOf(Props(
-        SelectNode(
-          selectQuery,
+        DropElemNode(
+          dropElemQuery,
           publishers,
           frequencyMonitorFactory,
           latencyMonitorFactory,
           Some(createdCallback),
           Some(eventCallback))),
-        "select")
+        "dropelem")
     case selfJoinQuery: SelfJoinQuery =>
       actorSystem.actorOf(Props(
         SelfJoinNode(
@@ -85,19 +95,10 @@ object GraphFactory {
           Some(createdCallback),
           Some(eventCallback))),
         "disjunction")
-    case sequenceQuery: SequenceQuery =>
-      actorSystem.actorOf(Props(
-        SequenceNode(
-          sequenceQuery,
-          publishers,
-          frequencyMonitorFactory,
-          latencyMonitorFactory,
-          Some(createdCallback),
-          Some(eventCallback))),
-        "sequence")
   }
 
-  // Source: https://stackoverflow.com/questions/21147001/why-scala-doesnt-infer-type-from-generic-type-parameters
+  // This is why `eventCallback` is listed separately:
+  // https://stackoverflow.com/questions/21147001/why-scala-doesnt-infer-type-from-generic-type-parameters
   def create[A](
       actorSystem: ActorSystem,
       query: Query1[A],

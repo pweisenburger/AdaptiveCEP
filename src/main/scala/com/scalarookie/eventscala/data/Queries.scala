@@ -1,19 +1,17 @@
 package com.scalarookie.eventscala.data
 
 import java.time.Duration
-
 import akka.actor.ActorContext
 import com.scalarookie.eventscala.data.Events._
 
 object Queries {
 
-  sealed trait NoReqStream { val publisherName: String }
-  case class NoReqStream1[A]                (publisherName: String) extends NoReqStream
-  case class NoReqStream2[A, B]             (publisherName: String) extends NoReqStream
-  case class NoReqStream3[A, B, C]          (publisherName: String) extends NoReqStream
-  case class NoReqStream4[A, B, C, D]       (publisherName: String) extends NoReqStream
-  case class NoReqStream5[A, B, C, D, E]    (publisherName: String) extends NoReqStream
-  case class NoReqStream6[A, B, C, D, E, F] (publisherName: String) extends NoReqStream
+  sealed trait NStream { val publisherName: String }
+  case class NStream1[A]                (publisherName: String) extends NStream
+  case class NStream2[A, B]             (publisherName: String) extends NStream
+  case class NStream3[A, B, C]          (publisherName: String) extends NStream
+  case class NStream4[A, B, C, D]       (publisherName: String) extends NStream
+  case class NStream5[A, B, C, D, E]    (publisherName: String) extends NStream
 
   sealed trait Window
   case class SlidingInstances  (instances: Int) extends Window
@@ -42,9 +40,9 @@ object Queries {
   sealed trait BinaryQuery extends Query { val sq1: Query; val sq2: Query }
 
   sealed trait StreamQuery      extends LeafQuery   { val publisherName: String }
-  sealed trait SequenceQuery    extends LeafQuery   { val s1: NoReqStream; val s2: NoReqStream }
+  sealed trait SequenceQuery    extends LeafQuery   { val s1: NStream; val s2: NStream }
   sealed trait FilterQuery      extends UnaryQuery  { val cond: Event => Boolean }
-  sealed trait SelectQuery      extends UnaryQuery
+  sealed trait DropElemQuery    extends UnaryQuery
   sealed trait SelfJoinQuery    extends UnaryQuery  { val w1: Window; val w2: Window }
   sealed trait JoinQuery        extends BinaryQuery { val w1: Window; val w2: Window }
   sealed trait ConjunctionQuery extends BinaryQuery
@@ -64,49 +62,49 @@ object Queries {
   case class Stream5[A, B, C, D, E]    (publisherName: String, requirements: Set[Requirement]) extends Query5[A, B, C, D, E]    with StreamQuery
   case class Stream6[A, B, C, D, E, F] (publisherName: String, requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with StreamQuery
 
-  case class Sequence11[A, B]             (s1: NoReqStream1[A],             s2: NoReqStream1[B],             requirements: Set[Requirement]) extends Query2[A, B]             with SequenceQuery
-  case class Sequence12[A, B, C]          (s1: NoReqStream1[A],             s2: NoReqStream2[B, C],          requirements: Set[Requirement]) extends Query3[A, B, C]          with SequenceQuery
-  case class Sequence21[A, B, C]          (s1: NoReqStream2[A, B],          s2: NoReqStream1[C],             requirements: Set[Requirement]) extends Query3[A, B, C]          with SequenceQuery
-  case class Sequence13[A, B, C, D]       (s1: NoReqStream1[A],             s2: NoReqStream3[B, C, D],       requirements: Set[Requirement]) extends Query4[A, B, C, D]       with SequenceQuery
-  case class Sequence22[A, B, C, D]       (s1: NoReqStream2[A, B],          s2: NoReqStream2[C, D],          requirements: Set[Requirement]) extends Query4[A, B, C, D]       with SequenceQuery
-  case class Sequence31[A, B, C, D]       (s1: NoReqStream3[A, B, C],       s2: NoReqStream1[D],             requirements: Set[Requirement]) extends Query4[A, B, C, D]       with SequenceQuery
-  case class Sequence14[A, B, C, D, E]    (s1: NoReqStream1[A],             s2: NoReqStream4[B, C, D, E],    requirements: Set[Requirement]) extends Query5[A, B, C, D, E]    with SequenceQuery
-  case class Sequence23[A, B, C, D, E]    (s1: NoReqStream2[A, B],          s2: NoReqStream3[C, D, E],       requirements: Set[Requirement]) extends Query5[A, B, C, D, E]    with SequenceQuery
-  case class Sequence32[A, B, C, D, E]    (s1: NoReqStream3[A, B, C],       s2: NoReqStream2[D, E],          requirements: Set[Requirement]) extends Query5[A, B, C, D, E]    with SequenceQuery
-  case class Sequence41[A, B, C, D, E]    (s1: NoReqStream4[A, B, C, D],    s2: NoReqStream1[E],             requirements: Set[Requirement]) extends Query5[A, B, C, D, E]    with SequenceQuery
-  case class Sequence15[A, B, C, D, E, F] (s1: NoReqStream1[A],             s2: NoReqStream5[B, C, D, E, F], requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with SequenceQuery
-  case class Sequence24[A, B, C, D, E, F] (s1: NoReqStream2[A, B],          s2: NoReqStream4[C, D, E, F],    requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with SequenceQuery
-  case class Sequence33[A, B, C, D, E, F] (s1: NoReqStream3[A, B, C],       s2: NoReqStream3[D, E, F],       requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with SequenceQuery
-  case class Sequence42[A, B, C, D, E, F] (s1: NoReqStream4[A, B, C, D],    s2: NoReqStream2[E, F],          requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with SequenceQuery
-  case class Sequence51[A, B, C, D, E, F] (s1: NoReqStream5[A, B, C, D, E], s2: NoReqStream1[F],             requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with SequenceQuery
+  case class Sequence11[A, B]             (s1: NStream1[A],             s2: NStream1[B],             requirements: Set[Requirement]) extends Query2[A, B]             with SequenceQuery
+  case class Sequence12[A, B, C]          (s1: NStream1[A],             s2: NStream2[B, C],          requirements: Set[Requirement]) extends Query3[A, B, C]          with SequenceQuery
+  case class Sequence21[A, B, C]          (s1: NStream2[A, B],          s2: NStream1[C],             requirements: Set[Requirement]) extends Query3[A, B, C]          with SequenceQuery
+  case class Sequence13[A, B, C, D]       (s1: NStream1[A],             s2: NStream3[B, C, D],       requirements: Set[Requirement]) extends Query4[A, B, C, D]       with SequenceQuery
+  case class Sequence22[A, B, C, D]       (s1: NStream2[A, B],          s2: NStream2[C, D],          requirements: Set[Requirement]) extends Query4[A, B, C, D]       with SequenceQuery
+  case class Sequence31[A, B, C, D]       (s1: NStream3[A, B, C],       s2: NStream1[D],             requirements: Set[Requirement]) extends Query4[A, B, C, D]       with SequenceQuery
+  case class Sequence14[A, B, C, D, E]    (s1: NStream1[A],             s2: NStream4[B, C, D, E],    requirements: Set[Requirement]) extends Query5[A, B, C, D, E]    with SequenceQuery
+  case class Sequence23[A, B, C, D, E]    (s1: NStream2[A, B],          s2: NStream3[C, D, E],       requirements: Set[Requirement]) extends Query5[A, B, C, D, E]    with SequenceQuery
+  case class Sequence32[A, B, C, D, E]    (s1: NStream3[A, B, C],       s2: NStream2[D, E],          requirements: Set[Requirement]) extends Query5[A, B, C, D, E]    with SequenceQuery
+  case class Sequence41[A, B, C, D, E]    (s1: NStream4[A, B, C, D],    s2: NStream1[E],             requirements: Set[Requirement]) extends Query5[A, B, C, D, E]    with SequenceQuery
+  case class Sequence15[A, B, C, D, E, F] (s1: NStream1[A],             s2: NStream5[B, C, D, E, F], requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with SequenceQuery
+  case class Sequence24[A, B, C, D, E, F] (s1: NStream2[A, B],          s2: NStream4[C, D, E, F],    requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with SequenceQuery
+  case class Sequence33[A, B, C, D, E, F] (s1: NStream3[A, B, C],       s2: NStream3[D, E, F],       requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with SequenceQuery
+  case class Sequence42[A, B, C, D, E, F] (s1: NStream4[A, B, C, D],    s2: NStream2[E, F],          requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with SequenceQuery
+  case class Sequence51[A, B, C, D, E, F] (s1: NStream5[A, B, C, D, E], s2: NStream1[F],             requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with SequenceQuery
 
-  case class KeepEventsWith1[A]                (sq: Query1[A],                cond: Event => Boolean, requirements: Set[Requirement]) extends Query1[A]                with FilterQuery
-  case class KeepEventsWith2[A, B]             (sq: Query2[A, B],             cond: Event => Boolean, requirements: Set[Requirement]) extends Query2[A, B]             with FilterQuery
-  case class KeepEventsWith3[A, B, C]          (sq: Query3[A, B, C],          cond: Event => Boolean, requirements: Set[Requirement]) extends Query3[A, B, C]          with FilterQuery
-  case class KeepEventsWith4[A, B, C, D]       (sq: Query4[A, B, C, D],       cond: Event => Boolean, requirements: Set[Requirement]) extends Query4[A, B, C, D]       with FilterQuery
-  case class KeepEventsWith5[A, B, C, D, E]    (sq: Query5[A, B, C, D, E],    cond: Event => Boolean, requirements: Set[Requirement]) extends Query5[A, B, C, D, E]    with FilterQuery
-  case class KeepEventsWith6[A, B, C, D, E, F] (sq: Query6[A, B, C, D, E, F], cond: Event => Boolean, requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with FilterQuery
+  case class Filter1[A]                (sq: Query1[A],                cond: Event => Boolean, requirements: Set[Requirement]) extends Query1[A]                with FilterQuery
+  case class Filter2[A, B]             (sq: Query2[A, B],             cond: Event => Boolean, requirements: Set[Requirement]) extends Query2[A, B]             with FilterQuery
+  case class Filter3[A, B, C]          (sq: Query3[A, B, C],          cond: Event => Boolean, requirements: Set[Requirement]) extends Query3[A, B, C]          with FilterQuery
+  case class Filter4[A, B, C, D]       (sq: Query4[A, B, C, D],       cond: Event => Boolean, requirements: Set[Requirement]) extends Query4[A, B, C, D]       with FilterQuery
+  case class Filter5[A, B, C, D, E]    (sq: Query5[A, B, C, D, E],    cond: Event => Boolean, requirements: Set[Requirement]) extends Query5[A, B, C, D, E]    with FilterQuery
+  case class Filter6[A, B, C, D, E, F] (sq: Query6[A, B, C, D, E, F], cond: Event => Boolean, requirements: Set[Requirement]) extends Query6[A, B, C, D, E, F] with FilterQuery
 
-  case class RemoveElement1Of2[A, B]             (sq: Query2[A, B],             requirements: Set[Requirement]) extends Query1[B]             with SelectQuery
-  case class RemoveElement2Of2[A, B]             (sq: Query2[A, B],             requirements: Set[Requirement]) extends Query1[A]             with SelectQuery
-  case class RemoveElement1Of3[A, B, C]          (sq: Query3[A, B, C],          requirements: Set[Requirement]) extends Query2[B, C]          with SelectQuery
-  case class RemoveElement2Of3[A, B, C]          (sq: Query3[A, B, C],          requirements: Set[Requirement]) extends Query2[A, C]          with SelectQuery
-  case class RemoveElement3Of3[A, B, C]          (sq: Query3[A, B, C],          requirements: Set[Requirement]) extends Query2[A, B]          with SelectQuery
-  case class RemoveElement1Of4[A, B, C, D]       (sq: Query4[A, B, C, D],       requirements: Set[Requirement]) extends Query3[B, C, D]       with SelectQuery
-  case class RemoveElement2Of4[A, B, C, D]       (sq: Query4[A, B, C, D],       requirements: Set[Requirement]) extends Query3[A, C, D]       with SelectQuery
-  case class RemoveElement3Of4[A, B, C, D]       (sq: Query4[A, B, C, D],       requirements: Set[Requirement]) extends Query3[A, B, D]       with SelectQuery
-  case class RemoveElement4Of4[A, B, C, D]       (sq: Query4[A, B, C, D],       requirements: Set[Requirement]) extends Query3[A, B, C]       with SelectQuery
-  case class RemoveElement1Of5[A, B, C, D, E]    (sq: Query5[A, B, C, D, E],    requirements: Set[Requirement]) extends Query4[B, C, D, E]    with SelectQuery
-  case class RemoveElement2Of5[A, B, C, D, E]    (sq: Query5[A, B, C, D, E],    requirements: Set[Requirement]) extends Query4[A, C, D, E]    with SelectQuery
-  case class RemoveElement3Of5[A, B, C, D, E]    (sq: Query5[A, B, C, D, E],    requirements: Set[Requirement]) extends Query4[A, B, D, E]    with SelectQuery
-  case class RemoveElement4Of5[A, B, C, D, E]    (sq: Query5[A, B, C, D, E],    requirements: Set[Requirement]) extends Query4[A, B, C, E]    with SelectQuery
-  case class RemoveElement5Of5[A, B, C, D, E]    (sq: Query5[A, B, C, D, E],    requirements: Set[Requirement]) extends Query4[A, B, C, D]    with SelectQuery
-  case class RemoveElement1Of6[A, B, C, D, E, F] (sq: Query6[A, B, C, D, E, F], requirements: Set[Requirement]) extends Query5[B, C, D, E, F] with SelectQuery
-  case class RemoveElement2Of6[A, B, C, D, E, F] (sq: Query6[A, B, C, D, E, F], requirements: Set[Requirement]) extends Query5[A, C, D, E, F] with SelectQuery
-  case class RemoveElement3Of6[A, B, C, D, E, F] (sq: Query6[A, B, C, D, E, F], requirements: Set[Requirement]) extends Query5[A, B, D, E, F] with SelectQuery
-  case class RemoveElement4Of6[A, B, C, D, E, F] (sq: Query6[A, B, C, D, E, F], requirements: Set[Requirement]) extends Query5[A, B, C, E, F] with SelectQuery
-  case class RemoveElement5Of6[A, B, C, D, E, F] (sq: Query6[A, B, C, D, E, F], requirements: Set[Requirement]) extends Query5[A, B, C, D, F] with SelectQuery
-  case class RemoveElement6Of6[A, B, C, D, E, F] (sq: Query6[A, B, C, D, E, F], requirements: Set[Requirement]) extends Query5[A, B, C, D, E] with SelectQuery
+  case class DropElem1Of2[A, B]             (sq: Query2[A, B],             requirements: Set[Requirement]) extends Query1[B]             with DropElemQuery
+  case class DropElem2Of2[A, B]             (sq: Query2[A, B],             requirements: Set[Requirement]) extends Query1[A]             with DropElemQuery
+  case class DropElem1Of3[A, B, C]          (sq: Query3[A, B, C],          requirements: Set[Requirement]) extends Query2[B, C]          with DropElemQuery
+  case class DropElem2Of3[A, B, C]          (sq: Query3[A, B, C],          requirements: Set[Requirement]) extends Query2[A, C]          with DropElemQuery
+  case class DropElem3Of3[A, B, C]          (sq: Query3[A, B, C],          requirements: Set[Requirement]) extends Query2[A, B]          with DropElemQuery
+  case class DropElem1Of4[A, B, C, D]       (sq: Query4[A, B, C, D],       requirements: Set[Requirement]) extends Query3[B, C, D]       with DropElemQuery
+  case class DropElem2Of4[A, B, C, D]       (sq: Query4[A, B, C, D],       requirements: Set[Requirement]) extends Query3[A, C, D]       with DropElemQuery
+  case class DropElem3Of4[A, B, C, D]       (sq: Query4[A, B, C, D],       requirements: Set[Requirement]) extends Query3[A, B, D]       with DropElemQuery
+  case class DropElem4Of4[A, B, C, D]       (sq: Query4[A, B, C, D],       requirements: Set[Requirement]) extends Query3[A, B, C]       with DropElemQuery
+  case class DropElem1Of5[A, B, C, D, E]    (sq: Query5[A, B, C, D, E],    requirements: Set[Requirement]) extends Query4[B, C, D, E]    with DropElemQuery
+  case class DropElem2Of5[A, B, C, D, E]    (sq: Query5[A, B, C, D, E],    requirements: Set[Requirement]) extends Query4[A, C, D, E]    with DropElemQuery
+  case class DropElem3Of5[A, B, C, D, E]    (sq: Query5[A, B, C, D, E],    requirements: Set[Requirement]) extends Query4[A, B, D, E]    with DropElemQuery
+  case class DropElem4Of5[A, B, C, D, E]    (sq: Query5[A, B, C, D, E],    requirements: Set[Requirement]) extends Query4[A, B, C, E]    with DropElemQuery
+  case class DropElem5Of5[A, B, C, D, E]    (sq: Query5[A, B, C, D, E],    requirements: Set[Requirement]) extends Query4[A, B, C, D]    with DropElemQuery
+  case class DropElem1Of6[A, B, C, D, E, F] (sq: Query6[A, B, C, D, E, F], requirements: Set[Requirement]) extends Query5[B, C, D, E, F] with DropElemQuery
+  case class DropElem2Of6[A, B, C, D, E, F] (sq: Query6[A, B, C, D, E, F], requirements: Set[Requirement]) extends Query5[A, C, D, E, F] with DropElemQuery
+  case class DropElem3Of6[A, B, C, D, E, F] (sq: Query6[A, B, C, D, E, F], requirements: Set[Requirement]) extends Query5[A, B, D, E, F] with DropElemQuery
+  case class DropElem4Of6[A, B, C, D, E, F] (sq: Query6[A, B, C, D, E, F], requirements: Set[Requirement]) extends Query5[A, B, C, E, F] with DropElemQuery
+  case class DropElem5Of6[A, B, C, D, E, F] (sq: Query6[A, B, C, D, E, F], requirements: Set[Requirement]) extends Query5[A, B, C, D, F] with DropElemQuery
+  case class DropElem6Of6[A, B, C, D, E, F] (sq: Query6[A, B, C, D, E, F], requirements: Set[Requirement]) extends Query5[A, B, C, D, E] with DropElemQuery
 
   case class SelfJoin11[A]       (sq: Query1[A],       w1: Window, w2: Window, requirements: Set[Requirement]) extends Query2[A, A]             with SelfJoinQuery
   case class SelfJoin22[A, B]    (sq: Query2[A, B],    w1: Window, w2: Window, requirements: Set[Requirement]) extends Query4[A, B, A, B]       with SelfJoinQuery

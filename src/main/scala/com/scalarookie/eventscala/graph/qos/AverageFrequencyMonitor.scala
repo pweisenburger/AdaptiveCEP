@@ -1,11 +1,10 @@
 package com.scalarookie.eventscala.graph.qos
 
 import java.util.concurrent.TimeUnit
-
-import akka.actor.ActorContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.FiniteDuration
-import com.scalarookie.eventscala.data.Events.Event
+import akka.actor.ActorContext
+import com.scalarookie.eventscala.data.Events._
 import com.scalarookie.eventscala.data.Queries._
 
 trait AveragedFrequencyMonitor {
