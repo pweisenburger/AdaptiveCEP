@@ -7,15 +7,15 @@
 ### Table of Contents
 + [1 Introduction](#1-introduction)
 + [2 State of the Art](#2-state-of-the-art)
-  + [2.1 Overview](#21-overview)
-  + [2.2 Language Integration](#22-language-integration)
-  + [2.3 Distributed Execution](#23-distributed-execution)
-  + [2.4 Quality of Service](#24-quality-of-service)
+    + [2.1 Overview](#21-overview)
+    + [2.2 Language Integration](#22-language-integration)
+    + [2.3 Distributed Execution](#23-distributed-execution)
+    + [2.4 Quality of Service](#24-quality-of-service)
 + [3 EventScala Framework](#3-eventscala-framework)
-  + [3.1 Overview](#31-overview)
-  + [3.2 Domain-specific Language](#32-domain-specific-language)
-  + [3.3 Operator Graph](#33-operator-graph)
-  + [3.4 Quality-of-Service Monitors](#34-quality-of-service-monitors)
+    + [3.1 Overview](#31-overview)
+    + [3.2 Domain-specific Language](#32-domain-specific-language)
+    + [3.3 Operator Graph](#33-operator-graph)
+    + [3.4 Quality-of-Service Monitors](#34-quality-of-service-monitors)
 + [4 Simulation](#4-simulation)
 + [5 Conclusion](#5-conclusion)
 + [References](#references)
@@ -55,7 +55,7 @@ select * from Sensor1.std:lastEvent(), pattern[every (Sensor2 or Sensor3)].std:l
 Listing 1.b: On the contrary, in EPL, the `join` operator cannot be used within a `pattern`.
 ```sql
 // Invalid EPL!
-select * from pattern[every (Sensor1 or Sensor2.std:lastEvent(), Sensor3.std:lastEvent())]
+select * from pattern[every (Sensor1 or (Sensor2.std:lastEvent(), Sensor3.std:lastEvent()))]
 ```
 
 It is to be pointed out that the distinction between SP and CEP is blurry, as many books and publications often use the terms SP and CP in their borader sense, that is, EP in general. SP and CEP do, however, pose different challenges when it comes to quality of service. (See section 2.4.) Refer to section 5 ("Analysis of Event vs. Stream Processing") of [6] for a more detailed comparison of CEP an SP.
@@ -72,8 +72,62 @@ Early EP solutions are HiPAC [17], SAMOS [18], Snoop [19] and SnoopIB [20]. To t
 
 #### 2.2 Language Integration
 
-+ Distributed Heterogeneous Event Processing
-  + "This lies mainly in the fact that there does not exist any generally accepted definition language for complex event processing, though first steps in this direction have been made"
++ Distributed Heterogeneous Event Processing:
+    + "This lies mainly in the fact that there does not exist any generally accepted definition language for complex event processing, though first steps in this direction have been made"
+
++ DSLs in Action:
+    + "A DSL is a programming language that's targeted at a specific problem; other programming languages that you use are more general purpose. It contains the syntax and semantics that model concepts at the same level of abstraction that the problem domain offers." (p. 10)
+    + "More often than not, people who aren't expert programmers can use DSLs--if the DSL has the appropraite level of abstraction. Mathematicians can easily learn and work with Mathematica, UI designers feel comfortable writing HTML [...] to name a few such use cases. Because nonprogrammers need to be able to use them, DSLs must be more intuitive to users than general-purpose programming languages need to be." (p. 11)
+    + "All DSLs are specific to the domain. Each language if of limited expressivity; you can use a DSL to solve the problem of that particular domain only. You can't build cargo management systems using only HTML."
+    + "The most popular way to classify DSLs is related to the way you implement them. [...] [Martin Fowler] classifies a DSL as *internal* or *external*, depending on whether it's been implemented on top of an existing host language. Internal DSLs are also known as *embedded* DSLs because they're implemented as an *embedding* within a host language." (p. 17)
+        + An *internal* DSL is ine that uses the infrastructure of an existing programming language (also called the host language) to build domain-specific semantics on top of it. One of the most popular internal DSLs is Rails, which is implemented on top of the Ruby programming languages." (p. 18)
+        + "An external DSL is one that's developed ground-up and has separate infrastructure for lexical analysis, parsing technologies, interpretation, compilation, and code generation. [...] Build tools like `make`, parser generators
+like YACC, and lexical analysis tools like LEX are examples of popular external DSLs." (p. 18)
+
++ Domain Specific Embedded Compilers:
+    + What is common to all the above database bindings [e.g., ODBC] is that queries are communicated to the database as unstructured strings (usually) representing SQL expressions. This low-level approach has many disadvantages:
+        + Programmers get no (static) safeguards against creating syntactically incorrect or ill-typed queries, which can lead to hard to find runtime errors.
+        + Programmers have to distinguish between at least two different languages, SQL and the [...] language that generates the queries and submits them to the database engine (Perl, Visual Basic). [...]" (p. 109)
+    + We argue that domain-specific embedded languages [9] (DSELs) expressed in higher-order, typed (HOT) languages, Haskell [10] in our case, provide a composable framework for domain-specific abstractions that is of greater utility than a colleaction of stand-alone domain-specific languages:
+        + Programmers have to learn only one language, domain-specific abstractions are exposed to the host language as extension languages.
+        + [...]
+        + It is nearly always 1 possible to guarantee that programmers can only produce syntactically correct target programs, and in many cases we
+are able to impose domain specific typing rules.
+        + Programmers can seamlessly integrate with other domain specific libraries [...], which are accessible in the same way as any other library.
+[...].
+        + Programmers can leverage on existing language
+infrastructure such as the module and type system and the built-in abstraction mechanisms." (p. 109)
++ "What is new in this paper is that we show how to embed the terms and the type system of another (domain-specific) programming language into the Haskell framework, which dynamically *computes* and *executes* programs written in the embedded language." (p. 110)
+
++ ScalaQL: Language-Integrated Database Queries for Scala
+    + "Unfortunately, relational database
+concepts are fundamentally very different from those used in general-
+purpose programming languages."
+    + "One solution to this problem which has been gaining traction in the .NET family of languages is Language-Integrated Queries (LINQ). That is, the embedding of database queries within application code in a way that is statically checked and type safe. Unfortunately, certain language changes or core design elements were necessary to make this embedding possible. We present a framework which implements this concept of type safe embedded queries in Scala without any modifications to the language itself."
+    + Generally speaking, this technique is implemented by embedding relational queries within application code in the form of raw character strings. These queries are unparsed and completely unchecked until runtime, at which point they are passed to the database [...]."
+    + "The Holy Grail of embedded queries is to find some way to make the host
+language compiler aware of the query and capable of statically eliminating these
+runtime issues."
+    + "Through a combination of operator overloading, implicit conversions, and controlled call-by-name semantics, we have been able to achieve the same effect without making any changes to the language itself."
+    + "Note that throughout this paper, we use the term “internal DSL” [4] to refer to a domain-specific language encoded as an API within a host language (such as Haskell or Scala)."
+
+```
+todo
+figure out where the following goes
+```
+
++ Embedded Typesafe Domain Specific Languages for Java
+    + "The obvious pros of the former [internal DSLs] is reusing the platform tooling, which in Java case includes compilers, advanced IDEs, debuggers, profilers and so on. Also embedded DSLs are considerably easier to design and develop, as it boils down to writing an API and using some of the more advanced language features."
+    + "Let’s start with a very simple example of an SQL query in Java. [...]
+        + We misspelled an SQL command.
+        + We misspelled a column name.
+        + We forgot to add a space before “WHERE”.
+        + We could be mistaken about the column type, it could be string in the database.
+        + We could be reading wrong types from the result set."
+
++ Domain-specific Languages and Code Synthesis Using Haskell
+    + "Aside from the difference in language used in each of these examples, there is an important difference in form and idiom. Each uses a language customized to the job at hand, and each builds computational requests in a form both familiar and productive for programmers (although accountants may not think of themselves as programmers)."
+        
 
 #### 2.3 Distributed Execution
 
@@ -86,9 +140,9 @@ In [7], Etzion and Niblett introduce an abstaction called event processing netwo
 + Event producers introduce events into an EPN.
 + Event consumers receive events from processing elements in an EPN.
 + Event processing agents (EPAs) embody "three logical functions":
-  + Filtering, i.e., selecting events for further processing
-  + Matching, i.e., "[f]inding patterns among events" and creating respective pattern events
-  + Derivation, i.e., deriving new events from the output of the pattern step
+    + Filtering, i.e., selecting events for further processing
+    + Matching, i.e., "[f]inding patterns among events" and creating respective pattern events
+    + Derivation, i.e., deriving new events from the output of the pattern step
 + Global state elements "represent stateful data that can be read by event processing agents when they do their work".
 + Channels may be used to connect processing elements instead of edges, as the behavior of channels may be defined explicitly.
 
@@ -116,7 +170,7 @@ Regarding the aforementioned challenge regarding parallelization, that is, figur
 #### 2.4 Quality of Service
 
 + Events and Streams: Harnessing and Unleashing Their Synergy!
-  + "event processing models do not support any specific QoS requirements.
+    + "event processing models do not support any specific QoS requirements.
 
 ### 3 EventScala Framework
 
@@ -153,4 +207,4 @@ Regarding the aforementioned challenge regarding parallelization, that is, figur
 + [17] 1988. Dayal, Blaustein, Buchmann, Chakravarthy, Hsu, Ledin, McCarthy, Rosenthal. Sarin. The HiPAC Project: Combining Active Databases and Timing Constraints
 + [18] 1993. Gatziu, Dittrich. SAMOS: An Active Object-Oriented Database System
 + [19] 1994. Chakravarthy, Krishnaprasad, Anwar. Composite Events for Active Databases: Contexts and Detection
-+ [20] 2003. Adaikkalavan, Chakravarthy. noopIB: Interval-Based Event Specification and Detection for Active Databases
++ [20] 2003. Adaikkalavan, Chakravarthy. SnoopIB: Interval-Based Event Specification and Detection for Active Databases
