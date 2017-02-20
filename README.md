@@ -1,7 +1,10 @@
-# EventScala
+# EventScala: A Type-Safe, Distributed and Quality-of-Service-oriented Approach to Event Processing
 
-![EventScala](img/logo.png)
+## Bachelor Thesis of Lucas Bärenfänger
 
-Developed by Lucas Bärenfänger (@scalarookie) in 2017.
+![EventScala](images/logo.png)
 
-Visit scalarookie.com for more information.
++ Read the [thesis](thesis.md)!
++ Check out the [implementation](implementation)!
+
+Cheers!

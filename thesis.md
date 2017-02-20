@@ -2,7 +2,7 @@
 
 ## Bachelor Thesis of Lucas Bärenfänger
 
-![EventScala](img/logo.png)
+![EventScala](images/logo.png)
 
 ### Table of Contents
 + [1 Introduction](#1-introduction)
