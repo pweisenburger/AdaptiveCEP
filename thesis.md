@@ -72,62 +72,29 @@ Early EP solutions are HiPAC [17], SAMOS [18], Snoop [19] and SnoopIB [20]. To t
 
 #### 2.2 Language Integration
 
-+ Distributed Heterogeneous Event Processing:
-    + "This lies mainly in the fact that there does not exist any generally accepted definition language for complex event processing, though first steps in this direction have been made"
+This section starts out by examining and criticizing the way queries are typically communicated to EP solutions. Then, the notion of domain-specific languages (DSLs) is introduced. Lastly, it is described how DSLs are used to ease the aforementioned problems in the context of relational databases.
 
-+ DSLs in Action:
-    + "A DSL is a programming language that's targeted at a specific problem; other programming languages that you use are more general purpose. It contains the syntax and semantics that model concepts at the same level of abstraction that the problem domain offers." (p. 10)
-    + "More often than not, people who aren't expert programmers can use DSLs--if the DSL has the appropraite level of abstraction. Mathematicians can easily learn and work with Mathematica, UI designers feel comfortable writing HTML [...] to name a few such use cases. Because nonprogrammers need to be able to use them, DSLs must be more intuitive to users than general-purpose programming languages need to be." (p. 11)
-    + "All DSLs are specific to the domain. Each language if of limited expressivity; you can use a DSL to solve the problem of that particular domain only. You can't build cargo management systems using only HTML."
-    + "The most popular way to classify DSLs is related to the way you implement them. [...] [Martin Fowler] classifies a DSL as *internal* or *external*, depending on whether it's been implemented on top of an existing host language. Internal DSLs are also known as *embedded* DSLs because they're implemented as an *embedding* within a host language." (p. 17)
-        + An *internal* DSL is ine that uses the infrastructure of an existing programming language (also called the host language) to build domain-specific semantics on top of it. One of the most popular internal DSLs is Rails, which is implemented on top of the Ruby programming languages." (p. 18)
-        + "An external DSL is one that's developed ground-up and has separate infrastructure for lexical analysis, parsing technologies, interpretation, compilation, and code generation. [...] Build tools like `make`, parser generators
-like YACC, and lexical analysis tools like LEX are examples of popular external DSLs." (p. 18)
+As pointed out in [8], "there does not exist any generally accepted definition language for complex event processing". However, many EP solutions--especially those that rely on dialects of SQL for expressing queries, e.g., Esper--receive the latter in the form of strings, just as traditionally done in DBMSs.
 
-+ Domain Specific Embedded Compilers:
-    + What is common to all the above database bindings [e.g., ODBC] is that queries are communicated to the database as unstructured strings (usually) representing SQL expressions. This low-level approach has many disadvantages:
-        + Programmers get no (static) safeguards against creating syntactically incorrect or ill-typed queries, which can lead to hard to find runtime errors.
-        + Programmers have to distinguish between at least two different languages, SQL and the [...] language that generates the queries and submits them to the database engine (Perl, Visual Basic). [...]" (p. 109)
-    + We argue that domain-specific embedded languages [9] (DSELs) expressed in higher-order, typed (HOT) languages, Haskell [10] in our case, provide a composable framework for domain-specific abstractions that is of greater utility than a colleaction of stand-alone domain-specific languages:
-        + Programmers have to learn only one language, domain-specific abstractions are exposed to the host language as extension languages.
-        + [...]
-        + It is nearly always 1 possible to guarantee that programmers can only produce syntactically correct target programs, and in many cases we
-are able to impose domain specific typing rules.
-        + Programmers can seamlessly integrate with other domain specific libraries [...], which are accessible in the same way as any other library.
-[...].
-        + Programmers can leverage on existing language
-infrastructure such as the module and type system and the built-in abstraction mechanisms." (p. 109)
-+ "What is new in this paper is that we show how to embed the terms and the type system of another (domain-specific) programming language into the Haskell framework, which dynamically *computes* and *executes* programs written in the embedded language." (p. 110)
+In [22], it is laid out why communicating SQL expressions in the form of "unstructured strings" is a bad approach. Firstly, "[p]rogrammers get no static safeguards against creating syntactically incorrect or ill-typed queries, which can lead to hard to find runtime errors". Furthermore, it is noted that the programmer at least needs to know the SQL dialect as well as the "language that generates the queries and submits them". To underline this very point, the authors of [24] present "a very simple example of an SQL query in Java" that contains a few errors. The SQL query is embedded in Java as a `String`. Among other errors, it contains a misspelled SQL command. Furthermore, it is statet that the assumtions made about the type of the column and the result set could be wrong. The problem is that, as described in [23], the query is embedded "within application code in the form of raw character strings". As "[t]hese queries are unparsed and completely unchecked until runtime", malformed queries do not cause the code they are embedded in to not compile but will cause trouble when being executed run-time.
 
-+ ScalaQL: Language-Integrated Database Queries for Scala
-    + "Unfortunately, relational database
-concepts are fundamentally very different from those used in general-
-purpose programming languages."
-    + "One solution to this problem which has been gaining traction in the .NET family of languages is Language-Integrated Queries (LINQ). That is, the embedding of database queries within application code in a way that is statically checked and type safe. Unfortunately, certain language changes or core design elements were necessary to make this embedding possible. We present a framework which implements this concept of type safe embedded queries in Scala without any modifications to the language itself."
-    + Generally speaking, this technique is implemented by embedding relational queries within application code in the form of raw character strings. These queries are unparsed and completely unchecked until runtime, at which point they are passed to the database [...]."
-    + "The Holy Grail of embedded queries is to find some way to make the host
-language compiler aware of the query and capable of statically eliminating these
-runtime issues."
-    + "Through a combination of operator overloading, implicit conversions, and controlled call-by-name semantics, we have been able to achieve the same effect without making any changes to the language itself."
-    + "Note that throughout this paper, we use the term “internal DSL” [4] to refer to a domain-specific language encoded as an API within a host language (such as Haskell or Scala)."
+To tackle this issue with regards to relational DBMSs, the contribution of [23] is a so-called domain-specific language (DSL)--named ScalaQL--as a way "to make the host language compiler [i.e., scalac] aware of the query and capable of statically eliminating these runtime issues". (In fact, the contribution of the much earlier released publication [22] is very similar. Here, the host language is Haskell, however, the problem domain is also relational databases. The authors of [22] seem to be the first ones to "show how to embed the terms and type system of another (domain-specific) programming language into the Haskell framework, which dynamically compzutes and executes programs written inthe embedded language.
 
-```
-todo
-figure out where the following goes
-```
+To explain what DSLs are, it makes sense to turn to the book "DSLs in Action" [21], which appears to be the standard primer on the subject. In it, one can find the following definition:
 
-+ Embedded Typesafe Domain Specific Languages for Java
-    + "The obvious pros of the former [internal DSLs] is reusing the platform tooling, which in Java case includes compilers, advanced IDEs, debuggers, profilers and so on. Also embedded DSLs are considerably easier to design and develop, as it boils down to writing an API and using some of the more advanced language features."
-    + "Let’s start with a very simple example of an SQL query in Java. [...]
-        + We misspelled an SQL command.
-        + We misspelled a column name.
-        + We forgot to add a space before “WHERE”.
-        + We could be mistaken about the column type, it could be string in the database.
-        + We could be reading wrong types from the result set."
+> "A DSL is a programming language that's targeted at a specific problem; other programming languages that you use are more general purpose. It contains the syntax and semantics that model concepts at the same level of abstraction that the problem domain offers."
 
-+ Domain-specific Languages and Code Synthesis Using Haskell
-    + "Aside from the difference in language used in each of these examples, there is an important difference in form and idiom. Each uses a language customized to the job at hand, and each builds computational requests in a form both familiar and productive for programmers (although accountants may not think of themselves as programmers)."
-        
+Furthermore, it is stated that--"[m]ore often than not"--DSLs are used by non-expert programmers. For this to be possible, it is necessary that the DSL appeals to its target group by having "the appropriate level of abstraction", that is, it must embody the particular terminology, idioms, etc. of the respective domain. This, however, leads to so-called "limited expressivity--"you can use a DSL to solve the problem of that particular domain only". Exemplary, the author mentions that "[m]athematicians can easily learn and work with Mathematica" and "UI designers feel comfortable writing HTML". Regarding limited expressivity, it is noted that "[y]ou can't build cargo management systems using only HTML".
+
+In [21], the notion of DSLs is further differentiated. Accordingly, there are internal as well as external DSLs, with internal DSLs also being know as embdedded DSLs. They are defined as follows:
+
+> "An internal DSL is one that uses the infrastructure of an existing programming language (also called the host language) to build domain-specific semantics on top of it."
+
+> "An external DSL is one that's developed ground-up and has separate infrastructure for lexical analysis, parsing technologies, interpretation, compilation, and code generation.
+
+In [22], it is argued that internal DSLs "expressed in higher order, typed [...] languages" are better suited as a "framework for domain-specific abstractions" than external DSLs. This is, according to the authors, due to the fact that programmers only have to know the host language as domain specific abstractions are made available as "extension languages". Other advantages mentioned are the possibility to leverage other "domain-sprecific libraries" as well as the possibility to use the host language's infrastructure, e.g., its module and type system. In [24], more advantages of internal DSLs are stated, e.g., "re-using the platform tooling, which in Java case includes compilers, advanced IDEs, debuggers, profilers, and so on". Furthermore, it is states that development is much easier, as it essentially "boils down to writing an API".
+
+Finally, it is to be noted that Scala lends it self very well as a host language for internal DSLs. Scala language features used to develop ScalaQL include "operator overloading, implicit conversions, and controlled call-by-name semantics" [4]. With ScalaQL (alongwith other existing solutions) renders SQL strings to communicate with DBMSs deprecated in the Scala ecosystem, it is the logical next step to render SQL-like strings to communicate with EP solutions deprecated in the Scala ecosystem--by developing an internal DSL.
 
 #### 2.3 Distributed Execution
 
@@ -208,3 +175,8 @@ Regarding the aforementioned challenge regarding parallelization, that is, figur
 + [18] 1993. Gatziu, Dittrich. SAMOS: An Active Object-Oriented Database System
 + [19] 1994. Chakravarthy, Krishnaprasad, Anwar. Composite Events for Active Databases: Contexts and Detection
 + [20] 2003. Adaikkalavan, Chakravarthy. SnoopIB: Interval-Based Event Specification and Detection for Active Databases
++ [21] DSLs in Action
++ [22] Domain Specific Embedded Compilers
++ [23] ScalaQL: Language-Integrated Database Queries for Scala
++ [24] Embedded Typesafe Domain Specific Languages for Java
++ [25] Domain-specific Languages and Code Synthesis Using Haskell
