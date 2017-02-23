@@ -45,6 +45,11 @@ Traditionally, two approches to event processing can be distinguished.
 + Stream processing (SP) typically features operators that resemble those of relational algebra, e.g., `projection`, `selection`, `join`, etc. SP queries are usually expressed in some SQL dialect and are commonly called "continuous queries". (This term underlines the following inversion of principles: In traditional DBMSs, data is being persisted as opposed to queries. Continuous queries, however, are being persisted and run *continuous*ly, while data is flowing through.)
 + Complex event processing (CEP) typically features operators that resemble those of boolean algebra, e.g., `and`, `or`, `not`. Operators such as `sequence` and `closure` are also common. CEP queries are usually expressed using rule languages.
 
+```
+todo
+add bit about windows vs. consumptions modes
+```
+
 Most solutions somehow do feature the operators of both approaches, though. Esper, for instance, can be considered a SP engine and comes with a typical SQL dialect, EPL (Event Processing Language). [3] Queries made up of CEP operators can, however, be expressed using so-called "patterns". These can then be used as operands of SP operators. (Listing 1.a) It is not possible to use SP operators within a pattern, though. (Listing 1.b) Another solution, Apache Flink, which considers itself to be a "stream processing framework", features typical CEP operators (e.g., sequence as `followedBy`) in a designated library, FlinkCEP [4, 5].
 
 Listing 1.a: In EPL, the `join` operator (`,`) can be applied to a `pattern`.
