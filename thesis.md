@@ -46,10 +46,7 @@ Traditionally, two approches to event processing can be distinguished.
 + Stream processing (SP) typically features operators that resemble those of relational algebra, e.g., `projection`, `selection`, `join`, etc. SP queries are usually expressed in some SQL dialect and are commonly called "continuous queries". (This term underlines the following inversion of principles: In traditional DBMSs, data is being persisted as opposed to queries. Continuous queries, however, are being persisted and run *continuous*ly, while data is flowing through.)
 + Complex event processing (CEP) typically features operators that resemble those of boolean algebra, e.g., `and`, `or`, `not`. Operators such as `sequence` and `closure` are also common. CEP queries are usually expressed using rule languages.
 
-```
-todo
-add bit about windows vs. consumptions modes
-```
+Furthermore, there is another significant difference between SP and CEP operators. As said, SP operators resemble those of relational algebra. Some relational operators, however, are blocking operators (e.g., `join`), that is, they are defined over finite sets of data and block execution until these are available in their entirety. Streams, however, can be viewed as infinite sets of data. As a consequence, in SP, those operators are not applied to streams directly. Instead, they require their operand streams to be annotated with windows that are typically expressed in terms of time or number of events. A window then only contains a finite number of events of the respesctive stream. So-called consumption modes are the counterpart of windows in CEP. The CEP operator `and` is semantically ambiguous in the sense that it only specifies the event types to be correlated but not the event instances. For example, the query `A and B` only specifies that an event of type `A` should be correlated with events of type `B`. However, given the occurences of the events `b1`, `b2`, `a1`, in that order, it is not clear whether `a1` should be correlated with `b1` or `b2`--this would depend on the consumption mode. (See [19] for more information on consumption modes.) One of the differences between windows and consumptions modes is that the former are applied to streams (i.e., operands) while the latter are applied to operators. As pointed out in [30], consumption modes "can be loosely interpreted as load shedding, used from a semantics viewpoint rather than a QoS viewpoint" as they essentially dictate which events can be dropped. To the best of my nderstanding, the same could be said about windows.
 
 Most solutions somehow do feature the operators of both approaches, though. Esper, for instance, can be considered a SP engine and comes with a typical SQL dialect, EPL (Event Processing Language). [3] Queries made up of CEP operators can, however, be expressed using so-called "patterns". These can then be used as operands of SP operators. (Listing 1.a) It is not possible to use SP operators within a pattern, though. (Listing 1.b) Another solution, Apache Flink, which considers itself to be a "stream processing framework", features typical CEP operators (e.g., sequence as `followedBy`) in a designated library, FlinkCEP [4, 5].
 
@@ -215,4 +212,5 @@ In the section "QoS of Event Composition", CEP-specific QoS metrics are listed, 
 + [25] Domain-specific Languages and Code Synthesis Using Haskell
 + [26] Quality of Service in Event-based Systems
 + [27] On Quality-of-Service and Publish-Subscribe
-+ [218] From Calls to Events
++ [28] From Calls to Events
++ [30] Stream Data Processing: A Quality of Service Perspective
