@@ -12,12 +12,12 @@
     + [2.2 Language Integration](#22-language-integration)
     + [2.3 Distributed Execution](#23-distributed-execution)
     + [2.4 Quality of Service](#24-quality-of-service)
-+ [3 EventScala Framework](#3-eventscala-framework)
++ [3 EventScala](#3-eventscala)
     + [3.1 Overview](#31-overview)
-    + [3.2 Data](32-data)
-    + [3.3 DSL](#33-dsl)
-    + [3.4 Graph](#34-graph)
-    + [3.5 QoS](#35-qos)
+    + [3.2 Case Class Representation](#32-case-class-representation)
+    + [3.3 Domain-specific Language](#33-domain-specific-language)
+    + [3.4 Execution Graph](#34-execution-graph)
+    + [3.5 Quality of Service](#35-quality-of-service)
 + [4 Simulation](#4-simulation)
 + [5 Conclusion](#5-conclusion)
 + [References](#references)
@@ -172,9 +172,10 @@ In the section "QoS of Event Composition", CEP-specific QoS metrics are listed, 
 + Order: Here, establishing an "odering between events" can be considered the most important QoS metric, as "achievable QoS [...] depends lagely on the possibility" to be able to do so. As an example of an operator requiring events to be ordered, the `sequence` operator--"which is part of most event algebras"--is mentioned. Furthermore, it is stated that the "natural ordering" is time-based, which, according to the authors, is no problem if "there is only one central clock" as well as only one pervent occuring every clock tick. If, however, there may be "multiple events" occuring at the same point in time, being "time-stamped by different clocks", establishing a total order is said to be impossible. Lastly, it is explained that the granularity of timestamps plays a major role when it comes to timestamping: Events that might have been distinguishable with fine-grained timestamps might no be distinguishable when being timestamped more coarsely.
 + Delay/loss of messages: The delay or loss of messages is described as a "source of ambiguity". As an example, it is explained that it is impossible to determine that an event "did not occur in a given interval" unless it can be asserted that the event in question is neither delayed nor lost. With regard to bounded networks, the authors refer to the 2g-precedence model. (An explanation of this model can be found in [9].) With regard to unbounded networks--"such as the internet"--they refer to [9], i.e., an approach based on the the injection of "heartbeat events from an outside time-service" that assumes that events "in the same channel do not overtake each other".
 
-### 3 EventScala Framework
+### 3 EventScala
 
 #### 3.1 Overview
+
 #### 3.2 Case Class Representation
 
 At the heart of the EventScala framework is the case class representation of queries. Thanks to it, EventScala's DSL and EventScala's execution graph can be thought of as separate modules that do not depend on each other in any way. On the one hand, using the DSL to express a query results in the case class representation of that query. On the other hand, executing a query using the execution graph requires a case class representation of said query. However, a case class representation of a query does neither have to be obtained using the DSL nor does it have to be executed using the execution graph. In fact, one could, for example, use the DSL to obtain the case class representation of a query and then generate a SQL-like string from it to execute it using Esper. Likewise, one could develop a different DSL or even type out the case class representation of a query by hand and then pass it to the execution graph to be run. Essentially, EventScala's case class representation is a type-safe and platform-independend way to encode queries for EP systems in Scala.
@@ -227,9 +228,9 @@ val sampleQuery: Query2[Int, String] =
     Set.empty)
 ```
 
-The avid reader has certainly noticed that this is the case class representation of the query that has been informally described and illustrated as a graph previosly in this section. It is to be stressed that this is a type-safe representation of said query. (This point will be discussed in detail in section 3.3.) Also, it is to be stressed again that it is a platform-independent representation, i.e., it neither encodes data specific to the DSL that generated it nor does it encode data that is specific to the EP solution that will execute it.
+The avid reader has certainly noticed that this is the case class representation of the query that has been informally described and illustrated as a graph previously in this section. It is to be stressed that this is a type-safe representation of said query. (This point will be discussed in detail in section 3.3.) Also, it is to be stressed again that it is a platform-independent representation, i.e., it neither encodes data specific to the DSL that generated it nor does it encode data that is specific to the EP solution that will execute it.
 
-Lastly, as the title of this thesis suggests, EventScala is a quality-of-service-oriented approach to EP. As such, it allows for QoS requirements to be expressed with each query. One might have noticed that the `sampleQuery` above contains the expression `Set.empty` four times. At these four points, it would have been possible to define a set of requirements (of type `Set[Requirement]`). When picturing the query as a graph once again, it becomes clear that requirements can be defined over every node of the graph. EventScala features two kinds of requirements, `FrequencyRequirement`s and `LatencyRequirement`s. (These will be discussed in greater detail in section 3.5.) It is to be noted, however, that the case classes representing these requirements are not platform independent. They do not just contain the specification of the respective requirement but also a callback closure that defines what to do whenever the respective requirement is not met during the exeution of the query. The fact that this callback closure is being passed data about the processing node that is responsible for executing the query in EventScala's execution graph is what breaks platform independence. I chose to go this way as platform independece with regards to QoS is somewhat pointless as there are--to the best of my knowledge--no other EP solutions that enforce such requirements anyway. Below find another example query, i.e., a simple stream subscription that is applied to a filter, with the stream being required to emit at least 2 events every 5 seconds.
+Lastly, as the title of this thesis suggests, EventScala is a quality-of-service-oriented approach to EP. As such, it allows for QoS requirements to be expressed with each query. One might have noticed that the `sampleQuery` above contains the expression `Set.empty` four times. At these four points, it would have been possible to define a set of requirements (of type `Set[Requirement]`). When picturing the query as a graph once again, it becomes clear that requirements can be defined over every node of the graph. EventScala features two kinds of requirements, `FrequencyRequirement`s and `LatencyRequirement`s. (These will be discussed in greater detail in section 3.5.) It is to be noted, however, that the case classes representing these requirements are not platform-independent. They do not just contain the specification of the respective requirement but also a callback closure that defines what to do whenever the respective requirement is not met during the exeution of the query. The fact that this callback closure is being passed data about the processing node that is responsible for executing the query in EventScala's execution graph is what breaks platform-independence. I chose to go this way as platform-independece with regards to QoS requirements is somewhat pointless as there are--to the best of my knowledge--no other EP solutions that enforce such requirements anyway. Below find another example query. It represents a simple stream subscription that is being applied to a filter, with the stream being required to emit at least 2 events every 5 seconds.
 
 ```scala
 val sampleQuery2: Query2[Int, Boolean] =
@@ -244,9 +245,9 @@ val sampleQuery2: Query2[Int, Boolean] =
     Set.empty)
 ```
 
-#### 3.3 DSL
-#### 3.4 Graph
-#### 3.5 QoS
+#### 3.3 Domain-specific Language
+#### 3.4 Execution Graph
+#### 3.5 Quality of Service
 
 ### 4 Simulation
 
