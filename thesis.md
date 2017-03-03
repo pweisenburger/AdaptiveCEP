@@ -14,9 +14,10 @@
     + [2.4 Quality of Service](#24-quality-of-service)
 + [3 EventScala Framework](#3-eventscala-framework)
     + [3.1 Overview](#31-overview)
-    + [3.2 Domain-specific Language](#32-domain-specific-language)
-    + [3.3 Operator Graph](#33-operator-graph)
-    + [3.4 Quality-of-Service Monitors](#34-quality-of-service-monitors)
+    + [3.2 Data](32-data)
+    + [3.3 DSL](#33-dsl)
+    + [3.4 Graph](#34-graph)
+    + [3.5 QoS](#35-qos)
 + [4 Simulation](#4-simulation)
 + [5 Conclusion](#5-conclusion)
 + [References](#references)
@@ -174,12 +175,78 @@ In the section "QoS of Event Composition", CEP-specific QoS metrics are listed, 
 ### 3 EventScala Framework
 
 #### 3.1 Overview
+#### 3.2 Case Class Representation
 
-#### 3.2 Domain-specific Language
+At the heart of the EventScala framework is the case class representation of queries. Thanks to it, EventScala's DSL and EventScala's execution graph can be thought of as separate modules that do not depend on each other in any way. On the one hand, using the DSL to express a query results in the case class representation of that query. On the other hand, executing a query using the execution graph requires a case class representation of said query. However, a case class representation of a query does neither have to be obtained using the DSL nor does it have to be executed using the execution graph. In fact, one could, for example, use the DSL to obtain the case class representation of a query and then generate a SQL-like string from it to execute it using Esper. Likewise, one could develop a different DSL or even type out the case class representation of a query by hand and then pass it to the execution graph to be run. Essentially, EventScala's case class representation is a type-safe and platform-independend way to encode queries for EP systems in Scala.
 
-#### 3.3 Operator Graph
+To understand the case class representations of queries, it is necessary to understand their structure. At the top of the hierarchy, there is the `Query` trait, which only specifies that extending classes have to have a field `requirements`, representing a set of QoS requirements that were specified for the respective query. (Refer to the end of this section as well as section 3.5 for more information on QoS requirements.)
 
-#### 3.4 Quality-of-Service Monitors
+As described in section 2.1, events are commonly represented by tuples of values, i.e., an event consisting of n values would be represented by a n-tuple. In EventScala, an event consists of at least 1 element and at most 6 elements. Analoguously, the `Query` trait is extended by the traits `Query1`, `Query2`, ..., `Query6`, each representing a query that results in a stream of events consisting of 1, 2, ..., 6 elements, respectively. The traits `Query1`, `Query2`, ..., `Query6` do not specify any additional fields. They do, however, take 1, 2, ..., 6 type parameters, respectively, specifying the types of the elements of the events of the respective streams they represent. `Query2[String, Int]` is, for example, the type of a query that results in a stream of events consisting of two elements: a `String` and an `Int`.
+
+A query usually consists of nested applications of operators over primitives. For example, one might subscribe to a stream of events consisting of a single `Int`, resulting in a `Query1[Int]`, as well as to a stream of events consisting of two `String`s, resulting in a `Query2[String, String]`. One might then apply the `join` operator to these two stream subscriptions, resulting in a `Query3[Int, String, String]`. Afterwards, one could decide to drop the second `String` using the `dropElem3` operator, resulting in a `Query2[Int, String]`. When picturing this query as a graph, the `dropElem3` operator would be the root node, having one child node, i.e., the `join` operator, which, in turn, would have two child nodes, i.e., the two stream subscriptions, which would represent the leaves of the graph. (This is actually exactly what EventScala's execution graph for this query would look like.) Analoguously, the application of the `dropElem3` operator can be thought of as a unary query--unary in the sense that it has one subquery. Furthermore, the application of the `join` operator can be thought of as a binary query--binary in the sense that it has two subqueries. Lastly, the subscription to a stream can be thought of as a leaf query--leaf in the sense that it has no child queries. As a matter of fact, in EventScala, every query can be classified into being either a leaf, a unary or a binary query. Therefore, there exist three traits `LeafQuery`, `UnaryQuery` (specifiying one field, `sq` (`s`ub`q`uery), of type `Query`) and `BinaryQuery` (specifiying two fields, `sq1` and `sq2`, both of type `Query`). All three traits extend the trait `Query`.
+
+```
+todo
+add illustration
+```
+
+In the previous paragraph, it has been hinted that in EventScala, one might subscribe to streams or make use of the operators `join` as well as `dropElem3`. For the sake of completeness, find below the list of all primitives (i.e., leaf queries) and operators (i.e., unary and binary queries) availiable:
+
++ Leaf queries, i.e., traits extending `LeafQuery`
+  + `StreamQuery`: A `StreamQuery` expresses a subscription to a stream. The trait `StreamQuery` specifies one field of type `String`, `publisherName`, for the name of the publisher that is the source of the stream.
+  + `SequenceQuery`: A `SequenceQuery` expresses a subscription to two streams with the CEP operator `sequence` being applied to them. The trait `SequenceQuery` specifies two fields of type `NStream`, `s1` and `s2`. A `NStream` is essentially a `Stream`, however, it is "`N`ot a query", i.e., not extending the trait `Query`. If `NStream` would be a query, then `s1` and `s2` would represent its subqueries, making `Sequence` a binary query rather than a leaf query.
++ Unary queries, i.e., traits extending `UnaryQuery`
+  + `FilterQuery`: A `FilterQuery` expresses the application of the SP operator `where`. The `FilterQuery` trait specifies one field of type `Event => Boolean`, `cond`, for the filter predicate. The field for the subquery representing the operator's input stream is specified by the extending classes.
+  + `DropElemQuery`: A `DropElemQuery` expresses the application of the operator that EventScala offers instead of the EP operator `select`. While `select` lets one select which elements of the events of the operator's input stream to keep, the `dropElem` operator lets one specify which element to drop. The `DropElemQuery` trait specifies no fields. Which element of the events of the operator's input stream is to be dropped is specified by the extending classes' names, e.g., `DropElem1Of2`.
+  + `SelfJoinQuery`: A `SelfJoinQuery` expresses the application of the SP operator `join` but with one stream representing both of the operator's input streams. The `SelfJoinQuery` trait specifies two fields of type `Window`, `w1` and `w2`, for the windows that are applied to the operator's input streams. The field for the subquery representing both of the operators's input streams is specified by the extending classes.
++ Binary Queries, i.e., traits extending `BinaryQuery`
+  + A `JoinQuery` expresses the application of the SP operator `join`. The `JoinQuery` trait specifies two fields of type `Window`, `w1` and `w2`, for the windows that are applied to the operator's input streams. The fields for the two subqueries representing the operators's input streams are specified by the extending classes.
+  + A `ConjunctionQuery` expresses the application of the CEP operator `and`. The `ConjunctionQuery` trait specifies no fields. The fields for the two subqueries representing the operator's input streams are specified by the extending classes.
+  + A `DisjunctionQuery` expresses the application of the CEP operator `or`. The `DisjunctionQuery` trait specifies no fields. The fields for the two subqueries representing the operator's input streams are specified by the extending classes.
+
+Up to this point, a hierarchy of traits but not one case class has been presented. The case class representation of a query is, however, made up of (possibly nested) case classes. These case classes have the following in common:
+
+  + They extend exactly one of the traits `Query1`, `Query2`, ..., `Query6`, indicating the number and types of the elements of the events of the resulting stream.
+  + They extend exactly one of the traits `StreamQuery`, `SequenceQuery`, `FilterQuery`, `DropElemQuery`, `SelfJoinQuery`, `JoinQuery`, `ConjunctionQuery` and `DisjunctionQuery`, indicating what kind of primitive or operator application they represent.
+
+For example, the case class `Stream1[A]` extends the trait `Query1[A]`, indicating that it represents a stream of events consisting of `1` element of the generic type `A`, as well as the trait `StreamQuery`, indicating that it respresents a subscription to a stream, i.e., a primitive. It has a field `publisherName` as specified by the trait `StreamQuery` as well as a field `requirements` as specified by the trait `Query`. `Conjunction12[A, B, C]`, to provide another example, extends the trait `Query3[A, B, C]`, indicating that it represents a stream of events consisting of `3` elements of the generic types `A`, `B` and `C`, respectively, as well as the trait `ConjunctionQuery`, indicating that it represents an application of the `and` operator. Obviously, it also has the field `requirements`.
+
+More interestingly, though, the case class `Conjunction12[A, B, C]` also has two fields (`sq1` of type `Query1[A]` and `sq2` of type `Query2[B, C]`) for the subqueries representing the `and` operator's two input streams, which--against one's intuition--are not specified in the `ConjunctionQuery` trait. The reason for this is that while every case class extending `ConjunctionQuery` does have two fields named `sq1` and `sq2`, their types are always different. For the case class `Conjunction11[A, B]`, their types are `Query1[A]` and `Query1[B]`, respectively, and for `Conjunction21[A, B, C]`, to provide another example, they are `Query2[A, B]` and `Query1[C]`, respectively. This hints at the biggest shortcoming of EventScala: As it is--to the best of my knowledge--not possible to abstract over the length of type parameter lists in Scala, thus, one cannot define one trait (like `trait Query[A, B, ...]`) for queries in general, but has to define one separate trait (e.g., `Query1[A]`, `Query2[A, B]`, and so forth) for queries representing streams of events consisting of 1 element, 2 elements, and so forth. (Tuples actually suffer from the same shortcoming: `Tuple1[+T1]`, `Tuple2[+T1, +T2]`, and so forth, are all defined separately in the Scala standard library.) To avoid a ridiculous amount of code repetition, I decided that in EventScala, events can consist of at most 6 elements. This seemingly small number does not only call for the 6 separate traits `Query1[A]` to `Query6[A, B, C, D, E, F]`, though, but also for--for example--15 separate case classes extending the `SequenceQuery` trait as well as, to provide the most extreme example, for 36 case classes extending the `DisjunctionQuery` trait. Any future work on this project should aim to solve this issue, maybe by representing events and queries with `HList`s, which encode the types of their members (which can be `H`eterogenuous, i.e., of different types) in their type. They are provided by Typelevel's Shapeless [32], a "type class and dependent type based generic programming library for Scala".
+
+At this point, EventScala's case class representation has been explained to an extent that it makes sense to present an example query in case class representation:
+
+```scala
+val sampleQuery: Query2[Int, String] =
+  DropElem3Of3[Int, String, String](
+    Join12[Int, String, String](
+      Stream1[Int]("X", Set.empty),
+      Stream2[String, String]("Y", Set.empty),
+      SlidingTime(42),       // Sliding window of 42 seconds
+      TumblingInstances(21), // Tumbling window of 21 events
+      Set.empty),
+    Set.empty)
+```
+
+The avid reader has certainly noticed that this is the case class representation of the query that has been informally described and illustrated as a graph previosly in this section. It is to be stressed that this is a type-safe representation of said query. (This point will be discussed in detail in section 3.3.) Also, it is to be stressed again that it is a platform-independent representation, i.e., it neither encodes data specific to the DSL that generated it nor does it encode data that is specific to the EP solution that will execute it.
+
+Lastly, as the title of this thesis suggests, EventScala is a quality-of-service-oriented approach to EP. As such, it allows for QoS requirements to be expressed with each query. One might have noticed that the `sampleQuery` above contains the expression `Set.empty` four times. At these four points, it would have been possible to define a set of requirements (of type `Set[Requirement]`). When picturing the query as a graph once again, it becomes clear that requirements can be defined over every node of the graph. EventScala features two kinds of requirements, `FrequencyRequirement`s and `LatencyRequirement`s. (These will be discussed in greater detail in section 3.5.) It is to be noted, however, that the case classes representing these requirements are not platform independent. They do not just contain the specification of the respective requirement but also a callback closure that defines what to do whenever the respective requirement is not met during the exeution of the query. The fact that this callback closure is being passed data about the processing node that is responsible for executing the query in EventScala's execution graph is what breaks platform independence. I chose to go this way as platform independece with regards to QoS is somewhat pointless as there are--to the best of my knowledge--no other EP solutions that enforce such requirements anyway. Below find another example query, i.e., a simple stream subscription that is applied to a filter, with the stream being required to emit at least 2 events every 5 seconds.
+
+```scala
+val sampleQuery2: Query2[Int, Boolean] =
+  Filter2[Int, Boolean](
+    Stream2[Int, Boolean](
+      "Z",
+      // If not at least 2 events are emitted every 5 seconds, "Problem!" will be printed to the console.
+      Set(FrequencyRequirement(GreaterEqual, 2, 5, _ => println("Problem!")))),
+    // This filter predicate does not filter out any event. :)
+    _ => true,
+    // No QoS requirements are defined over the filter.
+    Set.empty)
+```
+
+#### 3.3 DSL
+#### 3.4 Graph
+#### 3.5 QoS
 
 ### 4 Simulation
 
@@ -217,3 +284,4 @@ In the section "QoS of Event Composition", CEP-specific QoS metrics are listed, 
 + [28] From Calls to Events
 + [30] Stream Data Processing: A Quality of Service Perspective
 + [31] http://slick.lightbend.com/
++ [32] https://github.com/milessabin/shapeless
