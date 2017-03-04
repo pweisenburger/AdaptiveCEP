@@ -179,5 +179,5 @@ object Queries {
   case class Disjunction64[A, B, C, D, E, F, G, H, I, J]       (sq1: Query6[A, B, C, D, E, F], sq2: Query4[G, H, I, J],       requirements: Set[Requirement]) extends Query6[Either[A, F], Either[B, G], Either[C, H], Either[D, I], Either[E, X], Either[F, X]] with DisjunctionQuery
   case class Disjunction65[A, B, C, D, E, F, G, H, I, J, K]    (sq1: Query6[A, B, C, D, E, F], sq2: Query5[G, H, I, J, K],    requirements: Set[Requirement]) extends Query6[Either[A, F], Either[B, G], Either[C, H], Either[D, I], Either[E, J], Either[F, X]] with DisjunctionQuery
   case class Disjunction66[A, B, C, D, E, F, G, H, I, J, K, L] (sq1: Query6[A, B, C, D, E, F], sq2: Query6[G, H, I, J, K, L], requirements: Set[Requirement]) extends Query6[Either[A, F], Either[B, G], Either[C, H], Either[D, I], Either[E, J], Either[F, K]] with DisjunctionQuery
-  
+
 }
