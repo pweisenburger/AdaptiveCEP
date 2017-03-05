@@ -15,7 +15,7 @@
 + [3 EventScala](#3-eventscala)
     + [3.1 Overview](#31-overview)
     + [3.2 Case Class Representation](#32-case-class-representation)
-    + [3.3 Domain-specific Language](#33-domain-specific-language)
+    + [3.3 Domain-Specific Language](#33-domain-specific-language)
     + [3.4 Execution Graph](#34-execution-graph)
     + [3.5 Quality of Service](#35-quality-of-service)
 + [4 Simulation](#4-simulation)
@@ -45,6 +45,7 @@ Operators are defined over streams as opposed to individual events. The `or` ope
 Traditionally, two approches to EP can be distinguished:
 
 + Stream processing (SP) typically features operators that resemble those of relational algebra, e.g., `projection`, `selection`, `join`, etc. SP queries are usually expressed in some SQL dialect and constitute so-called "continuous queries". (This term underlines an inversion of principles: In traditional database management systems (DBMSs), it is the data that is being persisted and not the queries. Continuous queries, however, are being persisted and run *continuous*ly, while it is the data that can be thought of as flowing through.)
+
 + Complex event processing (CEP) typically features operators that resemble those of boolean algebra, e.g., `and`, `or`, `not`. Operators such as `sequence` and `closure` are common, too. CEP queries are usually expressed using rule languages.
 
 Furthermore, there is another significant difference between SP and CEP. As said, SP operators resemble those of relational algebra. Some relational operators (e.g., `join`), however, are blocking operators in the sense that they are defined over finite sets of data and block execution until these are available in their entirety. Streams, however, can be viewed as infinite sets of data. As a consequence, in SP, the respective operators are not applied to streams directly. Instead, they require their operand streams to be annotated with so-called windows, which are typically expressed "in terms of time or number of tuples [i.e., events]" [30]. A window only contains a finite number of events of the respective stream. So-called consumption modes are the counterpart of windows in CEP. They are explained best through an example. The CEP operator `and`, for instance, is semantically ambiguous. The query `A and B` only specifies that an event of type `A` should be correlated with an event of type `B`. However, given the events `b1`, `b2`, `a1`, occuring in that order, it is not clear whether `a1` should be correlated with `b1` or `b2`--this depends on the given consumption mode. (See [19] for more information on consumption modes.) One of the differences between windows and consumptions modes is that the former are applied to streams (i.e., operands) while the latter are applied to operators. As pointed out in [30], consumption modes "can be loosely interpreted as load shedding, used from a semantics viewpoint rather than a QoS viewpoint" as they essentially dictate which events have to be kept in memory and which ones can be dropped as they will not be part of any correlation. To the best of my understanding, the same can be said about windows.
@@ -127,6 +128,7 @@ add illustration
 It is to be stressed that an EPN diagram is an abstraction, comprised of "platform-independend definition elements". It does not assume a distributed implementation. After the introduction of the EPN concept, the authors lay out the "[i]mplementation perspective", in which the graph has to be materialized onto what are being called "runtime artifacts", resulting in a "runtime system". Usually, there is no "one-to-one correspondence" between the processing elements of an EPN and the runtime artifacts of a respective implementation. With regards to this, two "extremes" are being described:
 
 + The entire EPN may be represeted by one runtime artifact, i.e., one centralized runtime system.
+
 + Each EPA is represented by one runtime artifact. These distribute events between each other and "can be placed on different server[s], allowing much of the [...] work to be performed in parallel."
 
 To the best of my knowledge, the second scenario can be considered a good example for distributed EP, even though there are obviously many ways to map EPAs to runtime artifacts, several of which might also be considered distributed approaches.
@@ -153,23 +155,31 @@ As--according to [26]--"[f]or the [underlying] communication [...] the paradigm 
 Although the QoS metrics listed below were originally put together "in the context of distributed and decentralized publish-subscribe systems", they do also apply to EP, since--as mentioned before--the underlying communication of many distributed EP solutions is based on the publish/subscribe paradigm. In order to interpret these QoS metrics in the sense of EP, one can simply think of event producers, event consumers and EPAs (as found in EPNs) whenever publishers, subscribers and brokers (as found in publish/subscribe systems) are mentioned. Moreover, statements about publishers and subscribers do not only apply to event producers and event consumers, respectively, but also to EPAs, as they also cosume and produce event streams. For example, a statement such as "Publishers annotate notifications they emit with priorities" can be interpreted as "Event producers and EPAs annotate events they produce with priorities".
 
 + Latency: It is stated that "[s]ubscribers request a publisher that is within a maximum latency bound". An "end-to-end latency" between a publisher and a subscriber "depends on the number of [...] hops between them" as well as on the time each broker takes to deal with a notification. However, in a distributed setting, "measured lower bounds" may at best "give hints" about whether some latency requirement can be met--not "absolute guarantees". Preallocating paths is mentioned as a way to deal with latency requirements.
+
 + Bandwith: It is described that publishers announce upper/lower bounds regarding the stream they produce, whereas subscribers "restrict the maximum stream of notifications they want to receive". It is recommended to consider bandwidth at the "per-broker" level. Given that "each broker knows the bandwidth it can make locally available to the infrastructure", an upper-bound for an entire path can be estimated, allowing for routing "based on the highest free bandwidth".
+
 + Message priorities: It is proposed that publishers annotate the notations they produce with relative or absolute priorities, denoting their importance compared to other notifications produced either by themselves or elsewhere, respectively. Subscribers, on the other hand, specify priorities regarding their subscriptions. At the "per-broker" level, priorities "can be used to control the local queues of each broker", resulting in the "end-to-end application" of the priorities along the entire path. This is, according to the authors, commonly implemented by letting notifications with higher priorities overtake those with lower priorities at each broker.
+
 + Delivery guarantees: While subscribers announce "which notifications they must receive", and where they are sensitive to duplicates, it is stated that publishers "specify if subscribers must receive certain notifications". A simple approach that is mentioned is to simply let the system know which messages can be dicarded. More sophisticated approaches concern "the completeness and duplication of delivery", i.e., subscribers may receive notifications that are directed to them "at least once", "at most once", or "exactly once". While meshing is listed as a way to achieve "at least once", it comes at the price of "increasing the message overhead". Disconnected subscribers are yet "[a]nother problem", as they might stay disconnected, in which case "at least once" cannot be guaranteed, no matter how long the notifications are buffered.
+
 + Notification order: It is explained that "[t]he order in which notifications arrive" is of significance in some cases while it is not in other cases. With centralized ordering, "ordering is [considered] easy to achieve". However, "distributed ordering of events coming from different sources" is described as problematic. Deploying a "central broker to enforce a global odering" is mentioned as a "generic approach" to tackle this challenge, imposing a "limit" on the "scalability of the overall infrastrucure", though.
+
 + Validity interval: The importance of the infrastructure to know "how long a notification stays valid" is stressed. It is explained that this is specified either "in terms of time" of "by the arrival of later messages". Specifying that "only the most recent event is of interest" through "follow-up messages" is described as an example of the latter. This is called an "efficient approach" as it allows for the infrastructure to "shorten its queues in high traffic situations".
 
-When interpreting the above list of QoS metrics in terms of EP, it becomes evident that these metrics can be applied to both SP as well as CEP. (As said, brokers are to be thought of as EPAs, and it has not been specfied whether these EPAs perform SP or CEP operations.) There are, however, QoS metrics that specifically apply to either SP or CEP. Some of them have been identified in [28] by Buchmann, Appel, Freudenreich, Frischbier and Guerrero.
+When interpreting the above list of QoS metrics in terms of EP, it becomes evident that these metrics can be applied to both SP as well as CEP. (As said, brokers are to be thought of as EPAs, and it has not been specfied whether these EPAs perform SP or CEP operations.) There are, however, QoS metrics that specifically apply to either SP or CEP. Some have been identified in [28] by Buchmann, Appel, Freudenreich, Frischbier and Guerrero.
 
-Among others, the following SP-specific QoS metrics are listed in the section "QoS of Stream Processing":
+SP-specific QoS metrics listed in the section "QoS of Stream Processing" include:
 
 + Timeliness: One the one hand, it is stated that applications relying on SP "typically have timing contraints to meet", thus, the timeliness of the "continuous processing of incoming events" is considered "one of the most relevant QoS requirements". On the other hand, however, many of these applications may "tolerate approximate results". According to the authors, these circumstances suggest a "common" "trade-off", i.e., "accuracy for timeliness". To the best of my understanding, an example of this trade-off would be favoring some less precise filter that therefore executes quickly over some more precise and more time-consuming filter.
+
 + Throughput: With regards to timeliness, "achievable throughput" is considered a "closely related QoS metric". SP solutions are said to "attempt to optimize" their "continuous query execution" in order to achieve maximum thoughput. As load shedding is regarded as "often" being the "only practical approach", the result is, again, the "trade-off of accuracy for timeliness". (The authors stress that the expected timeliness as well as the expected accuracy must be specified when designing a business process that relies on the SP.)
+
 + Order: Whether events may be processed out of order is listed as an "application dependent" "issue".
 
-In the section "QoS of Event Composition", CEP-specific QoS metrics are listed, some of them are listed below:
+CEP-specific QoS metrics listed in the section "QoS of Event Composition" include:
 
 + Order: Establishing an "odering between events" can be considered the most important QoS metric, as "achievable QoS [...] depends lagely on the possibility" to be able to do so. As an example of an operator requiring events to be ordered, the `sequence` operator--"which is part of most [CEP] event algebras"--is mentioned. Furthermore, it is stated that the "natural ordering" is time-based, which, according to the authors, is no problem if "there is only one central clock" as well as only one event occuring every clock tick. If, however, there may be "multiple events" occuring at the same point in time, being "time-stamped by different clocks", establishing a total order is said to be impossible. Lastly, it is explained that the granularity of timestamps plays a major role when it comes to timestamping: Events that might have been distinguishable with fine-grained timestamps might no be distinguishable when being timestamped more coarsely.
+
 + Delay/loss of messages: The delay or loss of messages is described as a "source of ambiguity". As an example, it is explained that it is impossible to determine that an event "did not occur in a given interval" unless it can be asserted that the event in question is neither delayed nor lost. With regard to bounded networks, the authors refer to the 2g-precedence model as a possibility to tackle this challenge. (An explanation of this model can be found in [9].) With regard to unbounded networks--"such as the internet"--they refer to [9], i.e., an approach based on the the injection of "heartbeat events from an outside time-service" which assumes that events "in the same channel do not overtake each other".
 
 ### 3 EventScala
@@ -193,23 +203,33 @@ todo
 add illustration
 ```
 
-In the previous paragraph, it has been hinted that in EventScala, one might subscribe to streams or make use of the operators `join` as well as `dropElem3`. For the sake of completeness, find below the list of all primitives (i.e., leaf queries) and operators (i.e., unary and binary queries) availiable:
+In the previous paragraph, it has been hinted that in EventScala, one might subscribe to streams or make use of the operators `join` as well as `dropElem3`. For the sake of completeness, find below the list of all primitives (i.e., leaf queries) and operators (i.e., unary and binary queries) availiable.
 
-+ Leaf queries, i.e., traits extending `LeafQuery`
-  + `StreamQuery`: A `StreamQuery` expresses a subscription to a stream. The trait `StreamQuery` specifies one field of type `String`, `publisherName`, for the name of the publisher that is the source of the stream.
-  + `SequenceQuery`: A `SequenceQuery` expresses a subscription to two streams with the CEP operator `sequence` being applied to them. The trait `SequenceQuery` specifies two fields of type `NStream`, `s1` and `s2`. A `NStream` is essentially a `Stream`, however, it is "`N`ot a query", i.e., not extending the trait `Query`. If `NStream` would be a query, then `s1` and `s2` would represent its subqueries, making `Sequence` a binary query rather than a leaf query.
-+ Unary queries, i.e., traits extending `UnaryQuery`
-  + `FilterQuery`: A `FilterQuery` expresses the application of the SP operator `where`. The `FilterQuery` trait specifies one field of type `Event => Boolean`, `cond`, for the filter predicate. The field for the subquery representing the operator's input stream is specified by the extending classes.
-  + `DropElemQuery`: A `DropElemQuery` expresses the application of the operator that EventScala offers instead of the EP operator `select`. While `select` lets one select which elements of the events of the operator's input stream to keep, the `dropElem` operator lets one specify which element to drop. The `DropElemQuery` trait specifies no fields. Which element of the events of the operator's input stream is to be dropped is specified by the extending classes' names, e.g., `DropElem1Of2`.
-  + `SelfJoinQuery`: A `SelfJoinQuery` expresses the application of the SP operator `join` but with one stream representing both of the operator's input streams. The `SelfJoinQuery` trait specifies two fields of type `Window`, `w1` and `w2`, for the windows that are applied to the operator's input streams. The field for the subquery representing both of the operators's input streams is specified by the extending classes.
-+ Binary queries, i.e., traits extending `BinaryQuery`
-  + A `JoinQuery` expresses the application of the SP operator `join`. The `JoinQuery` trait specifies two fields of type `Window`, `w1` and `w2`, for the windows that are applied to the operator's input streams. The fields for the two subqueries representing the operators's input streams are specified by the extending classes.
-  + A `ConjunctionQuery` expresses the application of the CEP operator `and`. The `ConjunctionQuery` trait specifies no fields. The fields for the two subqueries representing the operator's input streams are specified by the extending classes.
-  + A `DisjunctionQuery` expresses the application of the CEP operator `or`. The `DisjunctionQuery` trait specifies no fields. The fields for the two subqueries representing the operator's input streams are specified by the extending classes.
+Leaf queries, i.e., traits extending `LeafQuery`:
+
++ `StreamQuery`: A `StreamQuery` expresses a subscription to a stream. The trait `StreamQuery` specifies one field of type `String`, `publisherName`, for the name of the publisher that is the source of the stream.
+
++ `SequenceQuery`: A `SequenceQuery` expresses a subscription to two streams with the CEP operator `sequence` being applied to them. The trait `SequenceQuery` specifies two fields of type `NStream`, `s1` and `s2`. A `NStream` is essentially a `Stream`, however, it is "`N`ot a query", i.e., not extending the trait `Query`. If `NStream` would be a query, then `s1` and `s2` would represent its subqueries, making `Sequence` a binary query rather than a leaf query.
+
+Unary queries, i.e., traits extending `UnaryQuery`:
+
++ `FilterQuery`: A `FilterQuery` expresses the application of the SP operator `where`. The `FilterQuery` trait specifies one field of type `Event => Boolean`, `cond`, for the filter predicate. The field for the subquery representing the operator's input stream is specified by the extending classes.
+
++ `DropElemQuery`: A `DropElemQuery` expresses the application of the operator that EventScala offers instead of the EP operator `select`. While `select` lets one select which elements of the events of the operator's input stream to keep, the `dropElem` operator lets one specify which element to drop. The `DropElemQuery` trait specifies no fields. Which element of the events of the operator's input stream is to be dropped is specified by the extending classes' names, e.g., `DropElem1Of2`.
+
++ `SelfJoinQuery`: A `SelfJoinQuery` expresses the application of the SP operator `join` but with one stream representing both of the operator's input streams. The `SelfJoinQuery` trait specifies two fields of type `Window`, `w1` and `w2`, for the windows that are applied to the operator's input streams. The field for the subquery representing both of the operators's input streams is specified by the extending classes.
+
+Binary queries, i.e., traits extending `BinaryQuery`:
+
++ A `JoinQuery` expresses the application of the SP operator `join`. The `JoinQuery` trait specifies two fields of type `Window`, `w1` and `w2`, for the windows that are applied to the operator's input streams. The fields for the two subqueries representing the operators's input streams are specified by the extending classes.
+
++ A `ConjunctionQuery` expresses the application of the CEP operator `and`. The `ConjunctionQuery` trait specifies no fields. The fields for the two subqueries representing the operator's input streams are specified by the extending classes.
++ A `DisjunctionQuery` expresses the application of the CEP operator `or`. The `DisjunctionQuery` trait specifies no fields. The fields for the two subqueries representing the operator's input streams are specified by the extending classes.
 
 Up to this point, a hierarchy of traits but not one case class has been presented. The case class representation of a query is, however, made up of (possibly nested) case classes. These case classes have the following in common:
 
   + They extend exactly one of the traits `Query1`, `Query2`, ..., `Query6`, indicating the number and types of the elements of the events of the resulting stream.
+
   + They extend exactly one of the traits `StreamQuery`, `SequenceQuery`, `FilterQuery`, `DropElemQuery`, `SelfJoinQuery`, `JoinQuery`, `ConjunctionQuery` and `DisjunctionQuery`, indicating what kind of primitive or operator application they represent.
 
 For example, the case class `Stream1[A]` extends the trait `Query1[A]`, indicating that it represents a stream of events consisting of `1` element of the generic type `A`, as well as the trait `StreamQuery`, indicating that it respresents a subscription to a stream, i.e., a primitive. It has a field `publisherName` as specified by the trait `StreamQuery` as well as a field `requirements` as specified by the trait `Query`. `Conjunction12[A, B, C]`, to provide another example, extends the trait `Query3[A, B, C]`, indicating that it represents a stream of events consisting of `3` elements of the generic types `A`, `B` and `C`, respectively, as well as the trait `ConjunctionQuery`, indicating that it represents an application of the `and` operator. Obviously, it also has the field `requirements`.
@@ -220,7 +240,7 @@ At this point, EventScala's case class representation has been explained to an e
 
 *Listing 2: Case class representation of a query*
 ```scala
-val sampleQuery: Query2[Int, String] =
+val sampleQuery1: Query2[Int, String] =
   DropElem3Of3[Int, String, String](
     Join12[Int, String, String](
       Stream1[Int]("X", Set.empty),
@@ -249,7 +269,7 @@ val sampleQuery2: Query2[Int, Boolean] =
     Set.empty)
 ```
 
-#### 3.3 Domain-specific Language
+#### 3.3 Domain-Specific Language
 
 EventScala's DSL for expressing queries for EP systems sets out to achieve in the domain of EP what ScalaQL and other DSLs achieved for relational databases, i.e., "statically eliminating [...] runtime issues" [23] caused by "syntactically incorrect or ill-typed queries" [22]. EventScala's DSL can be classified as an internal DSL. With EventScala being a Scala framework, its host language is obviously Scala.
 
@@ -260,42 +280,72 @@ mention typesafety, ide support
 
 This section is structured as followed. Firstly, the DSL is presented from a user's perspective, i.e., an overview of  its features is given and advantages are pointed out. Then, notable parts of its implementation are discussed, e.g., the use of Scala features such as implicit conversion [33].
 
-The section presenting the case class representation of queries already revealed which primitives and operations are supported by EventScala. In the following listings (listing 4, listing 5, listing 6), it will be shown how the DSL can be used to express queries made up of these primitves and operators.
+The section presenting the case class representation of queries already revealed which primitives and operations are supported by EventScala. In the following listings (`TODO reference`), it will be shown how the DSL can be used to express queries made up of these primitves and operators.
 
 *Listing 4: Primitives, i.e., leaf queries*
 ```scala
+// Subscription to a stream
+// of events of type `Int` from A
 val stream1: Query1[Int] =
-  stream[Int]("X") // Here, the type has to be explicitly annotated!
+  // Here, the type has to be explicitly annotated:
+  stream[Int]("A")
 
+// Subscription to a stream
+// of events of type `String, String` from B
 val stream2: Query2[String, String] =
-  stream[String, String]("Y") // Here, the type has to be explicitly annotated!
+  stream[String, String]("B")
 
+// Subscription to two streams
+// of events of type `Int` and `Boolean`, respectively,
+// with the CEP operator `sequence` applied to them
 val sequence1: Query2[Int, Boolean] =
-  sequence(nStream[Int]("C") -> nStream[Boolean]("D")) // Here, the types have to be explicitly annotated!
+  // Here, the types have to be explicitly annotated:
+  sequence(
+    nStream[Int]("C") ->
+    nStream[Boolean]("D"))
 
+// Subscription to two streams
+// of events of type `Int, Int` and `Int`, respectively,
+// with the CEP operator `sequence` applied to them
 val sequence2: Query3[Int, Int, Int] =
-  sequence(nStream[Int, Int]("E") -> nStream[Int]("F")) // Here, the type have to be explicitly annotated!
+  sequence(
+    nStream[Int, Int]("E") ->
+    nStream[Int]("F"))
 ```
 
 *Listing 5: Application of unary operators, i.e., unary queries*
 ```scala
+// Application of the SP operator `where`
+// to `stream1` (`Query1[Int]`)
 val filter1: Query1[Int] =
-  stream1.where(_ % 2 == 0) // Alternatively: stream1 where (_ % 2 == 0)
+  stream1.where(_ % 2 == 0)
+  // Alternatively: `stream1 where (_ % 2 == 0)`
 
+// Application of the SP operator `where`
+// to `sequence2` (`Query3[Int, Int, Int]`)
 val filter2: Query3[Int, Int, Int] =
-  sequence2.where((e1, _, e3) => e1 < e3) // Alternatively: sequence2 where ((e1, _, e3) => e1 < e3)
+  sequence2.where((e1, _, e3) => e1 < e3)
 
+// Application of the SP operator `dropElem2`
+// to `stream2` (`Query2[String, String]`)
 val dropElem1: Query1[String] =
-  stream2.dropElem2() // Alternatively: stream2 dropElem2()
+  stream2.dropElem2()
+  // Alternatively: stream2 dropElem2()
 
+// Application of the SP operator `dropElem1`
+// to `sequence1` (`Query2[Int, Boolean]`)
 val dropElem2: Query1[Boolean] =
-  sequence1.dropElem1() // Alternatively: sequence1 dropElem1()
+  sequence1.dropElem1()
 
+// Application of the SP operator `selfJoin`
+// to `stream2` (`Query2[String, String]`)
 val selfJoin1: Query4[String, String, String, String] =
   stream2.selfJoin(
-    slidingWindow(42.instances),
-    tumblingWindow(42.seconds))
+    slidingWindow(42.instances), // Alternatively: `42 instances`
+    tumblingWindow(42.seconds))  // Alternatively: `42 seconds`
 
+// Application of the SP operator `selfJoin`
+// to `sequence1` (`Query2[Int, Boolean]`)
 val selfJoin2: Query4[Int, Boolean, Int, Boolean] =
   sequence1.selfJoin(
     tumblingWindow(42.instances),
@@ -304,30 +354,95 @@ val selfJoin2: Query4[Int, Boolean, Int, Boolean] =
 
 *Listing 6: Application of binary operators, i.e. binary queries*
 ```scala
+// Application of the SP operator `join`
+// to `stream1` (`Query1[Int]`)
+// and `stream2` (`Query2[String, String]`)
 val join1: Query3[Int, String, String] =
   stream1.join(
     stream2,
     slidingWindow(42.instances),
     tumblingWindow(42.seconds))
 
+// Application of the SP operator `join`
+// to `sequence1` (`Query2[Int, Boolean]`)
+// and `stream2` (`Query2[String, String]`)
 val join2: Query5[Int, Boolean, Int, Int, Int] =
   sequence1.join(
     sequence2,
     slidingWindow(42.instances),
     tumblingWindow(42.seconds))
 
+// Application of the CEP operator `and`
+// to `stream2` (`Query2[String, String]`)
+// and `stream1` (`Query1[Int]`)
 val conjunction1: Query3[String, String, Int] =
-  stream2.and(stream1) // Alternatively: stream2 and stream1
+  stream2.and(stream1)
+  // Alternatively: `stream2 and stream1`
 
+// Application of the CEP operator `and`
+// to `sequence1` (`Query2[Int, Boolean]`)
+// and `sequence2` (`Query3[Int, Int, Int]`)
 val conjunction2: Query5[Int, Boolean, Int, Int, Int] =
-  sequence1.and(sequence2) // Alternatively: sequence1 or sequence2
+  sequence1.and(sequence2)
+  // Alternatively: `sequence1 and sequence2`
 
+// Application of the CEP operator `or`
+// to `stream1` (`Query1[Int]`)
+// and `stream2` (`Query2[String, String]`)
 val disjunction1: Query2[Either[Int, String], Either[X, String]] =
-  stream1.or(stream2) // Alternatively: stream2 and stream1
+  stream1.or(stream2)
+  // Alternatively: `stream1 or stream2`
 
+// Application of the CEP operator `or`
+// to `sequence2` (`Query3[Int, Int, Int]`)
+// and `sequence1` (`Query2[Int, Boolean]`)
 val disjunction2: Query3[Either[Int, Int], Either[Int, Boolean], Either[Int, X]] =
-  sequence2.or(sequence1) // Alternatively: sequence1 or sequence2
+  sequence2.or(sequence1)
+  // Alternatively: `sequence1 or sequence2`
 ```
+
+*Listing 7: Nested queries*
+```scala
+// Nested application
+// of 3 unary and 3 binary operators
+// to 4 primitives
+val nested1: Query3[Either[Int, String], Either[Int, X], Either[Float, X]] =
+  stream[Int]("A")
+    .join(
+      stream[Int]("B"),
+      slidingWindow(2.seconds),
+      slidingWindow(2.seconds))
+    .where(_ < _)
+    .dropElem1()
+    .selfJoin(
+      tumblingWindow(1.instances),
+      tumblingWindow(1.instances))
+    .and(stream[Float]("C"))
+    .or(stream[String]("D"))
+
+// Nested application
+// of 2 binary operators
+// to 3 (!) primitives
+val nested2: Query4[Int, Int, Float, String] =
+  stream[Int]("A")
+    .and(stream[Int]("B"))
+    .join(
+      sequence(
+        nStream[Float]("C") ->
+        nStream[String]("D")),
+      slidingWindow(3.seconds),
+      slidingWindow(3.seconds))
+```
+
+When examining queries that are expressed using the DSL (such as the ones listed above), many advantages over expressing queries as unstructured strings become apparent, including the following:
+
++ Syntax: Obviously but nevertheless very important is the fact that syntactically incorrect queries would fail to compile instead of causing runtime errors. For example, forgetting the dot before adding another method call to the chain or misspelling a method's name would cause compilation to fail.
+
++ Type-Safety: ...
+
++ Tooling: As the DSL is an internal DSL with Scala being its host language, every query expressed in it is also valid Scala. As a consequence, IDEs and other tools that support Scala can also be leveraged when expressing queries using the DSL. For example, one could benefit from all of the static safeguards listed above without ever manually hitting the compile button, as IDEs such as JetBrains's IntelliJ IDEA [34] continuously perform static analysis while typing.
+
+
 
 ```
 further structure
@@ -379,3 +494,4 @@ further structure
 + [31] http://slick.lightbend.com/
 + [32] https://github.com/milessabin/shapeless
 + [33] http://www.artima.com/weblogs/viewpost.jsp?thread=179766
++ [34] https://www.jetbrains.com/idea/
