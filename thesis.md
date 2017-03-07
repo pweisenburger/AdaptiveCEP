@@ -438,9 +438,15 @@ When examining queries that are expressed using the DSL (such as the ones listed
 
 + Syntax: Obviously but nevertheless very important is the fact that syntactically incorrect queries would fail to compile instead of causing runtime errors. For example, forgetting the dot before adding another method call to the chain or misspelling a method's name would cause compilation to fail.
 
-+ Type-Safety: ...
++ Type-safety: The type of a query expressed using the DSL always encodes the number and types of the elements of the events of the stream represented by it, e.g., a query of type `Query2[Int, String]` represents a stream of events with `2` elements of type `Int` and `String`, respectively. This information is used to provide static safeguards against a variety of malformed queries, for example:
 
-+ Tooling: As the DSL is an internal DSL with Scala being its host language, every query expressed in it is also valid Scala. As a consequence, IDEs and other tools that support Scala can also be leveraged when expressing queries using the DSL. For example, one could benefit from all of the static safeguards listed above without ever manually hitting the compile button, as IDEs such as JetBrains's IntelliJ IDEA [34] continuously perform static analysis while typing.
+  + Type-safety of the `filter` operator: The `where` method takes a Scala closure that represents the filter predicate. The number and types of the parameters of that closure have to match the number and types of the elements of the events of the stream that is represented by the respective query. For example, given a query of type `Query2[Int, String]`, the programmer has to supply a closure with exactly `2` parameters of type `Int` and `String`, respectively. By extension, it is guaranteed that within the closure's body, these parameters are treated as an `Int` and a `String`, respectively, e.g., calling the `String` method `capitalize` on the second parameter would cause a compile-time error.
+
+  + Type-safety of the `dropElem` operator: Which ones of the `dropElem` methods are available depends on the number of elements of the events of the stream represented by a given query. For example, given a `Query1`, not one `dropElem` method can be called. Given a `Query2`, to provide another example, `dropElem1` or `dropElem2` maybe used. Calling `dropElem3` on it would, however, result in a compile-time error.
+
+  + Type-safety of the operators `selfJoin`, `join` and `and`: Given that EventScala only supports up to 6 elements per event, the DSL should not allow for the operators `selfJoin`, `join` and `and` to be applied to queries represeting streams whose number of elements suceeds in sum 6.
+
++ Tooling: As the DSL is an internal DSL with Scala being its host language, every query expressed in it is also valid Scala. As a consequence, IDEs and other tools that support Scala can also be leveraged when expressing queries using the DSL. For example, one could benefit from the static safeguards listed above without ever manually hitting the compile button, as IDEs such as JetBrains's IntelliJ IDEA [34] continuously perform static analysis while typing.
 
 
 
