@@ -253,7 +253,7 @@ val sampleQuery1: Query2[Int, String] =
 
 The avid reader has certainly noticed that this is the case class representation of the query that has been informally described and illustrated as a graph previously in this section. It is to be stressed that this is a type-safe representation of said query. (This point will be discussed in detail in section 3.3.) Also, it is to be stressed again that it is a platform-independent representation, i.e., it neither encodes data specific to the DSL that generated it nor does it encode data that is specific to the EP solution that will execute it.
 
-Lastly, as the title of this thesis suggests, EventScala is a quality-of-service-oriented approach to EP. As such, it allows for QoS requirements to be expressed with each query. One might have noticed that the `sampleQuery` above contains the expression `Set.empty` four times. At these four points, it would have been possible to define a set of requirements (of type `Set[Requirement]`). When picturing the query as a graph once again, it becomes clear that requirements can be defined over every node of the graph. EventScala features two kinds of requirements, `FrequencyRequirement`s and `LatencyRequirement`s. (These will be discussed in greater detail in section 3.5.) It is to be noted, however, that the case classes representing these requirements are not platform-independent. They do not just contain the specification of the respective requirement but also a callback closure that defines what to do whenever the respective requirement is not met during the execution of the query. The fact that this callback closure is being passed data about the processing node that is responsible for executing the query in EventScala's execution graph is what breaks platform independence. I chose to go this way as platform independece with regards to QoS requirements is somewhat pointless as --to the best of my knowledge--there are no other EP solutions that are able to work with such requirements. Listing 3 shows another example query, representing a simple stream subscription that is being applied to a filter, with the stream being required to emit at least 2 events every 5 seconds.
+Lastly, as the title of this thesis suggests, EventScala is a quality-of-service-oriented approach to EP. As such, it allows for QoS requirements, i.e., run-time requirements, to be expressed with each query. One might have noticed that the `sampleQuery` above contains the expression `Set.empty` four times. At these four points, it would have been possible to define a set of requirements (of type `Set[Requirement]`). When picturing the query as a graph once again, it becomes clear that requirements can be defined over every node of the graph. EventScala features two kinds of requirements, `FrequencyRequirement`s and `LatencyRequirement`s. (These will be discussed in greater detail in section 3.5.) It is to be noted, however, that the case classes representing these requirements are not platform-independent. They do not just contain the specification of the respective requirement but also a callback closure that defines what to do whenever the respective requirement is not met during the execution of the query. The fact that this callback closure is being passed data about the processing node that is responsible for executing the query in EventScala's execution graph is what breaks platform independence. I chose to go this way as platform independece with regards to QoS requirements is somewhat pointless as --to the best of my knowledge--there are no other EP solutions that are able to work with such requirements. Listing 3 shows another example query, representing a simple stream subscription that is being applied to a filter, with the stream being required to emit at least 2 events every 5 seconds.
 
 *Listing 3: Case class representation of a query that specifies a QoS requirement*
 ```scala
@@ -273,14 +273,9 @@ val sampleQuery2: Query2[Int, Boolean] =
 
 EventScala's DSL for expressing queries for EP systems sets out to achieve in the domain of EP what ScalaQL and other DSLs achieved for relational databases, i.e., "statically eliminating [...] runtime issues" [23] caused by "syntactically incorrect or ill-typed queries" [22]. EventScala's DSL can be classified as an internal DSL. With EventScala being a Scala framework, its host language is obviously Scala.
 
-```
-todo
-mention typesafety, ide support
-```
-
 This section is structured as followed. Firstly, the DSL is presented from a user's perspective, i.e., an overview of  its features is given and advantages are pointed out. Then, notable parts of its implementation are discussed, e.g., the use of Scala features such as implicit conversion [33].
 
-The section presenting the case class representation of queries already revealed which primitives and operations are supported by EventScala. In the following listings (`TODO reference`), it will be shown how the DSL can be used to express queries made up of these primitves and operators.
+The section presenting the case class representation of queries already revealed which primitives and operations are supported by EventScala. In the following listings (`TODO reference`), it will be shown how the DSL can be used to express queries made up of these primitves and operators, i.e., how the DSL can be used tu express leaf, unary and binary queries.
 
 *Listing 4: Primitives, i.e., leaf queries*
 ```scala
@@ -434,7 +429,36 @@ val nested2: Query4[Int, Int, Float, String] =
       slidingWindow(3.seconds))
 ```
 
-When examining queries that are expressed using the DSL (such as the ones listed above), many advantages over expressing queries as unstructured strings become apparent, including the following:
+Furthermore, the section presenting the case class representation of queries also revealed that EventScala supports queries to be annotated with QoS requirements, i.e., `FrequencyRequirement`s and `LatencyRequirement`s. As already depicted, every (sub-)query can be annotated an arbitrary amount of such requirements, no matter how deeply they are nested. Listing 8 demonstrates how QoS requirements can be expressed using the DSL. In it, the query `nested1` from listing 7 (or rather two of its subqueries) are annotated with requirements.
+
+*Listing 8: Nested queries that specify QoS requirements*
+```scala
+val nested1WithQos: Query3[Either[Int, String], Either[Int, X], Either[Float, X]] =
+  stream[Int]("A")
+  .join(
+    stream[Int]("B"),
+    slidingWindow(2.seconds),
+    slidingWindow(2.seconds))
+  .where(_ < _)
+  .dropElem1(
+    // `LatencyRequirement`
+    latency < timespan(1.milliseconds) otherwise { (nodeData) =>
+      println(s"Events reach node `${nodeData.name}` too slowly!") })
+  .selfJoin(
+    tumblingWindow(1.instances),
+    tumblingWindow(1.instances),
+    // `FrequencyRequirement`s
+    frequency > ratio( 3.instances,  5.seconds) otherwise { (nodeData) =>
+      println(s"Node `${nodeData.name}` emits too few events!") },
+    frequency < ratio(12.instances, 15.seconds) otherwise { (nodeData) =>
+      println(s"Node `${nodeData.name}` emits too many events!") })
+  .and(stream[Float]("C"))
+  .or(stream[String]("D"))
+```
+
+At this point is becomes apparent why the definition of QoS requirements in EventScala's DSL (and, by extionsion, EventScala's case class representation) is platform-specific, i.e., specific to EvenScala's execution graph. As previously mentioned, each query (and, in turn, each of its subqueries) will be mapped to one processing node when run by the execution graph. Whenever one of the requirements of a query cannot be met during run-time, the callback closure that was specified as part the requirement is called. This closure is invoked with run-time data about the respective processing node, which is represented by an instance of the case class `NodeData`. This is exactly what lies behind the parameters called `nodeData` in listing 8.
+
+Nevertheless, when examining queries that are expressed using the DSL (such as the ones listed above), many advantages over expressing queries as unstructured strings become apparent, including the following:
 
 + Syntax: Obviously but nevertheless very important is the fact that syntactically incorrect queries would fail to compile instead of causing runtime errors. For example, forgetting the dot before adding another method call to the chain or misspelling a method's name would cause compilation to fail.
 
@@ -444,20 +468,30 @@ When examining queries that are expressed using the DSL (such as the ones listed
 
   + Type-safety of the `dropElem` operator: Which ones of the `dropElem` methods are available depends on the number of elements of the events of the stream represented by a given query. For example, given a `Query1`, not one `dropElem` method can be called. Given a `Query2`, to provide another example, `dropElem1` or `dropElem2` maybe used. Calling `dropElem3` on it would, however, result in a compile-time error.
 
-  + Type-safety of the operators `selfJoin`, `join` and `and`: Given that EventScala only supports up to 6 elements per event, the DSL should not allow for the operators `selfJoin`, `join` and `and` to be applied to queries represeting streams whose number of elements suceeds in sum 6.
+  + Type-safety of the operators `selfJoin`, `join` and `and`: Given that EventScala only supports up to 6 elements per event, the DSL does not allow for the operators `selfJoin`, `join` and `and` to be applied to two queries that represent streams for which the sum of the numbers of elements per event succeeds 6. For example, when calling the `join` method on a `Query4`, only a `Query1` or a `Query2` can be passed to it representing the second operand of the `join` operator.
 
 + Tooling: As the DSL is an internal DSL with Scala being its host language, every query expressed in it is also valid Scala. As a consequence, IDEs and other tools that support Scala can also be leveraged when expressing queries using the DSL. For example, one could benefit from the static safeguards listed above without ever manually hitting the compile button, as IDEs such as JetBrains's IntelliJ IDEA [34] continuously perform static analysis while typing.
 
+Obviously, this list of advantages could have been presented earlier, i.e., in the section on EventScala's case class representation of queries. All of the listed benefits also apply to the case class representation, since the DSL can be viewed as merely syntactic sugar for it.
 
+Finally, as the DSL's usage has been demonstrated and its advantages have been pointed out, the remainder of this section discusses how it is implemented, i.e., it is described which patterns and Scala features are leveraged.
 
+In EventScala's DSL, operators are represented by methods. It might look as if these methods were defined on the traits `Query1`, `Query2`, ..., `Query6`. Assuming a value `q` of type `Query2`, one could, for example, write `q.dropElem1()`, which suggests that `dropElem1` is a method implemented by `Query2`. This would, however, violate the separation of data and logic. Therefore, it is to be stressed that `Query2`--along with every trait or case class that is part of EventScala's case class representation--does not come with any logic whatsoever, i.e., no methods are defined or implemented.
+
+In order to make method calls such as `q.dropElem1()` possible, the DSL heavily relies on an advanced language feature called implicit conversion. In a blog post called "Pimp my Library" [33], Martin Odersky, the original designer of the Scala programming language, explains this feature. In this context, it is sufficient to understand the following use case: Whenever a value of type `X` is required but instead a value of type `Y` is being supplied, the compiler tries to find a function that is capable of converting the `Y` value to a `X` value. For this to work, the function has to be in scope, it has be marked with the `implicit` keyword and its signature has to be `Y => X`. As an example, Odersky introduces `x` to be of type `Array[Int]` and then assigns `x` to `v`, a variable of type `String`. Obviously, this would normally result in a compile-time error. However, it does not, since the following function is in scope:
+
+*Listing 9: Implicit conversion function*
+```scala
+implicit def array2string[T](x: Array[T]) = x.toString
 ```
-further structure
-- point out advantages of dsl over unstructured strings
-- show how operators can not just be applied to primitives but also to complex queries via method chaining
-- show how queries can be bound to names and how these names can then be used within other queries
-- show how to express qos requirements
-- eventually move on to explaining the implementation
-```
+
+At this point it is obvious why method calls such as `q.dropElem1()` do not result in a compile-time error: `q` is of type `Query2`, which neither defines nor implements the method `dropElem1`. However, there is a case class `Query2Helper` which does have this method as well as an implicit conversion function that takes a `Query2` and returns a `Query2Helper`. Needless to say, for each trait `Query1`, `Query2`, ..., `Query6`, there is a case class `Query1Helper`, `Query2Helper`, ..., `Query6Helper`, respectively, as well as a resepctive implicit conversion function in place.
+
+This is basically a simplicifcation of an approach proposed by Debasish Ghosh in his book "DSLs in Action" [21]. In chapter 6.4 ("Building a DSL that creates trades"), he uses a "[s]equence of implicit conversions" and the "subsequent creation of helper objects" to construct a tuple that represents something called a fixed income trade. This pattern can be described as follows: The DSL should be used to construct a tuple. The tuple's first element should be of type `A`, the second one of type `B`, the third one of type `C`, etc. Helper classes `AHelper`, `ABHelper`, `ABCHelper`, etc. as well as the respective implicit conversion methods with the signatures `A => AHelper`, `(A, B) => ABHelper`, `(A, B, C) => ABCHelper`, etc. are defined. `AHelper` has a `method1` that takes a `B` and returns an `(A, B)`, `ABHelper` has a `method2` that takes a `C` and returns an `(A, B, C)`, and so forth. This pattern allows for expressions such as `a method1 b method2 c /* ... */` (with `a` being an `A`, `b` being a `B`, and so forth). As said, Ghosh presents this pattern along with an example DSL is based upon it. He demonstrates how the expression `200 discount_bonds IBM for_client NOMURA on NYSE at 72.ccy(USD)` can be used to obtain a tuple that represents a fixed income trade, i.e., `((72, USD), NYSE, NOMURA, 200, IBM)`.
+
+Another Scala feature that the DSL heavily relies upon is operator overloading. Technically, however, Scala does not support operator overloading as it does not even have operators. Instead, what seem to be operators are actually methods. The arithmetic operator `+` that is defined over two `Int`s, for instance, is simply represented by the method `abstract def +(x: Int): Int` of the abstract class `Int`. As such, the two expressions `40 + 2` and `40.+(2)` are actually equivalent. With many characters being legal identifiers that can be used as method names, e.g., `+`, `>`, `<`, `|`, overloading an operator in Scala is nothing more than defining a method. This feature is used throughout the DSL. In order to construct a `FrequencyRequirement`, on might, for example, write `frequency > ratio(/* ... */) /* ... */`. Calling the function `frequency` returns a case object called `FrequencyHelper`, which defines a bunch of methods, including `>`, `>=`, `<`, `<=`, etc., all of which take one argument of type `Ratio`.
+
+Lastly, variable-length argument lists (also known as varargs) constitute yet another Scala feature that is used throughout the DSL. Varargs are, for instance, used to syntactically reflect the fact that queries in EventScala can be annotated with zero or more QoS requirements. To this end, the type of the last parameter of every method of the DSL that returns a query is `Requirement*`. The `stream[A]` method, for example, specifies two parameters, i.e., `publisherName` of type `String` and `requirements` of type `Requirement*`. Thus, this method might be supplied with no requirement, e.g., `stream[Int]("X")`, with one requirement, e.g., `stream[Int]("X", r1)`, with two requirements, e.g., `stream[Int]("X", r1, r2)`, etc. (with `r1`, `r2`, etc. being of type `Requirement`). If the DSL would not rely on varargs but simply use `Set[Requirement]` as the type of the `requirement` parameter type--as it is the case in the case class representation--these method calls would look much more verbose: `stream[Int]("X", Set.empty)`, `stream[Int]("X", Set(r1))`, `stream[Int]("X", Set(r1, r2))`, etc.
 
 #### 3.4 Execution Graph
 #### 3.5 Quality of Service
