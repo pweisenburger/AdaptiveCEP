@@ -1,7 +1,7 @@
-package com.scalarookie.eventscala.backend.data
+package com.lambdarookie.eventscala.backend.data
 
 /**
-  * Created by monur.
+  * Created by M. Onur Vural
   */
 class Coordinate(x: Double, y: Double, z: Double) {
 

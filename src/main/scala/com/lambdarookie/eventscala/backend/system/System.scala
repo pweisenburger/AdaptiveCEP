@@ -1,7 +1,7 @@
-package com.scalarookie.eventscala.backend.system
+package com.lambdarookie.eventscala.backend.system
 
-import com.scalarookie.eventscala.backend.data.Coordinate
-import com.scalarookie.eventscala.backend.qos.QualityOfService
+import com.lambdarookie.eventscala.backend.data.Coordinate
+import com.lambdarookie.eventscala.backend.qos.QualityOfService
 import rescala._
 
 /**
