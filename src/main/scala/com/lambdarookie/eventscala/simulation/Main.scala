@@ -68,5 +68,5 @@ object Main extends App {
       // This is necessary to avoid warnings about non-exhaustive `match`:
       case _                             =>
     })
-  
+
 }
