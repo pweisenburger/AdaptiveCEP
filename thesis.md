@@ -494,6 +494,39 @@ Another Scala feature that the DSL heavily relies upon is operator overloading. 
 Lastly, variable-length argument lists (also known as varargs) constitute yet another Scala feature that is used throughout the DSL. Varargs are, for instance, used to syntactically reflect the fact that queries in EventScala can be annotated with zero or more QoS requirements. To this end, the type of the last parameter of every method of the DSL that returns a query is `Requirement*`. The `stream[A]` method, for example, specifies two parameters, i.e., `publisherName` of type `String` and `requirements` of type `Requirement*`. Thus, this method might be supplied with no requirement, e.g., `stream[Int]("X")`, with one requirement, e.g., `stream[Int]("X", r1)`, with two requirements, e.g., `stream[Int]("X", r1, r2)`, etc. (with `r1`, `r2`, etc. being of type `Requirement`). If the DSL would not rely on varargs but simply use `Set[Requirement]` as the type of the `requirement` parameter type--as it is the case in the case class representation--these method calls would look much more verbose: `stream[Int]("X", Set.empty)`, `stream[Int]("X", Set(r1))`, `stream[Int]("X", Set(r1, r2))`, etc.
 
 #### 3.4 Execution Graph
+
+##### 3.4.1 Introduction
+
+EventScala does not only offer a type-safe case class representation of EP queries and a DSL to generate the former, it does also offer a way to execute such queries. It is EventScala's execution graph (or just graph) that allows for running queries in a --as the title of this thesis suggests--distributed fashion.
+
+This section is strucutred as follows. The execution graph is based on the Scala toolkit Akka and, as such, on the Actor Model. Even though this is not the place to cover either of them in depth, the first part of this section will indroduce the Actor Model and Akka to the extent necessary. Secondly, `TODO` Lastly, `TODO`
+
+##### 3.4.2 Akka and the Actor Model
+
+EventScala's execution graph is implemented using the Scala framework Akka. Akka is based on the Actor Model [35]. Accrding to the official documentation [36], actors "give you" "high-level abstractions for distribution, concurrency and parallelism" as well as an "[a]synchronous, non-blocking and highly performant message-driven programming model". According to Akka's documentation, concurrency means "that two tasks are making progress"--independenty from each other--although they do not necessarily to so sat the same time, i.e., "they might not be executing simultaneously". As as example, time slicing is mentioned. Parallelism is then described to be the case "when the execution can be truly simultaneous". Furthermore, a method call is described as being synchronous "if the caller cannot make progress until the method returns". A method call is considered asynchronous when it "allows the caller to progress" right after issuing the call, as the completion of the method is signalled through, say, the invocation of a callback closure.
+
+Using Akka (and, by extension, the Actor Model), applications are essentially built by creating hierachies of actors that send and receive messages. According to Akka's documentation, actors are "container[s]" for state, behavior, a mailbox, child actors and a supervision strategy. These five characteristics are then described in detailed. Below, I summarized what is important to know about them in this context.
+
++ State: An actor is a stateful abstraction. Therefore, an actor typically contains variables reflecting "possible states the actor may be in", e.g., a variable representing a "set of listeners" or "pending requests". Most importantly, this data is safeguarded from "corruption by other actors". Furthermore, "conceptually", each actor is represented by its own thread, which is also "completly shielded from the rest of the system".
+
++ Behavior: Whenever an actor processes a message, it triggers the actor to behave in a certain way. Behavior is described as a "function which defines the actions to be taken in reaction to the message".
+
++ Mailbox: As it is stated that it is "[a]n actor's purpose" to process messages, its mailbox, "which connects sender and receiver", deserves special attention. An actor's mailbox enqueues the messages directed to it "in the time-order of send operations". As a result of this, "messages sent from different actors may no have a defined order at runtime". On the other hand, however, if the mailbox only contains messages from one sender, they are ensured to be in the same order.
+
++ Child actors: Actors may create child actors which they will then "automatically supervise".
+
++ Supervision strategy: Lastly, an actor embodies a "strategy for handling faults of its children". As EventScala is a research project that does not concern itself with fault tolerance, this will not be mentioned again.
+
+It is to be stressed that while actors "are objects which encapsulate state and behavior", "they communcate exclusively by exchanging [immutable] messages". Therefore, fields and methods defined by an actor cannot be accessed in a direct, synchronous fashion. Instead, an actor can only be interacted with asynchrously, i.e., through messages. To the best of my understanding, this is key when it comes to how Akka tries to take the pain out of concurrent and asynchronous programming: Even though many actors might run concurrently and communicate asynchonoulsy, the code that is defined within each actor can be thought of as being executed sequentially and the communication between actors through immutable messages works without any kind of shared memory, rendering error-prone primitives such as locks unnecessary.
+
+##### 3.4.2 Akka and Event-Driven Archtecture
+
+`TODO`
+
+##### 3.4.2 The Structure of the Execution Graph
+
+In section 3.2 it has been described how a query in case class representation could be pictured as a graph. It has already been pointed out, that this graph conceptually corresponds to EventScala's execution graph. The outermost query was illustrated as the root node of the graph, its subquery as the child node of the root node, and so forth. As said, this precisely resembles the hierarchy of actors of the respective execution graph. Accordingly, each leaf query is represented by an actor without child actors, i.e., by a class extending the trait `LeafNode`, each unary query is represented by an actor with one child actor, i.e., by a class extending the trait `UnaryNode`, and each binary query is represented by an actor with two child actors, i.e., by a class extending the trait `BinaryNode`. The traits `LeafNode`, `UnaryNode` and `BinaryNode` extend the `Actor`, thus, any classes extending them are, in turn, `Actor`s. The following classes extend `LeafNode`, `UnaryNode` and `BinaryNode`, respectively.
+
 #### 3.5 Quality of Service
 
 ### 4 Simulation
@@ -535,3 +568,5 @@ Lastly, variable-length argument lists (also known as varargs) constitute yet an
 + [32] https://github.com/milessabin/shapeless
 + [33] http://www.artima.com/weblogs/viewpost.jsp?thread=179766
 + [34] https://www.jetbrains.com/idea/
++ [35] Hewitt, Bishop, Steiger. A Universal Modular ACTOR Formalism for Artificial Intelligence.
++ [36] http://doc.akka.io/docs/akka/2.4/AkkaScala.pdf
