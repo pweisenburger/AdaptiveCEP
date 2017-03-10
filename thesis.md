@@ -495,13 +495,9 @@ Lastly, variable-length argument lists (also known as varargs) constitute yet an
 
 #### 3.4 Execution Graph
 
-##### 3.4.1 Introduction
-
 EventScala does not only offer a type-safe case class representation of EP queries and a DSL to generate the former, it does also offer a way to execute such queries. It is EventScala's execution graph (or just graph) that allows for running queries in a --as the title of this thesis suggests--distributed fashion.
 
 This section is strucutred as follows. The execution graph is based on the Scala toolkit Akka and, as such, on the Actor Model. Even though this is not the place to cover either of them in depth, the first part of this section will indroduce the Actor Model and Akka to the extent necessary. Secondly, `TODO` Lastly, `TODO`
-
-##### 3.4.2 Akka and the Actor Model
 
 EventScala's execution graph is implemented using the Scala framework Akka. Akka is based on the Actor Model [35]. Accrding to the official documentation [36], actors "give you" "high-level abstractions for distribution, concurrency and parallelism" as well as an "[a]synchronous, non-blocking and highly performant message-driven programming model". According to Akka's documentation, concurrency means "that two tasks are making progress"--independenty from each other--although they do not necessarily to so sat the same time, i.e., "they might not be executing simultaneously". As as example, time slicing is mentioned. Parallelism is then described to be the case "when the execution can be truly simultaneous". Furthermore, a method call is described as being synchronous "if the caller cannot make progress until the method returns". A method call is considered asynchronous when it "allows the caller to progress" right after issuing the call, as the completion of the method is signalled through, say, the invocation of a callback closure.
 
@@ -519,13 +515,32 @@ Using Akka (and, by extension, the Actor Model), applications are essentially bu
 
 It is to be stressed that while actors "are objects which encapsulate state and behavior", "they communcate exclusively by exchanging [immutable] messages". Therefore, fields and methods defined by an actor cannot be accessed in a direct, synchronous fashion. Instead, an actor can only be interacted with asynchrously, i.e., through messages. To the best of my understanding, this is key when it comes to how Akka tries to take the pain out of concurrent and asynchronous programming: Even though many actors might run concurrently and communicate asynchonoulsy, the code that is defined within each actor can be thought of as being executed sequentially and the communication between actors through immutable messages works without any kind of shared memory, rendering error-prone primitives such as locks unnecessary.
 
-##### 3.4.2 Akka and Event-Driven Archtecture
+In section 2.1, characteristics of EDAs [2] have been listed. These directly apply to Akka and, by extension, the Actor Model, too. This is Akka is such a natural fit for implementing an EP engine.
 
-`TODO`
++ Individuality: An actor sends out each message individually.
++ Push: An actor sending out a message is never caused by some kind of request. (It could, however, be the reaction to some message previously received by the actor, which does not constitute a request, though, due to the last characteristic, i.e., "free of command".)
++ Immediacy: An actor reacts to a message immediately after receiving it. (In fact, it could be stated that all it does is reacting to messages right after receiving them.)
++ One-way: By default, an actor neither acknowledges nor replies to a received message. (Of course, this behavior can be explicitly implemented.)
++ Free of command: An actor always decides how to react to a received message, said reaction is never dictated by the message.
 
-##### 3.4.2 The Structure of the Execution Graph
+The execution graph of a query consists of actors organized in a graph hierarchy. In section 3.2, it has been described how a query in case class representation could be pictured as a graph. It has already been pointed out then, that this conceptual graph directly corresponds to what EventScala's execution graph for that query would look like, i.e., it precisely resembles the hierarchy in which the actors of the respective execution graph are assembled. In this conceptual graph, the outermost query has been depicted as the root node of the graph, its subquery as the child node of the root node, and so forth. In an execeution graph of a query, these nodes are actors. Obviously, each actor represents either a primitive or an operator of the given query, i.e., either a `LeafQuery`, `UnaryQuery` or `BinaryQuery`. Actors representing primitives, i.e., `LeafQueries`, constitute the leaves of the graph. They receive messages, i.e., events, from so-called `Publisher`s, which publish the events of the streams to which the primitives represent subscriptions. An actor representing a primitive then passes up these events to its parent actor, which represents an operator, i.e., either a `UnaryQuery` or a `BinaryQuery`. An actor representing an operator performs the respective (SP or CEP) operation on the the incoming stream(s) and sends the messages or events of the resulting stream up to its own parent actor. Finally, the actor representing the root of the graph invokes a closure specified by the programmer with every event of its result stream.
 
-In section 3.2 it has been described how a query in case class representation could be pictured as a graph. It has already been pointed out, that this graph conceptually corresponds to EventScala's execution graph. The outermost query was illustrated as the root node of the graph, its subquery as the child node of the root node, and so forth. As said, this precisely resembles the hierarchy of actors of the respective execution graph. Accordingly, each leaf query is represented by an actor without child actors, i.e., by a class extending the trait `LeafNode`, each unary query is represented by an actor with one child actor, i.e., by a class extending the trait `UnaryNode`, and each binary query is represented by an actor with two child actors, i.e., by a class extending the trait `BinaryNode`. The traits `LeafNode`, `UnaryNode` and `BinaryNode` extend the `Actor`, thus, any classes extending them are, in turn, `Actor`s. The following classes extend `LeafNode`, `UnaryNode` and `BinaryNode`, respectively.
+As it would seem natural, the classes up that make EventScala's execution graph resemble the classes that make up its case class representation in their structure. Accordingly, corresponding to the `LeafQuery` trait there is a trait `LeafNode`, corresponding to `UnaryQuery` there is `UnaryNode` and corresponding to `BinaryQuery` there is `BinaryNode`. The traits `LeafNode`, `UnaryNode` and `BinaryNode` extend the `Node` trait, which, in turn, extends the `Actor` trait. As expected, the classes `StreamNode` and `SequenceNode` extend the `LeafNode` trait, `FilterNode`, `DropElemNode` and `SelfJoinNode` extend `UnaryNode` and `JoinNode`, `ConjuctionNode` and `DisjunctionNode` extend `BinaryNode`.
+
+Figure `TODO` shows an illustration of the execution graph of the query defined in listing 2 (previously illustrated by listing `X`):
+
+```
+todo
+add illustration
+```
+
+Some classes, e.g., `JoinNode`, extend a trait called `EsperEngine`, while others, e.g., `FilterNode`, do not. The actors extending `EsperEngine` are essentially equipped with their own instance of the EP engine Esper, which they use to perform the respective operation they represent. This approach has to has two advantages. Firstly, by relying on Esper's implementation of more complex operators, e.g., `join`, a (possibly incorrect) implementation of such operators can be avoided. Secondly, resolving the semantic ambiguity of the `sequence` as well as the `and` operator is also taken care of by Esper's implementation.
+
+Mention frnky sauer
+
+The execution graph of a query is created dynamically at run-time. At first, a `Node` corresponding to the outermost query of the respective query is created as a top-level actor of an `ActorSystem`. From then on, the graph builds up recursively, i.e., a `UnaryNode` will create a child actor that corresponds to the one subquery of the `UnaryQuery` it represents. Likeweise, a `BinaryNode` will create create two child actors according to two subqueries of the `BinaryNode` it represents. `LeafNode`s will issue `Subscription`(s) to `Publisher`(s).
+
+Finally, it is noteworthy that at run-time, events are represented by the classes `Event1`, `Event2`, ..., `Event6`, all of which extend the trait `Event`. `Publisher`s pass up `Event`s to the leaves of the execution graph of a query, and, within this graph, `Node`s pass them up to their parent actors. Unlike their counterparts `Query1`, `Query2`, ..., `Query6`, `Event`s do not have type parameters for each of their elements. Instead, the elements of an `Event` are of type `Any`. However, Akka actors are untyped anyway, i.e., actors receive any message and can send any message to any actor.
 
 #### 3.5 Quality of Service
 
