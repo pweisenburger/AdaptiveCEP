@@ -534,15 +534,39 @@ todo
 add illustration
 ```
 
-Some classes, e.g., `JoinNode`, extend a trait called `EsperEngine`, while others, e.g., `FilterNode`, do not. The actors extending `EsperEngine` are essentially equipped with their own instance of the EP engine Esper, which they use to perform the respective operation they represent. This approach has to has two advantages. Firstly, by relying on Esper's implementation of more complex operators, e.g., `join`, a (possibly incorrect) implementation of such operators can be avoided. Secondly, resolving the semantic ambiguity of the `sequence` as well as the `and` operator is also taken care of by Esper's implementation.
+Some classes, e.g., `JoinNode`, extend a trait called `EsperEngine`, while others, e.g., `FilterNode`, do not. The actors extending `EsperEngine` are essentially equipped with their own instance of the EP engine Esper, which they use to perform the respective operation they represent. This approach has to has two advantages. Firstly, by relying on Esper's implementation of more complex operators, e.g., `join`, a (possibly incorrect) implementation of such operators can be avoided. Secondly, resolving the semantic ambiguity of the `sequence` as well as the `and` operator is also taken care of by Esper's implementation. It is to be noted that some of the code of the `EsperEngine` trait was inspired by a Lightbend Activator Template called "CEP with Akka and Esper or Streams" [37].
 
-Mention frnky sauer
-
-The execution graph of a query is created dynamically at run-time. At first, a `Node` corresponding to the outermost query of the respective query is created as a top-level actor of an `ActorSystem`. From then on, the graph builds up recursively, i.e., a `UnaryNode` will create a child actor that corresponds to the one subquery of the `UnaryQuery` it represents. Likeweise, a `BinaryNode` will create create two child actors according to two subqueries of the `BinaryNode` it represents. `LeafNode`s will issue `Subscription`(s) to `Publisher`(s).
+The execution graph of a query is created dynamically at run-time. At first, a `Node` corresponding to the outermost query of the respective query is created as a top-level actor of an `ActorSystem`. From then on, the graph builds up recursively, i.e., a `UnaryNode` will create a child actor that corresponds to the one subquery of the `UnaryQuery` which it represents. Likeweise, a `BinaryNode` will create create two child actors that correspond to the two subqueries of the `BinaryQuery` which it represents. `LeafNode`s will issue `Subscription`(s) to `Publisher`(s). When a `Publisher`  acknowledges a `LeafNode`'s subscription, the `LeafNode` either sends a `Created` message to its parent actor, or--if it is the root actor of the graph--invokes a closure that is to be called as soon as the graph is built (which supplied by the programmer). `UnaryNode`s and `BinaryNodes`s also either send a `Created` message to their parent actors or call the closure as soon as all of their child actors have sent them the `Created` message.
 
 Finally, it is noteworthy that at run-time, events are represented by the classes `Event1`, `Event2`, ..., `Event6`, all of which extend the trait `Event`. `Publisher`s pass up `Event`s to the leaves of the execution graph of a query, and, within this graph, `Node`s pass them up to their parent actors. Unlike their counterparts `Query1`, `Query2`, ..., `Query6`, `Event`s do not have type parameters for each of their elements. Instead, the elements of an `Event` are of type `Any`. However, Akka actors are untyped anyway, i.e., actors receive any message and can send any message to any actor.
 
+```
+todo
+mention undefined order of events
+```
+
 #### 3.5 Quality of Service
+
+- mention that this is part of the execution graph
+- queries may contain frequency and latency requirements, how are they enforced tho?
+- programmers may implement monitors that
+  - monitor the qos of the execution graph (at run-time, obviously)
+  - invoke the closure that is to be called when req not met
+- how does a monitor observe the qos of the execution graph, conceptually?
+  - every node gets its own instance of the monitor, which uses hooks (react: "lifecycle methods") to monitor this very node.
+  - this comes with 3 methods, onCreated, onEventEmit and onMessageReceive, which have access to
+    - nodedata containing
+      - name of the node
+      - query of node (containing the requirement)
+      - actor context of the node
+      - references to child nodes (if any)
+    - onEventEmit: the event, obviously.
+  - a monitor is a class. can send messages, keep state, everything...
+- technical details
+  - before the graph is created exactly one frequency monitor and one latency monitor is defined of the enitre graph
+  - any node gets an instance of both monitors, regardless whether req is defined or not, methods are being called!
+  - technically, there is not one monitor but always three. this has to do with different sig of methods: unarynodemnit gets unarynodedata, etc.
+  - roughly explain the two sample monitors
 
 ### 4 Simulation
 
@@ -585,3 +609,4 @@ Finally, it is noteworthy that at run-time, events are represented by the classe
 + [34] https://www.jetbrains.com/idea/
 + [35] Hewitt, Bishop, Steiger. A Universal Modular ACTOR Formalism for Artificial Intelligence.
 + [36] http://doc.akka.io/docs/akka/2.4/AkkaScala.pdf
++ [37] http://www.lightbend.com/activator/template/akka-with-esper
