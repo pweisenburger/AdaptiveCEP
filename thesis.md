@@ -547,26 +547,32 @@ mention undefined order of events
 
 #### 3.5 Quality of Service
 
-- mention that this is part of the execution graph
-- queries may contain frequency and latency requirements, how are they enforced tho?
-- programmers may implement monitors that
-  - monitor the qos of the execution graph (at run-time, obviously)
-  - invoke the closure that is to be called when req not met
-- how does a monitor observe the qos of the execution graph, conceptually?
-  - every node gets its own instance of the monitor, which uses hooks (react: "lifecycle methods") to monitor this very node.
-  - this comes with 3 methods, onCreated, onEventEmit and onMessageReceive, which have access to
-    - nodedata containing
-      - name of the node
-      - query of node (containing the requirement)
-      - actor context of the node
-      - references to child nodes (if any)
-    - onEventEmit: the event, obviously.
-  - a monitor is a class. can send messages, keep state, everything...
-- technical details
-  - before the graph is created exactly one frequency monitor and one latency monitor is defined of the enitre graph
-  - any node gets an instance of both monitors, regardless whether req is defined or not, methods are being called!
-  - technically, there is not one monitor but always three. this has to do with different sig of methods: unarynodemnit gets unarynodedata, etc.
-  - roughly explain the two sample monitors
+Conceptually, when picturing a query as a graph, QoS requirements can be defined over each node of that graph. To be more precise, an arbitrary amount of `FrequencyRequirement`s and `LatencyRequirement`s can be defined over each node of the graph. As this conceptual graph precisely resembles EventScala's execution graph of the same query, QoS requirements of a (sub-)query are being dealt with by the actor that represents that (sub-)query in the execution graph. To this end, each actor has to monitor its performance, and, whenever a requirement is not being met, react to this circumstance by invoking a closure that has been specified along with the respective requirement. (Both case classes `FrequencyRequirement` and `LatencyRequirement` specify a field `callback`.) This clousure might even carry out curative measures, as its arguments include the respective actor's `ActorContext`, which embodies run-time information about it.)
+
+Informally speaking, EventScala's execution graph requires the programmer to provide reference to one class representing a frequency monitor as well as one to class representing a latency monitor. At run-time, each actor of an execution graph gets exactly one instance of both of them, regardless of whether or not the query that the actor represents specifies any QoS requirements. As a consequence, at run-time, each actor has one frequency monitor instance as well as one latency monitor instance.
+
+Technically speaking, EventScala's execution graph requires the programmer to provide two classes that extend the `MonitorFactory` trait, one for frequency monitoring and one for latency monitoring. A `MonitorFactory` can create instances of classes that extend one of the traits `LeafNodeMonitor`, `UnaryNodeMonitor` and `BinaryNodeMonitor`. Thus, at run-time, a `LeafNode` will have one `LeafNodeMonitor` for frequency monitoring as well another `LeafNodeMonitor` for latency monitoring. The former will have been created by the factory supplied for frequency monitoring and the latter will have been created by the factory supplied for latency monitoring. Analogously, the same is true for `UnaryNode`s and `BinaryNode`s.
+
+EventScala has been designed to make it easy for programmers to implement their own monitors. To do so, one has to provide four classes that implement the four traits `LeafNodeMonitor`, `UnaryNodeMonitor`, `BinaryNodeMonitor` as well as `MonitorFactory`. EventScala comes with one exemplary frequency monitor as well as with one exemplary latency monitor. The examplary frequency monitor, for example, is comprised of the following four classes:
+
++ `AveragedFrequencyLeafNodeMonitor` extending the trait `LeafNodeMonitor`
++ `AveragedFrequencyUnaryNodeMonitor` extending the trait `UnaryNodeMonitor`
++ `AveragedFrequencyBinaryNodeMonitor` extending the trait `BinaryNodeMonitor`
++ `AveragedFrequencyMonitorFactory` extending the trait `MonitorFactory`
+
+However, the question remains how these monitors actually surveil the performance of the actor they are associated with. Conceptually, each monitor implements so-called lifecycle methods, i.e., hooks into the respective actor's lifecycle. (This approach has been inspired by React, Facebook's JavaScript library for building UIs [38], in which so-called components have so-called lifecycle methods "that you can override to run code at particular times in the process" [39].) `LeafNodeMonitor`, `UnaryNodeMonitor` and `BinaryNodeMonitor` all specify three methods that need to be implemented by extending classes:
+
++ `onCreated`
++ `onEventEmit`
++ `onMessageReceive`
+
+As the names of these methods suggest, the respective actors invoke them at certain times during their lifecycle. `onCreated` is being called only once, right after all of the actor's children have issued a `Created` message to it. `onEventEmit` is being invoked whenever the actor emitted an event. `onMessageReceive` is being called whenever the actor receives a message that has not been generated by EventScala's execution graph, as it might have been sent by another monitor. (This way, communcation between the monitors of the actors of the graph is facilitated.) Obviously, whenever `onEventEmit` is called, it is passed the respective event. Likewise, whenever `onMessageReceive` is called, it is passed the respective message. Furthermore, depending on the type of the respective actor, when being invoked, all three methods are always passed either an instance of the `LeafNodeData` case class, an instance of the `UnaryNodeData` case class or an instance of the `BinaryNodeData` case class. All of these contain the name of the actor as a `String` as well as its `ActorContext`. `UnaryNodeData` and `BinaryNodeData` also contain an `ActorRef`, i.e., a reference to an actor, for each of their child actors.
+
+It is to be noted that this approach consitutes a powerful way to suveil the performance of an actor and, by extension, the performance of the entire execution graph. For each metric (frequency and latency), each actor has one monitor. This monitor embodies code that is being executed repeatedly throughout the lifeycle of an actor. Furthermore, the methods embodying this code are being invoked with run-time information about the actor as an argument.
+-can communicate
+-can keep state
+
+-examples
 
 ### 4 Simulation
 
@@ -610,3 +616,5 @@ mention undefined order of events
 + [35] Hewitt, Bishop, Steiger. A Universal Modular ACTOR Formalism for Artificial Intelligence.
 + [36] http://doc.akka.io/docs/akka/2.4/AkkaScala.pdf
 + [37] http://www.lightbend.com/activator/template/akka-with-esper
++ [38] https://facebook.github.io/react/
++ [39] https://facebook.github.io/react/docs/react-component.html
