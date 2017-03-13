@@ -58,7 +58,7 @@ object Main extends App {
     publishers =              publishers,
     frequencyMonitorFactory = AverageFrequencyMonitorFactory  (interval = 15, logging = true),
     latencyMonitorFactory =   PathLatencyMonitorFactory       (interval =  5, logging = true),
-    createdCallback =         () => println("STATUS:\tGraph has been created."))(
+    createdCallback =         () => println("STATUS:\t\tGraph has been created."))(
     eventCallback =           {
       // Callback for `query1`:
       case (Left(i1), Left(i2), Left(f)) => println(s"COMPLEX EVENT:\tEvent3($i1,$i2,$f)")

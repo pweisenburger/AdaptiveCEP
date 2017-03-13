@@ -29,7 +29,7 @@ trait AverageFrequencyMonitor {
             val divisor: Int = interval / requirement.seconds
             val frequency: Int = currentOutput.get / divisor
             if (logging) println(
-              s"FREQUENCY:\tOn average, node `$name` emits $frequency events every ${requirement.seconds} seconds." +
+              s"FREQUENCY:\tOn average, node `$name` emits $frequency events every ${requirement.seconds} seconds. " +
               s"(Calculated every $interval seconds.)")
             requirement.operator match {
               case Equal =>        if (!(frequency == requirement.instances)) requirement.callback(callbackNodeData)
