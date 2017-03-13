@@ -7,7 +7,7 @@ import akka.actor.ActorContext
 import com.lambdarookie.eventscala.data.Events._
 import com.lambdarookie.eventscala.data.Queries._
 
-trait AveragedFrequencyMonitor {
+trait AverageFrequencyMonitor {
 
   val logging: Boolean
   val interval: Int
@@ -52,31 +52,31 @@ trait AveragedFrequencyMonitor {
 
 }
 
-case class AveragedFrequencyLeafNodeMonitor(interval: Int, logging: Boolean) extends AveragedFrequencyMonitor with LeafNodeMonitor {
+case class AverageFrequencyLeafNodeMonitor(interval: Int, logging: Boolean) extends AverageFrequencyMonitor with LeafNodeMonitor {
 
   override def onCreated(nodeData: LeafNodeData): Unit = onCreated(nodeData.name, nodeData.query, nodeData.context)
   override def onEventEmit(event: Event, nodeData: LeafNodeData): Unit = onEventEmit(event)
 
 }
 
-case class AveragedFrequencyUnaryNodeMonitor(interval: Int, logging: Boolean) extends AveragedFrequencyMonitor with UnaryNodeMonitor {
+case class AverageFrequencyUnaryNodeMonitor(interval: Int, logging: Boolean) extends AverageFrequencyMonitor with UnaryNodeMonitor {
 
   override def onCreated(nodeData: UnaryNodeData): Unit = onCreated(nodeData.name, nodeData.query, nodeData.context)
   override def onEventEmit(event: Event, nodeData: UnaryNodeData): Unit = onEventEmit(event)
 
 }
 
-case class AveragedFrequencyBinaryNodeMonitor(interval: Int, logging: Boolean) extends AveragedFrequencyMonitor with BinaryNodeMonitor {
+case class AverageFrequencyBinaryNodeMonitor(interval: Int, logging: Boolean) extends AverageFrequencyMonitor with BinaryNodeMonitor {
 
   override def onCreated(nodeData: BinaryNodeData): Unit = onCreated(nodeData.name, nodeData.query, nodeData.context)
   override def onEventEmit(event: Event, nodeData: BinaryNodeData): Unit = onEventEmit(event)
 
 }
 
-case class AveragedFrequencyMonitorFactory(interval: Int, logging: Boolean) extends MonitorFactory {
+case class AverageFrequencyMonitorFactory(interval: Int, logging: Boolean) extends MonitorFactory {
 
-  override def createLeafNodeMonitor: LeafNodeMonitor = AveragedFrequencyLeafNodeMonitor(interval, logging)
-  override def createUnaryNodeMonitor: UnaryNodeMonitor = AveragedFrequencyUnaryNodeMonitor(interval, logging)
-  override def createBinaryNodeMonitor: BinaryNodeMonitor = AveragedFrequencyBinaryNodeMonitor(interval, logging)
+  override def createLeafNodeMonitor: LeafNodeMonitor = AverageFrequencyLeafNodeMonitor(interval, logging)
+  override def createUnaryNodeMonitor: UnaryNodeMonitor = AverageFrequencyUnaryNodeMonitor(interval, logging)
+  override def createBinaryNodeMonitor: BinaryNodeMonitor = AverageFrequencyBinaryNodeMonitor(interval, logging)
 
 }
