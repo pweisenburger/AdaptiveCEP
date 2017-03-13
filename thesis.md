@@ -540,11 +540,6 @@ The execution graph of a query is created dynamically at run-time. At first, a `
 
 Finally, it is noteworthy that at run-time, events are represented by the classes `Event1`, `Event2`, ..., `Event6`, all of which extend the trait `Event`. `Publisher`s pass up `Event`s to the leaves of the execution graph of a query, and, within this graph, `Node`s pass them up to their parent actors. Unlike their counterparts `Query1`, `Query2`, ..., `Query6`, `Event`s do not have type parameters for each of their elements. Instead, the elements of an `Event` are of type `Any`. However, Akka actors are untyped anyway, i.e., actors receive any message and can send any message to any actor.
 
-```
-todo
-mention undefined order of events
-```
-
 #### 3.5 Quality of Service
 
 As the title of this thesis suggests, EventScala represents a QoS-oriented approach to EP. As such, it allows not only for QoS requirements to be defined over queries but also for their enforcement at run-time. To this end, EventScala's execution graph features so-called QoS monitors, which are concerned with surveilling an actor's performance as well as reacting when a requirement is not met.
@@ -586,6 +581,137 @@ add illustration
 ```
 
 ### 4 Simulation
+
+In order to showcase its capabilities, EventScala comes with an examplary set up simulating a real-world use case. It is comprised of three main components:
+
++ 4 sample `Publisher`s representing four streams that can be subscribed to
++ 2 sample queries expressed using the DSL
++ 1 sample configuration for an execution graph
+
+In this section, all three components are described in detail. Then, the output that is being generated when running the simulation is discussed.
+
+In EventScala, a publisher represents a primitive stream that can be subscribed to. To this end, the specifications of the `Publisher` trait--which extends the `Actor` trait--includes that a publisher has to maintain a set of publishers. On top of that, EventScala defines a case class `RandomPublisher` publishes one event every x milliseconds, with x being a pseudo-random `Integer` between 0 (inclusive) and 5000 (exclusive). A `RandomPublisher` takes a closure of type `Integer => Event` which it invokes in order to obtain the `Event` instances it publishes. To obtain the first event, it calls the closure with `0`, to invoke the second event, it calls the closure with `1`, and so on. In the simulation, there are 4 `RandomPublisher`s called `"A"`, `"B"`, `"C"` and `"D"`, representing streams of the types `Stream1[Int]`, `Stream1[Int]`, `Stream1[Float]` and `Stream1[String]`, respectively:
+
+*Listing 10: The `RandomPublisher`s of the simulation*
+```scala
+val publisherA: ActorRef = actorSystem.actorOf(Props(
+  RandomPublisher(id => Event1(id))), "A")
+val publisherB: ActorRef = actorSystem.actorOf(Props(
+  RandomPublisher(id => Event1(id * 2))), "B")
+val publisherC: ActorRef = actorSystem.actorOf(Props(
+  RandomPublisher(id => Event1(id.toFloat))), "C")
+val publisherD: ActorRef = actorSystem.actorOf(Props(
+  RandomPublisher(id => Event1(s"String($id)"))), "D")
+```
+
+The two sample queries `query1` and `query2` are expressed using the DSL and should not require any further explaination. `query1` will not be shown below as it is the same query that is shown in listing 8.
+
+*Listing 11: `query2` of the simulation*
+```scala
+val query2: Query4[Int, Int, Float, String] =
+  stream[Int]("A")
+  .and(stream[Int]("B"))
+  .join(
+    sequence(
+      nStream[Float]("C") -> nStream[String]("D"),
+      frequency > ratio(1.instances, 5.seconds) otherwise { (nodeData) =>
+        println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!") }),
+    slidingWindow(3.seconds),
+    slidingWindow(3.seconds),
+    latency < timespan(1.milliseconds) otherwise { (nodeData) =>
+      println(s"PROBLEM:\tEvents reach node `${nodeData.name}` too slowly!") })
+```
+
+Lastly, the simulation comes with a sample configuration for an execution graph of either `query1` and `query2`. (Shown below is the version for `query1`). It is being specified that the exemplary monitors, i.e., `AverageFrequencyMonitor` and `PathLatencyMonitor`, will be used for frequency and latency monitoring, respectively. The former is set to perform its calculations every 15 seconds while the latter is set to do so every 5 seconds. Both of them are set to log their calculations to the console. The closure that will be invoked when the graph has been created simply prints `"STATUS:\tGraph has been created."` to the console, and the closure that will be called whenever the root actor produced an event simply prints said event to the console. It is to be noted that the latter closure is type-safe, i.e., its type is `Either[Int, String], Either[Int, X], Either[Float, X] => Any`.
+
+*Listing 12: The execution graph configuration of the simulation*
+```scala
+val graph: ActorRef = GraphFactory.create(
+  actorSystem =             actorSystem,
+  query =                   query1,
+  publishers =              publishers,
+  frequencyMonitorFactory = AverageFrequencyMonitorFactory  (interval = 15, logging = true),
+  latencyMonitorFactory =   PathLatencyMonitorFactory       (interval =  5, logging = true),
+  createdCallback =         () => println("STATUS:\tGraph has been created."))(
+  eventCallback =           {
+    case (Left(i1), Left(i2), Left(f)) => println(s"COMPLEX EVENT:\tEvent3($i1,$i2,$f)")
+    case (Right(s), _, _)              => println(s"COMPLEX EVENT:\tEvent1($s)")
+    // This is necessary to avoid warnings about non-exhaustive `match`:
+    case _                             =>
+  })
+```
+
+When being run for approximately 15 seconds (not including set up time) on a Lenovo ThinkPad X220i laptop with a Intel Core i3-2350M CPU @ 2.30 GHz * 2 processor, this simulation generates console output like this:
+
+*Listing 13: The console output of the simulation*
+```
+STATUS:         Graph has been created.
+LATENCY:
+  Events reach node `disjunction-1-conjunction-1-selfjoin-1-dropelem` after PT0.015S.
+  (Calculated every 5 seconds.)
+PROBLEM:
+  Events reach node `disjunction-1-conjunction-1-selfjoin-1-dropelem` too slowly!
+STREAM A:       Event1(1)
+STREAM B:       Event1(2)
+STREAM A:       Event1(2)
+STREAM D:       Event1(String(2))
+COMPLEX EVENT:  Event1(String(2))
+STREAM C:       Event1(1.0)
+COMPLEX EVENT:  Event3(2,2,1.0)
+STREAM B:       Event1(4)
+STREAM A:       Event1(3)
+STREAM C:       Event1(2.0)
+COMPLEX EVENT:  Event3(4,4,2.0)
+LATENCY:
+  Events reach node `disjunction-1-conjunction-1-selfjoin-1-dropelem` after PT0.0015S.
+  (Calculated every 5 seconds.)
+PROBLEM:
+  Events reach node `disjunction-1-conjunction-1-selfjoin-1-dropelem` too slowly!
+STREAM D:       Event1(String(3))
+COMPLEX EVENT:  Event1(String(3))
+STREAM C:       Event1(3.0)
+STREAM B:       Event1(6)
+STREAM D:       Event1(String(4))
+COMPLEX EVENT:  Event1(String(4))
+STREAM C:       Event1(4.0)
+STREAM B:       Event1(8)
+STREAM A:       Event1(4)
+COMPLEX EVENT:  Event3(8,8,3.0)
+STREAM C:       Event1(5.0)
+STREAM B:       Event1(10)
+COMPLEX EVENT:  Event3(10,10,5.0)
+STREAM D:       Event1(String(5))
+COMPLEX EVENT:  Event1(String(5))
+LATENCY:
+  Events reach node `disjunction-1-conjunction-1-selfjoin-1-dropelem` after PT0.0005S.
+  (Calculated every 5 seconds.)
+STREAM C:       Event1(6.0)
+STREAM A:       Event1(5)
+COMPLEX EVENT:  Event3(10,10,6.0)
+STREAM B:       Event1(12)
+STREAM B:       Event1(14)
+STREAM A:       Event1(6)
+STREAM C:       Event1(7.0)
+COMPLEX EVENT:  Event3(12,12,7.0)
+STREAM C:       Event1(8.0)
+STREAM D:       Event1(String(6))
+COMPLEX EVENT:  Event1(String(6))
+LATENCY:
+  Events reach node `disjunction-1-conjunction-1-selfjoin-1-dropelem` after PT0.0015S.
+  (Calculated every 5 seconds.)
+PROBLEM:
+  Events reach node `disjunction-1-conjunction-1-selfjoin-1-dropelem` too slowly!
+FREQUENCY:
+  On average, node `disjunction-1-conjunction-1-selfjoin` emits 3 events every 5 seconds.
+  (Calculated every 15 seconds.)
+PROBLEM:
+  Node `disjunction-1-conjunction-1-selfjoin` emits too few events!
+FREQUENCY:
+  On average, node `disjunction-1-conjunction-1-selfjoin` emits 9 events every 15 seconds.
+  (Calculated every 15 seconds.)
+```
+
+It can be observed that publishers print the primitive events they publish to the console. Likewise, the root node prints the complex events the graph produces to the console. As expected, the latency monitor of the node `disjunction-1-conjunction-1-selfjoin-1-dropelem` logged to the console four times, i.e., once after graph creation, once after 5 seconds, once after 10 seconds, and once after 15 seconds. Also as expected, the frequency monitor of the node `disjunction-1-conjunction-1-selfjoin` only logged to the console once, i.e., after 15 seconds. Lastly, it is to be noted that the latency requirement has been met in 1 out of 4 times. The two frequency requirements, however, are defined in a way that they can never both be met. Accordingly, after 15 seconds, one of them was met (`frequency < ratio(12.instances, 15.seconds)`) while the other one was not (`frequency > ratio(3.instances, 5.seconds)`).
 
 ### 5 Conclusion
 
