@@ -120,10 +120,8 @@ In [7], Etzion and Niblett introduce an abstaction called event processing netwo
 + Global state elements "represent stateful data that can be read by event processing agents when they do their work".
 + Channels may be used to connect processing elements instead of edges, as the behavior of channels may be defined explicitly.
 
-```
-todo
-add illustration
-```
+*Figure 1: An exemplary EPN (Inspired by figure 2.7 on page 43 of "Event Processing in Action" [7])*
+![EPN](images/epn.png)
 
 It is to be stressed that an EPN diagram is an abstraction, comprised of "platform-independend definition elements". It does not assume a distributed implementation. After the introduction of the EPN concept, the authors lay out the "[i]mplementation perspective", in which the graph has to be materialized onto what are being called "runtime artifacts", resulting in a "runtime system". Usually, there is no "one-to-one correspondence" between the processing elements of an EPN and the runtime artifacts of a respective implementation. With regards to this, two "extremes" are being described:
 
@@ -134,11 +132,6 @@ It is to be stressed that an EPN diagram is an abstraction, comprised of "platfo
 To the best of my knowledge, the second scenario can be considered a good example for distributed EP, even though there are obviously many ways to map EPAs to runtime artifacts, several of which might also be considered distributed approaches.
 
 In the chapter "EPA assignment optimization"--which is concerned with mapping "logical functions [i.e., EPAs] to physical runtime artifacts"--the authors mention parallel and distributed processing explicitly. Parallel processing is considered "[o]ne of the major ways to achieve [...] performance metrics". Then, three levels of parallelism are introduced, that is, using multiple threads in one core, using multiple cores and using multiple machines. However, finding out "which activities should be run in parallel" is listed as a "difficult" challenge. Regarding distributed processing, it is stated that "moving the processing close to the producers and consumers" constitutes an optimization method. Furthermore, "[p]artitioning"--the practice of grouping EPAs so they eventually "execute together [i.e., in parallel]" when mapped to runtime artifacts--is introduced and considered "key" to both parallel execution and distributed execution. "Stratification", a partitioning approach in which EPAs are assigned to so-called "strata" is then explained: "If `EPA1` produces events that are consumed by `EPA2`, then `EPA2` is placed in a higher stratum."
-
-```
-todo
-add illustration
-```
 
 Regarding the aforementioned challenge of parallelization, [12 - 15] present different approaches. Furthermore, the previously mentioned "moving [of] the processing close to the producers and consumers" poses another challenge, especially with mobile producers/consumers. In [10, 11, 16], interesting approaches with regards to this are presented. Moreover, it appears that a good amount of the solutions to distributed EP proposed by academia, e.g., [9, 10, 11, 13], are built upon loosely-coupled publish/subscribe systems (or pub/sub systems), which constitue a related field of research themselves. Also, for events to be put into time-based windows (as sometimes required by the SP operator `join`) or for them to be ordered propery (as demanded by the CEP operator `sequence`), they need to be properly timestamped. Timestamping is a well-studied challenge in distributed systems in general and many approaches to tackle it have been proposed. [9] presents an interesting solution specifically aimed at distributed EP, leveraging a combination of NTP-synchronized local clocks and heartbeat events.
 
@@ -198,10 +191,8 @@ As described in section 2.1, events are commonly represented by tuples of values
 
 A query usually consists of nested applications of operators over primitives. For example, one might subscribe to a stream of events consisting of a single `Int`, resulting in a `Query1[Int]`, as well as to a stream of events consisting of two `String`s, resulting in a `Query2[String, String]`. One might then apply the `join` operator to these two stream subscriptions, resulting in a `Query3[Int, String, String]`. Afterwards, one could decide to drop the second `String` using the `dropElem3` operator, resulting in a `Query2[Int, String]`. When picturing this query as a graph, the `dropElem3` operator would be the root node, having one child node, i.e., the `join` operator, which, in turn, would have two child nodes, i.e., the two stream subscriptions, which would represent the leaves of the graph. (This is actually exactly what EventScala's execution graph for this query would look like.) Analoguously, the application of the `dropElem3` operator can be thought of as a unary query--unary in the sense that it has one subquery. Furthermore, the application of the `join` operator can be thought of as a binary query--binary in the sense that it has two subqueries. Lastly, the subscription to a stream can be thought of as a leaf query--leaf in the sense that it has no child queries. As a matter of fact, in EventScala, every query can be classified into being either a leaf, a unary or a binary query. Therefore, there exist three traits `LeafQuery`, `UnaryQuery` (specifiying one field, `sq` (`s`ub`q`uery), of type `Query`) and `BinaryQuery` (specifiying two fields, `sq1` and `sq2`, both of type `Query`). All three traits extend the trait `Query`.
 
-```
-todo
-add illustration
-```
+*Figure 2: A conceptual depiction of a `Query`*
+![EPN](images/query_conceptually.png)
 
 In the previous paragraph, it has been hinted that in EventScala, one might subscribe to streams or make use of the operators `join` as well as `dropElem3`. For the sake of completeness, find below the list of all primitives (i.e., leaf queries) and operators (i.e., unary and binary queries) availiable.
 
@@ -527,12 +518,10 @@ The execution graph of a query consists of actors organized in a graph hierarchy
 
 As it would seem natural, the classes up that make EventScala's execution graph resemble the classes that make up its case class representation in their structure. Accordingly, corresponding to the `LeafQuery` trait there is a trait `LeafNode`, corresponding to `UnaryQuery` there is `UnaryNode` and corresponding to `BinaryQuery` there is `BinaryNode`. The traits `LeafNode`, `UnaryNode` and `BinaryNode` extend the `Node` trait, which, in turn, extends the `Actor` trait. As expected, the classes `StreamNode` and `SequenceNode` extend the `LeafNode` trait, `FilterNode`, `DropElemNode` and `SelfJoinNode` extend `UnaryNode` and `JoinNode`, `ConjuctionNode` and `DisjunctionNode` extend `BinaryNode`.
 
-Figure `TODO` shows an illustration of the execution graph of the query defined in listing 2 (previously illustrated by listing `X`):
+Figure 3 shows the execution graph of the query defined in listing 2 (previously illustrated in figure 2):
 
-```
-todo
-add illustration
-```
+*Figure 3: The execution graph of the query defined in listing 2*
+![EPN](images/execution_graph.png)
 
 Some classes, e.g., `JoinNode`, extend a trait called `EsperEngine`, while others, e.g., `FilterNode`, do not. The actors extending `EsperEngine` are essentially equipped with their own instance of the EP engine Esper, which they use to perform the respective operation they represent. This approach has to has two advantages. Firstly, by relying on Esper's implementation of more complex operators, e.g., `join`, a (possibly incorrect) implementation of such operators can be avoided. Secondly, resolving the semantic ambiguity of the `sequence` as well as the `and` operator is also taken care of by Esper's implementation. It is to be noted that some of the code of the `EsperEngine` trait was inspired by a Lightbend Activator Template called "CEP with Akka and Esper or Streams" [37].
 
@@ -575,10 +564,8 @@ The exemplary frequency monitor is comrised of four classes that are all defined
 
 The exemplary latency monitor is also comprised of four classes, all of which are located in one file called `PathLatencyMonitor.scala`. This is a more complex monitor as it leverages communication between the monitor instances using messages. Periodically, each monitor calculates the so-called path latency of the respective actor. Given all paths that connect the actor in question to a `LeafNode`, path latency denotes the time it takes a message (or event) to travel along the slowest of these paths. (See illustration `TODO`.) Obviously, the path latency of a `LeafNode` is always 0. In order to calculate it for `UnaryNode`s and `BinaryNode`s, each monitor surveilling a `UnaryNode` or a `BinaryNode` periodically sends a message to its child's or its children's monitor(s), respectively, which will respond immediately. The time that passes between sending the message and receiving the response is being divided by 2 in order to approximate the time it takes for an event to travel from a child actor to the actor in question. (This value is referred to as child latency). Obvioulsy, child latency equals path latency if the child actor in question is a `LeafNode`. Path latency values are always advertised to the parent actor's monitor. A `UnaryNode`'s monitor can simply add the avertised path latency of its child actor to the child latency in order to obtain its own path latency. A `BinaryNode`'s monitor has to do so twice, i.e., it has to add the advertised path latency of child actor 1 to the child latency of child actor 1, and then do so again for child actor 2. The greater of the two resulting values will be adopted as the `BinaryNode`'s path latency. If a `LatencyRequirement` has been defined over the query that an actor represents, the requirement's closure will be invoked if the calculated path latency does not satisfy the requirement.
 
-```
-todo
-add illustration
-```
+*Figure 4: Of the 3 paths that connect actor `X` to a `LeafNode`, the one indicated by the thick, red edges is the slowest. Therefore, it is used to calculate `X`'s path latency, which is 1 ms + 3 ms = 4 ms.*
+![EPN](images/path_latency.png)
 
 ### 4 Simulation
 
