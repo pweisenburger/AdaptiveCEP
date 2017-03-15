@@ -4,7 +4,7 @@
 
 ![EventScala](images/logo.png)
 
-+ Read the [thesis](thesis.md)!
++ Read the [thesis](thesis.pdf)!
 + Check out the [implementation](implementation)!
 
 Cheers!
