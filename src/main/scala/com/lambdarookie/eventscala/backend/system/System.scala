@@ -19,7 +19,6 @@ trait QoSSystem {
   val qos: Signal[Set[QualityOfService]]
   val demandViolated: Event[QualityOfService]
 }
-
 trait Host {
   val position: Coordinate
   val neighbors: Set[Host]
