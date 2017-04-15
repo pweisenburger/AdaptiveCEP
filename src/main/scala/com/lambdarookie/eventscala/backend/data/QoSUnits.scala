@@ -106,4 +106,8 @@ object QoSUnits {
   }
 
   implicit def intToDistanceCreator(i: Int): DistanceUnits = DistanceUnits(i)
+
+
+  trait FrequencyUnit extends QoSUnit
+  trait BitRate extends QoSUnit
 }

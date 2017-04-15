@@ -1,32 +1,24 @@
 package com.lambdarookie.eventscala.backend.qos
 
-import com.lambdarookie.eventscala.backend.system.{Host, Operator}
-
 /**
   * Created by monur.
   */
-class QualityOfService(source: Host, value: Long) {
-  def lower(limit: Long): Boolean = {
-    value < limit
+trait QualityOfService
+class Condition(protected val _isFulfilled: Boolean) extends QualityOfService {
+  def isFulfilled = _isFulfilled
+}
+class Demand(_isFulfilled: Boolean) extends Condition(_isFulfilled) {
+  private var condition: Option[Condition] = None
+  private var isConditionFulfilled: Boolean = true
+
+  def when(newCondition: Condition): Demand = {
+    isConditionFulfilled = newCondition.isFulfilled
+    condition = Some(newCondition)
+    this
   }
 
-  def higher(limit: Long): Boolean = {
-    value > limit
-  }
-
-  def within(limit: Long): Boolean = {
-    value <= limit
+  override def isFulfilled: Boolean = {
+    if(isConditionFulfilled) _isFulfilled
+    else true
   }
 }
-
-case class Frequency(source: Host, frequency: Long) extends QualityOfService(source, frequency)
-
-case class Latency(source: Host, destination: Host, latency: Long) extends QualityOfService(source, latency) {
-//  def this(operator: Operator, latency: Latency) = ???
-}
-
-case class Proximity(source: Host, destination: Host, proximity: Long) extends QualityOfService(source, proximity)
-
-case class Throughput(source: Host, destination: Host, throughput: Long) extends QualityOfService(source, throughput)
-
-case class Bandwidth(broker: Host, bandwidth: Long) extends QualityOfService(broker, bandwidth)
