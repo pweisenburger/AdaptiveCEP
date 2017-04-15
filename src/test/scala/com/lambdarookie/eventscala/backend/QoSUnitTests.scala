@@ -1,0 +1,55 @@
+package com.lambdarookie.eventscala.backend
+
+import org.scalatest.FunSuiteLike
+import com.lambdarookie.eventscala.backend.data.QoSUnits._
+
+/**
+  * Created by monur.
+  */
+class QoSUnitTests extends FunSuiteLike {
+  test("QoSUnits - TimeSpan") {
+    assert(10.ns < 10.ms)
+    assert(10.ns < 10.sec)
+    assert(10.ms < 10.sec)
+    assert(10.ns < 11.ns)
+    assert(10.ms < 11.ms)
+    assert(10.sec < 11.sec)
+    assert(10.ms > 10.ns)
+    assert(10.sec > 10.ns)
+    assert(10.sec > 10.ms)
+    assert(11.ns > 10.ns)
+    assert(11.ms > 10.ms)
+    assert(11.sec > 10.sec)
+    assert(10.ns <= 10.ms)
+    assert(10.ns <= 10.sec)
+    assert(10.ms <= 10.sec)
+    assert(10.ns <= 11.ns)
+    assert(10.ms <= 11.ms)
+    assert(10.sec <= 11.sec)
+    assert(10.ns <= 10.ns)
+    assert(10.ms <= 10.ms)
+    assert(10.sec <= 10.sec)
+    assert(10.sec - 9.sec == 1.sec)
+    assert(10.ms - 9.ms == 1.ms)
+    assert(10.ns - 9.ns == 1.ns)
+    assert(!(10.sec - 9.sec == 2.sec))
+  }
+
+  test("QoSUnits - Distance") {
+    assert(10.m < 10.km)
+    assert(10.m < 11.m)
+    assert(10.km < 11.km)
+    assert(10.km > 10.m)
+    assert(11.m > 10.m)
+    assert(11.km > 10.km)
+    assert(10.m <= 10.km)
+    assert(10.m <= 11.m)
+    assert(10.km <= 11.km)
+    assert(10.m <= 10.m)
+    assert(10.km <= 10.km)
+    assert(10.m - 9.m == 1.m)
+    assert(10.km - 9.km == 1.km)
+    assert(1001.m - 1.km == 1.m)
+    assert(!(10.m - 9.m == 2.m))
+  }
+}

@@ -8,34 +8,21 @@ import scala.concurrent.duration._
 
 object QoSUnits {
 
-  trait QoSUnit {
-    def <(value: QoSUnit): Boolean
-    def >(value: QoSUnit): Boolean
-    def <=(value: QoSUnit): Boolean
+  trait QoSUnit[T <: QoSUnit[T]] {
+    def <(value: T): Boolean
+    def >(value: T): Boolean
+    def <=(value: T): Boolean
+
+    def -(value: T): T
   }
 
 
 
-  case class TimeSpan(i: Duration) extends QoSUnit {
-    override def <(value: QoSUnit): Boolean = {
-      value match {
-        case TimeSpan(duration) => i < duration
-        case _ => throw new IllegalArgumentException
-      }
-    }
-    override def >(value: QoSUnit): Boolean = {
-      value match {
-        case TimeSpan(duration) => i > duration
-        case _ => throw new IllegalArgumentException
-      }
-    }
-
-    override def <=(value: QoSUnit): Boolean = {
-      value match {
-        case TimeSpan(duration) => i <= duration
-        case _ => throw new IllegalArgumentException
-      }
-    }
+  case class TimeSpan(i: Duration) extends QoSUnit[TimeSpan] {
+    override def <(value: TimeSpan): Boolean = value match {case TimeSpan(duration) => i < duration}
+    override def >(value: TimeSpan): Boolean = value match {case TimeSpan(duration) => i > duration}
+    override def <=(value: TimeSpan): Boolean = value match {case TimeSpan(duration) => i <= duration}
+    override def -(value: TimeSpan): TimeSpan = value match {case TimeSpan(duration) => TimeSpan(i - duration)}
   }
 
   case class TimeSpanUnits(i: Int) {
@@ -48,56 +35,23 @@ object QoSUnits {
 
 
 
-  trait Distance extends QoSUnit
+  trait Distance extends QoSUnit[Distance] {
+    def toMeter: Int
+    override def <(value: Distance): Boolean = this.toMeter < value.toMeter
+    override def >(value: Distance): Boolean = this.toMeter > value.toMeter
+    override def <=(value: Distance): Boolean = this.toMeter <= value.toMeter
+  }
 
   case class Meter(i: Int) extends Distance {
-    override def <(value: QoSUnit): Boolean = {
-      value match {
-        case Meter(m) => i < m
-        case Kilometer(km) => i < km * 1000
-        case _ => throw new IllegalArgumentException
-      }
-    }
-    override def >(value: QoSUnit): Boolean = {
-      value match {
-        case Meter(m) => i > m
-        case Kilometer(km) => i > km * 1000
-        case _ => throw new IllegalArgumentException
-      }
-    }
+    override def toMeter: Int = i
 
-    override def <=(value: QoSUnit): Boolean = {
-      value match {
-        case Meter(m) => i <= m
-        case Kilometer(km) => i <= km * 1000
-        case _ => throw new IllegalArgumentException
-      }
-    }
+    override def -(value: Distance): Distance = Meter(this.toMeter - value.toMeter)
   }
 
   case class Kilometer(i: Int) extends Distance {
-    override def <(value: QoSUnit): Boolean = {
-      value match {
-        case Meter(m) => i * 1000 < m
-        case Kilometer(km) => i < km
-        case _ => throw new IllegalArgumentException
-      }
-    }
-    override def >(value: QoSUnit): Boolean = {
-      value match {
-        case Meter(m) => i * 1000 > m
-        case Kilometer(km) => i > km
-        case _ => throw new IllegalArgumentException
-      }
-    }
+    override def toMeter: Int = i * 1000
 
-    override def <=(value: QoSUnit): Boolean = {
-      value match {
-        case Meter(m) => i <= m
-        case Kilometer(km) => i <= km * 1000
-        case _ => throw new IllegalArgumentException
-      }
-    }
+    override def -(value: Distance): Distance = Kilometer((this.toMeter - value.toMeter)/1000)
   }
 
   case class DistanceUnits(i: Int) {
@@ -108,6 +62,6 @@ object QoSUnits {
   implicit def intToDistanceCreator(i: Int): DistanceUnits = DistanceUnits(i)
 
 
-  trait FrequencyUnit extends QoSUnit
-  trait BitRate extends QoSUnit
+  trait FrequencyUnit extends QoSUnit[FrequencyUnit]
+  trait BitRate extends QoSUnit[BitRate]
 }

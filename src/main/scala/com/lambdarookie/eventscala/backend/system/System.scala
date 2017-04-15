@@ -1,8 +1,10 @@
 package com.lambdarookie.eventscala.backend.system
 
 import com.lambdarookie.eventscala.backend.data.Coordinate
-import com.lambdarookie.eventscala.backend.qos.QualityOfService
+import com.lambdarookie.eventscala.backend.qos.{Proximity, QualityOfService}
 import rescala._
+
+import scala.collection.SortedSet
 
 /**
   * Created by monur.
@@ -22,6 +24,14 @@ trait QoSSystem {
 trait Host {
   val position: Coordinate
   val neighbors: Set[Host]
+
+  def measureProximity(from: Host, to: Host): Int = ???
+
+  def sortNeighborsByProximity: SortedSet[Host] = {
+    val sorted = SortedSet[Host]()((x: Host, y: Host) =>
+      Ordering[Int].compare(measureProximity(x, this), measureProximity(y, this)))
+    sorted ++ neighbors
+  }
 }
 trait Operator {
   val host: Host
