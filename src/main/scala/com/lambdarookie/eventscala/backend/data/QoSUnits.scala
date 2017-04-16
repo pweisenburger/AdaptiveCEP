@@ -44,13 +44,11 @@ object QoSUnits {
 
   case class Meter(i: Int) extends Distance {
     override def toMeter: Int = i
-
     override def -(value: Distance): Distance = Meter(this.toMeter - value.toMeter)
   }
 
   case class Kilometer(i: Int) extends Distance {
     override def toMeter: Int = i * 1000
-
     override def -(value: Distance): Distance = Kilometer((this.toMeter - value.toMeter)/1000)
   }
 
@@ -63,5 +61,36 @@ object QoSUnits {
 
 
   trait FrequencyUnit extends QoSUnit[FrequencyUnit]
-  trait BitRate extends QoSUnit[BitRate]
+
+
+
+  trait BitRate extends QoSUnit[BitRate] {
+    def toKbps: Long
+    override def <(value: BitRate): Boolean = this.toKbps < value.toKbps
+    override def >(value: BitRate): Boolean = this.toKbps > value.toKbps
+    override def <=(value: BitRate): Boolean = this.toKbps <= value.toKbps
+  }
+
+  case class KilobitsPerSecond(i: Long) extends BitRate {
+    override def toKbps: Long = i
+    override def -(value: BitRate): BitRate = KilobitsPerSecond(this.toKbps - value.toKbps)
+  }
+
+  case class MegabitsPerSecond(i: Long) extends BitRate {
+    override def toKbps: Long = i * 1024
+    override def -(value: BitRate): BitRate = MegabitsPerSecond((this.toKbps - value.toKbps)/1024)
+  }
+
+  case class GigabitsPerSecond(i: Long) extends BitRate {
+    override def toKbps: Long = i * 1024 * 1024
+    override def -(value: BitRate): BitRate = GigabitsPerSecond((this.toKbps - value.toKbps)/1024/1024)
+  }
+
+  case class BitRateUnits(i: Long) {
+    def kbps: KilobitsPerSecond = KilobitsPerSecond(i)
+    def mbps: MegabitsPerSecond = MegabitsPerSecond(i)
+    def gbps: GigabitsPerSecond = GigabitsPerSecond(i)
+  }
+
+  implicit def longToBitRateCreator(i: Long): BitRateUnits = BitRateUnits(i)
 }

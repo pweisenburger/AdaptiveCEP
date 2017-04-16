@@ -52,4 +52,33 @@ class QoSUnitTests extends FunSuiteLike {
     assert(1001.m - 1.km == 1.m)
     assert(!(10.m - 9.m == 2.m))
   }
+
+  test("QoSUnits - Bit rate") {
+    assert(10.kbps < 10.mbps)
+    assert(10.kbps < 10.gbps)
+    assert(10.mbps < 10.gbps)
+    assert(10.kbps < 11.kbps)
+    assert(10.mbps < 11.mbps)
+    assert(10.gbps < 11.gbps)
+    assert(10.mbps > 10.kbps)
+    assert(10.gbps > 10.kbps)
+    assert(10.gbps > 10.mbps)
+    assert(11.kbps > 10.kbps)
+    assert(11.mbps > 10.mbps)
+    assert(11.gbps > 10.gbps)
+    assert(10.kbps <= 10.mbps)
+    assert(10.kbps <= 10.gbps)
+    assert(10.mbps <= 10.gbps)
+    assert(10.kbps <= 11.kbps)
+    assert(10.mbps <= 11.mbps)
+    assert(10.gbps <= 11.gbps)
+    assert(10.kbps <= 10.kbps)
+    assert(10.mbps <= 10.mbps)
+    assert(10.gbps <= 10.gbps)
+    assert(10.gbps - 9.gbps == 1.gbps)
+    assert(10.mbps - 9.mbps == 1.mbps)
+    assert(10.kbps - 9.kbps == 1.kbps)
+    assert(!(10.gbps - 9.gbps == 2.gbps))
+    assert(1025.kbps - 1.mbps == 1.kbps)
+  }
 }
