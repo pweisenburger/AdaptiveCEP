@@ -12,8 +12,12 @@ import scala.util.Random
 object Simulation {
   case class HostId(id: Int) extends Host
 
-  case class HostProps(latency: Seq[(Host, ContinuousBoundedValue[Duration])]) {
-    def advance = HostProps(latency map { case (host, latency) => (host, latency.advance) })
+  case class HostProps(
+      latency: Seq[(Host, ContinuousBoundedValue[Duration])],
+      bandwidth: Seq[(Host, ContinuousBoundedValue[Double])]) {
+    def advance = HostProps(
+      latency map { case (host, latency) => (host, latency.advance) },
+      bandwidth map { case (host, bandwidth) => (host, bandwidth.advance) })
   }
 
   sealed trait Optimizing
@@ -41,22 +45,47 @@ class Simulation(system: System) {
       template copy (value = 2.milli + 98.millis * random.nextDouble)
   }
 
+  object bandwidth {
+    implicit val addDouble: (Double, Double) => Double = _ + _
 
-  private def avgDuration(durations: Seq[Duration]): Duration =
+    val template = ContinuousBoundedValue[Double](
+      0,
+      min = 5, max = 100,
+      () => (0.4 - 0.8 * random.nextDouble, 1 + random.nextInt(900)))
+
+    def apply() =
+      template copy (value = 5 + 95* random.nextDouble)
+  }
+
+
+  private def latencySelector(props: HostProps, host: Host): Duration =
+    (props.latency collectFirst { case (`host`, latency) => latency }).get.value
+
+  private def bandwidthSelector(props: HostProps, host: Host): Double =
+    (props.bandwidth collectFirst { case (`host`, bandwidth) => bandwidth }).get.value
+
+  private def latencyBandwidthSelector(props: HostProps, host: Host): (Duration, Double) =
+    ((props.latency collectFirst { case (`host`, latency) => latency }).get.value,
+     (props.bandwidth collectFirst { case (`host`, bandwidth) => bandwidth }).get.value)
+
+  private def avg(durations: Seq[Duration]): Duration =
     if (durations.isEmpty)
       Duration.Zero
     else
       durations.foldLeft[Duration](Duration.Zero) { _ + _ } / durations.size
 
-  private def latencySelector(props: HostProps, host: Host): Duration =
-    (props.latency collectFirst { case (`host`, latency) => latency }).get.value
+  private def avg(numerics: Seq[Double]): Double =
+    if (numerics.isEmpty)
+      0.0
+    else
+      numerics.sum / numerics.size
 
   private var hostProps: Map[Host, HostProps] = {
     val hostIds  = 0 until nodeCount map HostId
     (hostIds map { id =>
-      id -> HostProps(hostIds collect {
-        case otherId if otherId != id => otherId -> latency()
-      })
+      id -> HostProps(
+        hostIds collect { case otherId if otherId != id => otherId -> latency() },
+        hostIds collect { case otherId if otherId != id => otherId -> bandwidth() })
     }).toMap
   }
 
@@ -71,7 +100,10 @@ class Simulation(system: System) {
   }
 
   def measureLatency: Duration =
-    measure(latencySelector, Minimizing, Duration.Zero) { _ + _ } { avgDuration } { _.host }
+    measure(latencySelector, Minimizing, Duration.Zero) { _ + _ } { avg } { _.host }
+
+  def measureBandwidth: Double =
+    measure(bandwidthSelector, Maximizing, Double.MaxValue) { math.min } { avg } { _.host }
 
   private def measure[T: Ordering](
       selector: (HostProps, Host) => T,
@@ -94,7 +126,9 @@ class Simulation(system: System) {
   def placeSequentially(): Unit = {
     def allOperators(operator: Operator): Seq[Operator] =
       operator +: (operator.dependencies flatMap allOperators)
+
     var nodeIndex = 0
+
     def placeOperator(operator: Operator): Unit = {
       if (nodeIndex >= nodeCount)
         throw new UnsupportedOperationException("not enough hosts")
@@ -109,7 +143,7 @@ class Simulation(system: System) {
   }
 
   def placeOptimizingLatency(): Unit = {
-    val measureLatency = measure(latencySelector, Minimizing, Duration.Zero) { _ + _ } { avgDuration } _
+    val measureLatency = measure(latencySelector, Minimizing, Duration.Zero) { _ + _ } { avg } _
 
     val placementsA = placeOptimizingHeuristicA(latencySelector, Minimizing)
     val durationA = measureLatency { placementsA(_) }
@@ -118,6 +152,53 @@ class Simulation(system: System) {
     val durationB = measureLatency { placementsB(_) }
 
     (if (durationA < durationB) placementsA else placementsB) foreach { case (operator, host) =>
+      system place (operator, host)
+    }
+  }
+
+  def placeOptimizingBandwidth(): Unit = {
+    val measureBandwidth = measure(bandwidthSelector, Maximizing, Double.MaxValue) { math.min } { avg } _
+
+    val placementsA = placeOptimizingHeuristicA(bandwidthSelector, Maximizing)
+    val bandwidthA = measureBandwidth { placementsA(_) }
+
+    val placementsB = placeOptimizingHeuristicB(bandwidthSelector, Maximizing) { math.min }
+    val bandwidthB = measureBandwidth { placementsB(_) }
+
+    (if (bandwidthA > bandwidthB) placementsA else placementsB) foreach { case (operator, host) =>
+      system place (operator, host)
+    }
+  }
+
+  def placeOptimizingLatencyAndBandwidth(): Unit = {
+    def average(durationNumerics: Seq[(Duration, Double)]): (Duration, Double) =
+      durationNumerics.unzip match { case (latencies, bandwidths) => (avg(latencies), avg(bandwidths)) }
+
+    def merge(durationNumeric0: (Duration, Double), durationNumeric1: (Duration, Double)): (Duration, Double) =
+      (durationNumeric0, durationNumeric1) match { case ((duration0, numeric0), (duration1, numeric1)) =>
+        (duration0 + duration1, math.min(numeric0, numeric1))
+      }
+
+    implicit val ordering = new Ordering[(Duration, Double)] {
+      def abs(x: Duration) = if (x < Duration.Zero) -x else x
+      def compare(x: (Duration, Double), y: (Duration, Double)) = ((-x._1, x._2), (-y._1, y._2)) match {
+        case ((d0, n0), (d1, n1)) if d0 == d1 && n0 == n1 => 0
+        case ((d0, n0), (d1, n1)) if d0 < d1 && n0 < n1 => -1
+        case ((d0, n0), (d1, n1)) if d0 > d1 && n0 > n1 => 1
+        case ((d0, n0), (d1, n1)) =>
+          math.signum((d0 - d1) / abs(d0 + d1) + (n0 - n1) / math.abs(n0 + n1)).toInt
+      }
+    }
+
+    val measureBandwidth = measure(latencyBandwidthSelector, Maximizing, (Duration.Zero, Double.MaxValue)) { merge } { average } _
+
+    val placementsA = placeOptimizingHeuristicA(latencyBandwidthSelector, Maximizing)
+    val bandwidthA = measureBandwidth { placementsA(_) }
+
+    val placementsB = placeOptimizingHeuristicB(latencyBandwidthSelector, Maximizing) { merge }
+    val bandwidthB = measureBandwidth { placementsB(_) }
+
+    (if (bandwidthA > bandwidthB) placementsA else placementsB) foreach { case (operator, host) =>
       system place (operator, host)
     }
   }
@@ -138,7 +219,7 @@ class Simulation(system: System) {
 
       val host =
         if (!consumer && operator.dependencies.nonEmpty) {
-          val durationsForHosts =
+          val valuesForHosts =
             hostProps.toSeq collect { case (host, props) if !(placements.values exists { _== host }) =>
               val propValues =
                 operator.dependencies map { dependentOperator =>
@@ -148,10 +229,10 @@ class Simulation(system: System) {
               minmax(optimizing, propValues) -> host
             }
 
-          if (durationsForHosts.isEmpty)
+          if (valuesForHosts.isEmpty)
             throw new UnsupportedOperationException("not enough hosts")
 
-          val (duration, host) = minmaxBy(optimizing, durationsForHosts) { case (duration, _) => duration }
+          val (_, host) = minmaxBy(optimizing, valuesForHosts) { case (value, _) => value }
           host
         }
         else
@@ -170,21 +251,23 @@ class Simulation(system: System) {
       selector: (HostProps, Host) => T,
       optimizing: Optimizing)(
       merge: (T, T) => T): collection.Map[Operator, Host] = {
+    val previousPlacements = mutable.Map.empty[Operator, mutable.Set[Host]]
     val placements = mutable.Map.empty[Operator, Host]
 
     def allOperators(operator: Operator, parent: Option[Operator]): Seq[(Operator, Option[Operator])] =
       (operator -> parent) +: (operator.dependencies flatMap { allOperators(_, Some(operator)) })
 
     val operators = system.consumers flatMap { allOperators(_, None) }
-    operators foreach { case (operator, _) => placements += operator -> operator.host }
+    operators foreach { case (operator, _) =>
+      placements += operator -> operator.host
+      previousPlacements += operator -> mutable.Set(operator.host)
+    }
 
     @tailrec def placeOperators(): Unit = {
       val changed = operators map {
         case (operator, Some(parent)) if operator.dependencies.nonEmpty =>
-          val durationsForHosts =
-            hostProps.toSeq collect { case (host, props) if !(placements.values exists {
-              _ == host
-            }) =>
+          val valuesForHosts =
+            hostProps.toSeq collect { case (host, props) if !(placements.values exists { _ == host }) && !(previousPlacements(operator) contains host) =>
               merge(
                 minmax(optimizing, operator.dependencies map { dependentOperator =>
                   selector(props, placements(dependentOperator))
@@ -192,23 +275,36 @@ class Simulation(system: System) {
                 selector(hostProps(placements(parent)), host)) -> host
             }
 
-          val currentDuration =
+          val currentValue =
             merge(
               minmax(optimizing, operator.dependencies map { dependency =>
                 selector(hostProps(placements(operator)), placements(dependency))
               }),
               selector(hostProps(placements(parent)), placements(operator)))
 
-          if (durationsForHosts.isEmpty)
-            throw new UnsupportedOperationException("not enough hosts")
+          val noPotentialPlacements =
+            if (valuesForHosts.isEmpty) {
+              if ((hostProps.keySet -- placements.values --previousPlacements(operator)).isEmpty)
+                true
+              else
+                throw new UnsupportedOperationException("not enough hosts")
+            }
+            else
+              false
 
-          val (duration, host) = minmaxBy(optimizing, durationsForHosts) { case (duration, _) => duration }
+          if (!noPotentialPlacements) {
+            val (value, host) = minmaxBy(optimizing, valuesForHosts) { case (value, _) => value }
 
-          val changePlacement = duration < currentDuration
-          if (changePlacement)
-            placements += operator -> host
+            val changePlacement = value < currentValue
+            if (changePlacement) {
+              placements += operator -> host
+              previousPlacements(operator) += host
+            }
 
-          changePlacement
+            changePlacement
+          }
+          else
+            false
 
         case _ =>
           false

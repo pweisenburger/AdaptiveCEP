@@ -1,58 +1,64 @@
 package com.lambdarookie.eventscala.simulation
 
-import akka.actor.{ActorSystem, Props}
+import java.io.{File, PrintStream}
+
 import com.lambdarookie.eventscala.data.Queries.Query
-import com.lambdarookie.eventscala.dsl.Dsl._
-import com.lambdarookie.eventscala.publishers.EmptyPublisher
-import com.lambdarookie.eventscala.system.System
 
 object SimulationRunner extends App {
-  def createSimulation = {
-    implicit val actorSystem = ActorSystem()
+  val directory =
+    args.headOption map { new File(_) } flatMap { directory =>
+      if (!directory.isDirectory) {
+        System.err.println(s"$directory does not exist or is not a directory")
+        None
+      }
+      else
+        Some(directory)
+    }
 
-    val publishers = Map(
-      "A" -> actorSystem.actorOf(Props(new EmptyPublisher), "A"),
-      "B" -> actorSystem.actorOf(Props(new EmptyPublisher), "B"),
-      "C" -> actorSystem.actorOf(Props(new EmptyPublisher), "C"))
+  println("Starting simulation")
 
-    val query: Query =
-      stream[Int]("A")
-        .join(
-          stream[Int]("B"),
-          slidingWindow(30.seconds),
-          slidingWindow(30.seconds))
-        .where(_ <= _)
+  SimulationSetup.queries foreach { case (name, query) =>
+    runSimulation(query)(directory, s"$name-latency-everymin") { (simulation, timeSeconds, latencyMillis, bandwidth) =>
+      if ((timeSeconds % 60) == 0 && latencyMillis > 80)
+        simulation.placeOptimizingLatency()
+    }
 
-    val system = new System
-    system runQuery (query, publishers, None, None)
+    runSimulation(query)(directory, s"$name-latency-everysec") { (simulation, timeSeconds, latencyMillis, bandwidth) =>
+      if (latencyMillis > 80)
+        simulation.placeOptimizingLatency()
+    }
 
-    val simulation = new Simulation(system)
-    simulation.placeSequentially()
+    runSimulation(query)(directory, s"$name-bandwidth-everymin") { (simulation, timeSeconds, latencyMillis, bandwidth) =>
+      if ((timeSeconds % 60) == 0 && bandwidth < 25)
+        simulation.placeOptimizingBandwidth()
+    }
 
-    simulation
+    runSimulation(query)(directory, s"$name-bandwidth-everysec") { (simulation, timeSeconds, latencyMillis, bandwidth) =>
+      if (bandwidth < 40)
+        simulation.placeOptimizingBandwidth()
+    }
+
+    runSimulation(query)(directory, s"$name-latencybandwidth-everymin") { (simulation, timeSeconds, latencyMillis, bandwidth) =>
+      if ((timeSeconds % 60) == 0 && (latencyMillis > 80 || bandwidth < 25))
+        simulation.placeOptimizingLatencyAndBandwidth()
+    }
+
+    runSimulation(query)(directory, s"$name-latencybandwidth-everysec") { (simulation, timeSeconds, latencyMillis, bandwidth) =>
+      if (latencyMillis > 80 || bandwidth < 25)
+        simulation.placeOptimizingLatencyAndBandwidth()
+    }
   }
 
+  println("Simulation finished")
+}
 
-  val simulationStatic = createSimulation
-  val simulationAdaptive = createSimulation
+object runSimulation {
+  def apply(queries: Query*)(directory: Option[File], name: String)(optimize: (Simulation, Long, Long, Long) => Unit) = {
+    println(s"Simulating $name")
 
-  simulationStatic.placeOptimizingLatency()
-  simulationAdaptive.placeOptimizingLatency()
-
-  println("time-s,latencystatic-ms,latencyadaptive-ms")
-
-  0 to 3000 foreach { step =>
-    val time = simulationStatic.currentTime.toSeconds
-    val simulationStaticMillis = simulationStatic.measureLatency.toMillis
-    val simulationAdaptiveMillis = simulationAdaptive.measureLatency.toMillis
-
-    if ((time % 6) == 0)
-      println(Seq(time, simulationStaticMillis, simulationAdaptiveMillis) mkString ",")
-
-    if ((time % 60) == 0 && simulationAdaptiveMillis > 80)
-      simulationAdaptive.placeOptimizingLatency()
-
-    simulationStatic.advance()
-    simulationAdaptive.advance()
+    val out = directory map { directory => new PrintStream(new File(directory, s"$name.csv")) } getOrElse System.out
+    out.println(name)
+    new SimulationSetup(queries: _*)(out)(optimize).run()
+    directory foreach { _ => out.close() }
   }
 }
