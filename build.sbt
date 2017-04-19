@@ -1,4 +1,4 @@
-name := "EventScala"
+name := "AdaptiveCEP"
 
 version := "0.0.1-SNAPSHOT"
 
