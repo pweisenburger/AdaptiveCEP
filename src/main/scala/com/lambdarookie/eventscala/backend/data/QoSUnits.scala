@@ -37,6 +37,7 @@ object QoSUnits {
 
   trait Distance extends QoSUnit[Distance] {
     def toMeter: Int
+
     override def <(value: Distance): Boolean = this.toMeter < value.toMeter
     override def >(value: Distance): Boolean = this.toMeter > value.toMeter
     override def <=(value: Distance): Boolean = this.toMeter <= value.toMeter

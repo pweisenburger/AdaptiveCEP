@@ -25,11 +25,10 @@ trait Host {
   val position: Coordinate
   val neighbors: Set[Host]
 
-  def measureProximity(from: Host, to: Host): Int = ???
 
   def sortNeighborsByProximity: SortedSet[Host] = {
     val sorted = SortedSet[Host]()((x: Host, y: Host) =>
-      Ordering[Int].compare(measureProximity(x, this), measureProximity(y, this)))
+      Ordering[Int].compare(position.calculateDistanceTo(x.position), position.calculateDistanceTo(y.position)))
     sorted ++ neighbors
   }
 }
