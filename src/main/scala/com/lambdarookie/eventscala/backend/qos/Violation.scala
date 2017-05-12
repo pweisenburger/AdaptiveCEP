@@ -5,6 +5,4 @@ import com.lambdarookie.eventscala.data.Queries.Operator
 /**
   * Created by monur.
   */
-case class Violation(op: Operator, qos: QualityOfService) {
-
-}
+case class Violation(op: Operator, qos: QualityOfService)

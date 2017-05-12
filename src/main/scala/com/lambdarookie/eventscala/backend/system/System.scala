@@ -9,9 +9,7 @@ import scala.collection.SortedSet
 /**
   * Created by monur.
   */
-trait System extends CEPSystem with QoSSystem{
-
-}
+trait System extends CEPSystem with QoSSystem
 
 trait CEPSystem {
   val hosts: Signal[Set[Host]]
@@ -25,13 +23,13 @@ trait Host {
   val position: Coordinate
   val neighbors: Set[Host]
 
-
   def sortNeighborsByProximity: SortedSet[Host] = {
     val sorted = SortedSet[Host]()((x: Host, y: Host) =>
       Ordering[Int].compare(position.calculateDistanceTo(x.position), position.calculateDistanceTo(y.position)))
     sorted ++ neighbors
   }
 }
+
 trait Operator {
   val host: Host
   val inputs: Set[Operator]
