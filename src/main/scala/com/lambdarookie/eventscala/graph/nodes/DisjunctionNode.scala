@@ -1,18 +1,23 @@
 package com.lambdarookie.eventscala.graph.nodes
 
 import akka.actor.ActorRef
+import com.lambdarookie.eventscala.backend.system.BinaryOperator
+import com.lambdarookie.eventscala.backend.system.traits.{Operator, System}
 import com.lambdarookie.eventscala.data.Events._
 import com.lambdarookie.eventscala.data.Queries._
 import com.lambdarookie.eventscala.graph.nodes.traits._
 import com.lambdarookie.eventscala.graph.qos._
 
 case class DisjunctionNode(
+    system: System,
     query: DisjunctionQuery,
+    operator: BinaryOperator,
     publishers: Map[String, ActorRef],
     frequencyMonitorFactory: MonitorFactory,
     latencyMonitorFactory: MonitorFactory,
     createdCallback: Option[() => Any],
-    eventCallback: Option[(Event) => Any])
+    eventCallback: Option[(Event) => Any],
+    testId: String)
   extends BinaryNode {
 
   var childNode1Created: Boolean = false

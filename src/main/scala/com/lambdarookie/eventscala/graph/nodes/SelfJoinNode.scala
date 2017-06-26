@@ -8,14 +8,19 @@ import com.lambdarookie.eventscala.graph.nodes.traits._
 import com.lambdarookie.eventscala.graph.nodes.traits.EsperEngine._
 import com.lambdarookie.eventscala.graph.qos._
 import JoinNode._
+import com.lambdarookie.eventscala.backend.system.UnaryOperator
+import com.lambdarookie.eventscala.backend.system.traits.{Operator, System}
 
 case class SelfJoinNode(
+    system: System,
     query: SelfJoinQuery,
+    operator: UnaryOperator,
     publishers: Map[String, ActorRef],
     frequencyMonitorFactory: MonitorFactory,
     latencyMonitorFactory: MonitorFactory,
     createdCallback: Option[() => Any],
-    eventCallback: Option[(Event) => Any])
+    eventCallback: Option[(Event) => Any],
+    testId: String)
   extends UnaryNode with EsperEngine {
 
   override val esperServiceProviderUri: String = name

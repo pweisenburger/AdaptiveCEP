@@ -1,6 +1,6 @@
 package com.lambdarookie.eventscala.backend.qos
 
-import com.lambdarookie.eventscala.data.Queries.Operator
+import com.lambdarookie.eventscala.backend.system.traits.Operator
 
 /**
   * Created by monur.

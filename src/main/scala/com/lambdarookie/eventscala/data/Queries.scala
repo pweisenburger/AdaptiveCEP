@@ -19,19 +19,19 @@ object Queries {
   case class SlidingTime       (seconds: Int)   extends Window
   case class TumblingTime      (seconds: Int)   extends Window
 
-  sealed trait Operator
-  case object Equal        extends Operator
-  case object NotEqual     extends Operator
-  case object Greater      extends Operator
-  case object GreaterEqual extends Operator
-  case object Smaller      extends Operator
-  case object SmallerEqual extends Operator
+  sealed trait BooleanOperator
+  case object Equal        extends BooleanOperator
+  case object NotEqual     extends BooleanOperator
+  case object Greater      extends BooleanOperator
+  case object GreaterEqual extends BooleanOperator
+  case object Smaller      extends BooleanOperator
+  case object SmallerEqual extends BooleanOperator
 
   case class NodeData(name: String, query: Query, context: ActorContext)
 
   sealed trait Requirement
-  case class LatencyRequirement   (operator: Operator, duration: Duration,           callback: NodeData => Any) extends Requirement
-  case class FrequencyRequirement (operator: Operator, instances: Int, seconds: Int, callback: NodeData => Any) extends Requirement
+  case class LatencyRequirement   (operator: BooleanOperator, duration: Duration, callback: NodeData => Any) extends Requirement
+  case class FrequencyRequirement (operator: BooleanOperator, instances: Int, seconds: Int, callback: NodeData => Any) extends Requirement
 
   sealed trait Query { val requirements: Set[Requirement] }
 

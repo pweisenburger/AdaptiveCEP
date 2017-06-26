@@ -54,7 +54,7 @@ object Dsl {
     def <=  (ratio: Ratio): FrequencyHelper2 = FrequencyHelper2(SmallerEqual, ratio)
   }
 
-  case class FrequencyHelper2(operator: Operator, ratio: Ratio) {
+  case class FrequencyHelper2(operator: BooleanOperator, ratio: Ratio) {
     def otherwise(callback: NodeData => Any): FrequencyRequirement =
       FrequencyRequirement(operator, ratio.instances.i, ratio.seconds.i, callback)
   }
@@ -76,7 +76,7 @@ object Dsl {
     def <=  (duration: Duration): LatencyHelper2 = LatencyHelper2 (SmallerEqual, duration)
   }
 
-  case class LatencyHelper2(operator: Operator, duration: Duration) {
+  case class LatencyHelper2(operator: BooleanOperator, duration: Duration) {
     def otherwise(callback: NodeData => Any): LatencyRequirement =
       LatencyRequirement(operator, duration, callback)
   }

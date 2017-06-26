@@ -5,7 +5,7 @@ package com.lambdarookie.eventscala.backend.qos
   */
 trait QualityOfService
 class Condition(condition: Boolean) extends QualityOfService {
-  def isFulfilled = condition
+  def isFulfilled: Boolean = condition
 }
 class Demand(demand: Boolean) extends Condition(demand) {
   private var isConditionFulfilled: Boolean = true

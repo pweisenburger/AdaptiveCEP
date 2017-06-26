@@ -1,16 +1,19 @@
 package com.lambdarookie.eventscala.simulation
 
 import akka.actor.{ActorRef, ActorSystem, Props}
+import com.lambdarookie.eventscala.backend.system.TestSystem
 import com.lambdarookie.eventscala.data.Events._
 import com.lambdarookie.eventscala.data.Queries._
 import com.lambdarookie.eventscala.dsl.Dsl._
 import com.lambdarookie.eventscala.graph.factory._
 import com.lambdarookie.eventscala.graph.qos._
 import com.lambdarookie.eventscala.publishers._
+import com.lambdarookie.eventscala.backend.system.traits._
 
 object Main extends App {
 
   val actorSystem: ActorSystem = ActorSystem()
+  val system: System = new TestSystem
 
   val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id))),             "A")
   val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id * 2))),         "B")
@@ -52,7 +55,8 @@ object Main extends App {
       latency < timespan(1.milliseconds) otherwise { (nodeData) => println(s"PROBLEM:\tEvents reach node `${nodeData.name}` too slowly!") })
 
 
-  val graph: ActorRef = GraphFactory.create(
+  GraphFactory.create(
+    system =                  system,
     actorSystem =             actorSystem,
     query =                   query1, // Alternatively: `query2`
     publishers =              publishers,

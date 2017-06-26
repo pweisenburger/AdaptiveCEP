@@ -1,105 +1,29 @@
 package com.lambdarookie.eventscala.graph.factory
 
-import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.actor.{ActorRef, ActorSystem}
 import com.lambdarookie.eventscala.data.Events._
 import com.lambdarookie.eventscala.data.Queries._
-import com.lambdarookie.eventscala.graph.nodes._
 import com.lambdarookie.eventscala.graph.qos._
+import com.lambdarookie.eventscala.backend.system.traits.{Operator, System}
 
 object GraphFactory {
 
   def createImpl(
+      system: System,
       actorSystem: ActorSystem,
       query: Query,
       publishers: Map[String, ActorRef],
       frequencyMonitorFactory: MonitorFactory,
       latencyMonitorFactory: MonitorFactory,
       createdCallback: () => Any,
-      eventCallback: (Event) => Any): ActorRef = query match {
-    case streamQuery: StreamQuery =>
-      actorSystem.actorOf(Props(
-        StreamNode(
-          streamQuery, publishers,
-          frequencyMonitorFactory,
-          latencyMonitorFactory,
-          Some(createdCallback),
-          Some(eventCallback))),
-        "stream")
-    case sequenceQuery: SequenceQuery =>
-      actorSystem.actorOf(Props(
-        SequenceNode(
-          sequenceQuery,
-          publishers,
-          frequencyMonitorFactory,
-          latencyMonitorFactory,
-          Some(createdCallback),
-          Some(eventCallback))),
-        "sequence")
-    case filterQuery: FilterQuery =>
-      actorSystem.actorOf(Props(
-        FilterNode(
-          filterQuery,
-          publishers,
-          frequencyMonitorFactory,
-          latencyMonitorFactory,
-          Some(createdCallback),
-          Some(eventCallback))),
-        "filter")
-    case dropElemQuery: DropElemQuery =>
-      actorSystem.actorOf(Props(
-        DropElemNode(
-          dropElemQuery,
-          publishers,
-          frequencyMonitorFactory,
-          latencyMonitorFactory,
-          Some(createdCallback),
-          Some(eventCallback))),
-        "dropelem")
-    case selfJoinQuery: SelfJoinQuery =>
-      actorSystem.actorOf(Props(
-        SelfJoinNode(
-          selfJoinQuery,
-          publishers,
-          frequencyMonitorFactory,
-          latencyMonitorFactory,
-          Some(createdCallback),
-          Some(eventCallback))),
-        "selfjoin")
-    case joinQuery: JoinQuery =>
-      actorSystem.actorOf(Props(
-        JoinNode(
-          joinQuery,
-          publishers,
-          frequencyMonitorFactory,
-          latencyMonitorFactory,
-          Some(createdCallback),
-          Some(eventCallback))),
-        "join")
-    case conjunctionQuery: ConjunctionQuery =>
-      actorSystem.actorOf(Props(
-        ConjunctionNode(
-          conjunctionQuery,
-          publishers,
-          frequencyMonitorFactory,
-          latencyMonitorFactory,
-          Some(createdCallback),
-          Some(eventCallback))),
-        "conjunction")
-    case disjunctionQuery: DisjunctionQuery =>
-      actorSystem.actorOf(Props(
-        DisjunctionNode(
-          disjunctionQuery,
-          publishers,
-          frequencyMonitorFactory,
-          latencyMonitorFactory,
-          Some(createdCallback),
-          Some(eventCallback))),
-        "disjunction")
-  }
+      eventCallback: (Event) => Any): ActorRef =
+    NodeFactory.createNode(system, actorSystem, query, OperatorFactory.createOperator("0", system, query, Set.empty[Operator]),
+      publishers, frequencyMonitorFactory, latencyMonitorFactory, Some(createdCallback), Some(eventCallback), "", "0")
 
   // This is why `eventCallback` is listed separately:
   // https://stackoverflow.com/questions/21147001/why-scala-doesnt-infer-type-from-generic-type-parameters
   def create[A](
+      system: System,
       actorSystem: ActorSystem,
       query: Query1[A],
       publishers: Map[String, ActorRef],
@@ -108,6 +32,7 @@ object GraphFactory {
       createdCallback: () => Any)(
       eventCallback: (A) => Any): ActorRef =
     createImpl(
+      system,
       actorSystem,
       query.asInstanceOf[Query],
       publishers,
@@ -117,6 +42,7 @@ object GraphFactory {
       toFunEventAny(eventCallback))
 
   def create[A, B](
+      system: System,
       actorSystem: ActorSystem,
       query: Query2[A, B],
       publishers: Map[String, ActorRef],
@@ -125,6 +51,7 @@ object GraphFactory {
       createdCallback: () => Any)(
       eventCallback: (A, B) => Any): ActorRef =
     createImpl(
+      system,
       actorSystem,
       query.asInstanceOf[Query],
       publishers,
@@ -134,6 +61,7 @@ object GraphFactory {
       toFunEventAny(eventCallback))
 
   def create[A, B, C](
+      system: System,
       actorSystem: ActorSystem,
       query: Query3[A, B, C],
       publishers: Map[String, ActorRef],
@@ -142,6 +70,7 @@ object GraphFactory {
       createdCallback: () => Any)(
       eventCallback: (A, B, C) => Any): ActorRef =
     createImpl(
+      system,
       actorSystem,
       query.asInstanceOf[Query],
       publishers,
@@ -151,6 +80,7 @@ object GraphFactory {
       toFunEventAny(eventCallback))
 
   def create[A, B, C, D](
+      system: System,
       actorSystem: ActorSystem,
       query: Query4[A, B, C, D],
       publishers: Map[String, ActorRef],
@@ -159,6 +89,7 @@ object GraphFactory {
       createdCallback: () => Any)(
       eventCallback: (A, B, C, D) => Any): ActorRef =
     createImpl(
+      system,
       actorSystem,
       query.asInstanceOf[Query],
       publishers,
@@ -168,6 +99,7 @@ object GraphFactory {
       toFunEventAny(eventCallback))
 
   def create[A, B, C, D, E](
+      system: System,
       actorSystem: ActorSystem,
       query: Query5[A, B, C, D, E],
       publishers: Map[String, ActorRef],
@@ -176,6 +108,7 @@ object GraphFactory {
       createdCallback: () => Any)(
       eventCallback: (A, B, C, D, E) => Any): ActorRef =
     createImpl(
+      system,
       actorSystem,
       query.asInstanceOf[Query],
       publishers,
@@ -185,6 +118,7 @@ object GraphFactory {
       toFunEventAny(eventCallback))
 
   def create[A, B, C, D, E, F](
+      system: System,
       actorSystem: ActorSystem,
       query: Query6[A, B, C, D, E, F],
       publishers: Map[String, ActorRef],
@@ -193,6 +127,7 @@ object GraphFactory {
       createdCallback: () => Any)(
       eventCallback: (A, B, C, D, E, F) => Any): ActorRef =
     createImpl(
+      system,
       actorSystem,
       query.asInstanceOf[Query],
       publishers,

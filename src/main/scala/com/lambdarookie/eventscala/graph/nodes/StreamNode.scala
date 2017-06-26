@@ -1,6 +1,8 @@
 package com.lambdarookie.eventscala.graph.nodes
 
 import akka.actor.ActorRef
+import com.lambdarookie.eventscala.backend.system.EventSource
+import com.lambdarookie.eventscala.backend.system.traits.{Operator, System}
 import com.lambdarookie.eventscala.data.Events._
 import com.lambdarookie.eventscala.data.Queries._
 import com.lambdarookie.eventscala.graph.nodes.traits._
@@ -8,12 +10,15 @@ import com.lambdarookie.eventscala.graph.qos._
 import com.lambdarookie.eventscala.publishers.Publisher._
 
 case class StreamNode(
+    system: System,
     query: StreamQuery,
+    operator: EventSource,
     publishers: Map[String, ActorRef],
     frequencyMonitorFactory: MonitorFactory,
     latencyMonitorFactory: MonitorFactory,
     createdCallback: Option[() => Any],
-    eventCallback: Option[(Event) => Any])
+    eventCallback: Option[(Event) => Any],
+    testId: String)
   extends LeafNode {
 
   val publisher: ActorRef = publishers(query.publisherName)

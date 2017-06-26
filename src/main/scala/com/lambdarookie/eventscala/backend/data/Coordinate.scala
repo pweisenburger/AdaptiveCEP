@@ -15,7 +15,7 @@ case class Coordinate(latitude: Double, longitude: Double, altitude: Double) {
     * Calculate distance between two points in latitude and longitude taking
     * into account height difference. If you are not interested in height
     * difference pass 0.0. Uses Haversine method as its base.
-    * @param coordinate
+    * @param coordinate Coordinate to calculate to
     * @return Distance in meters
     */
   def calculateDistanceTo(coordinate: Coordinate): Int = {

@@ -2,6 +2,8 @@ package com.lambdarookie.eventscala.graph.nodes
 
 import akka.actor.ActorRef
 import com.espertech.esper.client._
+import com.lambdarookie.eventscala.backend.system.EventSource
+import com.lambdarookie.eventscala.backend.system.traits.{Operator, System}
 import com.lambdarookie.eventscala.data.Events._
 import com.lambdarookie.eventscala.data.Queries._
 import com.lambdarookie.eventscala.graph.nodes.traits._
@@ -10,12 +12,15 @@ import com.lambdarookie.eventscala.graph.qos._
 import com.lambdarookie.eventscala.publishers.Publisher._
 
 case class SequenceNode(
+    system: System,
     query: SequenceQuery,
+    operator: EventSource,
     publishers: Map[String, ActorRef],
     frequencyMonitorFactory: MonitorFactory,
     latencyMonitorFactory: MonitorFactory,
     createdCallback: Option[() => Any],
-    eventCallback: Option[(Event) => Any])
+    eventCallback: Option[(Event) => Any],
+    testId: String)
   extends LeafNode with EsperEngine {
 
   override val esperServiceProviderUri: String = name

@@ -1,7 +1,7 @@
 package com.lambdarookie.eventscala.backend.qos
 
 import com.lambdarookie.eventscala.backend.data.QoSUnits._
-import com.lambdarookie.eventscala.backend.system._
+import com.lambdarookie.eventscala.backend.system.traits.Host
 
 import scala.collection.SortedSet
 
