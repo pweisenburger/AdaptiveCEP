@@ -15,12 +15,15 @@ import com.lambdarookie.eventscala.data.Queries.{BinaryQuery, Query, UnaryQuery}
 //case class SequenceJoinOperator(host: Host, inputs: Set[Operator], outputs: Set[Operator]) extends Operator
 //case class StreamOperator(host: Host, inputs: Set[Operator], outputs: Set[Operator]) extends Operator
 
-case class EventSource(testId: String, system: System, host: Host, query: Query, outputs: Set[Operator]) extends Operator {
+case class EventSource(testId: String, system: System, query: Query, outputs: Set[Operator]) extends Operator {
+  val host: Host = system.selectHostForOperator(this)
   val inputs = Seq.empty[Operator]
 }
-case class UnaryOperator(testId: String, system: System, host: Host, query: UnaryQuery, outputs: Set[Operator]) extends Operator {
+case class UnaryOperator(testId: String, system: System, query: UnaryQuery, outputs: Set[Operator]) extends Operator {
+  val host: Host = system.selectHostForOperator(this)
   val inputs = Seq(createChildOperator(s"$testId-1", query.sq))
 }
-case class BinaryOperator(testId: String, system: System, host: Host, query: BinaryQuery, outputs: Set[Operator]) extends Operator {
+case class BinaryOperator(testId: String, system: System, query: BinaryQuery, outputs: Set[Operator]) extends Operator {
+  val host: Host = system.selectHostForOperator(this)
   val inputs = Seq(createChildOperator(s"$testId-1", query.sq1), createChildOperator(s"$testId-2", query.sq2))
 }

@@ -9,8 +9,8 @@ import com.lambdarookie.eventscala.data.Queries.{BinaryQuery, LeafQuery, Query, 
   */
 object OperatorFactory {
   def createOperator(id: String, system: System, query: Query, outputs: Set[Operator]): Operator = query match {
-    case q: LeafQuery => EventSource(id, system, system.selectRandomHost, q, outputs)
-    case q: UnaryQuery => UnaryOperator(id, system, system.selectRandomHost, q, outputs)
-    case q: BinaryQuery => BinaryOperator(id, system, system.selectRandomHost, q, outputs)
+    case q: LeafQuery => EventSource(id, system, q, outputs)
+    case q: UnaryQuery => UnaryOperator(id, system, q, outputs)
+    case q: BinaryQuery => BinaryOperator(id, system, q, outputs)
   }
 }

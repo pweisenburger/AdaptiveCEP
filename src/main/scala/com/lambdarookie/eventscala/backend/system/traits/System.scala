@@ -13,7 +13,9 @@ import scala.collection.SortedSet
 /**
   * Created by monur.
   */
-trait System extends CEPSystem with QoSSystem
+trait System extends CEPSystem with QoSSystem {
+
+}
 
 trait CEPSystem {
   val hosts: Signal[Set[Host]]
@@ -22,7 +24,12 @@ trait CEPSystem {
   val nodesToOperatorsVar: Var[Map[ActorRef, Operator]] = Var(Map())
   val nodesToOperators: Signal[Map[ActorRef, Operator]] = nodesToOperatorsVar
 
-  def selectRandomHost: Host = hosts.now.toVector((math.random * hosts.now.size).toInt)
+  def selectHostForOperator(operator: Operator): Host = {
+    // TODO: Operator placement strategy
+    selectRandomHost
+  }
+
+  private def selectRandomHost: Host = hosts.now.toVector((math.random * hosts.now.size).toInt)
 
 }
 
