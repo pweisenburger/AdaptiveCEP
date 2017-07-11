@@ -31,14 +31,15 @@ trait AverageFrequencyMonitor {
             if (logging) println(
               s"FREQUENCY:\tOn average, node `$name` emits $frequency events every ${requirement.seconds} seconds. " +
               s"(Calculated every $interval seconds.)")
-            requirement.operator match {
-              case Equal =>        if (!(frequency == requirement.instances)) requirement.callback(callbackNodeData)
-              case NotEqual =>     if (!(frequency != requirement.instances)) requirement.callback(callbackNodeData)
-              case Greater =>      if (!(frequency >  requirement.instances)) requirement.callback(callbackNodeData)
-              case GreaterEqual => if (!(frequency >= requirement.instances)) requirement.callback(callbackNodeData)
-              case Smaller =>      if (!(frequency <  requirement.instances)) requirement.callback(callbackNodeData)
-              case SmallerEqual => if (!(frequency <= requirement.instances)) requirement.callback(callbackNodeData)
-            }
+            //TODO: Handle violated demand
+//            requirement.operator match {
+//              case Equal =>        if (!(frequency == requirement.instances)) requirement.callback(callbackNodeData)
+//              case NotEqual =>     if (!(frequency != requirement.instances)) requirement.callback(callbackNodeData)
+//              case Greater =>      if (!(frequency >  requirement.instances)) requirement.callback(callbackNodeData)
+//              case GreaterEqual => if (!(frequency >= requirement.instances)) requirement.callback(callbackNodeData)
+//              case Smaller =>      if (!(frequency <  requirement.instances)) requirement.callback(callbackNodeData)
+//              case SmallerEqual => if (!(frequency <= requirement.instances)) requirement.callback(callbackNodeData)
+//            }
           })
           currentOutput = Some(0)
         }

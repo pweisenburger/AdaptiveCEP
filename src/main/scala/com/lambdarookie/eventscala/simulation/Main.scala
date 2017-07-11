@@ -34,12 +34,12 @@ object Main extends App {
       slidingWindow(2.seconds))
     .where(_ < _)
     .dropElem1(
-      latency < timespan(1.milliseconds) otherwise { (nodeData) => println(s"PROBLEM:\tEvents reach node `${nodeData.name}` too slowly!") })
+      latency < timespan(1.milliseconds))
     .selfJoin(
       tumblingWindow(1.instances),
       tumblingWindow(1.instances),
-      frequency > ratio( 3.instances,  5.seconds) otherwise { (nodeData) => println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!") },
-      frequency < ratio(12.instances, 15.seconds) otherwise { (nodeData) => println(s"PROBLEM:\tNode `${nodeData.name}` emits too many events!") })
+      frequency > ratio( 3.instances,  5.seconds),
+      frequency < ratio(12.instances, 15.seconds))
     .and(stream[Float]("C"))
     .or(stream[String]("D"))
 
@@ -49,10 +49,10 @@ object Main extends App {
     .join(
       sequence(
         nStream[Float]("C") -> nStream[String]("D"),
-        frequency > ratio(1.instances, 5.seconds) otherwise { (nodeData) => println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!") }),
+        frequency > ratio(1.instances, 5.seconds)),
       slidingWindow(3.seconds),
       slidingWindow(3.seconds),
-      latency < timespan(1.milliseconds) otherwise { (nodeData) => println(s"PROBLEM:\tEvents reach node `${nodeData.name}` too slowly!") })
+      latency < timespan(1.milliseconds))
 
 
   GraphFactory.create(

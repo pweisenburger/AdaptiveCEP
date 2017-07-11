@@ -30,8 +30,8 @@ object Queries {
   case class NodeData(name: String, query: Query, context: ActorContext)
 
   sealed trait Requirement
-  case class LatencyRequirement   (operator: BooleanOperator, duration: Duration, callback: NodeData => Any) extends Requirement
-  case class FrequencyRequirement (operator: BooleanOperator, instances: Int, seconds: Int, callback: NodeData => Any) extends Requirement
+  case class LatencyRequirement   (operator: BooleanOperator, duration: Duration) extends Requirement
+  case class FrequencyRequirement (operator: BooleanOperator, instances: Int, seconds: Int) extends Requirement
 
   sealed trait Query { val requirements: Set[Requirement] }
 

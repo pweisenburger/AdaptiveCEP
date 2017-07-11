@@ -70,7 +70,8 @@ case class PathLatencyUnaryNodeMonitor(interval: Int, logging: Boolean)
             println(
               s"LATENCY:\tEvents reach node `${nodeData.name}` after $pathLatency. " +
               s"(Calculated every $interval seconds.)")
-          latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency, lr)) lr.callback(callbackNodeData))
+          //TODO: Handle violated demand
+//          latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency, lr)) lr.callback(callbackNodeData))
           childNodeLatency = None
           childNodePathLatency = None
         }
@@ -83,7 +84,8 @@ case class PathLatencyUnaryNodeMonitor(interval: Int, logging: Boolean)
             println(
               s"LATENCY:\tEvents reach node `${nodeData.name}` after $pathLatency. " +
               s"(Calculated every $interval seconds.)")
-          latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency, lr)) lr.callback(callbackNodeData))
+          //TODO: Handle violated demand
+//          latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency, lr)) lr.callback(callbackNodeData))
           childNodeLatency = None
           childNodePathLatency = None
         }
@@ -135,14 +137,16 @@ case class PathLatencyBinaryNodeMonitor(interval: Int, logging: Boolean)
               println(
                 s"LATENCY:\tEvents reach node `${nodeData.name}` after $pathLatency1. " +
                 s"(Calculated every $interval seconds.)")
-            latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency1, lr)) lr.callback(callbackNodeData))
+            //TODO: Handle violated demand
+//            latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency1, lr)) lr.callback(callbackNodeData))
           } else {
             nodeData.context.parent ! PathLatency(nodeData.context.self, pathLatency2)
             if (logging && latencyRequirements.nonEmpty)
               println(
                 s"LATENCY:\tEvents reach node `${nodeData.name}` after $pathLatency2. " +
                 s"(Calculated every $interval seconds.)")
-            latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency2, lr)) lr.callback(callbackNodeData))
+            //TODO: Handle violated demand
+//            latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency2, lr)) lr.callback(callbackNodeData))
           }
           childNode1Latency = None
           childNode2Latency = None
@@ -166,15 +170,17 @@ case class PathLatencyBinaryNodeMonitor(interval: Int, logging: Boolean)
               println(
                 s"LATENCY:\tEvents reach node `${nodeData.name}` after $pathLatency1. " +
                 s"(Calculated every $interval seconds.)")
-            latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency1, lr)) lr.callback(callbackNodeData))
+            //TODO: Handle violated demand
+//            latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency1, lr)) lr.callback(callbackNodeData))
           } else {
             nodeData.context.parent ! PathLatency(nodeData.context.self, pathLatency2)
             if (logging && nodeData.query.requirements.collect { case lr: LatencyRequirement => lr }.nonEmpty)
               println(
                 s"LATENCY:\tEvents reach node `${nodeData.name}` after $pathLatency2. " +
                 s"(Calculated every $interval seconds.)")
-            nodeData.query.requirements.collect { case lr: LatencyRequirement => lr }.foreach(lr =>
-              if (isRequirementNotMet(pathLatency2, lr)) lr.callback(callbackNodeData))
+            //TODO: Handle violated demand
+//            nodeData.query.requirements.collect { case lr: LatencyRequirement => lr }.foreach(lr =>
+//              if (isRequirementNotMet(pathLatency2, lr)) lr.callback(callbackNodeData))
           }
           childNode1Latency = None
           childNode2Latency = None

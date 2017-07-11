@@ -46,17 +46,12 @@ object Dsl {
   def frequency: FrequencyHelper.type = FrequencyHelper
 
   case object FrequencyHelper {
-    def === (ratio: Ratio): FrequencyHelper2 = FrequencyHelper2(Equal, ratio)
-    def =!= (ratio: Ratio): FrequencyHelper2 = FrequencyHelper2(NotEqual, ratio)
-    def >   (ratio: Ratio): FrequencyHelper2 = FrequencyHelper2(Greater, ratio)
-    def >=  (ratio: Ratio): FrequencyHelper2 = FrequencyHelper2(GreaterEqual, ratio)
-    def <   (ratio: Ratio): FrequencyHelper2 = FrequencyHelper2(Smaller, ratio)
-    def <=  (ratio: Ratio): FrequencyHelper2 = FrequencyHelper2(SmallerEqual, ratio)
-  }
-
-  case class FrequencyHelper2(operator: BooleanOperator, ratio: Ratio) {
-    def otherwise(callback: NodeData => Any): FrequencyRequirement =
-      FrequencyRequirement(operator, ratio.instances.i, ratio.seconds.i, callback)
+    def === (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(Equal, ratio.instances.i, ratio.seconds.i)
+    def =!= (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(NotEqual, ratio.instances.i, ratio.seconds.i)
+    def >   (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(Greater, ratio.instances.i, ratio.seconds.i)
+    def >=  (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(GreaterEqual, ratio.instances.i, ratio.seconds.i)
+    def <   (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(Smaller, ratio.instances.i, ratio.seconds.i)
+    def <=  (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(SmallerEqual, ratio.instances.i, ratio.seconds.i)
   }
 
   def timespan(timespan: Timespan): Duration = timespan match {
@@ -68,17 +63,12 @@ object Dsl {
   def latency: LatencyHelper.type = LatencyHelper
 
   case object LatencyHelper {
-    def === (duration: Duration): LatencyHelper2 = LatencyHelper2 (Equal, duration)
-    def =!= (duration: Duration): LatencyHelper2 = LatencyHelper2 (NotEqual, duration)
-    def >   (duration: Duration): LatencyHelper2 = LatencyHelper2 (Greater, duration)
-    def >=  (duration: Duration): LatencyHelper2 = LatencyHelper2 (GreaterEqual, duration)
-    def <   (duration: Duration): LatencyHelper2 = LatencyHelper2 (Smaller, duration)
-    def <=  (duration: Duration): LatencyHelper2 = LatencyHelper2 (SmallerEqual, duration)
-  }
-
-  case class LatencyHelper2(operator: BooleanOperator, duration: Duration) {
-    def otherwise(callback: NodeData => Any): LatencyRequirement =
-      LatencyRequirement(operator, duration, callback)
+    def === (duration: Duration): LatencyRequirement = LatencyRequirement (Equal, duration)
+    def =!= (duration: Duration): LatencyRequirement = LatencyRequirement (NotEqual, duration)
+    def >   (duration: Duration): LatencyRequirement = LatencyRequirement (Greater, duration)
+    def >=  (duration: Duration): LatencyRequirement = LatencyRequirement (GreaterEqual, duration)
+    def <   (duration: Duration): LatencyRequirement = LatencyRequirement (Smaller, duration)
+    def <=  (duration: Duration): LatencyRequirement = LatencyRequirement (SmallerEqual, duration)
   }
 
   def stream[A]                (publisherName: String, requirements: Requirement*): Query1[A] =                Stream1 (publisherName, requirements.toSet)
