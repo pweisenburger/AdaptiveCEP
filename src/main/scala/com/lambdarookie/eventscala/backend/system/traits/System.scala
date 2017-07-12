@@ -3,8 +3,7 @@ package com.lambdarookie.eventscala.backend.system.traits
 import akka.actor.ActorRef
 import com.lambdarookie.eventscala.backend.data.Coordinate
 import com.lambdarookie.eventscala.backend.qos.QualityOfService
-import com.lambdarookie.eventscala.backend.system.{BinaryOperator, EventSource, UnaryOperator}
-import com.lambdarookie.eventscala.data.Queries.{BinaryQuery, LeafQuery, Query, UnaryQuery}
+import com.lambdarookie.eventscala.data.Queries.Query
 import com.lambdarookie.eventscala.graph.factory.OperatorFactory
 import rescala._
 

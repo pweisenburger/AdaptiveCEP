@@ -2,6 +2,7 @@ package com.lambdarookie.eventscala
 
 import akka.actor.{ActorRef, ActorSystem, PoisonPill, Props}
 import akka.testkit.{TestKit, TestProbe}
+import com.lambdarookie.eventscala.backend.system.TestSystem
 import org.scalatest.{BeforeAndAfterAll, FunSuiteLike}
 import com.lambdarookie.eventscala.data.Events._
 import com.lambdarookie.eventscala.data.Queries._
@@ -17,6 +18,7 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
   }
 
   def createTestGraph(query: Query, publishers: Map[String, ActorRef], testActor: ActorRef): ActorRef = GraphFactory.createImpl(
+    new TestSystem,
     system,
     query,
     publishers,
