@@ -31,7 +31,7 @@ object Queries {
 
   sealed trait Requirement
   case class LatencyRequirement   (operator: BooleanOperator, timeSpan: TimeSpan) extends Requirement
-  case class FrequencyRequirement (operator: BooleanOperator, instances: Int, seconds: Int) extends Requirement
+  case class FrequencyRequirement (operator: BooleanOperator, ratio: Ratio) extends Requirement
 
   sealed trait Query { val requirements: Set[Requirement] }
 

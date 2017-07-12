@@ -20,12 +20,12 @@ object Dsl {
   def frequency: FrequencyHelper.type = FrequencyHelper
 
   case object FrequencyHelper {
-    def === (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(Equal, ratio.instances.getInstanceNum, ratio.timeSpan.getSeconds)
-    def =!= (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(NotEqual, ratio.instances.getInstanceNum, ratio.timeSpan.getSeconds)
-    def >   (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(Greater, ratio.instances.getInstanceNum, ratio.timeSpan.getSeconds)
-    def >=  (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(GreaterEqual, ratio.instances.getInstanceNum, ratio.timeSpan.getSeconds)
-    def <   (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(Smaller, ratio.instances.getInstanceNum, ratio.timeSpan.getSeconds)
-    def <=  (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(SmallerEqual, ratio.instances.getInstanceNum, ratio.timeSpan.getSeconds)
+    def === (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(Equal, ratio)
+    def =!= (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(NotEqual, ratio)
+    def >   (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(Greater, ratio)
+    def >=  (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(GreaterEqual, ratio)
+    def <   (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(Smaller, ratio)
+    def <=  (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(SmallerEqual, ratio)
   }
 
   def latency: LatencyHelper.type = LatencyHelper

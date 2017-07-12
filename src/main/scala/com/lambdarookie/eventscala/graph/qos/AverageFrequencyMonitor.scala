@@ -24,12 +24,12 @@ trait AverageFrequencyMonitor {
         interval = FiniteDuration(interval, TimeUnit.SECONDS),
         runnable = () => {
           requirements.foreach(requirement => {
-            require(requirement.seconds <= interval)
+            require(requirement.ratio.timeSpan.getSeconds <= interval)
             // `divisor`, e.g., if `interval` == 30, and `requirement.seconds` == 10, then `divisor` == 3
-            val divisor: Int = interval / requirement.seconds
+            val divisor: Int = interval / requirement.ratio.timeSpan.getSeconds
             val frequency: Int = currentOutput.get / divisor
             if (logging) println(
-              s"FREQUENCY:\tOn average, node `$name` emits $frequency events every ${requirement.seconds} seconds. " +
+              s"FREQUENCY:\tOn average, node `$name` emits $frequency events every ${requirement.ratio.timeSpan.getSeconds} seconds. " +
               s"(Calculated every $interval seconds.)")
             //TODO: Handle violated demand
 //            requirement.operator match {
