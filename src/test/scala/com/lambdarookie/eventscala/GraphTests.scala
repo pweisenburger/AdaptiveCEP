@@ -10,6 +10,7 @@ import com.lambdarookie.eventscala.dsl.Dsl._
 import com.lambdarookie.eventscala.graph.factory._
 import com.lambdarookie.eventscala.publishers._
 import com.lambdarookie.eventscala.graph.qos._
+import com.lambdarookie.eventscala.backend.data.QoSUnits._
 
 class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAndAfterAll {
 

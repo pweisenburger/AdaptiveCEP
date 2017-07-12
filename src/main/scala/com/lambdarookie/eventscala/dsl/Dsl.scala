@@ -1,37 +1,15 @@
 package com.lambdarookie.eventscala.dsl
 
-import java.time.Duration
+import com.lambdarookie.eventscala.backend.data.QoSUnits._
 import com.lambdarookie.eventscala.data.Events._
 import com.lambdarookie.eventscala.data.Queries._
 
 object Dsl {
 
-  trait Timespan
-  case class Nanoseconds(i: Int) extends Timespan
-  case class Milliseconds(i: Int) extends Timespan
-  case class Seconds(i: Int) extends Timespan
-
-  case class TimespanHelper(i: Int) {
-    def nanoseconds: Nanoseconds = Nanoseconds(i)
-    def milliseconds: Milliseconds = Milliseconds(i)
-    def seconds: Seconds = Seconds(i)
-  }
-
-  implicit def intToTimespanHelper(i: Int): TimespanHelper = TimespanHelper(i)
-
-  case class Instances(i: Int)
-
-  case class InstancesHelper(i: Int) {
-    def instances: Instances = Instances(i)
-  }
-
-  implicit def intToInstancesHelper(i: Int): InstancesHelper = InstancesHelper(i)
-
-
-  def slidingWindow  (instances: Instances): Window = SlidingInstances  (instances.i)
-  def slidingWindow  (seconds: Seconds):     Window = SlidingTime       (seconds.i)
-  def tumblingWindow (instances: Instances): Window = TumblingInstances (instances.i)
-  def tumblingWindow (seconds: Seconds):     Window = TumblingTime      (seconds.i)
+  def slidingWindow  (instances: Instances): Window = SlidingInstances  (instances.getInstanceNum)
+  def slidingWindow  (timeSpan: TimeSpan):     Window = SlidingTime       (timeSpan.getSeconds)
+  def tumblingWindow (instances: Instances): Window = TumblingInstances (instances.getInstanceNum)
+  def tumblingWindow (timeSpan: TimeSpan):     Window = TumblingTime      (timeSpan.getSeconds)
 
   def nStream[A]                (publisherName: String): NStream1[A] =                NStream1 (publisherName)
   def nStream[A, B]             (publisherName: String): NStream2[A, B] =             NStream2 (publisherName)
@@ -39,36 +17,26 @@ object Dsl {
   def nStream[A, B, C, D]       (publisherName: String): NStream4[A, B, C, D] =       NStream4 (publisherName)
   def nStream[A, B, C, D, E]    (publisherName: String): NStream5[A, B, C, D, E] =    NStream5 (publisherName)
 
-  case class Ratio(instances: Instances, seconds: Seconds)
-
-  def ratio(instances: Instances, seconds: Seconds): Ratio = Ratio(instances, seconds)
-
   def frequency: FrequencyHelper.type = FrequencyHelper
 
   case object FrequencyHelper {
-    def === (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(Equal, ratio.instances.i, ratio.seconds.i)
-    def =!= (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(NotEqual, ratio.instances.i, ratio.seconds.i)
-    def >   (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(Greater, ratio.instances.i, ratio.seconds.i)
-    def >=  (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(GreaterEqual, ratio.instances.i, ratio.seconds.i)
-    def <   (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(Smaller, ratio.instances.i, ratio.seconds.i)
-    def <=  (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(SmallerEqual, ratio.instances.i, ratio.seconds.i)
-  }
-
-  def timespan(timespan: Timespan): Duration = timespan match {
-    case Nanoseconds(i) => Duration.ofNanos(i)
-    case Milliseconds(i) => Duration.ofMillis(i)
-    case Seconds(i) => Duration.ofSeconds(i)
+    def === (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(Equal, ratio.instances.getInstanceNum, ratio.timeSpan.getSeconds)
+    def =!= (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(NotEqual, ratio.instances.getInstanceNum, ratio.timeSpan.getSeconds)
+    def >   (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(Greater, ratio.instances.getInstanceNum, ratio.timeSpan.getSeconds)
+    def >=  (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(GreaterEqual, ratio.instances.getInstanceNum, ratio.timeSpan.getSeconds)
+    def <   (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(Smaller, ratio.instances.getInstanceNum, ratio.timeSpan.getSeconds)
+    def <=  (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(SmallerEqual, ratio.instances.getInstanceNum, ratio.timeSpan.getSeconds)
   }
 
   def latency: LatencyHelper.type = LatencyHelper
 
   case object LatencyHelper {
-    def === (duration: Duration): LatencyRequirement = LatencyRequirement (Equal, duration)
-    def =!= (duration: Duration): LatencyRequirement = LatencyRequirement (NotEqual, duration)
-    def >   (duration: Duration): LatencyRequirement = LatencyRequirement (Greater, duration)
-    def >=  (duration: Duration): LatencyRequirement = LatencyRequirement (GreaterEqual, duration)
-    def <   (duration: Duration): LatencyRequirement = LatencyRequirement (Smaller, duration)
-    def <=  (duration: Duration): LatencyRequirement = LatencyRequirement (SmallerEqual, duration)
+    def === (timeSpan: TimeSpan): LatencyRequirement = LatencyRequirement (Equal, timeSpan)
+    def =!= (timeSpan: TimeSpan): LatencyRequirement = LatencyRequirement (NotEqual, timeSpan)
+    def >   (timeSpan: TimeSpan): LatencyRequirement = LatencyRequirement (Greater, timeSpan)
+    def >=  (timeSpan: TimeSpan): LatencyRequirement = LatencyRequirement (GreaterEqual, timeSpan)
+    def <   (timeSpan: TimeSpan): LatencyRequirement = LatencyRequirement (Smaller, timeSpan)
+    def <=  (timeSpan: TimeSpan): LatencyRequirement = LatencyRequirement (SmallerEqual, timeSpan)
   }
 
   def stream[A]                (publisherName: String, requirements: Requirement*): Query1[A] =                Stream1 (publisherName, requirements.toSet)

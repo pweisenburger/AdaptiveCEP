@@ -9,6 +9,7 @@ import com.lambdarookie.eventscala.graph.factory._
 import com.lambdarookie.eventscala.graph.qos._
 import com.lambdarookie.eventscala.publishers._
 import com.lambdarookie.eventscala.backend.system.traits._
+import com.lambdarookie.eventscala.backend.data.QoSUnits._
 
 object Main extends App {
 
@@ -30,16 +31,16 @@ object Main extends App {
     stream[Int]("A")
     .join(
       stream[Int]("B"),
-      slidingWindow(2.seconds),
-      slidingWindow(2.seconds))
+      slidingWindow(2.sec),
+      slidingWindow(2.sec))
     .where(_ < _)
     .dropElem1(
-      latency < timespan(1.milliseconds))
+      latency < 1.ms)
     .selfJoin(
       tumblingWindow(1.instances),
       tumblingWindow(1.instances),
-      frequency > ratio( 3.instances,  5.seconds),
-      frequency < ratio(12.instances, 15.seconds))
+      frequency > Ratio( 3.instances,  5.sec),
+      frequency < Ratio(12.instances, 15.sec))
     .and(stream[Float]("C"))
     .or(stream[String]("D"))
 
@@ -49,10 +50,10 @@ object Main extends App {
     .join(
       sequence(
         nStream[Float]("C") -> nStream[String]("D"),
-        frequency > ratio(1.instances, 5.seconds)),
-      slidingWindow(3.seconds),
-      slidingWindow(3.seconds),
-      latency < timespan(1.milliseconds))
+        frequency > Ratio(1.instances, 5.sec)),
+      slidingWindow(3.sec),
+      slidingWindow(3.sec),
+      latency < 1.ms)
 
 
   GraphFactory.create(

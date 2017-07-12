@@ -1,7 +1,7 @@
 package com.lambdarookie.eventscala.data
 
-import java.time.Duration
 import akka.actor.ActorContext
+import com.lambdarookie.eventscala.backend.data.QoSUnits._
 import com.lambdarookie.eventscala.data.Events._
 
 object Queries {
@@ -30,7 +30,7 @@ object Queries {
   case class NodeData(name: String, query: Query, context: ActorContext)
 
   sealed trait Requirement
-  case class LatencyRequirement   (operator: BooleanOperator, duration: Duration) extends Requirement
+  case class LatencyRequirement   (operator: BooleanOperator, timeSpan: TimeSpan) extends Requirement
   case class FrequencyRequirement (operator: BooleanOperator, instances: Int, seconds: Int) extends Requirement
 
   sealed trait Query { val requirements: Set[Requirement] }

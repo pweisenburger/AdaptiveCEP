@@ -33,7 +33,7 @@ case class Proximity(source: Host, destination: Host, proximity: Distance)
     source.sortNeighborsByProximity.grouped(count).toList(1)
   }
 }
-case class Frequency(source: Host, frequency: FrequencyUnit) extends Conditionable[FrequencyUnit](source, frequency)
+case class Frequency(source: Host, ratio: Ratio) extends Conditionable[Ratio](source, ratio)
 
 case class Latency(source: Host, destination: Host, latency: TimeSpan) extends Demandable[TimeSpan](source, latency)
 case class Throughput(source: Host, destination: Host, throughput: BitRate) extends Demandable[BitRate](source,

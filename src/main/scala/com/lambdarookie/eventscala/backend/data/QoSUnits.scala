@@ -1,6 +1,6 @@
 package com.lambdarookie.eventscala.backend.data
 
-import scala.concurrent.duration._
+import java.time._
 
 /**
   * Created by monur.
@@ -9,48 +9,54 @@ import scala.concurrent.duration._
 object QoSUnits {
 
   trait QoSUnit[T <: QoSUnit[T]] {
-    def <(value: T): Boolean
-    def >(value: T): Boolean
-    def <=(value: T): Boolean
+    def <(other: T): Boolean
+    def <=(other: T): Boolean
+    def -(other: T): T
 
-    def -(value: T): T
+    def >(other: T): Boolean = other < this.asInstanceOf[T]
+    def >=(other: T): Boolean = other <= this.asInstanceOf[T]
   }
 
 
+  //          TimeSpan Begin
+  case class TimeSpan(private val i: Duration) extends QoSUnit[TimeSpan] {
+    override def <(other: TimeSpan): Boolean = other match {case TimeSpan(duration) => i.compareTo(duration) < 0}
+    override def >(other: TimeSpan): Boolean = other match {case TimeSpan(duration) => i.compareTo(duration) > 0}
+    override def <=(other: TimeSpan): Boolean = other match {case TimeSpan(duration) => i.compareTo(duration) <= 0}
+    override def -(other: TimeSpan): TimeSpan = other match {case TimeSpan(duration) => TimeSpan(i minus duration)}
 
-  case class TimeSpan(i: Duration) extends QoSUnit[TimeSpan] {
-    override def <(value: TimeSpan): Boolean = value match {case TimeSpan(duration) => i < duration}
-    override def >(value: TimeSpan): Boolean = value match {case TimeSpan(duration) => i > duration}
-    override def <=(value: TimeSpan): Boolean = value match {case TimeSpan(duration) => i <= duration}
-    override def -(value: TimeSpan): TimeSpan = value match {case TimeSpan(duration) => TimeSpan(i - duration)}
+    def toDuration: Duration = i
+    def getNano: Int = i.getNano
+    def getSeconds: Int = i.getSeconds.toInt
   }
 
-  case class TimeSpanUnits(i: Int) {
-    def ns: TimeSpan = TimeSpan(i.nanos)
-    def ms: TimeSpan = TimeSpan(i.millis)
-    def sec: TimeSpan = TimeSpan(i.second)
+  case class TimeSpanUnits(private val i: Int) {
+    def ns: TimeSpan = TimeSpan(Duration.ofNanos(i))
+    def ms: TimeSpan = TimeSpan(Duration.ofMillis(i))
+    def sec: TimeSpan = TimeSpan(Duration.ofSeconds(i))
   }
 
   implicit def intToTimeSpanCreator(i: Int): TimeSpanUnits = TimeSpanUnits(i)
+  //          TimeSpan End
 
 
-
+  //          Distance Begin
   trait Distance extends QoSUnit[Distance] {
     def toMeter: Int
 
-    override def <(value: Distance): Boolean = this.toMeter < value.toMeter
-    override def >(value: Distance): Boolean = this.toMeter > value.toMeter
-    override def <=(value: Distance): Boolean = this.toMeter <= value.toMeter
+    override def <(other: Distance): Boolean = this.toMeter < other.toMeter
+    override def >(other: Distance): Boolean = this.toMeter > other.toMeter
+    override def <=(other: Distance): Boolean = this.toMeter <= other.toMeter
   }
 
   case class Meter(i: Int) extends Distance {
     override def toMeter: Int = i
-    override def -(value: Distance): Distance = Meter(this.toMeter - value.toMeter)
+    override def -(other: Distance): Distance = Meter(this.toMeter - other.toMeter)
   }
 
   case class Kilometer(i: Int) extends Distance {
     override def toMeter: Int = i * 1000
-    override def -(value: Distance): Distance = Kilometer((this.toMeter - value.toMeter)/1000)
+    override def -(other: Distance): Distance = Kilometer((this.toMeter - other.toMeter)/1000)
   }
 
   case class DistanceUnits(i: Int) {
@@ -59,32 +65,49 @@ object QoSUnits {
   }
 
   implicit def intToDistanceCreator(i: Int): DistanceUnits = DistanceUnits(i)
+  //          Distance End
 
 
-  trait FrequencyUnit extends QoSUnit[FrequencyUnit]
+  //          Ratio Begin
+  case class Instances(private val i: Int) {
+    def -(other: Instances): Instances = (this.getInstanceNum - other.getInstanceNum).instances
+    def instances: Instances = Instances(i)
+    def getInstanceNum: Int = i
+  }
+  implicit def intToInstancesCreator(i: Int): Instances = Instances(i)
+
+  case class Ratio(instances: Instances, timeSpan: TimeSpan) extends QoSUnit[Ratio] {
+    val exactRatio: Double = instances.getInstanceNum.toDouble / timeSpan.getNano.toDouble
+
+    override def <(other: Ratio): Boolean = this.exactRatio < other.exactRatio
+    override def >(other: Ratio): Boolean = this.exactRatio > other.exactRatio
+    override def <=(other: Ratio): Boolean = this.exactRatio <= other.exactRatio
+    override def -(other: Ratio): Ratio = Ratio(this.instances - other.instances, this.timeSpan - other.timeSpan)
+  }
+  //          Ratio End
 
 
-
+  //          BitRate Begin
   trait BitRate extends QoSUnit[BitRate] {
     def toKbps: Long
-    override def <(value: BitRate): Boolean = this.toKbps < value.toKbps
-    override def >(value: BitRate): Boolean = this.toKbps > value.toKbps
-    override def <=(value: BitRate): Boolean = this.toKbps <= value.toKbps
+    override def <(other: BitRate): Boolean = this.toKbps < other.toKbps
+    override def >(other: BitRate): Boolean = this.toKbps > other.toKbps
+    override def <=(other: BitRate): Boolean = this.toKbps <= other.toKbps
   }
 
   case class KilobitsPerSecond(i: Long) extends BitRate {
     override def toKbps: Long = i
-    override def -(value: BitRate): BitRate = KilobitsPerSecond(this.toKbps - value.toKbps)
+    override def -(other: BitRate): BitRate = KilobitsPerSecond(this.toKbps - other.toKbps)
   }
 
   case class MegabitsPerSecond(i: Long) extends BitRate {
     override def toKbps: Long = i * 1024
-    override def -(value: BitRate): BitRate = MegabitsPerSecond((this.toKbps - value.toKbps)/1024)
+    override def -(other: BitRate): BitRate = MegabitsPerSecond((this.toKbps - other.toKbps)/1024)
   }
 
   case class GigabitsPerSecond(i: Long) extends BitRate {
     override def toKbps: Long = i * 1024 * 1024
-    override def -(value: BitRate): BitRate = GigabitsPerSecond((this.toKbps - value.toKbps)/1024/1024)
+    override def -(other: BitRate): BitRate = GigabitsPerSecond((this.toKbps - other.toKbps)/1024/1024)
   }
 
   case class BitRateUnits(i: Long) {
@@ -94,4 +117,5 @@ object QoSUnits {
   }
 
   implicit def longToBitRateCreator(i: Long): BitRateUnits = BitRateUnits(i)
+  //          BitRate End
 }

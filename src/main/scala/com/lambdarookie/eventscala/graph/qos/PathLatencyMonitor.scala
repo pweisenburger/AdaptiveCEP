@@ -15,12 +15,12 @@ trait PathLatencyMonitor {
 
   def isRequirementNotMet(latency: Duration, lr: LatencyRequirement): Boolean = {
     val met: Boolean = lr.operator match {
-      case Equal =>        latency.compareTo(lr.duration) == 0
-      case NotEqual =>     latency.compareTo(lr.duration) != 0
-      case Greater =>      latency.compareTo(lr.duration) >  0
-      case GreaterEqual => latency.compareTo(lr.duration) >= 0
-      case Smaller =>      latency.compareTo(lr.duration) <  0
-      case SmallerEqual => latency.compareTo(lr.duration) <= 0
+      case Equal =>        latency.compareTo(lr.timeSpan.toDuration) == 0
+      case NotEqual =>     latency.compareTo(lr.timeSpan.toDuration) != 0
+      case Greater =>      latency.compareTo(lr.timeSpan.toDuration) >  0
+      case GreaterEqual => latency.compareTo(lr.timeSpan.toDuration) >= 0
+      case Smaller =>      latency.compareTo(lr.timeSpan.toDuration) <  0
+      case SmallerEqual => latency.compareTo(lr.timeSpan.toDuration) <= 0
     }
     !met
   }
