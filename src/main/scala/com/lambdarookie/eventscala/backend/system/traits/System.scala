@@ -2,7 +2,7 @@ package com.lambdarookie.eventscala.backend.system.traits
 
 import akka.actor.ActorRef
 import com.lambdarookie.eventscala.backend.data.Coordinate
-import com.lambdarookie.eventscala.backend.qos.QualityOfService
+import com.lambdarookie.eventscala.backend.qos.{Latency, QualityOfService}
 import com.lambdarookie.eventscala.data.Queries.Query
 import com.lambdarookie.eventscala.graph.factory.OperatorFactory
 import rescala._
@@ -12,15 +12,15 @@ import scala.collection.SortedSet
 /**
   * Created by monur.
   */
-trait System extends CEPSystem with QoSSystem {
-
-}
+trait System extends CEPSystem with QoSSystem
 
 trait CEPSystem {
   val hosts: Signal[Set[Host]]
-  val operators: Signal[Set[Operator]]
 
-  val nodesToOperatorsVar: Var[Map[ActorRef, Operator]] = Var(Map())
+  val operatorsVar: Var[Set[Operator]] = Var(Set.empty)
+  val operators: Signal[Set[Operator]] = operatorsVar
+
+  val nodesToOperatorsVar: Var[Map[ActorRef, Operator]] = Var(Map.empty)
   val nodesToOperators: Signal[Map[ActorRef, Operator]] = nodesToOperatorsVar
 
   def selectHostForOperator(operator: Operator): Host = {
@@ -28,8 +28,13 @@ trait CEPSystem {
     selectRandomHost
   }
 
-  private def selectRandomHost: Host = hosts.now.toVector((math.random * hosts.now.size).toInt)
+  def getHostByNode(node: ActorRef): Option[Host] = nodesToOperators.now.get(node) match {
+    case Some(operator) => Some(operator.host)
+    case None => None
+  }
 
+
+  private def selectRandomHost: Host = hosts.now.toVector((math.random * hosts.now.size).toInt)
 }
 
 trait QoSSystem {
@@ -39,6 +44,10 @@ trait QoSSystem {
 
 trait Host {
   val position: Coordinate
+
+  var lastLatencies: Map[Host, Latency] = Map.empty
+
+
   def neighbors: Set[Host]
 
   def sortNeighborsByProximity: SortedSet[Host] = {
@@ -56,5 +65,5 @@ trait Operator {
   val inputs: Seq[Operator]
   val outputs: Set[Operator]
 
-  def createChildOperator(id: String, subQuery: Query): Operator = OperatorFactory.createOperator(id, system, subQuery, Set(this))
+  def createChildOperator(testId: String, subQuery: Query): Operator = OperatorFactory.createOperator(testId, system, subQuery, Set(this))
 }

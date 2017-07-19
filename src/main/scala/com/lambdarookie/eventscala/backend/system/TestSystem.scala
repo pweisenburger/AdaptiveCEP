@@ -10,7 +10,6 @@ import rescala._
   */
 class TestSystem extends System {
   override val hosts: Signal[Set[Host]] = RandomHostFactory.createRandomHosts
-  val operatorsVar: Var[Set[Operator]] = Var(Set())
   override val operators: Signal[Set[Operator]] = operatorsVar
   override val qos: Signal[Set[QualityOfService]] = null
   override val demandViolated: Event[QualityOfService] = null
