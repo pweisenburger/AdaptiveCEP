@@ -23,6 +23,8 @@ case class DisjunctionNode(
   var childNode1Created: Boolean = false
   var childNode2Created: Boolean = false
 
+  system.nodesToOperatorsVar() = system.nodesToOperators.now + (self -> operator)
+
   def fillArray(desiredLength: Int, array: Array[Either[Any, Any]]): Array[Either[Any, Any]] = {
     require(array.length <= desiredLength)
     require(array.length > 0)

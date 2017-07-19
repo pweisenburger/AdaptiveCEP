@@ -20,8 +20,6 @@ trait BinaryNode extends Node {
 
   val childNode1: ActorRef = createChildNode(1, query.sq1, childOperator1)
   val childNode2: ActorRef = createChildNode(2, query.sq2, childOperator2)
-  system.nodesToOperatorsVar() = system.nodesToOperators.now ++
-    Map(childNode1 -> childOperator1, childNode2 -> childOperator2)
 
   val frequencyMonitor: BinaryNodeMonitor = frequencyMonitorFactory.createBinaryNodeMonitor
   val latencyMonitor: BinaryNodeMonitor = latencyMonitorFactory.createBinaryNodeMonitor

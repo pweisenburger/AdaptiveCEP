@@ -27,6 +27,8 @@ case class ConjunctionNode(
   var childNode1Created: Boolean = false
   var childNode2Created: Boolean = false
 
+  system.nodesToOperatorsVar() = system.nodesToOperators.now + (self -> operator)
+
   override def receive: Receive = {
     case Created if sender() == childNode1 =>
       childNode1Created = true

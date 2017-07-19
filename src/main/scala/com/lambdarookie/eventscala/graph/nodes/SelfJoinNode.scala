@@ -25,6 +25,8 @@ case class SelfJoinNode(
 
   override val esperServiceProviderUri: String = name
 
+  system.nodesToOperatorsVar() = system.nodesToOperators.now + (self -> operator)
+
   override def receive: Receive = {
     case Created if sender() == childNode =>
       emitCreated()

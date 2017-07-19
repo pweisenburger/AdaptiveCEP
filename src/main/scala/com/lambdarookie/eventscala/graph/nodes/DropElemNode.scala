@@ -43,6 +43,8 @@ case class DropElemNode(
     case DropElem6Of6(_, _) => 6
   }
 
+  system.nodesToOperatorsVar() = system.nodesToOperators.now + (self -> operator)
+
   def handleEvent2(e1: Any, e2: Any): Unit = elemToBeDropped match {
     case 1 => emitEvent(Event1(e2))
     case 2 => emitEvent(Event1(e1))

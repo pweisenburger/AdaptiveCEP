@@ -20,6 +20,8 @@ case class FilterNode(
     testId: String)
   extends UnaryNode {
 
+  system.nodesToOperatorsVar() = system.nodesToOperators.now + (self -> operator)
+
   override def receive: Receive = {
     case Created if sender() == childNode =>
       emitCreated()

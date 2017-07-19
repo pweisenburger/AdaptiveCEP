@@ -17,7 +17,6 @@ trait UnaryNode extends Node {
 
   private val childOperator: Operator = operator.inputs.head
   val childNode: ActorRef = createChildNode(1, query.sq, childOperator)
-  system.nodesToOperatorsVar() = system.nodesToOperators.now updated (childNode, childOperator)
 
   val frequencyMonitor: UnaryNodeMonitor = frequencyMonitorFactory.createUnaryNodeMonitor
   val latencyMonitor: UnaryNodeMonitor = latencyMonitorFactory.createUnaryNodeMonitor
