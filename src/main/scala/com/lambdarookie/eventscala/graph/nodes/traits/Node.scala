@@ -18,6 +18,8 @@ trait Node extends Actor {
   val frequencyMonitorFactory: MonitorFactory
   val latencyMonitorFactory: MonitorFactory
 
+  system.nodesToOperatorsVar.transform(x => x + (self -> operator))
+
   def createChildNode(id: Int, query: Query, childOperator: Operator): ActorRef =
     NodeFactory.createNode(
       system, context, query, childOperator, publishers,

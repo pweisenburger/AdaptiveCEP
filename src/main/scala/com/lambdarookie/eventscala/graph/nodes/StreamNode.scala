@@ -25,8 +25,6 @@ case class StreamNode(
 
   publisher ! Subscribe
 
-  system.nodesToOperatorsVar() = system.nodesToOperators.now + (self -> operator)
-
   override def receive: Receive = {
     case AcknowledgeSubscription if sender() == publisher =>
       emitCreated()

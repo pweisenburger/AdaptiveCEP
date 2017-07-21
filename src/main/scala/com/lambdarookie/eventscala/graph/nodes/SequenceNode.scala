@@ -32,8 +32,6 @@ case class SequenceNode(
   var subscription1Acknowledged: Boolean = false
   var subscription2Acknowledged: Boolean = false
 
-  system.nodesToOperatorsVar() = system.nodesToOperators.now + (self -> operator)
-
   override def receive: Receive = {
     case AcknowledgeSubscription if sender() == queryPublishers(0) =>
       subscription1Acknowledged = true
