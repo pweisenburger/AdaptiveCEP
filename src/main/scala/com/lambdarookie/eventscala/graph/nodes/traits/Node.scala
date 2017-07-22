@@ -2,7 +2,7 @@ package com.lambdarookie.eventscala.graph.nodes.traits
 
 import akka.actor.{Actor, ActorRef}
 import com.lambdarookie.eventscala.data.Queries._
-import com.lambdarookie.eventscala.graph.qos._
+import com.lambdarookie.eventscala.graph.monitors._
 import com.lambdarookie.eventscala.backend.system.traits.{Operator, System}
 import com.lambdarookie.eventscala.graph.factory.NodeFactory
 

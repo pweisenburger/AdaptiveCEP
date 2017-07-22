@@ -6,7 +6,7 @@ import com.lambdarookie.eventscala.backend.system.traits.{Operator, System}
 import com.lambdarookie.eventscala.data.Events.Event
 import com.lambdarookie.eventscala.data.Queries._
 import com.lambdarookie.eventscala.graph.nodes._
-import com.lambdarookie.eventscala.graph.qos.MonitorFactory
+import com.lambdarookie.eventscala.graph.monitors.MonitorFactory
 
 /**
   * Created by monur.

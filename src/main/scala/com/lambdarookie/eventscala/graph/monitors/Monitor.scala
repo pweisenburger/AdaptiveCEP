@@ -1,4 +1,4 @@
-package com.lambdarookie.eventscala.graph.qos
+package com.lambdarookie.eventscala.graph.monitors
 
 import akka.actor.{ActorContext, ActorRef}
 import com.lambdarookie.eventscala.data.Events._

@@ -1,4 +1,4 @@
-package com.lambdarookie.eventscala.graph.qos
+package com.lambdarookie.eventscala.graph.monitors
 
 import java.time._
 import java.util.concurrent.TimeUnit
@@ -14,7 +14,7 @@ case class PathLatency(childNode: ActorRef, duration: Duration)
 trait PathLatencyMonitor {
 
   def isRequirementNotMet(latency: Duration, lr: LatencyRequirement): Boolean = {
-    val met: Boolean = lr.operator match {
+    val met: Boolean = lr.boolOperator match {
       case Equal =>        latency.compareTo(lr.timeSpan.toDuration) == 0
       case NotEqual =>     latency.compareTo(lr.timeSpan.toDuration) != 0
       case Greater =>      latency.compareTo(lr.timeSpan.toDuration) >  0

@@ -1,4 +1,4 @@
-package com.lambdarookie.eventscala.graph.qos
+package com.lambdarookie.eventscala.graph.monitors
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -32,7 +32,7 @@ trait AverageFrequencyMonitor {
               s"FREQUENCY:\tOn average, node `$name` emits $frequency events every ${requirement.ratio.timeSpan.getSeconds} seconds. " +
               s"(Calculated every $interval seconds.)")
             //TODO: Handle violated demand
-//            requirement.operator match {
+//            requirement.boolOperator match {
 //              case Equal =>        if (!(frequency == requirement.instances)) requirement.callback(callbackNodeData)
 //              case NotEqual =>     if (!(frequency != requirement.instances)) requirement.callback(callbackNodeData)
 //              case Greater =>      if (!(frequency >  requirement.instances)) requirement.callback(callbackNodeData)

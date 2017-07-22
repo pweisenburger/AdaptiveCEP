@@ -3,7 +3,7 @@ package com.lambdarookie.eventscala.graph.factory
 import akka.actor.{ActorRef, ActorSystem}
 import com.lambdarookie.eventscala.data.Events._
 import com.lambdarookie.eventscala.data.Queries._
-import com.lambdarookie.eventscala.graph.qos._
+import com.lambdarookie.eventscala.graph.monitors._
 import com.lambdarookie.eventscala.backend.system.traits.{Operator, System}
 
 object GraphFactory {

@@ -1,4 +1,4 @@
-package com.lambdarookie.eventscala.graph.qos
+package com.lambdarookie.eventscala.graph.monitors
 
 case class DummyMonitorFactory() extends MonitorFactory {
 

@@ -5,7 +5,7 @@ import com.lambdarookie.eventscala.backend.system.BinaryOperator
 import com.lambdarookie.eventscala.backend.system.traits.Operator
 import com.lambdarookie.eventscala.data.Events._
 import com.lambdarookie.eventscala.data.Queries._
-import com.lambdarookie.eventscala.graph.qos._
+import com.lambdarookie.eventscala.graph.monitors._
 
 trait BinaryNode extends Node {
 

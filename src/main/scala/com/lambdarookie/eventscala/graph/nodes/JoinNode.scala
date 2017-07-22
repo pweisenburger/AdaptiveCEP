@@ -6,7 +6,7 @@ import com.lambdarookie.eventscala.data.Events._
 import com.lambdarookie.eventscala.data.Queries._
 import com.lambdarookie.eventscala.graph.nodes.traits._
 import com.lambdarookie.eventscala.graph.nodes.traits.EsperEngine._
-import com.lambdarookie.eventscala.graph.qos._
+import com.lambdarookie.eventscala.graph.monitors._
 import JoinNode._
 import com.lambdarookie.eventscala.backend.system.BinaryOperator
 import com.lambdarookie.eventscala.backend.system.traits.{Operator, System}
