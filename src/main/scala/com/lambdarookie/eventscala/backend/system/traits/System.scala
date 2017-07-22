@@ -6,6 +6,7 @@ import com.lambdarookie.eventscala.backend.qos.{Latency, QualityOfService}
 import com.lambdarookie.eventscala.data.Queries.Query
 import com.lambdarookie.eventscala.graph.factory.OperatorFactory
 import rescala._
+import com.lambdarookie.eventscala.backend.data.QoSUnits._
 
 import scala.collection.SortedSet
 
@@ -45,7 +46,7 @@ trait QoSSystem {
 trait Host {
   val position: Coordinate
 
-  var lastLatencies: Map[Host, Latency] = Map.empty
+  var lastLatencies: Map[Host, Latency] = Map(this -> Latency(this, this, 0.ms))
 
 
   def neighbors: Set[Host]

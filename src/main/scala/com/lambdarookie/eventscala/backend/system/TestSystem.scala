@@ -1,9 +1,10 @@
 package com.lambdarookie.eventscala.backend.system
 
 import com.lambdarookie.eventscala.backend.data.Coordinate
-import com.lambdarookie.eventscala.backend.qos.QualityOfService
+import com.lambdarookie.eventscala.backend.qos.{Latency, QualityOfService}
 import com.lambdarookie.eventscala.backend.system.traits._
 import rescala._
+import com.lambdarookie.eventscala.backend.data.QoSUnits._
 
 /**
   * Created by monur.
@@ -28,6 +29,10 @@ object RandomHostFactory {
     val host1: Host = host1Impl
     val host2: Host = host2Impl
     val host3: Host = host3Impl
+
+    host1.lastLatencies ++= Map(host2 -> Latency(host1, host2, 90.ms), host3 -> Latency(host1, host3, 91.ms))
+    host2.lastLatencies ++= Map(host1 -> Latency(host2, host1, 92.ms), host3 -> Latency(host2, host3, 93.ms))
+    host3.lastLatencies ++= Map(host1 -> Latency(host3, host1, 94.ms), host2 -> Latency(host3, host2, 95.ms))
 
     Var(Set(host1, host2, host3))
   }
