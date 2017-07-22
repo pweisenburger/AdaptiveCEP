@@ -18,10 +18,10 @@ trait System extends CEPSystem with QoSSystem
 trait CEPSystem {
   val hosts: Signal[Set[Host]]
 
-  val operatorsVar: Var[Set[Operator]] = Var(Set.empty)
-  val operators: Signal[Set[Operator]] = operatorsVar
+  private val operatorsVar: Var[Set[Operator]] = Var(Set.empty)
+  private val nodesToOperatorsVar: Var[Map[ActorRef, Operator]] = Var(Map.empty)
 
-  val nodesToOperatorsVar: Var[Map[ActorRef, Operator]] = Var(Map.empty)
+  val operators: Signal[Set[Operator]] = operatorsVar
   val nodesToOperators: Signal[Map[ActorRef, Operator]] = nodesToOperatorsVar
 
   def selectHostForOperator(operator: Operator): Host = {
@@ -33,6 +33,10 @@ trait CEPSystem {
     case Some(operator) => Some(operator.host)
     case None => None
   }
+
+  def addNodeOperatorPair(node: ActorRef, operator: Operator): Unit = nodesToOperatorsVar.transform(x => x + (node -> operator))
+
+  def addOperator(operator: Operator): Unit = operatorsVar.transform(x => x + operator)
 
 
   private def selectRandomHost: Host = hosts.now.toVector((math.random * hosts.now.size).toInt)

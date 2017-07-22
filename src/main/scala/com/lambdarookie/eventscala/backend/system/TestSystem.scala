@@ -11,7 +11,6 @@ import com.lambdarookie.eventscala.backend.data.QoSUnits._
   */
 class TestSystem extends System {
   override val hosts: Signal[Set[Host]] = RandomHostFactory.createRandomHosts
-  override val operators: Signal[Set[Operator]] = operatorsVar
   override val qos: Signal[Set[QualityOfService]] = null
   override val demandViolated: Event[QualityOfService] = null
 }

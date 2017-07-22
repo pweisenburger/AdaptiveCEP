@@ -14,7 +14,7 @@ object OperatorFactory {
       case q: UnaryQuery => UnaryOperator(id, system, q, outputs)
       case q: BinaryQuery => BinaryOperator(id, system, q, outputs)
     }
-    system.operatorsVar() = system.operators.now + op
+    system.addOperator(op)
     op
   }
 }
