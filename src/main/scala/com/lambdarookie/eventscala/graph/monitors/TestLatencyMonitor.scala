@@ -3,6 +3,7 @@ package com.lambdarookie.eventscala.graph.monitors
 import java.time._
 import java.util.concurrent.TimeUnit
 
+import com.lambdarookie.eventscala.backend.qos.QualityOfService._
 import com.lambdarookie.eventscala.backend.system.TestSystem
 
 import scala.concurrent.ExecutionContext.Implicits.global

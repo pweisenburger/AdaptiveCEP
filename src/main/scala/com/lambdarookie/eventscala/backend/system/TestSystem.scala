@@ -1,18 +1,18 @@
 package com.lambdarookie.eventscala.backend.system
 
 import com.lambdarookie.eventscala.backend.data.Coordinate
-import com.lambdarookie.eventscala.backend.qos.{Latency, QualityOfService}
+import com.lambdarookie.eventscala.backend.qos.Latency
 import com.lambdarookie.eventscala.backend.system.traits._
 import rescala._
 import com.lambdarookie.eventscala.backend.data.QoSUnits._
+import com.lambdarookie.eventscala.backend.qos.QualityOfService.Demand
 
 /**
   * Created by monur.
   */
 class TestSystem extends System {
   override val hosts: Signal[Set[Host]] = RandomHostFactory.createRandomHosts
-  override val qos: Signal[Set[QualityOfService]] = null
-  override val demandViolated: Event[QualityOfService] = null
+  override val demandViolated: Event[Demand] = null
 }
 
 object RandomHostFactory {

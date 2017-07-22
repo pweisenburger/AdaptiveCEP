@@ -2,9 +2,11 @@ package com.lambdarookie.eventscala.graph.monitors
 
 import java.time._
 import java.util.concurrent.TimeUnit
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.FiniteDuration
 import akka.actor.ActorRef
+import com.lambdarookie.eventscala.backend.qos.QualityOfService._
 import com.lambdarookie.eventscala.data.Queries._
 
 case class ChildLatencyRequest(time: Instant)

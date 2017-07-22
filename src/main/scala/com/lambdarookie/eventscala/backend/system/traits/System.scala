@@ -2,11 +2,12 @@ package com.lambdarookie.eventscala.backend.system.traits
 
 import akka.actor.ActorRef
 import com.lambdarookie.eventscala.backend.data.Coordinate
-import com.lambdarookie.eventscala.backend.qos.{Latency, QualityOfService}
+import com.lambdarookie.eventscala.backend.qos.Latency
 import com.lambdarookie.eventscala.data.Queries.Query
 import com.lambdarookie.eventscala.graph.factory.OperatorFactory
 import rescala._
 import com.lambdarookie.eventscala.backend.data.QoSUnits._
+import com.lambdarookie.eventscala.backend.qos.QualityOfService.Demand
 
 import scala.collection.SortedSet
 
@@ -43,8 +44,12 @@ trait CEPSystem {
 }
 
 trait QoSSystem {
-  val qos: Signal[Set[QualityOfService]]
-  val demandViolated: Event[QualityOfService]
+  private val qosVar: Var[Set[Demand]] = Var(Set.empty)
+
+  val qos: Signal[Set[Demand]] = qosVar
+  val demandViolated: Event[Demand]
+
+  def addDemand(demand: Demand): Unit = qosVar.transform(x => x + demand)
 }
 
 trait Host {

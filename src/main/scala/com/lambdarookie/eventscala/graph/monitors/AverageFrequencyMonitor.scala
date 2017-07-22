@@ -6,6 +6,7 @@ import scala.concurrent.duration.FiniteDuration
 import akka.actor.ActorContext
 import com.lambdarookie.eventscala.data.Events._
 import com.lambdarookie.eventscala.data.Queries._
+import com.lambdarookie.eventscala.backend.qos.QualityOfService._
 
 trait AverageFrequencyMonitor {
 

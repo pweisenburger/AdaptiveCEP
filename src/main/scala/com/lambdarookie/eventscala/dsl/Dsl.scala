@@ -1,6 +1,7 @@
 package com.lambdarookie.eventscala.dsl
 
 import com.lambdarookie.eventscala.backend.data.QoSUnits._
+import com.lambdarookie.eventscala.backend.qos.QualityOfService._
 import com.lambdarookie.eventscala.data.Events._
 import com.lambdarookie.eventscala.data.Queries._
 
@@ -16,28 +17,6 @@ object Dsl {
   def nStream[A, B, C]          (publisherName: String): NStream3[A, B, C] =          NStream3 (publisherName)
   def nStream[A, B, C, D]       (publisherName: String): NStream4[A, B, C, D] =       NStream4 (publisherName)
   def nStream[A, B, C, D, E]    (publisherName: String): NStream5[A, B, C, D, E] =    NStream5 (publisherName)
-
-  def frequency: FrequencyHelper.type = FrequencyHelper
-
-  case object FrequencyHelper {
-    def === (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(Equal, ratio)
-    def =!= (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(NotEqual, ratio)
-    def >   (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(Greater, ratio)
-    def >=  (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(GreaterEqual, ratio)
-    def <   (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(Smaller, ratio)
-    def <=  (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(SmallerEqual, ratio)
-  }
-
-  def latency: LatencyHelper.type = LatencyHelper
-
-  case object LatencyHelper {
-    def === (timeSpan: TimeSpan): LatencyRequirement = LatencyRequirement (Equal, timeSpan)
-    def =!= (timeSpan: TimeSpan): LatencyRequirement = LatencyRequirement (NotEqual, timeSpan)
-    def >   (timeSpan: TimeSpan): LatencyRequirement = LatencyRequirement (Greater, timeSpan)
-    def >=  (timeSpan: TimeSpan): LatencyRequirement = LatencyRequirement (GreaterEqual, timeSpan)
-    def <   (timeSpan: TimeSpan): LatencyRequirement = LatencyRequirement (Smaller, timeSpan)
-    def <=  (timeSpan: TimeSpan): LatencyRequirement = LatencyRequirement (SmallerEqual, timeSpan)
-  }
 
   def stream[A]                (publisherName: String, requirements: Requirement*): Query1[A] =                Stream1 (publisherName, requirements.toSet)
   def stream[A, B]             (publisherName: String, requirements: Requirement*): Query2[A, B] =             Stream2 (publisherName, requirements.toSet)

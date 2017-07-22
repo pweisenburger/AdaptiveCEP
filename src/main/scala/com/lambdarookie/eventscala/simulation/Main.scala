@@ -10,6 +10,7 @@ import com.lambdarookie.eventscala.graph.monitors._
 import com.lambdarookie.eventscala.publishers._
 import com.lambdarookie.eventscala.backend.system.traits._
 import com.lambdarookie.eventscala.backend.data.QoSUnits._
+import com.lambdarookie.eventscala.backend.qos.QualityOfService._
 
 object Main extends App {
 

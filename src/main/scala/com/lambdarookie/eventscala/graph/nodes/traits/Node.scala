@@ -1,6 +1,7 @@
 package com.lambdarookie.eventscala.graph.nodes.traits
 
 import akka.actor.{Actor, ActorRef}
+import com.lambdarookie.eventscala.backend.qos.QualityOfService.Demand
 import com.lambdarookie.eventscala.data.Queries._
 import com.lambdarookie.eventscala.graph.monitors._
 import com.lambdarookie.eventscala.backend.system.traits.{Operator, System}
@@ -19,6 +20,7 @@ trait Node extends Actor {
   val latencyMonitorFactory: MonitorFactory
 
   system.addNodeOperatorPair(self, operator)
+  query.requirements.foreach(req => system.addDemand(Demand(operator, req)))
 
   def createChildNode(id: Int, query: Query, childOperator: Operator): ActorRef =
     NodeFactory.createNode(

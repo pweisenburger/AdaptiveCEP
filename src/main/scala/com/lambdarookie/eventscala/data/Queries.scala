@@ -1,7 +1,7 @@
 package com.lambdarookie.eventscala.data
 
 import akka.actor.ActorContext
-import com.lambdarookie.eventscala.backend.data.QoSUnits._
+import com.lambdarookie.eventscala.backend.qos.QualityOfService.Requirement
 import com.lambdarookie.eventscala.data.Events._
 
 object Queries {
@@ -19,19 +19,7 @@ object Queries {
   case class SlidingTime       (seconds: Int)   extends Window
   case class TumblingTime      (seconds: Int)   extends Window
 
-  sealed trait BooleanOperator
-  case object Equal        extends BooleanOperator
-  case object NotEqual     extends BooleanOperator
-  case object Greater      extends BooleanOperator
-  case object GreaterEqual extends BooleanOperator
-  case object Smaller      extends BooleanOperator
-  case object SmallerEqual extends BooleanOperator
-
   case class NodeData(name: String, query: Query, context: ActorContext)
-
-  sealed trait Requirement
-  case class LatencyRequirement   (boolOperator: BooleanOperator, timeSpan: TimeSpan) extends Requirement
-  case class FrequencyRequirement (boolOperator: BooleanOperator, ratio: Ratio) extends Requirement
 
   sealed trait Query { val requirements: Set[Requirement] }
 
