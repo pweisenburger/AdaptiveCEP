@@ -59,7 +59,6 @@ case class TestLatencyUnaryNodeMonitor(interval: Int, logging: Boolean, testSyst
     val latencyRequirements: Set[LatencyRequirement] =
       nodeData.query.requirements.collect { case lr: LatencyRequirement => lr }
     message match {
-      // No need for measuring since this is a test monitor
       case ChildLatencyRequest(time) => nodeData.context.parent ! ChildLatencyResponse(nodeData.context.self, time)
       case ChildLatencyResponse(childNode, _) =>
         childNodeLatency = Some(testSystem.getHostByNode(nodeData.context.self)
@@ -72,7 +71,8 @@ case class TestLatencyUnaryNodeMonitor(interval: Int, logging: Boolean, testSyst
               s"LATENCY:\tEvents reach node `${nodeData.name}` after $pathLatency. " +
                 s"(Calculated every $interval seconds.)")
           //TODO: Handle violated demand
-          //          latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency, lr)) lr.callback(callbackNodeData))
+          latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency, lr))
+            nodeData.query.addViolatedDemand(testSystem.qos.now.get(nodeData.query).get))
           childNodeLatency = None
           childNodePathLatency = None
         }
@@ -86,7 +86,8 @@ case class TestLatencyUnaryNodeMonitor(interval: Int, logging: Boolean, testSyst
               s"LATENCY:\tEvents reach node `${nodeData.name}` after $pathLatency. " +
                 s"(Calculated every $interval seconds.)")
           //TODO: Handle violated demand
-          //          latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency, lr)) lr.callback(callbackNodeData))
+          latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency, lr))
+            nodeData.query.addViolatedDemand(testSystem.qos.now.get(nodeData.query).get))
           childNodeLatency = None
           childNodePathLatency = None
         }
@@ -139,7 +140,8 @@ case class TestLatencyBinaryNodeMonitor(interval: Int, logging: Boolean, testSys
                 s"LATENCY:\tEvents reach node `${nodeData.name}` after $pathLatency1. " +
                   s"(Calculated every $interval seconds.)")
             //TODO: Handle violated demand
-            //            latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency1, lr)) lr.callback(callbackNodeData))
+            latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency1, lr))
+              nodeData.query.addViolatedDemand(testSystem.qos.now.get(nodeData.query).get))
           } else {
             nodeData.context.parent ! PathLatency(nodeData.context.self, pathLatency2)
             if (logging && latencyRequirements.nonEmpty)
@@ -147,7 +149,8 @@ case class TestLatencyBinaryNodeMonitor(interval: Int, logging: Boolean, testSys
                 s"LATENCY:\tEvents reach node `${nodeData.name}` after $pathLatency2. " +
                   s"(Calculated every $interval seconds.)")
             //TODO: Handle violated demand
-            //            latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency2, lr)) lr.callback(callbackNodeData))
+            latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency2, lr))
+              nodeData.query.addViolatedDemand(testSystem.qos.now.get(nodeData.query).get))
           }
           childNode1Latency = None
           childNode2Latency = None
@@ -172,7 +175,8 @@ case class TestLatencyBinaryNodeMonitor(interval: Int, logging: Boolean, testSys
                 s"LATENCY:\tEvents reach node `${nodeData.name}` after $pathLatency1. " +
                   s"(Calculated every $interval seconds.)")
             //TODO: Handle violated demand
-            //            latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency1, lr)) lr.callback(callbackNodeData))
+            latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency1, lr))
+              nodeData.query.addViolatedDemand(testSystem.qos.now.get(nodeData.query).get))
           } else {
             nodeData.context.parent ! PathLatency(nodeData.context.self, pathLatency2)
             if (logging && nodeData.query.requirements.collect { case lr: LatencyRequirement => lr }.nonEmpty)
@@ -180,8 +184,8 @@ case class TestLatencyBinaryNodeMonitor(interval: Int, logging: Boolean, testSys
                 s"LATENCY:\tEvents reach node `${nodeData.name}` after $pathLatency2. " +
                   s"(Calculated every $interval seconds.)")
             //TODO: Handle violated demand
-            //            nodeData.query.requirements.collect { case lr: LatencyRequirement => lr }.foreach(lr =>
-            //              if (isRequirementNotMet(pathLatency2, lr)) lr.callback(callbackNodeData))
+            latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency2, lr))
+              nodeData.query.addViolatedDemand(testSystem.qos.now.get(nodeData.query).get))
           }
           childNode1Latency = None
           childNode2Latency = None

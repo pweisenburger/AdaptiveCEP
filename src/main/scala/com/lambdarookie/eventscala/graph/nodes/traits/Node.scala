@@ -20,7 +20,7 @@ trait Node extends Actor {
   val latencyMonitorFactory: MonitorFactory
 
   system.addNodeOperatorPair(self, operator)
-  query.requirements.foreach(req => system.addDemand(Demand(operator, req)))
+  query.requirements.foreach(req => system.addDemand(query, Demand(operator, req)))
 
   def createChildNode(id: Int, query: Query, childOperator: Operator): ActorRef =
     NodeFactory.createNode(

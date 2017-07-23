@@ -16,6 +16,7 @@ import scala.collection.SortedSet
   */
 trait System extends CEPSystem with QoSSystem
 
+
 trait CEPSystem {
   val hosts: Signal[Set[Host]]
 
@@ -43,14 +44,16 @@ trait CEPSystem {
   private def selectRandomHost: Host = hosts.now.toVector((math.random * hosts.now.size).toInt)
 }
 
-trait QoSSystem {
-  private val qosVar: Var[Set[Demand]] = Var(Set.empty)
 
-  val qos: Signal[Set[Demand]] = qosVar
+trait QoSSystem {
+  private val qosVar: Var[Map[Query, Demand]] = Var(Map.empty)
+
+  val qos: Signal[Map[Query, Demand]] = qosVar
   val demandViolated: Event[Demand]
 
-  def addDemand(demand: Demand): Unit = qosVar.transform(x => x + demand)
+  def addDemand(query: Query, demand: Demand): Unit = qosVar.transform(x => x + (query -> demand))
 }
+
 
 trait Host {
   val position: Coordinate
@@ -66,6 +69,7 @@ trait Host {
     sorted ++ neighbors
   }
 }
+
 
 trait Operator {
   val testId: String

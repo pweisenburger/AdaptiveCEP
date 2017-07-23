@@ -1,6 +1,7 @@
 package com.lambdarookie.eventscala.data
 
 import akka.actor.ActorContext
+import com.lambdarookie.eventscala.backend.qos.Demands
 import com.lambdarookie.eventscala.backend.qos.QualityOfService.Requirement
 import com.lambdarookie.eventscala.data.Events._
 
@@ -21,7 +22,7 @@ object Queries {
 
   case class NodeData(name: String, query: Query, context: ActorContext)
 
-  sealed trait Query { val requirements: Set[Requirement] }
+  sealed trait Query extends Demands { val requirements: Set[Requirement] }
 
   sealed trait LeafQuery   extends Query
   sealed trait UnaryQuery  extends Query { val sq: Query }
