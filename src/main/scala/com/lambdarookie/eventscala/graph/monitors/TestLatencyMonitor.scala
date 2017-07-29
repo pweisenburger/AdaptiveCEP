@@ -72,7 +72,7 @@ case class TestLatencyUnaryNodeMonitor(interval: Int, logging: Boolean, testSyst
                 s"(Calculated every $interval seconds.)")
           //TODO: Handle violated demand
           latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency, lr))
-            nodeData.query.addViolatedDemand(testSystem.qos.now.get(nodeData.query).get))
+            nodeData.query.addViolatedDemand(testSystem.qos.now.apply(nodeData.query)))
           childNodeLatency = None
           childNodePathLatency = None
         }
@@ -87,7 +87,7 @@ case class TestLatencyUnaryNodeMonitor(interval: Int, logging: Boolean, testSyst
                 s"(Calculated every $interval seconds.)")
           //TODO: Handle violated demand
           latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency, lr))
-            nodeData.query.addViolatedDemand(testSystem.qos.now.get(nodeData.query).get))
+            nodeData.query.addViolatedDemand(testSystem.qos.now.apply(nodeData.query)))
           childNodeLatency = None
           childNodePathLatency = None
         }
@@ -141,7 +141,7 @@ case class TestLatencyBinaryNodeMonitor(interval: Int, logging: Boolean, testSys
                   s"(Calculated every $interval seconds.)")
             //TODO: Handle violated demand
             latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency1, lr))
-              nodeData.query.addViolatedDemand(testSystem.qos.now.get(nodeData.query).get))
+              nodeData.query.addViolatedDemand(testSystem.qos.now.apply(nodeData.query)))
           } else {
             nodeData.context.parent ! PathLatency(nodeData.context.self, pathLatency2)
             if (logging && latencyRequirements.nonEmpty)
@@ -150,7 +150,7 @@ case class TestLatencyBinaryNodeMonitor(interval: Int, logging: Boolean, testSys
                   s"(Calculated every $interval seconds.)")
             //TODO: Handle violated demand
             latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency2, lr))
-              nodeData.query.addViolatedDemand(testSystem.qos.now.get(nodeData.query).get))
+              nodeData.query.addViolatedDemand(testSystem.qos.now.apply(nodeData.query)))
           }
           childNode1Latency = None
           childNode2Latency = None
@@ -176,7 +176,7 @@ case class TestLatencyBinaryNodeMonitor(interval: Int, logging: Boolean, testSys
                   s"(Calculated every $interval seconds.)")
             //TODO: Handle violated demand
             latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency1, lr))
-              nodeData.query.addViolatedDemand(testSystem.qos.now.get(nodeData.query).get))
+              nodeData.query.addViolatedDemand(testSystem.qos.now.apply(nodeData.query)))
           } else {
             nodeData.context.parent ! PathLatency(nodeData.context.self, pathLatency2)
             if (logging && nodeData.query.requirements.collect { case lr: LatencyRequirement => lr }.nonEmpty)
@@ -185,7 +185,7 @@ case class TestLatencyBinaryNodeMonitor(interval: Int, logging: Boolean, testSys
                   s"(Calculated every $interval seconds.)")
             //TODO: Handle violated demand
             latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency2, lr))
-              nodeData.query.addViolatedDemand(testSystem.qos.now.get(nodeData.query).get))
+              nodeData.query.addViolatedDemand(testSystem.qos.now.apply(nodeData.query)))
           }
           childNode1Latency = None
           childNode2Latency = None
