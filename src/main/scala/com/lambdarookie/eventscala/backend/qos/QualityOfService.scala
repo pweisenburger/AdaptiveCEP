@@ -41,5 +41,5 @@ object QualityOfService {
   }
 
 
-  case class Demand(operator: Operator, requirement: Requirement)
+  case class Violation (operator: Operator, requirement: Requirement)
 }

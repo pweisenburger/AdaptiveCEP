@@ -7,6 +7,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.FiniteDuration
 import akka.actor.ActorRef
 import com.lambdarookie.eventscala.backend.qos.QualityOfService._
+import com.lambdarookie.eventscala.backend.system.traits._
 import com.lambdarookie.eventscala.data.Queries._
 
 case class ChildLatencyRequest(time: Instant)
@@ -44,7 +45,7 @@ case class PathLatencyLeafNodeMonitor() extends PathLatencyMonitor with LeafNode
 
 }
 
-case class PathLatencyUnaryNodeMonitor(interval: Int, logging: Boolean)
+case class PathLatencyUnaryNodeMonitor(interval: Int, logging: Boolean, testing: Boolean)
   extends PathLatencyMonitor with UnaryNodeMonitor {
 
   val clock: Clock = Clock.systemDefaultZone
@@ -57,23 +58,27 @@ case class PathLatencyUnaryNodeMonitor(interval: Int, logging: Boolean)
     runnable = () => nodeData.childNode ! ChildLatencyRequest(clock.instant))
 
   override def onMessageReceive(message: Any, nodeData: UnaryNodeData): Unit = {
-    val callbackNodeData: NodeData = NodeData(nodeData.name, nodeData.query, nodeData.context)
+    val query: Query = nodeData.query
     val latencyRequirements: Set[LatencyRequirement] =
-      nodeData.query.requirements.collect { case lr: LatencyRequirement => lr }
+      query.requirements.collect { case lr: LatencyRequirement => lr }
+    val system: System = nodeData.system
+    val self: ActorRef = nodeData.context.self
+    val operator: Operator = system.nodesToOperators.now.apply(self)
     message match {
       case ChildLatencyRequest(time) =>
-        nodeData.context.parent ! ChildLatencyResponse(nodeData.context.self, time)
-      case ChildLatencyResponse(_, requestTime) =>
-        childNodeLatency = Some(Duration.between(requestTime, clock.instant).dividedBy(2))
+        nodeData.context.parent ! ChildLatencyResponse(self, time)
+      case ChildLatencyResponse(childNode, requestTime) =>
+        if (testing) childNodeLatency = Some(operator.host.lastLatencies(system.getHostByNode(childNode)).toDuration)
+        else childNodeLatency = Some(Duration.between(requestTime, clock.instant).dividedBy(2))
+
         if (childNodePathLatency.isDefined) {
           val pathLatency: Duration = childNodeLatency.get.plus(childNodePathLatency.get)
-          nodeData.context.parent ! PathLatency(nodeData.context.self, pathLatency)
+          nodeData.context.parent ! PathLatency(self, pathLatency)
           if (logging && latencyRequirements.nonEmpty)
-            println(
-              s"LATENCY:\tEvents reach node `${nodeData.name}` after $pathLatency. " +
+            println(s"LATENCY:\tEvents reach node `${nodeData.name}` after ${pathLatency.toMillis} ms. " +
               s"(Calculated every $interval seconds.)")
-          //TODO: Handle violated demand
-//          latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency, lr)) lr.callback(callbackNodeData))
+          latencyRequirements.foreach(lr =>
+            if (isRequirementNotMet(pathLatency, lr)) query.addViolatedDemand(Violation(operator, lr)))
           childNodeLatency = None
           childNodePathLatency = None
         }
@@ -81,13 +86,12 @@ case class PathLatencyUnaryNodeMonitor(interval: Int, logging: Boolean)
         childNodePathLatency = Some(duration)
         if (childNodeLatency.isDefined) {
           val pathLatency: Duration = childNodeLatency.get.plus(childNodePathLatency.get)
-          nodeData.context.parent ! PathLatency(nodeData.context.self, pathLatency)
+          nodeData.context.parent ! PathLatency(self, pathLatency)
           if (logging && latencyRequirements.nonEmpty)
-            println(
-              s"LATENCY:\tEvents reach node `${nodeData.name}` after $pathLatency. " +
+            println(s"LATENCY:\tEvents reach node `${nodeData.name}` after ${pathLatency.toMillis} ms. " +
               s"(Calculated every $interval seconds.)")
-          //TODO: Handle violated demand
-//          latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency, lr)) lr.callback(callbackNodeData))
+          latencyRequirements.foreach(lr =>
+            if (isRequirementNotMet(pathLatency, lr)) query.addViolatedDemand(Violation(operator, lr)))
           childNodeLatency = None
           childNodePathLatency = None
         }
@@ -96,7 +100,7 @@ case class PathLatencyUnaryNodeMonitor(interval: Int, logging: Boolean)
 
 }
 
-case class PathLatencyBinaryNodeMonitor(interval: Int, logging: Boolean)
+case class PathLatencyBinaryNodeMonitor(interval: Int, logging: Boolean, testing: Boolean)
   extends PathLatencyMonitor with BinaryNodeMonitor {
 
   val clock: Clock = Clock.systemDefaultZone
@@ -114,42 +118,35 @@ case class PathLatencyBinaryNodeMonitor(interval: Int, logging: Boolean)
     })
 
   override def onMessageReceive(message: Any, nodeData: BinaryNodeData): Unit = {
-    val callbackNodeData: NodeData = NodeData(nodeData.name, nodeData.query, nodeData.context)
+    val query = nodeData.query
     val latencyRequirements: Set[LatencyRequirement] =
-      nodeData.query.requirements.collect { case lr: LatencyRequirement => lr }
+      query.requirements.collect { case lr: LatencyRequirement => lr }
+    val system: System = nodeData.system
+    val self: ActorRef = nodeData.context.self
+    val operator = system.nodesToOperators.now.apply(self)
     message match {
       case ChildLatencyRequest(time) =>
-        nodeData.context.parent ! ChildLatencyResponse(nodeData.context.self, time)
+        nodeData.context.parent ! ChildLatencyResponse(self, time)
       case ChildLatencyResponse(childNode, requestTime) =>
-        childNode match {
-          case nodeData.childNode1 => childNode1Latency =
-            Some(Duration.between(requestTime, clock.instant).dividedBy(2))
-          case nodeData.childNode2 => childNode2Latency =
-            Some(Duration.between(requestTime, clock.instant).dividedBy(2))
+        val childHost: Host = system.getHostByNode(childNode)
+        if (testing) childNode match {
+          case nodeData.childNode1 => childNode1Latency = Some(operator.host.lastLatencies(childHost).toDuration)
+          case nodeData.childNode2 => childNode2Latency = Some(operator.host.lastLatencies(childHost).toDuration)
+        } else childNode match {
+          case nodeData.childNode1 => childNode1Latency = Some(Duration.between(requestTime, clock.instant).dividedBy(2))
+          case nodeData.childNode2 => childNode2Latency = Some(Duration.between(requestTime, clock.instant).dividedBy(2))
         }
-        if (childNode1Latency.isDefined &&
-          childNode2Latency.isDefined &&
-          childNode1PathLatency.isDefined &&
-          childNode2PathLatency.isDefined) {
+        if (childNode1Latency.isDefined && childNode2Latency.isDefined &&
+          childNode1PathLatency.isDefined && childNode2PathLatency.isDefined) {
           val pathLatency1 = childNode1Latency.get.plus(childNode1PathLatency.get)
           val pathLatency2 = childNode2Latency.get.plus(childNode2PathLatency.get)
-          if (pathLatency1.compareTo(pathLatency2) >= 0) {
-            nodeData.context.parent ! PathLatency(nodeData.context.self, pathLatency1)
-            if (logging && latencyRequirements.nonEmpty)
-              println(
-                s"LATENCY:\tEvents reach node `${nodeData.name}` after $pathLatency1. " +
-                s"(Calculated every $interval seconds.)")
-            //TODO: Handle violated demand
-//            latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency1, lr)) lr.callback(callbackNodeData))
-          } else {
-            nodeData.context.parent ! PathLatency(nodeData.context.self, pathLatency2)
-            if (logging && latencyRequirements.nonEmpty)
-              println(
-                s"LATENCY:\tEvents reach node `${nodeData.name}` after $pathLatency2. " +
-                s"(Calculated every $interval seconds.)")
-            //TODO: Handle violated demand
-//            latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency2, lr)) lr.callback(callbackNodeData))
-          }
+          if (pathLatency1.compareTo(pathLatency2) >= 0) nodeData.context.parent ! PathLatency(self, pathLatency1)
+          else nodeData.context.parent ! PathLatency(self, pathLatency2)
+          if (logging && latencyRequirements.nonEmpty)
+            println(s"LATENCY:\tEvents reach node `${nodeData.name}` after " +
+              s"${math.max(pathLatency1.toMillis, pathLatency2.toMillis)} ms. (Calculated every $interval seconds.)")
+          latencyRequirements.foreach(lr =>
+            if (isRequirementNotMet(pathLatency1, lr)) query.addViolatedDemand(Violation(operator, lr)))
           childNode1Latency = None
           childNode2Latency = None
           childNode1PathLatency = None
@@ -166,24 +163,13 @@ case class PathLatencyBinaryNodeMonitor(interval: Int, logging: Boolean)
           childNode2PathLatency.isDefined) {
           val pathLatency1 = childNode1Latency.get.plus(childNode1PathLatency.get)
           val pathLatency2 = childNode2Latency.get.plus(childNode2PathLatency.get)
-          if (pathLatency1.compareTo(pathLatency2) >= 0) {
-            nodeData.context.parent ! PathLatency(nodeData.context.self, pathLatency1)
-            if (logging && latencyRequirements.nonEmpty)
-              println(
-                s"LATENCY:\tEvents reach node `${nodeData.name}` after $pathLatency1. " +
-                s"(Calculated every $interval seconds.)")
-            //TODO: Handle violated demand
-//            latencyRequirements.foreach(lr => if (isRequirementNotMet(pathLatency1, lr)) lr.callback(callbackNodeData))
-          } else {
-            nodeData.context.parent ! PathLatency(nodeData.context.self, pathLatency2)
-            if (logging && nodeData.query.requirements.collect { case lr: LatencyRequirement => lr }.nonEmpty)
-              println(
-                s"LATENCY:\tEvents reach node `${nodeData.name}` after $pathLatency2. " +
-                s"(Calculated every $interval seconds.)")
-            //TODO: Handle violated demand
-//            nodeData.query.requirements.collect { case lr: LatencyRequirement => lr }.foreach(lr =>
-//              if (isRequirementNotMet(pathLatency2, lr)) lr.callback(callbackNodeData))
-          }
+          if (pathLatency1.compareTo(pathLatency2) >= 0) nodeData.context.parent ! PathLatency(self, pathLatency1)
+          else nodeData.context.parent ! PathLatency(self, pathLatency2)
+          if (logging && latencyRequirements.nonEmpty)
+            println(s"LATENCY:\tEvents reach node `${nodeData.name}` after " +
+              s"${math.max(pathLatency1.toMillis, pathLatency2.toMillis)} ms. (Calculated every $interval seconds.)")
+          latencyRequirements.foreach(lr =>
+            if (isRequirementNotMet(pathLatency1, lr)) query.addViolatedDemand(Violation(operator, lr)))
           childNode1Latency = None
           childNode2Latency = None
           childNode1PathLatency = None
@@ -194,10 +180,10 @@ case class PathLatencyBinaryNodeMonitor(interval: Int, logging: Boolean)
 
 }
 
-case class PathLatencyMonitorFactory(interval: Int, logging: Boolean) extends MonitorFactory {
+case class PathLatencyMonitorFactory(interval: Int, logging: Boolean, testing: Boolean) extends MonitorFactory {
 
   override def createLeafNodeMonitor: LeafNodeMonitor = PathLatencyLeafNodeMonitor()
-  override def createUnaryNodeMonitor: UnaryNodeMonitor = PathLatencyUnaryNodeMonitor(interval, logging)
-  override def createBinaryNodeMonitor: BinaryNodeMonitor = PathLatencyBinaryNodeMonitor(interval, logging)
+  override def createUnaryNodeMonitor: UnaryNodeMonitor = PathLatencyUnaryNodeMonitor(interval, logging, testing)
+  override def createBinaryNodeMonitor: BinaryNodeMonitor = PathLatencyBinaryNodeMonitor(interval, logging, testing)
 
 }

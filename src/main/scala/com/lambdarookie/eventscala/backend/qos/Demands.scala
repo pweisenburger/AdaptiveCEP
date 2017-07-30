@@ -1,7 +1,6 @@
 package com.lambdarookie.eventscala.backend.qos
 
-import com.lambdarookie.eventscala.backend.data.QoSUnits._
-import com.lambdarookie.eventscala.backend.qos.QualityOfService.Demand
+import com.lambdarookie.eventscala.backend.qos.QualityOfService.Violation
 import rescala._
 
 
@@ -9,12 +8,12 @@ import rescala._
   * Created by monur.
   */
 trait Demands {
-  def violatedDemands: Signal[Set[Demand]] = violatedDemandsVar
+  def violatedDemands: Signal[Set[Violation]] = violatedDemandsVar
 //  def adapting: Signal[Option[Set[Demand]]]
 //  def adaptationPlanned: Event[Set[Demand]]
 //  def delayAdaptation(delay: Event[TimeSpan]): Unit
 
-  private val violatedDemandsVar: Var[Set[Demand]] = Var(Set.empty)
+  private val violatedDemandsVar: Var[Set[Violation]] = Var(Set.empty)
 
-  def addViolatedDemand(demand: Demand): Unit = violatedDemandsVar.transform(x => x + demand)
+  def addViolatedDemand(violation: Violation): Unit = violatedDemandsVar.transform(x => x + violation)
 }

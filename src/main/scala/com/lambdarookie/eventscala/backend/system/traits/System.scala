@@ -2,12 +2,11 @@ package com.lambdarookie.eventscala.backend.system.traits
 
 import akka.actor.ActorRef
 import com.lambdarookie.eventscala.backend.data.Coordinate
-import com.lambdarookie.eventscala.backend.qos.Latency
 import com.lambdarookie.eventscala.data.Queries.Query
 import com.lambdarookie.eventscala.graph.factory.OperatorFactory
 import rescala._
 import com.lambdarookie.eventscala.backend.data.QoSUnits._
-import com.lambdarookie.eventscala.backend.qos.QualityOfService.Demand
+import com.lambdarookie.eventscala.backend.qos.QualityOfService.Requirement
 
 import scala.collection.SortedSet
 
@@ -33,7 +32,7 @@ trait CEPSystem {
 
   def getHostByNode(node: ActorRef): Host = nodesToOperators.now.get(node) match {
     case Some(operator) => operator.host
-    case None => throw new NoSuchElementException("ERROR: Given node is not defined in the system.")
+    case None => throw new NoSuchElementException("ERROR: Following node is not defined in the system: " + node)
   }
 
   def addNodeOperatorPair(node: ActorRef, operator: Operator): Unit = nodesToOperatorsVar.transform(x => x + (node -> operator))
@@ -46,19 +45,19 @@ trait CEPSystem {
 
 
 trait QoSSystem {
-  private val qosVar: Var[Map[Query, Demand]] = Var(Map.empty)
+  private val queriesVar: Var[Set[Query]] = Var(Set.empty)
 
-  val qos: Signal[Map[Query, Demand]] = qosVar
-  val demandViolated: Event[Demand]
+  val queries: Signal[Set[Query]] = queriesVar
+  val demandViolated: Event[Requirement]
 
-  def addDemand(query: Query, demand: Demand): Unit = qosVar.transform(x => x + (query -> demand))
+  def addQuery(query: Query): Unit = queriesVar.transform(x => x + query)
 }
 
 
 trait Host {
   val position: Coordinate
 
-  var lastLatencies: Map[Host, Latency] = Map(this -> Latency(this, this, 0.ms))
+  var lastLatencies: Map[Host, TimeSpan] = Map(this -> 0.ms)
 
 
   def neighbors: Set[Host]

@@ -1,18 +1,17 @@
 package com.lambdarookie.eventscala.backend.system
 
 import com.lambdarookie.eventscala.backend.data.Coordinate
-import com.lambdarookie.eventscala.backend.qos.Latency
 import com.lambdarookie.eventscala.backend.system.traits._
 import rescala._
 import com.lambdarookie.eventscala.backend.data.QoSUnits._
-import com.lambdarookie.eventscala.backend.qos.QualityOfService.Demand
+import com.lambdarookie.eventscala.backend.qos.QualityOfService.Requirement
 
 /**
   * Created by monur.
   */
 class TestSystem extends System {
   override val hosts: Signal[Set[Host]] = RandomHostFactory.createRandomHosts
-  override val demandViolated: Event[Demand] = null
+  override val demandViolated: Event[Requirement] = null
 }
 
 object RandomHostFactory {
@@ -29,9 +28,9 @@ object RandomHostFactory {
     val host2: Host = host2Impl
     val host3: Host = host3Impl
 
-    host1.lastLatencies ++= Map(host2 -> Latency(host1, host2, 90.ms), host3 -> Latency(host1, host3, 91.ms))
-    host2.lastLatencies ++= Map(host1 -> Latency(host2, host1, 92.ms), host3 -> Latency(host2, host3, 93.ms))
-    host3.lastLatencies ++= Map(host1 -> Latency(host3, host1, 94.ms), host2 -> Latency(host3, host2, 95.ms))
+    host1.lastLatencies ++= Map(host2 -> 90.ms, host3 -> 91.ms)
+    host2.lastLatencies ++= Map(host1 -> 92.ms, host3 -> 93.ms)
+    host3.lastLatencies ++= Map(host1 -> 94.ms, host2 -> 94.ms)
 
     Var(Set(host1, host2, host3))
   }
