@@ -13,7 +13,7 @@ trait LeafNode extends Node {
 
   val frequencyMonitor: LeafNodeMonitor = frequencyMonitorFactory.createLeafNodeMonitor
   val latencyMonitor: LeafNodeMonitor = latencyMonitorFactory.createLeafNodeMonitor
-  val nodeData: LeafNodeData = LeafNodeData(name, query, context)
+  val nodeData: LeafNodeData = LeafNodeData(name, query, system, context)
 
   def emitCreated(): Unit = {
     if (createdCallback.isDefined) createdCallback.get.apply() else context.parent ! Created

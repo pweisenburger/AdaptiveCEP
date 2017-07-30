@@ -23,7 +23,7 @@ trait BinaryNode extends Node {
 
   val frequencyMonitor: BinaryNodeMonitor = frequencyMonitorFactory.createBinaryNodeMonitor
   val latencyMonitor: BinaryNodeMonitor = latencyMonitorFactory.createBinaryNodeMonitor
-  val nodeData: BinaryNodeData = BinaryNodeData(name, query, context, childNode1, childNode2)
+  val nodeData: BinaryNodeData = BinaryNodeData(name, query, system, context, childNode1, childNode2)
 
   def emitCreated(): Unit = {
     if (createdCallback.isDefined) createdCallback.get.apply() else context.parent ! Created

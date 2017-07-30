@@ -31,9 +31,9 @@ trait CEPSystem {
     selectRandomHost
   }
 
-  def getHostByNode(node: ActorRef): Option[Host] = nodesToOperators.now.get(node) match {
-    case Some(operator) => Some(operator.host)
-    case None => None
+  def getHostByNode(node: ActorRef): Host = nodesToOperators.now.get(node) match {
+    case Some(operator) => operator.host
+    case None => throw new NoSuchElementException("ERROR: Given node is not defined in the system.")
   }
 
   def addNodeOperatorPair(node: ActorRef, operator: Operator): Unit = nodesToOperatorsVar.transform(x => x + (node -> operator))

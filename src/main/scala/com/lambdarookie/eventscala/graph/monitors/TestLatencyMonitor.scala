@@ -14,7 +14,7 @@ trait TestLatencyMonitor {
   val testSystem: TestSystem
 
   def isRequirementNotMet(latency: Duration, lr: LatencyRequirement): Boolean = {
-    val met: Boolean = lr.boolOperator match {
+    val met: Boolean = lr.booleanOperator match {
       case Equal =>        latency.compareTo(lr.timeSpan.toDuration) == 0
       case NotEqual =>     latency.compareTo(lr.timeSpan.toDuration) != 0
       case Greater =>      latency.compareTo(lr.timeSpan.toDuration) >  0
@@ -62,7 +62,7 @@ case class TestLatencyUnaryNodeMonitor(interval: Int, logging: Boolean, testSyst
       case ChildLatencyRequest(time) => nodeData.context.parent ! ChildLatencyResponse(nodeData.context.self, time)
       case ChildLatencyResponse(childNode, _) =>
         childNodeLatency = Some(testSystem.getHostByNode(nodeData.context.self)
-          .get.lastLatencies(testSystem.getHostByNode(childNode).get).latency.toDuration)
+          .lastLatencies(testSystem.getHostByNode(childNode)).latency.toDuration)
         if (childNodePathLatency.isDefined) {
           val pathLatency: Duration = childNodeLatency.get.plus(childNodePathLatency.get)
           nodeData.context.parent ! PathLatency(nodeData.context.self, pathLatency)
@@ -123,9 +123,9 @@ case class TestLatencyBinaryNodeMonitor(interval: Int, logging: Boolean, testSys
       case ChildLatencyResponse(childNode, _) =>
         childNode match {
           case nodeData.childNode1 => childNode1Latency = Some(testSystem.getHostByNode(nodeData.context.self)
-            .get.lastLatencies(testSystem.getHostByNode(childNode).get).latency.toDuration)
+            .lastLatencies(testSystem.getHostByNode(childNode)).latency.toDuration)
           case nodeData.childNode2 => childNode2Latency = Some(testSystem.getHostByNode(nodeData.context.self)
-            .get.lastLatencies(testSystem.getHostByNode(childNode).get).latency.toDuration)
+            .lastLatencies(testSystem.getHostByNode(childNode)).latency.toDuration)
         }
         if (childNode1Latency.isDefined &&
           childNode2Latency.isDefined &&

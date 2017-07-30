@@ -33,7 +33,7 @@ trait AverageFrequencyMonitor {
               s"FREQUENCY:\tOn average, node `$name` emits $frequency events every ${requirement.ratio.timeSpan.getSeconds} seconds. " +
               s"(Calculated every $interval seconds.)")
             //TODO: Handle violated demand
-//            requirement.boolOperator match {
+//            requirement.booleanOperator match {
 //              case Equal =>        if (!(frequency == requirement.instances)) requirement.callback(callbackNodeData)
 //              case NotEqual =>     if (!(frequency != requirement.instances)) requirement.callback(callbackNodeData)
 //              case Greater =>      if (!(frequency >  requirement.instances)) requirement.callback(callbackNodeData)

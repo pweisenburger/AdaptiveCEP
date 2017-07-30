@@ -16,8 +16,8 @@ object QualityOfService {
   case object SmallerEqual extends BooleanOperator
 
   sealed trait Requirement
-  case class LatencyRequirement   (boolOperator: BooleanOperator, timeSpan: TimeSpan) extends Requirement
-  case class FrequencyRequirement (boolOperator: BooleanOperator, ratio: Ratio) extends Requirement
+  case class LatencyRequirement   (booleanOperator: BooleanOperator, timeSpan: TimeSpan) extends Requirement
+  case class FrequencyRequirement (booleanOperator: BooleanOperator, ratio: Ratio) extends Requirement
 
 
   def frequency: FrequencyRequirementCreator.type = FrequencyRequirementCreator

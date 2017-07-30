@@ -3,10 +3,11 @@ package com.lambdarookie.eventscala.graph.monitors
 import akka.actor.{ActorContext, ActorRef}
 import com.lambdarookie.eventscala.data.Events._
 import com.lambdarookie.eventscala.data.Queries._
+import com.lambdarookie.eventscala.backend.system.traits.System
 
-case class LeafNodeData(name: String, query: Query, context: ActorContext)
-case class UnaryNodeData(name: String, query: Query, context: ActorContext, childNode: ActorRef)
-case class BinaryNodeData(name: String, query: Query, context: ActorContext, childNode1: ActorRef, childNode2: ActorRef)
+case class LeafNodeData(name: String, query: Query, system: System, context: ActorContext)
+case class UnaryNodeData(name: String, query: Query, system: System, context: ActorContext, childNode: ActorRef)
+case class BinaryNodeData(name: String, query: Query, system: System, context: ActorContext, childNode1: ActorRef, childNode2: ActorRef)
 
 trait LeafNodeMonitor {
 
