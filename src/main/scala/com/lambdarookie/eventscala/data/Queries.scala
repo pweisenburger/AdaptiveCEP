@@ -2,7 +2,7 @@ package com.lambdarookie.eventscala.data
 
 import akka.actor.ActorContext
 import com.lambdarookie.eventscala.backend.qos.Demands
-import com.lambdarookie.eventscala.backend.qos.QualityOfService.Requirement
+import com.lambdarookie.eventscala.backend.qos.QualityOfService.{Requirement, Violation}
 import com.lambdarookie.eventscala.data.Events._
 
 object Queries {
@@ -24,9 +24,22 @@ object Queries {
 
   sealed trait Query extends Demands { val requirements: Set[Requirement] }
 
-  sealed trait LeafQuery   extends Query
-  sealed trait UnaryQuery  extends Query { val sq: Query }
-  sealed trait BinaryQuery extends Query { val sq1: Query; val sq2: Query }
+  sealed trait LeafQuery   extends Query {
+    override val violatedDemands: rescala.Signal[Set[Violation]] = violatedDemandsVar
+  }
+  sealed trait UnaryQuery  extends Query {
+    val sq: Query
+
+    override val violatedDemands: rescala.Signal[Set[Violation]] =
+      rescala.Signal{violatedDemandsVar() ++ sq.violatedDemands()}
+  }
+  sealed trait BinaryQuery extends Query {
+    val sq1: Query
+    val sq2: Query
+
+    override val violatedDemands: rescala.Signal[Set[Violation]] =
+      rescala.Signal{violatedDemandsVar() ++ sq1.violatedDemands() ++ sq2.violatedDemands()}
+  }
 
   sealed trait StreamQuery      extends LeafQuery   { val publisherName: String }
   sealed trait SequenceQuery    extends LeafQuery   { val s1: NStream; val s2: NStream }

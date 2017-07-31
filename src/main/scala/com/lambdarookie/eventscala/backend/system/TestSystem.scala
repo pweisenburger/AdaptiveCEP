@@ -28,9 +28,9 @@ object RandomHostFactory {
     val host2: Host = host2Impl
     val host3: Host = host3Impl
 
-    host1.lastLatencies ++= Map(host2 -> 90.ms, host3 -> 91.ms)
-    host2.lastLatencies ++= Map(host1 -> 92.ms, host3 -> 93.ms)
-    host3.lastLatencies ++= Map(host1 -> 94.ms, host2 -> 94.ms)
+    host1.lastLatencies ++= Map(host2 -> 999.ms, host3 -> 999.ms)
+    host2.lastLatencies ++= Map(host1 -> 999.ms, host3 -> 999.ms)
+    host3.lastLatencies ++= Map(host1 -> 999.ms, host2 -> 999.ms)
 
     Var(Set(host1, host2, host3))
   }
@@ -42,4 +42,8 @@ class TestHost(val id: Integer, val position: Coordinate) extends Host {
   val name: String = s"Host $id"
 
   var neighbors: Set[Host] = Set.empty
+
+  override def measureNeighborLatencies(): Unit =
+    neighbors.foreach(n => lastLatencies += (n -> (math.random() * 6).toInt.ms))
+
 }

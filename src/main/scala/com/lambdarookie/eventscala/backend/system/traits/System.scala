@@ -35,7 +35,8 @@ trait CEPSystem {
     case None => throw new NoSuchElementException("ERROR: Following node is not defined in the system: " + node)
   }
 
-  def addNodeOperatorPair(node: ActorRef, operator: Operator): Unit = nodesToOperatorsVar.transform(x => x + (node -> operator))
+  def addNodeOperatorPair(node: ActorRef, operator: Operator): Unit =
+    nodesToOperatorsVar.transform(x => x + (node -> operator))
 
   def addOperator(operator: Operator): Unit = operatorsVar.transform(x => x + operator)
 
@@ -57,10 +58,11 @@ trait QoSSystem {
 trait Host {
   val position: Coordinate
 
-  var lastLatencies: Map[Host, TimeSpan] = Map(this -> 0.ms)
-
-
   def neighbors: Set[Host]
+  def measureNeighborLatencies(): Unit
+
+
+  var lastLatencies: Map[Host, TimeSpan] = Map(this -> 0.ms)
 
   def sortNeighborsByProximity: SortedSet[Host] = {
     val sorted = SortedSet[Host]()((x: Host, y: Host) =>
@@ -78,5 +80,6 @@ trait Operator {
   val inputs: Seq[Operator]
   val outputs: Set[Operator]
 
-  def createChildOperator(testId: String, subQuery: Query): Operator = OperatorFactory.createOperator(testId, system, subQuery, Set(this))
+  def createChildOperator(testId: String, subQuery: Query): Operator =
+    OperatorFactory.createOperator(testId, system, subQuery, Set(this))
 }

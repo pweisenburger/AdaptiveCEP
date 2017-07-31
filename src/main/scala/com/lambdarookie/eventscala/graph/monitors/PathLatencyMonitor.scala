@@ -55,7 +55,10 @@ case class PathLatencyUnaryNodeMonitor(interval: Int, logging: Boolean, testing:
   override def onCreated(nodeData: UnaryNodeData): Unit = nodeData.context.system.scheduler.schedule(
     initialDelay = FiniteDuration(0, TimeUnit.SECONDS),
     interval = FiniteDuration(interval, TimeUnit.SECONDS),
-    runnable = () => nodeData.childNode ! ChildLatencyRequest(clock.instant))
+    runnable = () => {
+      nodeData.system.getHostByNode(nodeData.context.self).measureNeighborLatencies()
+      nodeData.childNode ! ChildLatencyRequest(clock.instant)
+    })
 
   override def onMessageReceive(message: Any, nodeData: UnaryNodeData): Unit = {
     val query: Query = nodeData.query
@@ -113,6 +116,7 @@ case class PathLatencyBinaryNodeMonitor(interval: Int, logging: Boolean, testing
     initialDelay = FiniteDuration(0, TimeUnit.SECONDS),
     interval = FiniteDuration(interval, TimeUnit.SECONDS),
     runnable = () => {
+      nodeData.system.getHostByNode(nodeData.context.self).measureNeighborLatencies()
       nodeData.childNode1 ! ChildLatencyRequest(clock.instant)
       nodeData.childNode2 ! ChildLatencyRequest(clock.instant)
     })
@@ -157,10 +161,8 @@ case class PathLatencyBinaryNodeMonitor(interval: Int, logging: Boolean, testing
           case nodeData.childNode1 => childNode1PathLatency = Some(duration)
           case nodeData.childNode2 => childNode2PathLatency = Some(duration)
         }
-        if (childNode1Latency.isDefined &&
-          childNode2Latency.isDefined &&
-          childNode1PathLatency.isDefined &&
-          childNode2PathLatency.isDefined) {
+        if (childNode1Latency.isDefined && childNode2Latency.isDefined &&
+          childNode1PathLatency.isDefined && childNode2PathLatency.isDefined) {
           val pathLatency1 = childNode1Latency.get.plus(childNode1PathLatency.get)
           val pathLatency2 = childNode2Latency.get.plus(childNode2PathLatency.get)
           if (pathLatency1.compareTo(pathLatency2) >= 0) nodeData.context.parent ! PathLatency(self, pathLatency1)
