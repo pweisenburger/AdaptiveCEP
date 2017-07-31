@@ -18,6 +18,8 @@ object QualityOfService {
   sealed trait Requirement
   case class LatencyRequirement   (booleanOperator: BooleanOperator, timeSpan: TimeSpan) extends Requirement
   case class FrequencyRequirement (booleanOperator: BooleanOperator, ratio: Ratio) extends Requirement
+  case class ThroughputRequirement (booleanOperator: BooleanOperator, bitRate: BitRate) extends Requirement
+  case class BandwidthRequirement (booleanOperator: BooleanOperator, bitRate: BitRate) extends Requirement
 
 
   def frequency: FrequencyRequirementCreator.type = FrequencyRequirementCreator
@@ -38,6 +40,26 @@ object QualityOfService {
     def >=  (timeSpan: TimeSpan): LatencyRequirement = LatencyRequirement (GreaterEqual, timeSpan)
     def <   (timeSpan: TimeSpan): LatencyRequirement = LatencyRequirement (Smaller, timeSpan)
     def <=  (timeSpan: TimeSpan): LatencyRequirement = LatencyRequirement (SmallerEqual, timeSpan)
+  }
+
+  def throughput: ThroughputRequirementCreator.type = ThroughputRequirementCreator
+  case object ThroughputRequirementCreator {
+    def === (bitRate: BitRate): ThroughputRequirement = ThroughputRequirement (Equal, bitRate)
+    def =!= (bitRate: BitRate): ThroughputRequirement = ThroughputRequirement (NotEqual, bitRate)
+    def >   (bitRate: BitRate): ThroughputRequirement = ThroughputRequirement (Greater, bitRate)
+    def >=  (bitRate: BitRate): ThroughputRequirement = ThroughputRequirement (GreaterEqual, bitRate)
+    def <   (bitRate: BitRate): ThroughputRequirement = ThroughputRequirement (Smaller, bitRate)
+    def <=  (bitRate: BitRate): ThroughputRequirement = ThroughputRequirement (SmallerEqual, bitRate)
+  }
+
+  def bandwidth: BandwidthRequirementCreator.type = BandwidthRequirementCreator
+  case object BandwidthRequirementCreator {
+    def === (bitRate: BitRate): BandwidthRequirement = BandwidthRequirement (Equal, bitRate)
+    def =!= (bitRate: BitRate): BandwidthRequirement = BandwidthRequirement (NotEqual, bitRate)
+    def >   (bitRate: BitRate): BandwidthRequirement = BandwidthRequirement (Greater, bitRate)
+    def >=  (bitRate: BitRate): BandwidthRequirement = BandwidthRequirement (GreaterEqual, bitRate)
+    def <   (bitRate: BitRate): BandwidthRequirement = BandwidthRequirement (Smaller, bitRate)
+    def <=  (bitRate: BitRate): BandwidthRequirement = BandwidthRequirement (SmallerEqual, bitRate)
   }
 
 
