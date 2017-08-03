@@ -20,10 +20,11 @@ object QoSUnits {
 
   //          TimeSpan Begin
   case class TimeSpan(private val i: Duration) extends QoSUnit[TimeSpan] {
-    override def <(other: TimeSpan): Boolean = other match {case TimeSpan(duration) => i.compareTo(duration) < 0}
-    override def >(other: TimeSpan): Boolean = other match {case TimeSpan(duration) => i.compareTo(duration) > 0}
-    override def <=(other: TimeSpan): Boolean = other match {case TimeSpan(duration) => i.compareTo(duration) <= 0}
-    override def -(other: TimeSpan): TimeSpan = other match {case TimeSpan(duration) => TimeSpan(i minus duration)}
+    override def <(other: TimeSpan): Boolean = i.compareTo(other.toDuration) < 0
+    override def >(other: TimeSpan): Boolean = i.compareTo(other.toDuration) > 0
+    override def <=(other: TimeSpan): Boolean = i.compareTo(other.toDuration) <= 0
+    override def -(other: TimeSpan): TimeSpan = TimeSpan(i minus other.toDuration)
+    def +(other: TimeSpan): TimeSpan = TimeSpan(i plus other.toDuration)
 
     def toDuration: Duration = i
     def getNano: Int = i.getNano

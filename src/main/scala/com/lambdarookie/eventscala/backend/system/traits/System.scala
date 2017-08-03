@@ -25,10 +25,7 @@ trait CEPSystem {
   val operators: Signal[Set[Operator]] = operatorsVar
   val nodesToOperators: Signal[Map[ActorRef, Operator]] = nodesToOperatorsVar
 
-  def selectHostForOperator(operator: Operator): Host = {
-    // TODO: Operator placement strategy
-    selectRandomHost
-  }
+  def selectHostForOperator(operator: Operator): Host // TODO: Operator placement strategy
 
   def getHostByNode(node: ActorRef): Host = nodesToOperators.now.get(node) match {
     case Some(operator) => operator.host
@@ -40,8 +37,22 @@ trait CEPSystem {
 
   def addOperator(operator: Operator): Unit = operatorsVar.transform(x => x + operator)
 
-
-  private def selectRandomHost: Host = hosts.now.toVector((math.random * hosts.now.size).toInt)
+  def measureLatencies(): Unit = hosts.now.foreach(host => {
+    host.measureNeighborLatencies()
+    var dests = hosts.now - host
+    var nexts = host.neighbors
+    while(nexts.nonEmpty) {
+      val n = nexts.head
+      nexts = nexts.tail
+      if(host.lastLatencies.contains(n) && dests.contains(n)) {
+        dests -= n
+        nexts ++= n.neighbors.intersect(dests)
+        n.neighbors.foreach(nn => if(n.lastLatencies.contains(nn) && (!host.lastLatencies.contains(nn)
+          || (host.lastLatencies.contains(nn) && host.lastLatencies(nn) > host.lastLatencies(n) + n.lastLatencies(nn))))
+          host.lastLatencies += (nn -> (host.lastLatencies(n) + n.lastLatencies(nn))))
+      }
+    }
+  })
 }
 
 
@@ -60,7 +71,6 @@ trait Host {
 
   def neighbors: Set[Host]
   def measureNeighborLatencies(): Unit
-
 
   var lastLatencies: Map[Host, TimeSpan] = Map(this -> 0.ms)
 

@@ -12,27 +12,33 @@ import com.lambdarookie.eventscala.backend.qos.QualityOfService.Requirement
 class TestSystem extends System {
   override val hosts: Signal[Set[Host]] = RandomHostFactory.createRandomHosts
   override val demandViolated: Event[Requirement] = null
+
+  override def selectHostForOperator(operator: Operator): Host = hosts.now.toVector((math.random * hosts.now.size).toInt)
 }
 
 object RandomHostFactory {
   def createRandomHosts: Var[Set[Host]] = {
-    val host1Impl: TestHost = new TestHost(1, createRandomCoordinate)
-    val host2Impl: TestHost = new TestHost(2, createRandomCoordinate)
-    val host3Impl: TestHost = new TestHost(3, createRandomCoordinate)
+    val testHost1: TestHost = new TestHost(1, createRandomCoordinate)
+    val testHost2: TestHost = new TestHost(2, createRandomCoordinate)
+    val testHost3: TestHost = new TestHost(3, createRandomCoordinate)
+    val testHost4: TestHost = new TestHost(4, createRandomCoordinate)
 
-    host1Impl.neighbors ++= Set(host2Impl, host3Impl)
-    host2Impl.neighbors ++= Set(host1Impl, host3Impl)
-    host3Impl.neighbors ++= Set(host1Impl, host2Impl)
+    testHost1.neighbors ++= Set(testHost2, testHost3)
+    testHost2.neighbors ++= Set(testHost1, testHost3, testHost4)
+    testHost3.neighbors ++= Set(testHost1, testHost2)
+    testHost4.neighbors ++= Set(testHost2)
 
-    val host1: Host = host1Impl
-    val host2: Host = host2Impl
-    val host3: Host = host3Impl
+    val host1: Host = testHost1
+    val host2: Host = testHost2
+    val host3: Host = testHost3
+    val host4: Host = testHost4
 
-    host1.lastLatencies ++= Map(host2 -> 999.ms, host3 -> 999.ms)
-    host2.lastLatencies ++= Map(host1 -> 999.ms, host3 -> 999.ms)
-    host3.lastLatencies ++= Map(host1 -> 999.ms, host2 -> 999.ms)
+    host1.measureNeighborLatencies()
+    host2.measureNeighborLatencies()
+    host3.measureNeighborLatencies()
+    host4.measureNeighborLatencies()
 
-    Var(Set(host1, host2, host3))
+    Var(Set(host1, host2, host3, host4))
   }
 
   def createRandomCoordinate = Coordinate(-90 + math.random * 180, -180 + math.random * 360, math.random * 100)

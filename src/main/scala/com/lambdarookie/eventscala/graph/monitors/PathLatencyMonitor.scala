@@ -56,7 +56,7 @@ case class PathLatencyUnaryNodeMonitor(interval: Int, logging: Boolean, testing:
     initialDelay = FiniteDuration(0, TimeUnit.SECONDS),
     interval = FiniteDuration(interval, TimeUnit.SECONDS),
     runnable = () => {
-      nodeData.system.getHostByNode(nodeData.context.self).measureNeighborLatencies()
+      nodeData.system.measureLatencies()
       nodeData.childNode ! ChildLatencyRequest(clock.instant)
     })
 
@@ -116,7 +116,7 @@ case class PathLatencyBinaryNodeMonitor(interval: Int, logging: Boolean, testing
     initialDelay = FiniteDuration(0, TimeUnit.SECONDS),
     interval = FiniteDuration(interval, TimeUnit.SECONDS),
     runnable = () => {
-      nodeData.system.getHostByNode(nodeData.context.self).measureNeighborLatencies()
+      nodeData.system.measureLatencies()
       nodeData.childNode1 ! ChildLatencyRequest(clock.instant)
       nodeData.childNode2 ! ChildLatencyRequest(clock.instant)
     })
