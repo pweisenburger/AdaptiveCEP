@@ -17,6 +17,8 @@ object QoSUnits {
     def >=(other: T): Boolean = other <= this.asInstanceOf[T]
   }
 
+  def min[T <: QoSUnit[T]](first: T, second: T): T = if(first < second) first else second
+
 
   //          TimeSpan Begin
   case class TimeSpan(private val i: Duration) extends QoSUnit[TimeSpan] {

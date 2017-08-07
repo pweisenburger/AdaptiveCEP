@@ -18,10 +18,10 @@ class TestSystem extends System {
 
 object RandomHostFactory {
   def createRandomHosts: Var[Set[Host]] = {
-    val testHost1: TestHost = new TestHost(1, createRandomCoordinate)
-    val testHost2: TestHost = new TestHost(2, createRandomCoordinate)
-    val testHost3: TestHost = new TestHost(3, createRandomCoordinate)
-    val testHost4: TestHost = new TestHost(4, createRandomCoordinate)
+    val testHost1: TestHost = new TestHost(1, createRandomCoordinate, 1.gbps)
+    val testHost2: TestHost = new TestHost(2, createRandomCoordinate, 1.gbps)
+    val testHost3: TestHost = new TestHost(3, createRandomCoordinate, 1.gbps)
+    val testHost4: TestHost = new TestHost(4, createRandomCoordinate, 1.gbps)
 
     testHost1.neighbors ++= Set(testHost2, testHost3)
     testHost2.neighbors ++= Set(testHost1, testHost3, testHost4)
@@ -33,10 +33,10 @@ object RandomHostFactory {
     val host3: Host = testHost3
     val host4: Host = testHost4
 
-    host1.measureNeighborLatencies()
-    host2.measureNeighborLatencies()
-    host3.measureNeighborLatencies()
-    host4.measureNeighborLatencies()
+    host1.measureNeighborMetrics()
+    host2.measureNeighborMetrics()
+    host3.measureNeighborMetrics()
+    host4.measureNeighborMetrics()
 
     Var(Set(host1, host2, host3, host4))
   }
@@ -44,12 +44,18 @@ object RandomHostFactory {
   def createRandomCoordinate = Coordinate(-90 + math.random * 180, -180 + math.random * 360, math.random * 100)
 }
 
-class TestHost(val id: Integer, val position: Coordinate) extends Host {
+class TestHost(val id: Integer, val position: Coordinate, val maxBandwidth: BitRate) extends Host {
   val name: String = s"Host $id"
 
   var neighbors: Set[Host] = Set.empty
 
   override def measureNeighborLatencies(): Unit =
-    neighbors.foreach(n => lastLatencies += (n -> (math.random() * 6).toInt.ms))
+    neighbors.foreach(n => lastLatencies += (n -> (math.random() * 5 + 1).toInt.ms))
+
+  override def measureNeighborBandwidths(): Unit =
+    neighbors.foreach(n => lastBandwidths += (n -> (math.random() * 50 + 50).toInt.mbps))
+
+  override def measureNeighborThroughputs(): Unit = neighbors.foreach(n => lastThroughputs +=
+    (n -> (math.random() * (if(lastBandwidths.contains(n)) lastBandwidths(n).toKbps * 1024 else 0)).toInt.mbps))
 
 }
