@@ -6,7 +6,7 @@ import com.lambdarookie.eventscala.data.Queries.Query
 import com.lambdarookie.eventscala.graph.factory.OperatorFactory
 import rescala._
 import com.lambdarookie.eventscala.backend.data.QoSUnits._
-import com.lambdarookie.eventscala.backend.qos.QualityOfService.Demand
+import com.lambdarookie.eventscala.backend.qos.QualityOfService.{Demand, Violation}
 
 /**
   * Created by monur.
@@ -127,7 +127,7 @@ trait QoSSystem {
   private val queriesVar: Var[Set[Query]] = Var(Set.empty)
 
   val queries: Signal[Set[Query]] = queriesVar
-  val demandViolated: Event[Demand]
+  val demandViolated: Event[Violation]
 
   def addQuery(query: Query): Unit = queriesVar.transform(x => x + query)
 }

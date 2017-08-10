@@ -4,14 +4,14 @@ import com.lambdarookie.eventscala.backend.data.Coordinate
 import com.lambdarookie.eventscala.backend.system.traits._
 import rescala._
 import com.lambdarookie.eventscala.backend.data.QoSUnits._
-import com.lambdarookie.eventscala.backend.qos.QualityOfService.Demand
+import com.lambdarookie.eventscala.backend.qos.QualityOfService.{Demand, Violation}
 
 /**
   * Created by monur.
   */
 class TestSystem extends System {
   override val hosts: Signal[Set[Host]] = RandomHostFactory.createRandomHosts
-  override val demandViolated: Event[Demand] = null
+  override val demandViolated: Event[Violation] = null
 
   override def selectHostForOperator(operator: Operator): Host = hosts.now.toVector((math.random * hosts.now.size).toInt)
 }

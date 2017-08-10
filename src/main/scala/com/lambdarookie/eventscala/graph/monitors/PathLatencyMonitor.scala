@@ -60,7 +60,7 @@ case class PathLatencyUnaryNodeMonitor(interval: Int, logging: Boolean, testing:
   var childNodePathLatency: Option[Duration] = None
 
   override def onCreated(nodeData: UnaryNodeData): Unit = nodeData.context.system.scheduler.schedule(
-    initialDelay = FiniteDuration(0, TimeUnit.SECONDS),
+    initialDelay = FiniteDuration(interval, TimeUnit.SECONDS),
     interval = FiniteDuration(interval, TimeUnit.SECONDS),
     runnable = () => {
       nodeData.system.measureLowestLatencies()
