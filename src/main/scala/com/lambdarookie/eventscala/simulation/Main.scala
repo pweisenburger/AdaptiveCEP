@@ -36,12 +36,10 @@ object Main extends App {
       slidingWindow(2.sec))
     .where(_ < _)
     .dropElem1(
-      latency < 1.ms)
+      latency < (1.ms, frequency > Ratio(10.instances, 5.sec)))
     .selfJoin(
       tumblingWindow(1.instances),
-      tumblingWindow(1.instances),
-      frequency > Ratio( 3.instances,  5.sec),
-      frequency < Ratio(12.instances, 15.sec))
+      tumblingWindow(1.instances))
     .and(stream[Float]("C"))
     .or(stream[String]("D"))
 
@@ -50,8 +48,7 @@ object Main extends App {
     .and(stream[Int]("B"))
     .join(
       sequence(
-        nStream[Float]("C") -> nStream[String]("D"),
-        frequency > Ratio(1.instances, 5.sec)),
+        nStream[Float]("C") -> nStream[String]("D")),
       slidingWindow(3.sec),
       slidingWindow(3.sec),
       latency < 1.ms)
@@ -62,7 +59,7 @@ object Main extends App {
     actorSystem =             actorSystem,
     query =                   query1, // Alternatively: `query2`
     publishers =              publishers,
-    frequencyMonitorFactory = AverageFrequencyMonitorFactory  (interval = 15, logging = true),
+    frequencyMonitorFactory = AverageFrequencyMonitorFactory  (interval = 15, logging = true, testing = true),
     latencyMonitorFactory   = PathLatencyMonitorFactory       (interval =  5, logging = true, testing = true),
     createdCallback =         () => println("STATUS:\t\tGraph has been created."))(
     eventCallback =           {

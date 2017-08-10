@@ -13,8 +13,9 @@ sealed trait Conditionable extends QoSMetric
 sealed trait Demandable extends Conditionable
 
 case class Proximity(source: Host, destination: Host, proximity: Distance) extends Conditionable {
-  def nearest(count: Int): SortedSet[Host] = {
-    source.sortNeighborsByProximity.grouped(count).toList(1)
+  def nearest(count: Int): Seq[Host] = {
+    source.sortByProximity()
+    source.lastProximities.keys.toSeq
   }
 }
 

@@ -15,53 +15,87 @@ object QualityOfService {
   case object Smaller      extends BooleanOperator
   case object SmallerEqual extends BooleanOperator
 
-  sealed trait Requirement
-  case class LatencyRequirement   (booleanOperator: BooleanOperator, timeSpan: TimeSpan) extends Requirement
-  case class FrequencyRequirement (booleanOperator: BooleanOperator, ratio: Ratio) extends Requirement
-  case class ThroughputRequirement (booleanOperator: BooleanOperator, bitRate: BitRate) extends Requirement
-  case class BandwidthRequirement (booleanOperator: BooleanOperator, bitRate: BitRate) extends Requirement
+  sealed trait Condition{ var notFulfilled: Boolean = false }
+  case class FrequencyCondition(booleanOperator: BooleanOperator, ratio: Ratio) extends Condition
+  case class ProximityCondition(booleanOperator: BooleanOperator, distance: Distance) extends Condition
+
+  sealed trait Demand extends Condition { val conditions: Set[Condition] }
+  case class LatencyDemand(booleanOperator: BooleanOperator, timeSpan: TimeSpan, conditions: Set[Condition])
+    extends Demand
+  case class ThroughputDemand(booleanOperator: BooleanOperator, bitRate: BitRate, conditions: Set[Condition])
+    extends Demand
+  case class BandwidthDemand(booleanOperator: BooleanOperator, bitRate: BitRate, conditions: Set[Condition])
+    extends Demand
 
 
-  def frequency: FrequencyRequirementCreator.type = FrequencyRequirementCreator
-  case object FrequencyRequirementCreator {
-    def === (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(Equal, ratio)
-    def =!= (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(NotEqual, ratio)
-    def >   (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(Greater, ratio)
-    def >=  (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(GreaterEqual, ratio)
-    def <   (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(Smaller, ratio)
-    def <=  (ratio: Ratio): FrequencyRequirement = FrequencyRequirement(SmallerEqual, ratio)
+  def frequency: FrequencyConditionCreator.type = FrequencyConditionCreator
+  case object FrequencyConditionCreator {
+    def === (ratio: Ratio): FrequencyCondition = FrequencyCondition(Equal, ratio)
+    def =!= (ratio: Ratio): FrequencyCondition = FrequencyCondition(NotEqual, ratio)
+    def >   (ratio: Ratio): FrequencyCondition = FrequencyCondition(Greater, ratio)
+    def >=  (ratio: Ratio): FrequencyCondition = FrequencyCondition(GreaterEqual, ratio)
+    def <   (ratio: Ratio): FrequencyCondition = FrequencyCondition(Smaller, ratio)
+    def <=  (ratio: Ratio): FrequencyCondition = FrequencyCondition(SmallerEqual, ratio)
   }
 
-  def latency: LatencyRequirementCreator.type = LatencyRequirementCreator
-  case object LatencyRequirementCreator {
-    def === (timeSpan: TimeSpan): LatencyRequirement = LatencyRequirement (Equal, timeSpan)
-    def =!= (timeSpan: TimeSpan): LatencyRequirement = LatencyRequirement (NotEqual, timeSpan)
-    def >   (timeSpan: TimeSpan): LatencyRequirement = LatencyRequirement (Greater, timeSpan)
-    def >=  (timeSpan: TimeSpan): LatencyRequirement = LatencyRequirement (GreaterEqual, timeSpan)
-    def <   (timeSpan: TimeSpan): LatencyRequirement = LatencyRequirement (Smaller, timeSpan)
-    def <=  (timeSpan: TimeSpan): LatencyRequirement = LatencyRequirement (SmallerEqual, timeSpan)
+  def proximity: ProximityConditionCreator.type = ProximityConditionCreator
+  case object ProximityConditionCreator {
+    def === (distance: Distance): ProximityCondition = ProximityCondition(Equal, distance)
+    def =!= (distance: Distance): ProximityCondition = ProximityCondition(NotEqual, distance)
+    def >   (distance: Distance): ProximityCondition = ProximityCondition(Greater, distance)
+    def >=  (distance: Distance): ProximityCondition = ProximityCondition(GreaterEqual, distance)
+    def <   (distance: Distance): ProximityCondition = ProximityCondition(Smaller, distance)
+    def <=  (distance: Distance): ProximityCondition = ProximityCondition(SmallerEqual, distance)
   }
 
-  def throughput: ThroughputRequirementCreator.type = ThroughputRequirementCreator
-  case object ThroughputRequirementCreator {
-    def === (bitRate: BitRate): ThroughputRequirement = ThroughputRequirement (Equal, bitRate)
-    def =!= (bitRate: BitRate): ThroughputRequirement = ThroughputRequirement (NotEqual, bitRate)
-    def >   (bitRate: BitRate): ThroughputRequirement = ThroughputRequirement (Greater, bitRate)
-    def >=  (bitRate: BitRate): ThroughputRequirement = ThroughputRequirement (GreaterEqual, bitRate)
-    def <   (bitRate: BitRate): ThroughputRequirement = ThroughputRequirement (Smaller, bitRate)
-    def <=  (bitRate: BitRate): ThroughputRequirement = ThroughputRequirement (SmallerEqual, bitRate)
+  def latency: LatencyDemandCreator.type = LatencyDemandCreator
+  case object LatencyDemandCreator {
+    def === (timeSpan: TimeSpan, conditions: Condition*): LatencyDemand =
+      LatencyDemand (Equal, timeSpan, conditions.toSet)
+    def =!= (timeSpan: TimeSpan, conditions: Condition*): LatencyDemand =
+      LatencyDemand (NotEqual, timeSpan, conditions.toSet)
+    def >   (timeSpan: TimeSpan, conditions: Condition*): LatencyDemand =
+      LatencyDemand (Greater, timeSpan, conditions.toSet)
+    def >=  (timeSpan: TimeSpan, conditions: Condition*): LatencyDemand =
+      LatencyDemand (GreaterEqual, timeSpan, conditions.toSet)
+    def <   (timeSpan: TimeSpan, conditions: Condition*): LatencyDemand =
+      LatencyDemand (Smaller, timeSpan, conditions.toSet)
+    def <=  (timeSpan: TimeSpan, conditions: Condition*): LatencyDemand =
+      LatencyDemand (SmallerEqual, timeSpan, conditions.toSet)
   }
 
-  def bandwidth: BandwidthRequirementCreator.type = BandwidthRequirementCreator
-  case object BandwidthRequirementCreator {
-    def === (bitRate: BitRate): BandwidthRequirement = BandwidthRequirement (Equal, bitRate)
-    def =!= (bitRate: BitRate): BandwidthRequirement = BandwidthRequirement (NotEqual, bitRate)
-    def >   (bitRate: BitRate): BandwidthRequirement = BandwidthRequirement (Greater, bitRate)
-    def >=  (bitRate: BitRate): BandwidthRequirement = BandwidthRequirement (GreaterEqual, bitRate)
-    def <   (bitRate: BitRate): BandwidthRequirement = BandwidthRequirement (Smaller, bitRate)
-    def <=  (bitRate: BitRate): BandwidthRequirement = BandwidthRequirement (SmallerEqual, bitRate)
+  def throughput: ThroughputDemandCreator.type = ThroughputDemandCreator
+  case object ThroughputDemandCreator {
+    def === (bitRate: BitRate, conditions: Condition*): ThroughputDemand =
+      ThroughputDemand (Equal, bitRate, conditions.toSet)
+    def =!= (bitRate: BitRate, conditions: Condition*): ThroughputDemand =
+      ThroughputDemand (NotEqual, bitRate, conditions.toSet)
+    def >   (bitRate: BitRate, conditions: Condition*): ThroughputDemand =
+      ThroughputDemand (Greater, bitRate, conditions.toSet)
+    def >=  (bitRate: BitRate, conditions: Condition*): ThroughputDemand =
+      ThroughputDemand (GreaterEqual, bitRate, conditions.toSet)
+    def <   (bitRate: BitRate, conditions: Condition*): ThroughputDemand =
+      ThroughputDemand (Smaller, bitRate, conditions.toSet)
+    def <=  (bitRate: BitRate, conditions: Condition*): ThroughputDemand =
+      ThroughputDemand (SmallerEqual, bitRate, conditions.toSet)
+  }
+
+  def bandwidth: BandwidthDemandCreator.type = BandwidthDemandCreator
+  case object BandwidthDemandCreator {
+    def === (bitRate: BitRate, conditions: Condition*): BandwidthDemand =
+      BandwidthDemand (Equal, bitRate, conditions.toSet)
+    def =!= (bitRate: BitRate, conditions: Condition*): BandwidthDemand =
+      BandwidthDemand (NotEqual, bitRate, conditions.toSet)
+    def >   (bitRate: BitRate, conditions: Condition*): BandwidthDemand =
+      BandwidthDemand (Greater, bitRate, conditions.toSet)
+    def >=  (bitRate: BitRate, conditions: Condition*): BandwidthDemand =
+      BandwidthDemand (GreaterEqual, bitRate, conditions.toSet)
+    def <   (bitRate: BitRate, conditions: Condition*): BandwidthDemand =
+      BandwidthDemand (Smaller, bitRate, conditions.toSet)
+    def <=  (bitRate: BitRate, conditions: Condition*): BandwidthDemand =
+      BandwidthDemand (SmallerEqual, bitRate, conditions.toSet)
   }
 
 
-  case class Violation (operator: Operator, requirement: Requirement)
+  case class Violation(operator: Operator, demand: Demand)
 }

@@ -2,48 +2,49 @@ package com.lambdarookie.eventscala.graph.monitors
 
 import java.util.concurrent.TimeUnit
 
+import com.lambdarookie.eventscala.backend.qos.QualityOfService._
+import com.lambdarookie.eventscala.backend.system.traits.Host
+import com.lambdarookie.eventscala.data.Events._
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.FiniteDuration
-import com.lambdarookie.eventscala.data.Events._
-import com.lambdarookie.eventscala.data.Queries._
-import com.lambdarookie.eventscala.backend.qos.QualityOfService._
-import com.lambdarookie.eventscala.backend.system.traits.Operator
 
 trait AverageFrequencyMonitor {
 
-  val logging: Boolean
   val interval: Int
+  val logging: Boolean
+  val testing: Boolean
 
   var currentOutput: Option[Int] = None
 
   def onCreated[ND <: NodeData](nodeData: ND): Unit = {
-    val query: Query = nodeData.query
-    val requirements: Set[FrequencyRequirement] =
-      query.requirements.collect{ case fr: FrequencyRequirement => fr }
+    val host: Host = nodeData.system.getHostByNode(nodeData.context.self)
+    val demands: Set[Demand] = nodeData.query.demands.filter(d => d.conditions.exists(_.isInstanceOf[FrequencyCondition]))
     currentOutput = Some(0)
-    if (requirements.nonEmpty) {
+    if (demands.nonEmpty) {
       nodeData.context.system.scheduler.schedule(
-        initialDelay = FiniteDuration(interval, TimeUnit.SECONDS),
+        initialDelay = FiniteDuration(0, TimeUnit.SECONDS),
         interval = FiniteDuration(interval, TimeUnit.SECONDS),
         runnable = () => {
-          requirements.foreach(requirement => {
-            require(requirement.ratio.timeSpan.getSeconds <= interval)
-            // `divisor`, e.g., if `interval` == 30, and `requirement.ratio.timeSpan.getSeconds` == 10, then `divisor` == 3
-            val divisor: Int = interval / requirement.ratio.timeSpan.getSeconds
-            val frequency: Int = currentOutput.get / divisor
-            if (logging) println(
-              s"FREQUENCY:\tOn average, node `${nodeData.name}` emits $frequency events every " +
-                s"${requirement.ratio.timeSpan.getSeconds} seconds. (Calculated every $interval seconds.)")
-            val operator: Operator = nodeData.system.nodesToOperators.now.apply(nodeData.context.self)
-            val instances = requirement.ratio.instances.getInstanceNum
-            requirement.booleanOperator match {
-              case Equal =>        if (!(frequency == instances)) query.addViolatedDemand(Violation(operator, requirement))
-              case NotEqual =>     if (!(frequency != instances)) query.addViolatedDemand(Violation(operator, requirement))
-              case Greater =>      if (!(frequency >  instances)) query.addViolatedDemand(Violation(operator, requirement))
-              case GreaterEqual => if (!(frequency >= instances)) query.addViolatedDemand(Violation(operator, requirement))
-              case Smaller =>      if (!(frequency <  instances)) query.addViolatedDemand(Violation(operator, requirement))
-              case SmallerEqual => if (!(frequency <= instances)) query.addViolatedDemand(Violation(operator, requirement))
-            }
+          nodeData.system.measureFrequencies()
+          demands.foreach(d => d.conditions.foreach {
+            case fc: FrequencyCondition =>
+              require(fc.ratio.timeSpan.getSeconds <= interval)
+              // `divisor`, e.g., if `interval` == 30, and `fc.ratio.timeSpan.getSeconds` == 10, then `divisor` == 3
+              val divisor: Int = interval / fc.ratio.timeSpan.getSeconds
+              val frequency = if(testing) host.lastFrequency.instances.getInstanceNum else currentOutput.get / divisor
+              if (logging) println(s"FREQUENCY:\tOn average, node `${nodeData.name}` emits $frequency events every " +
+                s"${fc.ratio.timeSpan.getSeconds} seconds. (Calculated every $interval seconds.)")
+              val instances = fc.ratio.instances.getInstanceNum
+              fc.booleanOperator match {
+                case Equal =>        fc.notFulfilled = !(frequency == instances)
+                case NotEqual =>     fc.notFulfilled = !(frequency != instances)
+                case Greater =>      fc.notFulfilled = !(frequency > instances)
+                case GreaterEqual => fc.notFulfilled = !(frequency >= instances)
+                case Smaller =>      fc.notFulfilled = !(frequency < instances)
+                case SmallerEqual => fc.notFulfilled = !(frequency <= instances)
+              }
+
           })
           currentOutput = Some(0)
         }
@@ -57,7 +58,7 @@ trait AverageFrequencyMonitor {
 
 }
 
-case class AverageFrequencyLeafNodeMonitor(interval: Int, logging: Boolean)
+case class AverageFrequencyLeafNodeMonitor(interval: Int, logging: Boolean, testing: Boolean)
   extends AverageFrequencyMonitor with LeafNodeMonitor {
 
   override def onCreated(nodeData: LeafNodeData): Unit = onCreated[LeafNodeData](nodeData)
@@ -65,7 +66,7 @@ case class AverageFrequencyLeafNodeMonitor(interval: Int, logging: Boolean)
 
 }
 
-case class AverageFrequencyUnaryNodeMonitor(interval: Int, logging: Boolean)
+case class AverageFrequencyUnaryNodeMonitor(interval: Int, logging: Boolean, testing: Boolean)
   extends AverageFrequencyMonitor with UnaryNodeMonitor {
 
   override def onCreated(nodeData: UnaryNodeData): Unit = onCreated[UnaryNodeData](nodeData)
@@ -73,7 +74,7 @@ case class AverageFrequencyUnaryNodeMonitor(interval: Int, logging: Boolean)
 
 }
 
-case class AverageFrequencyBinaryNodeMonitor(interval: Int, logging: Boolean)
+case class AverageFrequencyBinaryNodeMonitor(interval: Int, logging: Boolean, testing: Boolean)
   extends AverageFrequencyMonitor with BinaryNodeMonitor {
 
   override def onCreated(nodeData: BinaryNodeData): Unit = onCreated[BinaryNodeData](nodeData)
@@ -81,10 +82,13 @@ case class AverageFrequencyBinaryNodeMonitor(interval: Int, logging: Boolean)
 
 }
 
-case class AverageFrequencyMonitorFactory(interval: Int, logging: Boolean) extends MonitorFactory {
+case class AverageFrequencyMonitorFactory(interval: Int, logging: Boolean, testing: Boolean) extends MonitorFactory {
 
-  override def createLeafNodeMonitor: LeafNodeMonitor = AverageFrequencyLeafNodeMonitor(interval, logging)
-  override def createUnaryNodeMonitor: UnaryNodeMonitor = AverageFrequencyUnaryNodeMonitor(interval, logging)
-  override def createBinaryNodeMonitor: BinaryNodeMonitor = AverageFrequencyBinaryNodeMonitor(interval, logging)
+  override def createLeafNodeMonitor: LeafNodeMonitor =
+    AverageFrequencyLeafNodeMonitor(interval, logging, testing: Boolean)
+  override def createUnaryNodeMonitor: UnaryNodeMonitor =
+    AverageFrequencyUnaryNodeMonitor(interval, logging, testing: Boolean)
+  override def createBinaryNodeMonitor: BinaryNodeMonitor =
+    AverageFrequencyBinaryNodeMonitor(interval, logging, testing: Boolean)
 
 }

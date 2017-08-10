@@ -4,14 +4,14 @@ import com.lambdarookie.eventscala.backend.data.Coordinate
 import com.lambdarookie.eventscala.backend.system.traits._
 import rescala._
 import com.lambdarookie.eventscala.backend.data.QoSUnits._
-import com.lambdarookie.eventscala.backend.qos.QualityOfService.Requirement
+import com.lambdarookie.eventscala.backend.qos.QualityOfService.Demand
 
 /**
   * Created by monur.
   */
 class TestSystem extends System {
   override val hosts: Signal[Set[Host]] = RandomHostFactory.createRandomHosts
-  override val demandViolated: Event[Requirement] = null
+  override val demandViolated: Event[Demand] = null
 
   override def selectHostForOperator(operator: Operator): Host = hosts.now.toVector((math.random * hosts.now.size).toInt)
 }
@@ -33,10 +33,10 @@ object RandomHostFactory {
     val host3: Host = testHost3
     val host4: Host = testHost4
 
-    host1.measureNeighborMetrics()
-    host2.measureNeighborMetrics()
-    host3.measureNeighborMetrics()
-    host4.measureNeighborMetrics()
+    host1.measureMetrics()
+    host2.measureMetrics()
+    host3.measureMetrics()
+    host4.measureMetrics()
 
     Var(Set(host1, host2, host3, host4))
   }
@@ -49,6 +49,8 @@ class TestHost(val id: Integer, val position: Coordinate, val maxBandwidth: BitR
 
   var neighbors: Set[Host] = Set.empty
 
+  override def measureFrequency(): Unit = lastFrequency = Ratio((math.random() * 10 + 5).toInt.instances, 5.sec)
+
   override def measureNeighborLatencies(): Unit =
     neighbors.foreach(n => lastLatencies += (n -> (math.random() * 5 + 1).toInt.ms))
 
@@ -57,5 +59,4 @@ class TestHost(val id: Integer, val position: Coordinate, val maxBandwidth: BitR
 
   override def measureNeighborThroughputs(): Unit = neighbors.foreach(n => lastThroughputs +=
     (n -> (math.random() * (if(lastBandwidths.contains(n)) lastBandwidths(n).toKbps * 1024 else 0)).toInt.mbps))
-
 }
