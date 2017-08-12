@@ -15,8 +15,8 @@ case class ConjunctionNode(
     query: ConjunctionQuery,
     operator: BinaryOperator,
     publishers: Map[String, ActorRef],
-    frequencyMonitorFactory: MonitorFactory,
-    latencyMonitorFactory: MonitorFactory,
+    frequencyMonitor: AverageFrequencyMonitor,
+    latencyMonitor: PathLatencyMonitor,
     createdCallback: Option[() => Any],
     eventCallback: Option[(Event) => Any],
     testId: String)

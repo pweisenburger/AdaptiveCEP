@@ -23,8 +23,9 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     system,
     query,
     publishers,
-    DummyMonitorFactory(),
-    DummyMonitorFactory(),
+    GraphMonitor(15),
+    AverageFrequencyMonitor(interval = 15, logging = false, testing = true),
+    PathLatencyMonitor(interval = 5, logging = false, testing = true),
     () => testActor ! Created,
     event => testActor ! event)
 

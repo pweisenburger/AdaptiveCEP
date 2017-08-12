@@ -21,20 +21,5 @@ trait BinaryNode extends Node {
   val childNode1: ActorRef = createChildNode(1, query.sq1, childOperator1)
   val childNode2: ActorRef = createChildNode(2, query.sq2, childOperator2)
 
-  val frequencyMonitor: BinaryNodeMonitor = frequencyMonitorFactory.createBinaryNodeMonitor
-  val latencyMonitor: BinaryNodeMonitor = latencyMonitorFactory.createBinaryNodeMonitor
   val nodeData: BinaryNodeData = BinaryNodeData(name, query, system, context, childNode1, childNode2)
-
-  def emitCreated(): Unit = {
-    if (createdCallback.isDefined) createdCallback.get.apply() else context.parent ! Created
-    frequencyMonitor.onCreated(nodeData)
-    latencyMonitor.onCreated(nodeData)
-  }
-
-  def emitEvent(event: Event): Unit = {
-    if (eventCallback.isDefined) eventCallback.get.apply(event) else context.parent ! event
-    frequencyMonitor.onEventEmit(event, nodeData)
-    latencyMonitor.onEventEmit(event, nodeData)
-  }
-
 }

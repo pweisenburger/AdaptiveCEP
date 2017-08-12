@@ -9,15 +9,10 @@ import com.lambdarookie.eventscala.data.Events._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.FiniteDuration
 
-trait AverageFrequencyMonitor {
-
-  val interval: Int
-  val logging: Boolean
-  val testing: Boolean
-
+case class AverageFrequencyMonitor(interval: Int, logging: Boolean, testing: Boolean) extends NodeMonitor {
   var currentOutput: Option[Int] = None
 
-  def onCreated[ND <: NodeData](nodeData: ND): Unit = {
+  override def onCreated(nodeData: NodeData): Unit = {
     val host: Host = nodeData.system.getHostByNode(nodeData.context.self)
     val demands: Set[Demand] = nodeData.query.demands.filter(d => d.conditions.exists(_.isInstanceOf[FrequencyCondition]))
     currentOutput = Some(0)
@@ -26,7 +21,6 @@ trait AverageFrequencyMonitor {
         initialDelay = FiniteDuration(0, TimeUnit.SECONDS),
         interval = FiniteDuration(interval, TimeUnit.SECONDS),
         runnable = () => {
-          nodeData.system.measureFrequencies()
           demands.foreach(d => d.conditions.foreach {
             case fc: FrequencyCondition =>
               require(fc.ratio.timeSpan.getSeconds <= interval)
@@ -52,43 +46,7 @@ trait AverageFrequencyMonitor {
     }
   }
 
-  def onEventEmit(event: Event): Unit = {
-    if (currentOutput.isDefined) currentOutput = Some(currentOutput.get + 1)
-  }
+  def onEventEmit(event: Event): Unit =  if (currentOutput.isDefined) currentOutput = Some(currentOutput.get + 1)
 
-}
-
-case class AverageFrequencyLeafNodeMonitor(interval: Int, logging: Boolean, testing: Boolean)
-  extends AverageFrequencyMonitor with LeafNodeMonitor {
-
-  override def onCreated(nodeData: LeafNodeData): Unit = onCreated[LeafNodeData](nodeData)
-  override def onEventEmit(event: Event, nodeData: LeafNodeData): Unit = onEventEmit(event)
-
-}
-
-case class AverageFrequencyUnaryNodeMonitor(interval: Int, logging: Boolean, testing: Boolean)
-  extends AverageFrequencyMonitor with UnaryNodeMonitor {
-
-  override def onCreated(nodeData: UnaryNodeData): Unit = onCreated[UnaryNodeData](nodeData)
-  override def onEventEmit(event: Event, nodeData: UnaryNodeData): Unit = onEventEmit(event)
-
-}
-
-case class AverageFrequencyBinaryNodeMonitor(interval: Int, logging: Boolean, testing: Boolean)
-  extends AverageFrequencyMonitor with BinaryNodeMonitor {
-
-  override def onCreated(nodeData: BinaryNodeData): Unit = onCreated[BinaryNodeData](nodeData)
-  override def onEventEmit(event: Event, nodeData: BinaryNodeData): Unit = onEventEmit(event)
-
-}
-
-case class AverageFrequencyMonitorFactory(interval: Int, logging: Boolean, testing: Boolean) extends MonitorFactory {
-
-  override def createLeafNodeMonitor: LeafNodeMonitor =
-    AverageFrequencyLeafNodeMonitor(interval, logging, testing: Boolean)
-  override def createUnaryNodeMonitor: UnaryNodeMonitor =
-    AverageFrequencyUnaryNodeMonitor(interval, logging, testing: Boolean)
-  override def createBinaryNodeMonitor: BinaryNodeMonitor =
-    AverageFrequencyBinaryNodeMonitor(interval, logging, testing: Boolean)
 
 }

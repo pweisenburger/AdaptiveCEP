@@ -20,8 +20,6 @@ object Queries {
   case class SlidingTime       (seconds: Int)   extends Window
   case class TumblingTime      (seconds: Int)   extends Window
 
-  case class NodeData(name: String, query: Query, context: ActorContext)
-
   sealed trait Query extends Demands { val demands: Set[Demand] }
 
   sealed trait LeafQuery   extends Query {

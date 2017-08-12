@@ -59,8 +59,9 @@ object Main extends App {
     actorSystem =             actorSystem,
     query =                   query1, // Alternatively: `query2`
     publishers =              publishers,
-    frequencyMonitorFactory = AverageFrequencyMonitorFactory  (interval = 15, logging = true, testing = true),
-    latencyMonitorFactory   = PathLatencyMonitorFactory       (interval =  5, logging = true, testing = true),
+    graphMonitor =            GraphMonitor            (interval = 15),
+    frequencyMonitor =        AverageFrequencyMonitor (interval = 15, logging = true, testing = true),
+    latencyMonitor   =        PathLatencyMonitor      (interval =  5, logging = true, testing = true),
     createdCallback =         () => println("STATUS:\t\tGraph has been created."))(
     eventCallback =           {
       // Callback for `query1`:

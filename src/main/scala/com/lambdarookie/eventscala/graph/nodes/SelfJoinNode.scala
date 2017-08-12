@@ -16,8 +16,8 @@ case class SelfJoinNode(
     query: SelfJoinQuery,
     operator: UnaryOperator,
     publishers: Map[String, ActorRef],
-    frequencyMonitorFactory: MonitorFactory,
-    latencyMonitorFactory: MonitorFactory,
+    frequencyMonitor: AverageFrequencyMonitor,
+    latencyMonitor: PathLatencyMonitor,
     createdCallback: Option[() => Any],
     eventCallback: Option[(Event) => Any],
     testId: String)
