@@ -11,7 +11,8 @@ import com.lambdarookie.eventscala.backend.qos.QualityOfService.{Demand, Violati
   */
 class TestSystem extends System {
   override val hosts: Signal[Set[Host]] = RandomHostFactory.createRandomHosts
-  override val demandViolated: Event[Violation] = null
+
+  demandViolated += {v => v.operator.query.addViolatedDemand(v)}
 
   override def selectHostForOperator(operator: Operator): Host = hosts.now.toVector((math.random * hosts.now.size).toInt)
 }

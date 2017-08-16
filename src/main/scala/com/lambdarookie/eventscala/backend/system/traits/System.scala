@@ -125,11 +125,14 @@ trait CEPSystem {
 
 trait QoSSystem {
   private val queriesVar: Var[Set[Query]] = Var(Set.empty)
+  private val fireDemandViolated: Evt[Violation] = Evt[Violation]
 
   val queries: Signal[Set[Query]] = queriesVar
-  val demandViolated: Event[Violation]
+  val demandViolated: Event[Violation] = fireDemandViolated
 
   def addQuery(query: Query): Unit = queriesVar.transform(x => x + query)
+
+  def fireDemandViolated(violation: Violation): Unit = fireDemandViolated fire violation
 }
 
 

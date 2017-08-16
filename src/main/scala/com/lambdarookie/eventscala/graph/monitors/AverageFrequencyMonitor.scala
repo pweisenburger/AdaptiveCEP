@@ -26,19 +26,19 @@ case class AverageFrequencyMonitor(interval: Int, logging: Boolean, testing: Boo
               require(fc.ratio.timeSpan.getSeconds <= interval)
               // `divisor`, e.g., if `interval` == 30, and `fc.ratio.timeSpan.getSeconds` == 10, then `divisor` == 3
               val divisor: Int = interval / fc.ratio.timeSpan.getSeconds
-              val frequency = if(testing) host.lastFrequency.instances.getInstanceNum else currentOutput.get / divisor
-              if (logging) println(s"FREQUENCY:\tOn average, node `${nodeData.name}` emits $frequency events every " +
+              val current: Int = if(testing) host.lastFrequency.instances.getInstanceNum else currentOutput.get / divisor
+              if (logging) println(s"FREQUENCY:\tOn average, node `${nodeData.name}` emits $current events every " +
                 s"${fc.ratio.timeSpan.getSeconds} seconds. (Calculated every $interval seconds.)")
-              val instances = fc.ratio.instances.getInstanceNum
+              val expected = fc.ratio.instances.getInstanceNum
               fc.booleanOperator match {
-                case Equal =>        fc.notFulfilled = !(frequency == instances)
-                case NotEqual =>     fc.notFulfilled = !(frequency != instances)
-                case Greater =>      fc.notFulfilled = !(frequency > instances)
-                case GreaterEqual => fc.notFulfilled = !(frequency >= instances)
-                case Smaller =>      fc.notFulfilled = !(frequency < instances)
-                case SmallerEqual => fc.notFulfilled = !(frequency <= instances)
+                case Equal =>        fc.notFulfilled = !(current == expected)
+                case NotEqual =>     fc.notFulfilled = !(current != expected)
+                case Greater =>      fc.notFulfilled = !(current > expected)
+                case GreaterEqual => fc.notFulfilled = !(current >= expected)
+                case Smaller =>      fc.notFulfilled = !(current < expected)
+                case SmallerEqual => fc.notFulfilled = !(current <= expected)
               }
-
+            case _ => //Do nothing
           })
           currentOutput = Some(0)
         }

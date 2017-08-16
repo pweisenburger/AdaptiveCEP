@@ -17,6 +17,7 @@ case class PathLatency(childNode: ActorRef, duration: Duration)
 case class PathLatencyMonitor(interval: Int, logging: Boolean, testing: Boolean) extends NodeMonitor {
 
   val clock: Clock = Clock.systemDefaultZone
+
   var childNodeLatency: Option[Duration] = None
   var childNodePathLatency: Option[Duration] = None
   var childNode1Latency: Option[Duration] = None
@@ -67,7 +68,7 @@ case class PathLatencyMonitor(interval: Int, logging: Boolean, testing: Boolean)
                 println(s"LATENCY:\tEvents reach node `${nodeData.name}` after ${pathLatency.toMillis} ms. " +
                   s"(Calculated every $interval seconds.)")
               latencyDemands.foreach(ld =>
-                if (isDemandNotMet(pathLatency, ld)) query.addViolatedDemand(Violation(operator, ld)))
+                if (isDemandNotMet(pathLatency, ld)) system.fireDemandViolated(Violation(operator, ld)))
               childNodeLatency = None
               childNodePathLatency = None
             }
@@ -82,7 +83,7 @@ case class PathLatencyMonitor(interval: Int, logging: Boolean, testing: Boolean)
                 println(s"LATENCY:\tEvents reach node `${nodeData.name}` after ${pathLatency.toMillis} ms. " +
                   s"(Calculated every $interval seconds.)")
               latencyDemands.foreach(ld =>
-                if (isDemandNotMet(pathLatency, ld)) query.addViolatedDemand(Violation(operator, ld)))
+                if (isDemandNotMet(pathLatency, ld)) system.fireDemandViolated(Violation(operator, ld)))
               childNodeLatency = None
               childNodePathLatency = None
             }
@@ -111,7 +112,7 @@ case class PathLatencyMonitor(interval: Int, logging: Boolean, testing: Boolean)
               println(s"LATENCY:\tEvents reach node `${nodeData.name}` after " +
                 s"${math.max(pathLatency1.toMillis, pathLatency2.toMillis)} ms. (Calculated every $interval seconds.)")
             latencyDemands.foreach(ld =>
-              if (isDemandNotMet(pathLatency1, ld)) query.addViolatedDemand(Violation(operator, ld)))
+              if (isDemandNotMet(pathLatency1, ld)) system.fireDemandViolated(Violation(operator, ld)))
             childNode1Latency = None
             childNode2Latency = None
             childNode1PathLatency = None
@@ -134,7 +135,7 @@ case class PathLatencyMonitor(interval: Int, logging: Boolean, testing: Boolean)
               println(s"LATENCY:\tEvents reach node `${nodeData.name}` after " +
                 s"${math.max(pathLatency1.toMillis, pathLatency2.toMillis)} ms. (Calculated every $interval seconds.)")
             latencyDemands.foreach(ld =>
-              if (isDemandNotMet(pathLatency1, ld)) query.addViolatedDemand(Violation(operator, ld)))
+              if (isDemandNotMet(pathLatency1, ld)) system.fireDemandViolated(Violation(operator, ld)))
             childNode1Latency = None
             childNode2Latency = None
             childNode1PathLatency = None
