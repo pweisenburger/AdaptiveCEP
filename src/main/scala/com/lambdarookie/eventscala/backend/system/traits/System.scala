@@ -1,12 +1,10 @@
 package com.lambdarookie.eventscala.backend.system.traits
 
 import akka.actor.ActorRef
-import com.lambdarookie.eventscala.backend.data.Coordinate
-import com.lambdarookie.eventscala.data.Queries.Query
-import com.lambdarookie.eventscala.graph.factory.OperatorFactory
-import rescala._
 import com.lambdarookie.eventscala.backend.data.QoSUnits._
-import com.lambdarookie.eventscala.backend.qos.QualityOfService.{Demand, Violation}
+import com.lambdarookie.eventscala.backend.qos.QualityOfService.Violation
+import com.lambdarookie.eventscala.data.Queries.Query
+import rescala._
 
 /**
   * Created by monur.
@@ -133,49 +131,4 @@ trait QoSSystem {
   def addQuery(query: Query): Unit = queriesVar.transform(x => x + query)
 
   def fireDemandViolated(violation: Violation): Unit = fireDemandViolated fire violation
-}
-
-
-trait Host {
-  val position: Coordinate
-  val maxBandwidth: BitRate
-
-  def neighbors: Set[Host]
-  def measureFrequency(): Unit
-  def measureNeighborLatencies(): Unit
-  def measureNeighborBandwidths(): Unit
-  def measureNeighborThroughputs(): Unit
-
-  var lastFrequency: Ratio = Ratio(0.instances, 0.sec)
-  var lastProximities: Map[Host, Distance] = Map(this -> 0.m)
-  var lastLatencies: Map[Host, TimeSpan] = Map(this -> 0.ms)
-  var lastThroughputs: Map[Host, BitRate] = Map(this -> maxBandwidth)
-  var lastBandwidths: Map[Host, BitRate] = Map(this -> maxBandwidth)
-
-
-  def measureProximities(): Unit =
-    neighbors.foreach(n => lastProximities += (n -> position.calculateDistanceTo(n.position).m))
-
-  def sortByProximity(): Unit = lastProximities = Map(lastProximities.toSeq.sortWith(_._2 < _._2): _*)
-
-  def measureMetrics(): Unit = {
-    measureFrequency()
-    measureProximities()
-    measureNeighborLatencies()
-    measureNeighborBandwidths()
-    measureNeighborThroughputs()
-  }
-}
-
-
-trait Operator {
-  val testId: String
-  val system: System
-  val host: Host
-  val query: Query
-  val inputs: Seq[Operator]
-  val outputs: Set[Operator]
-
-  def createChildOperator(testId: String, subQuery: Query): Operator =
-    OperatorFactory.createOperator(testId, system, subQuery, Set(this))
 }
