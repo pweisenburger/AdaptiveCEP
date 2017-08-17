@@ -59,7 +59,7 @@ object Main extends App {
     actorSystem =             actorSystem,
     query =                   query1, // Alternatively: `query2`
     publishers =              publishers,
-    graphMonitor =            GraphMonitor            (interval = 15),
+    graphMonitor =            GraphMonitor            (15, 15, 15, 15),
     frequencyMonitor =        AverageFrequencyMonitor (interval = 15, logging = true, testing = true),
     latencyMonitor   =        PathLatencyMonitor      (interval =  5, logging = true, testing = true),
     createdCallback =         () => println("STATUS:\t\tGraph has been created."))(

@@ -25,14 +25,31 @@ trait NodeMonitor {
   def onMessageReceive(message: Any, nodeData: NodeData): Unit = ()
 }
 
-case class GraphMonitor(interval: Int) {
-  def onCreated(system: System, actorSystem: ActorSystem): Unit = actorSystem.scheduler.schedule(
-    initialDelay = FiniteDuration(0, TimeUnit.SECONDS),
-    interval = FiniteDuration(interval, TimeUnit.SECONDS),
-    runnable = () => {
-      system.measureFrequencies()
-      system.measureLowestLatencies()
-      system.measureHighestBandwidths()
-      system.measureHighestThroughputs()
-    })
+case class GraphMonitor(frequencyInterval: Int, latencyInterval: Int, bandwidthInterval: Int, throughputInterval: Int) {
+  def onCreated(system: System, actorSystem: ActorSystem): Unit = {
+    actorSystem.scheduler.schedule(
+      initialDelay = FiniteDuration(0, TimeUnit.SECONDS),
+      interval = FiniteDuration(frequencyInterval, TimeUnit.SECONDS),
+      runnable = () => {
+        system.measureFrequencies()
+      })
+    actorSystem.scheduler.schedule(
+      initialDelay = FiniteDuration(0, TimeUnit.SECONDS),
+      interval = FiniteDuration(latencyInterval, TimeUnit.SECONDS),
+      runnable = () => {
+        system.measureLowestLatencies()
+      })
+    actorSystem.scheduler.schedule(
+      initialDelay = FiniteDuration(0, TimeUnit.SECONDS),
+      interval = FiniteDuration(bandwidthInterval, TimeUnit.SECONDS),
+      runnable = () => {
+        system.measureHighestBandwidths()
+      })
+    actorSystem.scheduler.schedule(
+      initialDelay = FiniteDuration(0, TimeUnit.SECONDS),
+      interval = FiniteDuration(throughputInterval, TimeUnit.SECONDS),
+      runnable = () => {
+        system.measureHighestThroughputs()
+      })
+  }
 }
