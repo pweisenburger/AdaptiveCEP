@@ -21,8 +21,7 @@ object NodeFactory {
                  latencyMonitor: PathLatencyMonitor,
                  createdCallback: Option[() => Any],
                  eventCallback: Option[(Event) => Any],
-                 prefix: String,
-                 testId: String): ActorRef = query match {
+                 prefix: String): ActorRef = query match {
     case streamQuery: StreamQuery =>
       actorRefFactory.actorOf(Props(
         StreamNode(
@@ -33,8 +32,7 @@ object NodeFactory {
           frequencyMonitor,
           latencyMonitor,
           createdCallback,
-          eventCallback,
-          testId)),
+          eventCallback)),
         s"${prefix}stream")
     case sequenceQuery: SequenceQuery =>
       actorRefFactory.actorOf(Props(
@@ -46,8 +44,7 @@ object NodeFactory {
           frequencyMonitor,
           latencyMonitor,
           createdCallback,
-          eventCallback,
-          testId)),
+          eventCallback)),
         s"${prefix}sequence")
     case filterQuery: FilterQuery =>
       actorRefFactory.actorOf(Props(
@@ -59,8 +56,7 @@ object NodeFactory {
           frequencyMonitor,
           latencyMonitor,
           createdCallback,
-          eventCallback,
-          testId)),
+          eventCallback)),
         s"${prefix}filter")
     case dropElemQuery: DropElemQuery =>
       actorRefFactory.actorOf(Props(
@@ -72,8 +68,7 @@ object NodeFactory {
           frequencyMonitor,
           latencyMonitor,
           createdCallback,
-          eventCallback,
-          testId)),
+          eventCallback)),
         s"${prefix}dropelem")
     case selfJoinQuery: SelfJoinQuery =>
       actorRefFactory.actorOf(Props(
@@ -85,8 +80,7 @@ object NodeFactory {
           frequencyMonitor,
           latencyMonitor,
           createdCallback,
-          eventCallback,
-          testId)),
+          eventCallback)),
         s"${prefix}selfjoin")
     case joinQuery: JoinQuery =>
       actorRefFactory.actorOf(Props(
@@ -98,8 +92,7 @@ object NodeFactory {
           frequencyMonitor,
           latencyMonitor,
           createdCallback,
-          eventCallback,
-          testId)),
+          eventCallback)),
         s"${prefix}join")
     case conjunctionQuery: ConjunctionQuery =>
       actorRefFactory.actorOf(Props(
@@ -111,8 +104,7 @@ object NodeFactory {
           frequencyMonitor,
           latencyMonitor,
           createdCallback,
-          eventCallback,
-          testId)),
+          eventCallback)),
         s"${prefix}conjunction")
     case disjunctionQuery: DisjunctionQuery =>
       actorRefFactory.actorOf(Props(
@@ -124,8 +116,7 @@ object NodeFactory {
           frequencyMonitor,
           latencyMonitor,
           createdCallback,
-          eventCallback,
-          testId)),
+          eventCallback)),
         s"${prefix}disjunction")
   }
 }

@@ -17,8 +17,7 @@ case class StreamNode(
     frequencyMonitor: AverageFrequencyMonitor,
     latencyMonitor: PathLatencyMonitor,
     createdCallback: Option[() => Any],
-    eventCallback: Option[(Event) => Any],
-    testId: String)
+    eventCallback: Option[(Event) => Any])
   extends LeafNode {
 
   val publisher: ActorRef = publishers(query.publisherName)

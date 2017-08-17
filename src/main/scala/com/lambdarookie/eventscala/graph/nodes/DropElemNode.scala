@@ -16,8 +16,7 @@ case class DropElemNode(
     frequencyMonitor: AverageFrequencyMonitor,
     latencyMonitor: PathLatencyMonitor,
     createdCallback: Option[() => Any],
-    eventCallback: Option[(Event) => Any],
-    testId: String)
+    eventCallback: Option[(Event) => Any])
   extends UnaryNode {
 
   val elemToBeDropped: Int = query match {

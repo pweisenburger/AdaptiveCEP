@@ -11,7 +11,6 @@ trait Node extends Actor {
 
   val name: String = self.path.name
 
-  val testId: String
   val system: System
   val query: Query
   val operator: Operator
@@ -42,6 +41,6 @@ trait Node extends Actor {
       system, context, query, childOperator, publishers,
       AverageFrequencyMonitor(frequencyMonitor.interval, frequencyMonitor.logging, frequencyMonitor.testing),
       PathLatencyMonitor(latencyMonitor.interval, latencyMonitor.logging, latencyMonitor.testing),
-      None, None, s"$name-$id-", s"$testId-$id")
+      None, None, s"$name-$id-")
 
 }

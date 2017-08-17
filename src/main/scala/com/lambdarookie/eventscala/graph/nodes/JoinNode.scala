@@ -19,8 +19,7 @@ case class JoinNode(
     frequencyMonitor: AverageFrequencyMonitor,
     latencyMonitor: PathLatencyMonitor,
     createdCallback: Option[() => Any],
-    eventCallback: Option[(Event) => Any],
-    testId: String)
+    eventCallback: Option[(Event) => Any])
   extends BinaryNode with EsperEngine {
 
   override val esperServiceProviderUri: String = name

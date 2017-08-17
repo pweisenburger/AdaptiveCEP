@@ -16,8 +16,7 @@ case class DisjunctionNode(
     frequencyMonitor: AverageFrequencyMonitor,
     latencyMonitor: PathLatencyMonitor,
     createdCallback: Option[() => Any],
-    eventCallback: Option[(Event) => Any],
-    testId: String)
+    eventCallback: Option[(Event) => Any])
   extends BinaryNode {
 
   var childNode1Created: Boolean = false

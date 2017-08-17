@@ -16,8 +16,7 @@ case class FilterNode(
     frequencyMonitor: AverageFrequencyMonitor,
     latencyMonitor: PathLatencyMonitor,
     createdCallback: Option[() => Any],
-    eventCallback: Option[(Event) => Any],
-    testId: String)
+    eventCallback: Option[(Event) => Any])
   extends UnaryNode {
 
   override def receive: Receive = {
