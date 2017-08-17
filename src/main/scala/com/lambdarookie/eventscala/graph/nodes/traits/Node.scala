@@ -40,6 +40,8 @@ trait Node extends Actor {
   def createChildNode(id: Int, query: Query, childOperator: Operator): ActorRef =
     NodeFactory.createNode(
       system, context, query, childOperator, publishers,
-      frequencyMonitor, latencyMonitor, None, None, s"$name-$id-", s"$testId-$id")
+      AverageFrequencyMonitor(frequencyMonitor.interval, frequencyMonitor.logging, frequencyMonitor.testing),
+      PathLatencyMonitor(latencyMonitor.interval, latencyMonitor.logging, latencyMonitor.testing),
+      None, None, s"$name-$id-", s"$testId-$id")
 
 }
