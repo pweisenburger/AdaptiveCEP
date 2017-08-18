@@ -19,7 +19,8 @@ object GraphFactory {
       createdCallback: () => Any,
       eventCallback: (Event) => Any): ActorRef = {
     graphMonitor.onCreated(system, actorSystem)
-    NodeFactory.createNode(system, actorSystem, query, OperatorFactory.createOperator(system, query, Set.empty[Operator]),
+    NodeFactory.createNode(system, actorSystem, query,
+      OperatorFactory.createOperator(Operator.ROOT, system, query, Set.empty[Operator]),
       publishers, frequencyMonitor, latencyMonitor, Some(createdCallback), Some(eventCallback), "")
   }
 

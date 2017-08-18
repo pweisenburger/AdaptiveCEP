@@ -53,11 +53,22 @@ object Main extends App {
       slidingWindow(3.sec),
       latency < 1.ms)
 
+  val query3: Query3[Int, Int, String] =
+    stream[Int]("A")
+      .selfJoin(
+        slidingWindow(3.sec),
+        slidingWindow(3.sec))
+      .join(
+        stream[String]("B"),
+        tumblingWindow(1.instances),
+        tumblingWindow(1.instances),
+        latency < 10.ms)
+
 
   GraphFactory.create(
     system =                  system,
     actorSystem =             actorSystem,
-    query =                   query1, // Alternatively: `query2`
+    query =                   query3,
     publishers =              publishers,
     graphMonitor =            GraphMonitor            (15, 15, 15, 15),
     frequencyMonitor =        AverageFrequencyMonitor (interval = 15, logging = true, testing = true),
@@ -65,10 +76,12 @@ object Main extends App {
     createdCallback =         () => println("STATUS:\t\tGraph has been created."))(
     eventCallback =           {
       // Callback for `query1`:
-      case (Left(i1), Left(i2), Left(f)) => println(s"COMPLEX EVENT:\tEvent3($i1,$i2,$f)")
-      case (Right(s), _, _)              => println(s"COMPLEX EVENT:\tEvent1($s)")
+//      case (Left(i1), Left(i2), Left(f)) => println(s"COMPLEX EVENT:\tEvent3($i1,$i2,$f)")
+//      case (Right(s), _, _)              => println(s"COMPLEX EVENT:\tEvent1($s)")
       // Callback for `query2`:
       // case (i1, i2, f, s)             => println(s"COMPLEX EVENT:\tEvent4($i1, $i2, $f,$s)")
+      // Callback for `query2`:
+       case (i1, i2, s)             => println(s"COMPLEX EVENT:\tEvent3($i1, $i2, $s)")
       // This is necessary to avoid warnings about non-exhaustive `match`:
       case _                             =>
     })

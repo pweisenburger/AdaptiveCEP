@@ -2,6 +2,7 @@ package com.lambdarookie.eventscala.backend.system.traits
 
 import com.lambdarookie.eventscala.backend.data.Coordinate
 import com.lambdarookie.eventscala.backend.data.QoSUnits._
+import rescala._
 
 /**
   * Created by monur.
@@ -16,12 +17,20 @@ trait Host {
   def measureNeighborBandwidths(): Unit
   def measureNeighborThroughputs(): Unit
 
+
+  private val operatorsVar: Var[Set[Operator]] = Var(Set.empty)
+  val operators: Signal[Set[Operator]] = operatorsVar
+
   var lastFrequency: Ratio = Ratio(0.instances, 0.sec)
   var lastProximities: Map[Host, Distance] = Map(this -> 0.m)
-  var lastLatencies: Map[Host, TimeSpan] = Map(this -> 0.ms)
-  var lastThroughputs: Map[Host, BitRate] = Map(this -> maxBandwidth)
-  var lastBandwidths: Map[Host, BitRate] = Map(this -> maxBandwidth)
+  var lastLatencies: Map[Host, (Seq[Host], TimeSpan)] = Map(this -> (Seq.empty, 0.ms))
+  var lastThroughputs: Map[Host, (Seq[Host], BitRate)] = Map(this -> (Seq.empty, maxBandwidth))
+  var lastBandwidths: Map[Host, (Seq[Host], BitRate)] = Map(this -> (Seq.empty, maxBandwidth))
 
+
+  def addOperator(operator: Operator): Unit = operatorsVar.transform(_ + operator)
+
+  def removeOperator(operator: Operator): Unit = operatorsVar.transform(_ - operator)
 
   def measureProximities(): Unit =
     neighbors.foreach(n => lastProximities += (n -> position.calculateDistanceTo(n.position).m))

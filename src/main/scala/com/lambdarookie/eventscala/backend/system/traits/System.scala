@@ -26,7 +26,7 @@ trait CEPSystem {
     * @param operator Operator, whose host we are seeking
     * @return Selected host
     */
-  def selectHostForOperator(operator: Operator): Host // TODO: Operator placement strategy
+  def placeOperator(operator: Operator): Host
 
   /**
     * Get the host of a node. Every node is mapped to an operator and therefore a host
@@ -66,13 +66,16 @@ trait CEPSystem {
     var nexts = host.neighbors
     while(nexts.nonEmpty) {
       val n = nexts.head
+      val inters: Seq[Host] = host.lastLatencies(n)._1 :+ n
       nexts = nexts.tail
       if(host.lastLatencies.contains(n) && dests.contains(n)) {
         dests -= n
         nexts ++= n.neighbors.intersect(dests)
-        n.neighbors.foreach(nn => if(n.lastLatencies.contains(nn) && (!host.lastLatencies.contains(nn)
-          || (host.lastLatencies.contains(nn) && host.lastLatencies(nn) > host.lastLatencies(n) + n.lastLatencies(nn))))
-          host.lastLatencies += (nn -> (host.lastLatencies(n) + n.lastLatencies(nn))))
+        n.neighbors.foreach(nn => if(n.lastLatencies.contains(nn)
+          && (!host.lastLatencies.contains(nn)
+            || (host.lastLatencies.contains(nn)
+              && host.lastLatencies(nn)._2 > host.lastLatencies(n)._2 + n.lastLatencies(nn)._2)))
+          host.lastLatencies += (nn -> (inters ,host.lastLatencies(n)._2 + n.lastLatencies(nn)._2)))
       }
     }
   })
@@ -86,14 +89,16 @@ trait CEPSystem {
     var nexts = host.neighbors
     while(nexts.nonEmpty) {
       val n = nexts.head
+      val inters: Seq[Host] = host.lastBandwidths(n)._1 :+ n
       nexts = nexts.tail
       if(host.lastBandwidths.contains(n) && dests.contains(n)) {
         dests -= n
         nexts ++= n.neighbors.intersect(dests)
-        n.neighbors.foreach(nn => if(n.lastBandwidths.contains(nn) && (!host.lastBandwidths.contains(nn)
-          || (host.lastBandwidths.contains(nn)
-          &&  host.lastBandwidths(nn) < min(host.lastBandwidths(n), n.lastBandwidths(nn)))))
-          host.lastBandwidths += (nn -> min(host.lastBandwidths(n), n.lastBandwidths(nn))))
+        n.neighbors.foreach(nn => if(n.lastBandwidths.contains(nn)
+          && (!host.lastBandwidths.contains(nn)
+            || (host.lastBandwidths.contains(nn)
+              &&  host.lastBandwidths(nn)._2 < min(host.lastBandwidths(n)._2, n.lastBandwidths(nn)._2))))
+          host.lastBandwidths += (nn -> (inters, min(host.lastBandwidths(n)._2, n.lastBandwidths(nn)._2))))
       }
     }
   })
@@ -107,14 +112,16 @@ trait CEPSystem {
     var nexts = host.neighbors
     while(nexts.nonEmpty) {
       val n = nexts.head
+      val inters: Seq[Host] = host.lastThroughputs(n)._1 :+ n
       nexts = nexts.tail
       if(host.lastThroughputs.contains(n) && dests.contains(n)) {
         dests -= n
         nexts ++= n.neighbors.intersect(dests)
-        n.neighbors.foreach(nn => if(n.lastThroughputs.contains(nn) && (!host.lastThroughputs.contains(nn)
-          || (host.lastThroughputs.contains(nn)
-          && host.lastThroughputs(nn) < min(host.lastThroughputs(n), n.lastThroughputs(nn)))))
-          host.lastThroughputs += (nn -> min(host.lastThroughputs(n), n.lastThroughputs(nn))))
+        n.neighbors.foreach(nn => if(n.lastThroughputs.contains(nn)
+          && (!host.lastThroughputs.contains(nn)
+            || (host.lastThroughputs.contains(nn)
+              && host.lastThroughputs(nn)._2 < min(host.lastThroughputs(n)._2, n.lastThroughputs(nn)._2))))
+          host.lastThroughputs += (nn -> (inters, min(host.lastThroughputs(n)._2, n.lastThroughputs(nn)._2))))
       }
     }
   })
