@@ -23,12 +23,12 @@ case class AverageFrequencyMonitor(interval: Int, logging: Boolean, testing: Boo
         runnable = () => {
           demands.foreach(d => d.conditions.foreach {
             case fc: FrequencyCondition =>
-              require(fc.ratio.timeSpan.getSeconds <= interval)
-              // `divisor`, e.g., if `interval` == 30, and `fc.ratio.timeSpan.getSeconds` == 10, then `divisor` == 3
-              val divisor: Int = interval / fc.ratio.timeSpan.getSeconds
+              require(fc.ratio.timeSpan.toSeconds <= interval)
+              // `divisor`, e.g., if `interval` == 30, and `fc.ratio.timeSpan.toSeconds` == 10, then `divisor` == 3
+              val divisor: Int = interval / fc.ratio.timeSpan.toSeconds
               val current: Int = if(testing) host.lastFrequency.instances.getInstanceNum else currentOutput.get / divisor
               if (logging) println(s"FREQUENCY:\tOn average, node `${nodeData.name}` emits $current events every " +
-                s"${fc.ratio.timeSpan.getSeconds} seconds. (Calculated every $interval seconds.)")
+                s"${fc.ratio.timeSpan.toSeconds} seconds. (Calculated every $interval seconds.)")
               val expected = fc.ratio.instances.getInstanceNum
               fc.booleanOperator match {
                 case Equal =>        fc.notFulfilled = !(current == expected)

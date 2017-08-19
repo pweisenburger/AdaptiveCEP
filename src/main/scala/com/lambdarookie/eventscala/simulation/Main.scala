@@ -15,7 +15,7 @@ import com.lambdarookie.eventscala.backend.qos.QualityOfService._
 object Main extends App {
 
   val actorSystem: ActorSystem = ActorSystem()
-  val system: System = new TestSystem
+  val system: System = TestSystem(true)
 
   val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id))),             "A")
   val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id * 2))),         "B")

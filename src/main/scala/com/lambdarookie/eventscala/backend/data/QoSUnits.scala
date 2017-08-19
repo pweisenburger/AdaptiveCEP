@@ -29,8 +29,9 @@ object QoSUnits {
     def +(other: TimeSpan): TimeSpan = TimeSpan(i plus other.toDuration)
 
     def toDuration: Duration = i
-    def getNano: Int = i.getNano
-    def getSeconds: Int = i.getSeconds.toInt
+    def toNanos: Int = i.getNano
+    def toMillis: Int = i.toMillis.toInt
+    def toSeconds: Int = i.getSeconds.toInt
   }
 
   case class TimeSpanUnits(private val i: Int) {
@@ -80,7 +81,7 @@ object QoSUnits {
   implicit def intToInstancesCreator(i: Int): Instances = Instances(i)
 
   case class Ratio(instances: Instances, timeSpan: TimeSpan) extends QoSUnit[Ratio] {
-    val exactRatio: Double = instances.getInstanceNum.toDouble / timeSpan.getNano.toDouble
+    val exactRatio: Double = instances.getInstanceNum.toDouble / timeSpan.toNanos.toDouble
 
     override def <(other: Ratio): Boolean = this.exactRatio < other.exactRatio
     override def >(other: Ratio): Boolean = this.exactRatio > other.exactRatio
@@ -93,6 +94,8 @@ object QoSUnits {
   //          BitRate Begin
   trait BitRate extends QoSUnit[BitRate] {
     def toKbps: Long
+    def toMbps: Long = toKbps / 1024
+
     override def <(other: BitRate): Boolean = this.toKbps < other.toKbps
     override def >(other: BitRate): Boolean = this.toKbps > other.toKbps
     override def <=(other: BitRate): Boolean = this.toKbps <= other.toKbps

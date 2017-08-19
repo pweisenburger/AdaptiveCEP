@@ -64,22 +64,6 @@ object QualityOfService {
       LatencyDemand (SmallerEqual, timeSpan, conditions.toSet)
   }
 
-  def throughput: ThroughputDemandCreator.type = ThroughputDemandCreator
-  case object ThroughputDemandCreator {
-    def === (bitRate: BitRate, conditions: Condition*): ThroughputDemand =
-      ThroughputDemand (Equal, bitRate, conditions.toSet)
-    def =!= (bitRate: BitRate, conditions: Condition*): ThroughputDemand =
-      ThroughputDemand (NotEqual, bitRate, conditions.toSet)
-    def >   (bitRate: BitRate, conditions: Condition*): ThroughputDemand =
-      ThroughputDemand (Greater, bitRate, conditions.toSet)
-    def >=  (bitRate: BitRate, conditions: Condition*): ThroughputDemand =
-      ThroughputDemand (GreaterEqual, bitRate, conditions.toSet)
-    def <   (bitRate: BitRate, conditions: Condition*): ThroughputDemand =
-      ThroughputDemand (Smaller, bitRate, conditions.toSet)
-    def <=  (bitRate: BitRate, conditions: Condition*): ThroughputDemand =
-      ThroughputDemand (SmallerEqual, bitRate, conditions.toSet)
-  }
-
   def bandwidth: BandwidthDemandCreator.type = BandwidthDemandCreator
   case object BandwidthDemandCreator {
     def === (bitRate: BitRate, conditions: Condition*): BandwidthDemand =
@@ -94,6 +78,22 @@ object QualityOfService {
       BandwidthDemand (Smaller, bitRate, conditions.toSet)
     def <=  (bitRate: BitRate, conditions: Condition*): BandwidthDemand =
       BandwidthDemand (SmallerEqual, bitRate, conditions.toSet)
+  }
+
+  def throughput: ThroughputDemandCreator.type = ThroughputDemandCreator
+  case object ThroughputDemandCreator {
+    def === (bitRate: BitRate, conditions: Condition*): ThroughputDemand =
+      ThroughputDemand (Equal, bitRate, conditions.toSet)
+    def =!= (bitRate: BitRate, conditions: Condition*): ThroughputDemand =
+      ThroughputDemand (NotEqual, bitRate, conditions.toSet)
+    def >   (bitRate: BitRate, conditions: Condition*): ThroughputDemand =
+      ThroughputDemand (Greater, bitRate, conditions.toSet)
+    def >=  (bitRate: BitRate, conditions: Condition*): ThroughputDemand =
+      ThroughputDemand (GreaterEqual, bitRate, conditions.toSet)
+    def <   (bitRate: BitRate, conditions: Condition*): ThroughputDemand =
+      ThroughputDemand (Smaller, bitRate, conditions.toSet)
+    def <=  (bitRate: BitRate, conditions: Condition*): ThroughputDemand =
+      ThroughputDemand (SmallerEqual, bitRate, conditions.toSet)
   }
 
 
