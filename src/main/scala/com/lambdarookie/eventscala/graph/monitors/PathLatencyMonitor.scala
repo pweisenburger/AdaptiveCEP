@@ -62,7 +62,7 @@ case class PathLatencyMonitor(interval: Int, logging: Boolean, testing: Boolean)
             else Some(Duration.between(requestTime, clock.instant).dividedBy(2))
             if (childNodePathToLatency.isDefined) {
               val pathToLatency: (Seq[Host], Duration) =
-                (host +: childNodePathToLatency.get._1, childNodeLatency.get.plus(childNodePathToLatency.get._2))
+                (childNodePathToLatency.get._1 :+ host, childNodeLatency.get.plus(childNodePathToLatency.get._2))
               val latencyDemands: Set[LatencyDemand] =
                 query.demands.collect { case ld: LatencyDemand if areConditionsMet(ld) => ld }
               nodeData.context.parent ! PathLatency(self, pathToLatency._1, pathToLatency._2)
@@ -78,7 +78,7 @@ case class PathLatencyMonitor(interval: Int, logging: Boolean, testing: Boolean)
             childNodePathToLatency = Some(path -> duration)
             if (childNodeLatency.isDefined) {
               val pathToLatency: (Seq[Host], Duration) =
-                (host +: childNodePathToLatency.get._1, childNodeLatency.get.plus(childNodePathToLatency.get._2))
+                (childNodePathToLatency.get._1 :+ host, childNodeLatency.get.plus(childNodePathToLatency.get._2))
               val latencyDemands: Set[LatencyDemand] =
                 query.demands.collect { case ld: LatencyDemand if areConditionsMet(ld) => ld }
               nodeData.context.parent ! PathLatency(self, pathToLatency._1, pathToLatency._2)
@@ -106,9 +106,9 @@ case class PathLatencyMonitor(interval: Int, logging: Boolean, testing: Boolean)
             if (childNode1Latency.isDefined && childNode2Latency.isDefined &&
               childNode1PathToLatency.isDefined && childNode2PathToLatency.isDefined) {
               val path1ToLatency: (Seq[Host], Duration) =
-                (host +: childNode1PathToLatency.get._1, childNode1Latency.get.plus(childNode1PathToLatency.get._2))
+                (childNode1PathToLatency.get._1 :+ host, childNode1Latency.get.plus(childNode1PathToLatency.get._2))
               val path2ToLatency: (Seq[Host], Duration) =
-                (host +: childNode2PathToLatency.get._1, childNode2Latency.get.plus(childNode2PathToLatency.get._2))
+                (childNode2PathToLatency.get._1 :+ host, childNode2Latency.get.plus(childNode2PathToLatency.get._2))
               val slowPathToLatency: (Seq[Host], Duration) =
                 if (path1ToLatency._2.compareTo(path2ToLatency._2) >= 0) path1ToLatency else path2ToLatency
               val latencyDemands: Set[LatencyDemand] =
@@ -132,9 +132,9 @@ case class PathLatencyMonitor(interval: Int, logging: Boolean, testing: Boolean)
             if (childNode1Latency.isDefined && childNode2Latency.isDefined &&
               childNode1PathToLatency.isDefined && childNode2PathToLatency.isDefined) {
               val path1ToLatency =
-                (host +: childNode1PathToLatency.get._1, childNode1Latency.get.plus(childNode1PathToLatency.get._2))
+                (childNode1PathToLatency.get._1 :+ host, childNode1Latency.get.plus(childNode1PathToLatency.get._2))
               val path2ToLatency =
-                (host +: childNode2PathToLatency.get._1, childNode2Latency.get.plus(childNode2PathToLatency.get._2))
+                (childNode2PathToLatency.get._1 :+ host, childNode2Latency.get.plus(childNode2PathToLatency.get._2))
               val slowPathToLatency: (Seq[Host], Duration) =
                 if (path1ToLatency._2.compareTo(path2ToLatency._2) >= 0) path1ToLatency else path2ToLatency
               val latencyDemands: Set[LatencyDemand] =

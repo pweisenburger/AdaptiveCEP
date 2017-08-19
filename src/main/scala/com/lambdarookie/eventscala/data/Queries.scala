@@ -1,6 +1,5 @@
 package com.lambdarookie.eventscala.data
 
-import akka.actor.ActorContext
 import com.lambdarookie.eventscala.backend.qos.Demands
 import com.lambdarookie.eventscala.backend.qos.QualityOfService.{Demand, Violation}
 import com.lambdarookie.eventscala.data.Events._
