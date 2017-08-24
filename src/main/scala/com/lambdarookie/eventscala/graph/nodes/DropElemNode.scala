@@ -9,14 +9,14 @@ import com.lambdarookie.eventscala.graph.nodes.traits._
 import com.lambdarookie.eventscala.graph.monitors._
 
 case class DropElemNode(
-    system: System,
-    query: DropElemQuery,
-    operator: UnaryOperator,
-    publishers: Map[String, ActorRef],
-    frequencyMonitor: AverageFrequencyMonitor,
-    latencyMonitor: PathLatencyMonitor,
-    createdCallback: Option[() => Any],
-    eventCallback: Option[(Event) => Any])
+                         system: System,
+                         query: DropElemQuery,
+                         operator: UnaryOperator,
+                         publishers: Map[String, ActorRef],
+                         frequencyMonitor: AverageFrequencyMonitor,
+                         latencyMonitor: PathDemandsMonitor,
+                         createdCallback: Option[() => Any],
+                         eventCallback: Option[(Event) => Any])
   extends UnaryNode {
 
   val elemToBeDropped: Int = query match {

@@ -9,14 +9,14 @@ import com.lambdarookie.eventscala.graph.nodes.traits._
 import com.lambdarookie.eventscala.graph.monitors._
 
 case class FilterNode(
-    system: System,
-    query: FilterQuery,
-    operator: UnaryOperator,
-    publishers: Map[String, ActorRef],
-    frequencyMonitor: AverageFrequencyMonitor,
-    latencyMonitor: PathLatencyMonitor,
-    createdCallback: Option[() => Any],
-    eventCallback: Option[(Event) => Any])
+                       system: System,
+                       query: FilterQuery,
+                       operator: UnaryOperator,
+                       publishers: Map[String, ActorRef],
+                       frequencyMonitor: AverageFrequencyMonitor,
+                       latencyMonitor: PathDemandsMonitor,
+                       createdCallback: Option[() => Any],
+                       eventCallback: Option[(Event) => Any])
   extends UnaryNode {
 
   override def receive: Receive = {

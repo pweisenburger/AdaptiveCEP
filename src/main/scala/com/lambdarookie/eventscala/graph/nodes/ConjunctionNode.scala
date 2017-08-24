@@ -11,14 +11,14 @@ import com.lambdarookie.eventscala.graph.monitors._
 import com.lambdarookie.eventscala.backend.system.traits.{Operator, System}
 
 case class ConjunctionNode(
-    system: System,
-    query: ConjunctionQuery,
-    operator: BinaryOperator,
-    publishers: Map[String, ActorRef],
-    frequencyMonitor: AverageFrequencyMonitor,
-    latencyMonitor: PathLatencyMonitor,
-    createdCallback: Option[() => Any],
-    eventCallback: Option[(Event) => Any])
+                            system: System,
+                            query: ConjunctionQuery,
+                            operator: BinaryOperator,
+                            publishers: Map[String, ActorRef],
+                            frequencyMonitor: AverageFrequencyMonitor,
+                            latencyMonitor: PathDemandsMonitor,
+                            createdCallback: Option[() => Any],
+                            eventCallback: Option[(Event) => Any])
   extends BinaryNode with EsperEngine {
 
   override val esperServiceProviderUri: String = name

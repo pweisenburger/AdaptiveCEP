@@ -53,78 +53,97 @@ trait CEPSystem {
   def addOperator(operator: Operator): Unit = operatorsVar.transform(x => x + operator)
 
   /**
-    * Measure the frequency of each host
+    * Calculate the path with the lowest latency between two hosts using Dijkstra's shortest path algorithm
+    * @param source Source host
+    * @param dest Destination host
+    * @return The tuple of the path (For the path 'source -> A -> B -> dest' returns 'Seq(A, B, dest)') and the latency
     */
-  def measureFrequencies(): Unit = hosts.now.foreach(_.measureFrequency())
+  def calculateLowestLatency(source: Host, dest: Host): (Seq[Host], TimeSpan) = {
+    var visited: Set[Host] = Set(source)
+    var latencies: Map[Host, (Seq[Host], TimeSpan)] = source.neighborLatencies - source
+    var out: (Seq[Host], TimeSpan) = null
+    while (latencies.nonEmpty) {
+      latencies = latencies.toSeq.sortWith(_._2._2 < _._2._2).toMap
+      val n: (Host, (Seq[Host], TimeSpan)) = latencies.head
+      if (!visited.contains(n._1))
+        if (n._1 == dest) {
+          out = (n._2._1 :+ dest, n._2._2)
+          latencies = Map.empty
+        } else {
+          visited += n._1
+          val inters: Seq[Host] = n._2._1 :+ n._1
+          n._1.neighborLatencies.foreach(nn => if (!visited.contains(nn._1)) {
+            val sourceToNnLatency: TimeSpan = latencies(n._1)._2 + nn._2._2
+            if (!latencies.contains(nn._1) || latencies(nn._1)._2 > sourceToNnLatency)
+              latencies += nn._1 -> (inters, sourceToNnLatency)
+          })
+          latencies -= n._1
+        }
+    }
+    out
+  }
 
   /**
-    * Find the lowest latency between hosts using Dijkstra's shortest path algorithm
+    * Calculate the path with the highest bandwidth between two hosts using a modified Dijkstra's shortest path algorithm
+    * @param source Source host
+    * @param dest Destination host
+    * @return The tuple of the path (For the path 'source -> A -> B -> dest' returns 'Seq(A, B, dest)') and the bandwidth
     */
-  def measureLowestLatencies(): Unit = hosts.now.foreach(host => {
-    host.measureNeighborLatencies()
-    var dests = hosts.now - host
-    var nexts = host.neighbors
-    while(nexts.nonEmpty) {
-      val n = nexts.head
-      val inters: Seq[Host] = host.lastLatencies(n)._1 :+ n
-      nexts = nexts.tail
-      if(host.lastLatencies.contains(n) && dests.contains(n)) {
-        dests -= n
-        nexts ++= n.neighbors.intersect(dests)
-        n.neighbors.foreach(nn => if(n.lastLatencies.contains(nn)
-          && (!host.lastLatencies.contains(nn)
-            || (host.lastLatencies.contains(nn)
-              && host.lastLatencies(nn)._2 > host.lastLatencies(n)._2 + n.lastLatencies(nn)._2)))
-          host.lastLatencies += (nn -> (inters ,host.lastLatencies(n)._2 + n.lastLatencies(nn)._2)))
-      }
+  def calculateHighestBandwidth(source: Host, dest: Host): (Seq[Host], BitRate) = {
+    var visited: Set[Host] = Set(source)
+    var bandwidths: Map[Host, (Seq[Host], BitRate)] = source.neighborBandwidths - source
+    var out: (Seq[Host], BitRate) = null
+    while (bandwidths.nonEmpty) {
+      bandwidths = bandwidths.toSeq.sortWith(_._2._2 > _._2._2).toMap
+      val n: (Host, (Seq[Host], BitRate)) = bandwidths.head
+      if (!visited.contains(n._1))
+        if (n._1 == dest) {
+          out = (n._2._1 :+ dest, n._2._2)
+          bandwidths = Map.empty
+        } else {
+          visited += n._1
+          val inters: Seq[Host] = n._2._1 :+ n._1
+          n._1.neighborBandwidths.foreach(nn => if (!visited.contains(nn._1)) {
+            val sourceToNnBandwidth: BitRate = min(bandwidths(n._1)._2, nn._2._2)
+            if (!bandwidths.contains(nn._1) || bandwidths(nn._1)._2 > sourceToNnBandwidth)
+              bandwidths += nn._1 -> (inters, sourceToNnBandwidth)
+          })
+          bandwidths -= n._1
+        }
     }
-  })
+    out
+  }
 
   /**
-    * Find the highest bandwidth between hosts using a modified version of Dijkstra's algorithm
+    * Calculate the path with the highest throughput between two hosts using a modified Dijkstra's shortest path algorithm
+    * @param source Source host
+    * @param dest Destination host
+    * @return The tuple of the path (For the path 'source -> A -> B -> dest' returns 'Seq(A, B, dest)') and the throughput
     */
-  def measureHighestBandwidths(): Unit = hosts.now.foreach(host => {
-    host.measureNeighborBandwidths()
-    var dests = hosts.now - host
-    var nexts = host.neighbors
-    while(nexts.nonEmpty) {
-      val n = nexts.head
-      val inters: Seq[Host] = host.lastBandwidths(n)._1 :+ n
-      nexts = nexts.tail
-      if(host.lastBandwidths.contains(n) && dests.contains(n)) {
-        dests -= n
-        nexts ++= n.neighbors.intersect(dests)
-        n.neighbors.foreach(nn => if(n.lastBandwidths.contains(nn)
-          && (!host.lastBandwidths.contains(nn)
-            || (host.lastBandwidths.contains(nn)
-              &&  host.lastBandwidths(nn)._2 < min(host.lastBandwidths(n)._2, n.lastBandwidths(nn)._2))))
-          host.lastBandwidths += (nn -> (inters, min(host.lastBandwidths(n)._2, n.lastBandwidths(nn)._2))))
-      }
+  def calculateHighestThroughput(source: Host, dest: Host): (Seq[Host], BitRate) = {
+    var visited: Set[Host] = Set(source)
+    var throughputs: Map[Host, (Seq[Host], BitRate)] = source.neighborThroughputs - source
+    var out: (Seq[Host], BitRate) = null
+    while (throughputs.nonEmpty) {
+      throughputs = throughputs.toSeq.sortWith(_._2._2 > _._2._2).toMap
+      val n: (Host, (Seq[Host], BitRate)) = throughputs.head
+      if (!visited.contains(n._1))
+        if (n._1 == dest) {
+          out = (n._2._1 :+ dest, n._2._2)
+          throughputs = Map.empty
+        } else {
+          visited += n._1
+          val inters: Seq[Host] = n._2._1 :+ n._1
+          n._1.neighborThroughputs.foreach(nn => if (!visited.contains(nn._1)) {
+            val sourceToNnThroughput: BitRate = min(throughputs(n._1)._2, nn._2._2)
+            if (!throughputs.contains(nn._1) || throughputs(nn._1)._2 > sourceToNnThroughput)
+              throughputs += nn._1 -> (inters, sourceToNnThroughput)
+          })
+          throughputs -= n._1
+        }
     }
-  })
-
-  /**
-    * Find the highest throughput between hosts using a modified version of Dijkstra's algorithm
-    */
-  def measureHighestThroughputs(): Unit = hosts.now.foreach(host => {
-    host.measureNeighborThroughputs()
-    var dests = hosts.now - host
-    var nexts = host.neighbors
-    while(nexts.nonEmpty) {
-      val n = nexts.head
-      val inters: Seq[Host] = host.lastThroughputs(n)._1 :+ n
-      nexts = nexts.tail
-      if(host.lastThroughputs.contains(n) && dests.contains(n)) {
-        dests -= n
-        nexts ++= n.neighbors.intersect(dests)
-        n.neighbors.foreach(nn => if(n.lastThroughputs.contains(nn)
-          && (!host.lastThroughputs.contains(nn)
-            || (host.lastThroughputs.contains(nn)
-              && host.lastThroughputs(nn)._2 < min(host.lastThroughputs(n)._2, n.lastThroughputs(nn)._2))))
-          host.lastThroughputs += (nn -> (inters, min(host.lastThroughputs(n)._2, n.lastThroughputs(nn)._2))))
-      }
-    }
-  })
+    out
+  }
 }
 
 

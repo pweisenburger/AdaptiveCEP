@@ -23,9 +23,9 @@ trait Host {
 
   var lastFrequency: Ratio = Ratio(0.instances, 0.sec)
   var lastProximities: Map[Host, Distance] = Map(this -> 0.m)
-  var lastLatencies: Map[Host, (Seq[Host], TimeSpan)] = Map(this -> (Seq.empty, 0.ms))
-  var lastThroughputs: Map[Host, (Seq[Host], BitRate)] = Map(this -> (Seq.empty, maxBandwidth))
-  var lastBandwidths: Map[Host, (Seq[Host], BitRate)] = Map(this -> (Seq.empty, maxBandwidth))
+  var neighborLatencies: Map[Host, (Seq[Host], TimeSpan)] = Map(this -> (Seq.empty, 0.ms))
+  var neighborThroughputs: Map[Host, (Seq[Host], BitRate)] = Map(this -> (Seq.empty, maxBandwidth))
+  var neighborBandwidths: Map[Host, (Seq[Host], BitRate)] = Map(this -> (Seq.empty, maxBandwidth))
 
 
   def addOperator(operator: Operator): Unit = operatorsVar.transform(_ + operator)

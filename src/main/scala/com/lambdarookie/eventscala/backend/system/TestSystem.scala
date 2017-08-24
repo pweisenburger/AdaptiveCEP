@@ -15,8 +15,10 @@ case class TestSystem(logging: Boolean) extends System {
   demandViolated += {v => v.operator.query.addViolatedDemand(v)}
 
   override def placeOperator(operator: Operator): Host = {
-    val host: Host = if (hosts.now.exists(_.operators.now.isEmpty)) hosts.now.filter(_.operators.now.isEmpty).head
-    else hosts.now.toVector((math.random * hosts.now.size).toInt)
+    val host: Host = if (hosts.now.exists(_.operators.now.isEmpty))
+      hosts.now.filter(_.operators.now.isEmpty).head
+    else
+      hosts.now.toVector((math.random * hosts.now.size).toInt)
     host.addOperator(operator)
     if (logging) println(s"LOG:\t$operator is placed on $host")
     host
@@ -45,20 +47,20 @@ case class TestSystem(logging: Boolean) extends System {
     host3.measureMetrics()
     host4.measureMetrics()
 
-//    host1.lastLatencies ++= Map(host2 -> (Seq.empty, 5.ms), host3 -> (Seq.empty, 3.ms))
-//    host2.lastLatencies ++= Map(host1 -> (Seq.empty, 5.ms), host4 -> (Seq.empty, 1.ms))
-//    host3.lastLatencies ++= Map(host1 -> (Seq.empty, 3.ms))
-//    host4.lastLatencies ++= Map(host2 -> (Seq.empty, 1.ms))
+//    host1.neighborLatencies ++= Map(host2 -> (Seq.empty, 5.ms), host3 -> (Seq.empty, 3.ms))
+//    host2.neighborLatencies ++= Map(host1 -> (Seq.empty, 5.ms), host4 -> (Seq.empty, 1.ms))
+//    host3.neighborLatencies ++= Map(host1 -> (Seq.empty, 3.ms))
+//    host4.neighborLatencies ++= Map(host2 -> (Seq.empty, 1.ms))
 //
-//    host1.lastBandwidths ++= Map(host2 -> (Seq.empty, 500.mbps), host3 -> (Seq.empty, 300.mbps))
-//    host2.lastBandwidths ++= Map(host1 -> (Seq.empty, 500.mbps), host4 -> (Seq.empty, 100.mbps))
-//    host3.lastBandwidths ++= Map(host1 -> (Seq.empty, 300.mbps))
-//    host4.lastBandwidths ++= Map(host2 -> (Seq.empty, 100.mbps))
+//    host1.neighborBandwidths ++= Map(host2 -> (Seq.empty, 500.mbps), host3 -> (Seq.empty, 300.mbps))
+//    host2.neighborBandwidths ++= Map(host1 -> (Seq.empty, 500.mbps), host4 -> (Seq.empty, 100.mbps))
+//    host3.neighborBandwidths ++= Map(host1 -> (Seq.empty, 300.mbps))
+//    host4.neighborBandwidths ++= Map(host2 -> (Seq.empty, 100.mbps))
 //
-//    host1.lastThroughputs ++= Map(host2 -> (Seq.empty, 50.mbps), host3 -> (Seq.empty, 30.mbps))
-//    host2.lastThroughputs ++= Map(host1 -> (Seq.empty, 50.mbps), host4 -> (Seq.empty, 10.mbps))
-//    host3.lastThroughputs ++= Map(host1 -> (Seq.empty, 30.mbps))
-//    host4.lastThroughputs ++= Map(host2 -> (Seq.empty, 10.mbps))
+//    host1.neighborThroughputs ++= Map(host2 -> (Seq.empty, 50.mbps), host3 -> (Seq.empty, 30.mbps))
+//    host2.neighborThroughputs ++= Map(host1 -> (Seq.empty, 50.mbps), host4 -> (Seq.empty, 10.mbps))
+//    host3.neighborThroughputs ++= Map(host1 -> (Seq.empty, 30.mbps))
+//    host4.neighborThroughputs ++= Map(host2 -> (Seq.empty, 10.mbps))
 
     Var(Set(host1, host2, host3, host4))
   }
@@ -71,25 +73,20 @@ class TestHost(val id: Int, val position: Coordinate, val maxBandwidth: BitRate)
 
   override def measureFrequency(): Unit = lastFrequency = Ratio((math.random() * 10 + 5).toInt.instances, 5.sec)
 
-  override def measureNeighborLatencies(): Unit = {
-    neighbors.foreach(n => {
-      val out: TimeSpan = (math.random() * 5 + 1).toInt.ms
-      lastLatencies += (n -> (Seq.empty, out))
-      println(s"MEASURED:\tLatency from $this to $n is ${lastLatencies(n)._2.toMillis} ms")
-    })
-  }
+  override def measureNeighborLatencies(): Unit = neighbors.foreach(n =>
+    neighborLatencies += (n -> (Seq.empty, (math.random() * 5 + 1).toInt.ms)))
 
-  override def measureNeighborBandwidths(): Unit = {
-    neighbors.foreach(n => {
-      val out = (math.random() * 50 + 50).toInt.mbps
-//      println(s"Bandwidth from $this to $n is ${out.toMbps} mbps")
-      lastBandwidths += (n -> (Seq.empty, out))
-    })
-  }
+
+  override def measureNeighborBandwidths(): Unit = neighbors.foreach(n =>
+    neighborBandwidths += (n -> (Seq.empty, (math.random() * 50 + 50).toInt.mbps)))
 
   override def measureNeighborThroughputs(): Unit = neighbors.foreach(n =>
-    lastThroughputs += (n -> (Seq.empty,
-      (math.random() * (if(lastBandwidths.contains(n)) lastBandwidths(n)._2.toKbps / 1024 else 0)).toInt.mbps)))
+      neighborThroughputs += (n -> (Seq.empty, (math.random() * (
+        if (neighborBandwidths.contains(n))
+          neighborBandwidths(n)._2.toKbps / 1024
+        else
+          0)
+        ).toInt.mbps)))
 
 //  override def measureNeighborLatencies(): Unit = {}
 //

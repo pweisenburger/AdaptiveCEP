@@ -6,22 +6,22 @@ import com.lambdarookie.eventscala.backend.system.traits.{Operator, System}
 import com.lambdarookie.eventscala.data.Events.Event
 import com.lambdarookie.eventscala.data.Queries._
 import com.lambdarookie.eventscala.graph.nodes._
-import com.lambdarookie.eventscala.graph.monitors.{AverageFrequencyMonitor, PathLatencyMonitor}
+import com.lambdarookie.eventscala.graph.monitors.{AverageFrequencyMonitor, PathDemandsMonitor}
 
 /**
   * Created by monur.
   */
 object NodeFactory {
   def createNode[T <: ActorRefFactory](system: System,
-                 actorRefFactory: T,
-                 query: Query,
-                 operator: Operator,
-                 publishers: Map[String, ActorRef],
-                 frequencyMonitor: AverageFrequencyMonitor,
-                 latencyMonitor: PathLatencyMonitor,
-                 createdCallback: Option[() => Any],
-                 eventCallback: Option[(Event) => Any],
-                 prefix: String): ActorRef = query match {
+                                       actorRefFactory: T,
+                                       query: Query,
+                                       operator: Operator,
+                                       publishers: Map[String, ActorRef],
+                                       frequencyMonitor: AverageFrequencyMonitor,
+                                       latencyMonitor: PathDemandsMonitor,
+                                       createdCallback: Option[() => Any],
+                                       eventCallback: Option[(Event) => Any],
+                                       prefix: String): ActorRef = query match {
     case streamQuery: StreamQuery =>
       actorRefFactory.actorOf(Props(
         StreamNode(

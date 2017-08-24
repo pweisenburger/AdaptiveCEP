@@ -17,7 +17,7 @@ trait Node extends Actor {
   val publishers: Map[String, ActorRef]
   val nodeData: NodeData
   val frequencyMonitor: AverageFrequencyMonitor
-  val latencyMonitor: PathLatencyMonitor
+  val latencyMonitor: PathDemandsMonitor
   val createdCallback: Option[() => Any]
   val eventCallback: Option[(Event) => Any]
 
@@ -40,7 +40,7 @@ trait Node extends Actor {
     NodeFactory.createNode(
       system, context, query, childOperator, publishers,
       AverageFrequencyMonitor(frequencyMonitor.interval, frequencyMonitor.logging, frequencyMonitor.testing),
-      PathLatencyMonitor(latencyMonitor.interval, latencyMonitor.logging, latencyMonitor.testing),
+      PathDemandsMonitor(latencyMonitor.interval, latencyMonitor.logging, latencyMonitor.testing),
       None, None, s"$name-$id-")
 
 }

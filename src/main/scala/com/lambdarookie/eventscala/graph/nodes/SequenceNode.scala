@@ -12,14 +12,14 @@ import com.lambdarookie.eventscala.graph.monitors._
 import com.lambdarookie.eventscala.publishers.Publisher._
 
 case class SequenceNode(
-    system: System,
-    query: SequenceQuery,
-    operator: EventSource,
-    publishers: Map[String, ActorRef],
-    frequencyMonitor: AverageFrequencyMonitor,
-    latencyMonitor: PathLatencyMonitor,
-    createdCallback: Option[() => Any],
-    eventCallback: Option[(Event) => Any])
+                         system: System,
+                         query: SequenceQuery,
+                         operator: EventSource,
+                         publishers: Map[String, ActorRef],
+                         frequencyMonitor: AverageFrequencyMonitor,
+                         latencyMonitor: PathDemandsMonitor,
+                         createdCallback: Option[() => Any],
+                         eventCallback: Option[(Event) => Any])
   extends LeafNode with EsperEngine {
 
   override val esperServiceProviderUri: String = name

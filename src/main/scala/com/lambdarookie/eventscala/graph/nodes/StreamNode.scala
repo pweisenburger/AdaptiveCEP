@@ -10,14 +10,14 @@ import com.lambdarookie.eventscala.graph.monitors._
 import com.lambdarookie.eventscala.publishers.Publisher._
 
 case class StreamNode(
-    system: System,
-    query: StreamQuery,
-    operator: EventSource,
-    publishers: Map[String, ActorRef],
-    frequencyMonitor: AverageFrequencyMonitor,
-    latencyMonitor: PathLatencyMonitor,
-    createdCallback: Option[() => Any],
-    eventCallback: Option[(Event) => Any])
+                       system: System,
+                       query: StreamQuery,
+                       operator: EventSource,
+                       publishers: Map[String, ActorRef],
+                       frequencyMonitor: AverageFrequencyMonitor,
+                       latencyMonitor: PathDemandsMonitor,
+                       createdCallback: Option[() => Any],
+                       eventCallback: Option[(Event) => Any])
   extends LeafNode {
 
   val publisher: ActorRef = publishers(query.publisherName)
