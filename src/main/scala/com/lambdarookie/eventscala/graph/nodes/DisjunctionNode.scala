@@ -14,7 +14,7 @@ case class DisjunctionNode(
                             operator: BinaryOperator,
                             publishers: Map[String, ActorRef],
                             frequencyMonitor: AverageFrequencyMonitor,
-                            latencyMonitor: PathDemandsMonitor,
+                            demandsMonitor: PathDemandsMonitor,
                             createdCallback: Option[() => Any],
                             eventCallback: Option[(Event) => Any])
   extends BinaryNode {
@@ -84,7 +84,7 @@ case class DisjunctionNode(
     }
     case unhandledMessage =>
       frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
-      latencyMonitor.onMessageReceive(unhandledMessage, nodeData)
+      demandsMonitor.onMessageReceive(unhandledMessage, nodeData)
   }
 
 }

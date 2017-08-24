@@ -71,7 +71,7 @@ case class TestSystem(logging: Boolean) extends System {
 class TestHost(val id: Int, val position: Coordinate, val maxBandwidth: BitRate) extends Host {
   var neighbors: Set[Host] = Set.empty
 
-  override def measureFrequency(): Unit = lastFrequency = Ratio((math.random() * 10 + 5).toInt.instances, 5.sec)
+  override def measureFrequency(): Ratio = Ratio((math.random() * 10 + 5).toInt.instances, 5.sec)
 
   override def measureNeighborLatencies(): Unit = neighbors.foreach(n =>
     neighborLatencies += (n -> (Seq.empty, (math.random() * 5 + 1).toInt.ms)))

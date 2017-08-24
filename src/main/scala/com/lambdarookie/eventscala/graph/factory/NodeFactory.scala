@@ -18,7 +18,7 @@ object NodeFactory {
                                        operator: Operator,
                                        publishers: Map[String, ActorRef],
                                        frequencyMonitor: AverageFrequencyMonitor,
-                                       latencyMonitor: PathDemandsMonitor,
+                                       demandsMonitor: PathDemandsMonitor,
                                        createdCallback: Option[() => Any],
                                        eventCallback: Option[(Event) => Any],
                                        prefix: String): ActorRef = query match {
@@ -30,7 +30,7 @@ object NodeFactory {
           operator.asInstanceOf[EventSource],
           publishers,
           frequencyMonitor,
-          latencyMonitor,
+          demandsMonitor,
           createdCallback,
           eventCallback)),
         s"${prefix}stream")
@@ -42,7 +42,7 @@ object NodeFactory {
           operator.asInstanceOf[EventSource],
           publishers,
           frequencyMonitor,
-          latencyMonitor,
+          demandsMonitor,
           createdCallback,
           eventCallback)),
         s"${prefix}sequence")
@@ -54,7 +54,7 @@ object NodeFactory {
           operator.asInstanceOf[UnaryOperator],
           publishers,
           frequencyMonitor,
-          latencyMonitor,
+          demandsMonitor,
           createdCallback,
           eventCallback)),
         s"${prefix}filter")
@@ -66,7 +66,7 @@ object NodeFactory {
           operator.asInstanceOf[UnaryOperator],
           publishers,
           frequencyMonitor,
-          latencyMonitor,
+          demandsMonitor,
           createdCallback,
           eventCallback)),
         s"${prefix}dropelem")
@@ -78,7 +78,7 @@ object NodeFactory {
           operator.asInstanceOf[UnaryOperator],
           publishers,
           frequencyMonitor,
-          latencyMonitor,
+          demandsMonitor,
           createdCallback,
           eventCallback)),
         s"${prefix}selfjoin")
@@ -90,7 +90,7 @@ object NodeFactory {
           operator.asInstanceOf[BinaryOperator],
           publishers,
           frequencyMonitor,
-          latencyMonitor,
+          demandsMonitor,
           createdCallback,
           eventCallback)),
         s"${prefix}join")
@@ -102,7 +102,7 @@ object NodeFactory {
           operator.asInstanceOf[BinaryOperator],
           publishers,
           frequencyMonitor,
-          latencyMonitor,
+          demandsMonitor,
           createdCallback,
           eventCallback)),
         s"${prefix}conjunction")
@@ -114,7 +114,7 @@ object NodeFactory {
           operator.asInstanceOf[BinaryOperator],
           publishers,
           frequencyMonitor,
-          latencyMonitor,
+          demandsMonitor,
           createdCallback,
           eventCallback)),
         s"${prefix}disjunction")

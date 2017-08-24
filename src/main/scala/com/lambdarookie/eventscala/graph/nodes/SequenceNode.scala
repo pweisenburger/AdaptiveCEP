@@ -17,7 +17,7 @@ case class SequenceNode(
                          operator: EventSource,
                          publishers: Map[String, ActorRef],
                          frequencyMonitor: AverageFrequencyMonitor,
-                         latencyMonitor: PathDemandsMonitor,
+                         demandsMonitor: PathDemandsMonitor,
                          createdCallback: Option[() => Any],
                          eventCallback: Option[(Event) => Any])
   extends LeafNode with EsperEngine {
@@ -56,7 +56,7 @@ case class SequenceNode(
     }
     case unhandledMessage =>
       frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
-      latencyMonitor.onMessageReceive(unhandledMessage, nodeData)
+      demandsMonitor.onMessageReceive(unhandledMessage, nodeData)
   }
 
   override def postStop(): Unit = {

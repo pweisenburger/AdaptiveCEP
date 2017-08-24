@@ -27,7 +27,8 @@ case class ThroughputInfo(path: Seq[Host], throughput: BitRate) {
 }
 
 
-case class PathDemandsMonitor(interval: Int, logging: Boolean, testing: Boolean) extends NodeMonitor {
+case class PathDemandsMonitor(messageInterval: Int, latencyInterval: Int, bandwidthInterval: Int, throughputInterval: Int,
+                              logging: Boolean, testing: Boolean) extends NodeMonitor {
 
   val clock: Clock = Clock.systemDefaultZone
 
@@ -48,16 +49,28 @@ case class PathDemandsMonitor(interval: Int, logging: Boolean, testing: Boolean)
     }
     val host: Host = nodeData.system.getHostByNode(nodeData.context.self)
     if (childNodes.nonEmpty) nodeData.context.system.scheduler.schedule(
-      initialDelay = FiniteDuration(interval, TimeUnit.SECONDS),
-      interval = FiniteDuration(interval, TimeUnit.SECONDS),
+      initialDelay = FiniteDuration(messageInterval, TimeUnit.SECONDS),
+      interval = FiniteDuration(messageInterval, TimeUnit.SECONDS),
       runnable = () => {
         childNodes.foreach(_ ! ChildInfoRequest(clock.instant))
       })
     nodeData.context.system.scheduler.schedule(
-      initialDelay = FiniteDuration(interval, TimeUnit.SECONDS),
-      interval = FiniteDuration(30, TimeUnit.SECONDS),
+      initialDelay = FiniteDuration(messageInterval, TimeUnit.SECONDS),
+      interval = FiniteDuration(latencyInterval, TimeUnit.SECONDS),
       runnable = () => {
-        host.measureMetrics()
+        host.measureNeighborLatencies()
+      })
+    nodeData.context.system.scheduler.schedule(
+      initialDelay = FiniteDuration(messageInterval, TimeUnit.SECONDS),
+      interval = FiniteDuration(bandwidthInterval, TimeUnit.SECONDS),
+      runnable = () => {
+        host.measureNeighborBandwidths()
+      })
+    nodeData.context.system.scheduler.schedule(
+      initialDelay = FiniteDuration(messageInterval, TimeUnit.SECONDS),
+      interval = FiniteDuration(throughputInterval, TimeUnit.SECONDS),
+      runnable = () => {
+        host.measureNeighborThroughputs()
       })
   }
 
@@ -104,7 +117,7 @@ case class PathDemandsMonitor(interval: Int, logging: Boolean, testing: Boolean)
             }
           case PathInfos(_, latencyInfo, bandwidthInfo, throughputInfo) =>
             childNode1PathInfos = Some(latencyInfo, bandwidthInfo, throughputInfo)
-            if (childNode1Infos.isDefined) {
+              if (childNode1Infos.isDefined) {
               val pathInfos: PathInfos = createPathInfos(childNode1Infos.get, childNode1PathInfos.get)
               val demands: Set[Demand] = query.demands.collect { case d if areConditionsMet(d) => d }
               nodeData.context.parent ! pathInfos

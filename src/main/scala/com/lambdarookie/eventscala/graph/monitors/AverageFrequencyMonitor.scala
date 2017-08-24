@@ -26,7 +26,10 @@ case class AverageFrequencyMonitor(interval: Int, logging: Boolean, testing: Boo
               require(fc.ratio.timeSpan.toSeconds <= interval)
               // `divisor`, e.g., if `interval` == 30, and `fc.ratio.timeSpan.toSeconds` == 10, then `divisor` == 3
               val divisor: Int = interval / fc.ratio.timeSpan.toSeconds
-              val current: Int = if(testing) host.lastFrequency.instances.getInstanceNum else currentOutput.get / divisor
+              val current: Int = if(testing)
+                host.measureFrequency().instances.getInstanceNum
+              else
+                currentOutput.get / divisor
               if (logging) println(s"FREQUENCY:\tOn average, node `${nodeData.name}` emits $current events every " +
                 s"${fc.ratio.timeSpan.toSeconds} seconds. (Calculated every $interval seconds.)")
               val expected = fc.ratio.instances.getInstanceNum

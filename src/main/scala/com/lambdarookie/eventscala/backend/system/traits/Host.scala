@@ -12,7 +12,7 @@ trait Host {
   val maxBandwidth: BitRate
 
   def neighbors: Set[Host]
-  def measureFrequency(): Unit
+  def measureFrequency(): Ratio
   def measureNeighborLatencies(): Unit
   def measureNeighborBandwidths(): Unit
   def measureNeighborThroughputs(): Unit
