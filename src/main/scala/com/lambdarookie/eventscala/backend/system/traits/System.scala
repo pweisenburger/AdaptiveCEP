@@ -105,7 +105,7 @@ trait CEPSystem {
           val inters: Seq[Host] = n._2._1 :+ n._1
           n._1.neighborBandwidths.foreach(nn => if (!visited.contains(nn._1)) {
             val sourceToNnBandwidth: BitRate = min(bandwidths(n._1)._2, nn._2._2)
-            if (!bandwidths.contains(nn._1) || bandwidths(nn._1)._2 > sourceToNnBandwidth)
+            if (!bandwidths.contains(nn._1) || bandwidths(nn._1)._2 < sourceToNnBandwidth)
               bandwidths += nn._1 -> (inters, sourceToNnBandwidth)
           })
           bandwidths -= n._1
@@ -136,7 +136,7 @@ trait CEPSystem {
           val inters: Seq[Host] = n._2._1 :+ n._1
           n._1.neighborThroughputs.foreach(nn => if (!visited.contains(nn._1)) {
             val sourceToNnThroughput: BitRate = min(throughputs(n._1)._2, nn._2._2)
-            if (!throughputs.contains(nn._1) || throughputs(nn._1)._2 > sourceToNnThroughput)
+            if (!throughputs.contains(nn._1) || throughputs(nn._1)._2 < sourceToNnThroughput)
               throughputs += nn._1 -> (inters, sourceToNnThroughput)
           })
           throughputs -= n._1
@@ -144,6 +144,21 @@ trait CEPSystem {
     }
     out
   }
+
+  def calculateLatency(path: Seq[Host]): TimeSpan = if (path.nonEmpty && path.tail.nonEmpty)
+    path.head.neighborLatencies(path(1))._2 + calculateLatency(path.tail)
+  else
+    0.ms
+
+  def calculateBandwidth(path: Seq[Host]): BitRate = if (path.nonEmpty && path.tail.nonEmpty)
+    min(path.head.neighborBandwidths(path(1))._2, calculateBandwidth(path.tail))
+  else
+    Int.MaxValue.gbps
+
+  def calculateThroughput(path: Seq[Host]): BitRate = if (path.nonEmpty && path.tail.nonEmpty)
+    min(path.head.neighborThroughputs(path(1))._2, calculateThroughput(path.tail))
+  else
+    Int.MaxValue.gbps
 }
 
 

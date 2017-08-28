@@ -33,8 +33,8 @@ case class TestSystem(logging: Boolean) extends System {
     val testHost4: TestHost = new TestHost(4, createRandomCoordinate, 1.gbps)
 
     testHost1.neighbors ++= Set(testHost2, testHost3)
-    testHost2.neighbors ++= Set(testHost1, testHost4)
-    testHost3.neighbors ++= Set(testHost1)
+    testHost2.neighbors ++= Set(testHost1, testHost3, testHost4)
+    testHost3.neighbors ++= Set(testHost1, testHost2)
     testHost4.neighbors ++= Set(testHost2)
 
     val host1: Host = testHost1
@@ -47,20 +47,20 @@ case class TestSystem(logging: Boolean) extends System {
     host3.measureMetrics()
     host4.measureMetrics()
 
-//    host1.neighborLatencies ++= Map(host2 -> (Seq.empty, 5.ms), host3 -> (Seq.empty, 3.ms))
-//    host2.neighborLatencies ++= Map(host1 -> (Seq.empty, 5.ms), host4 -> (Seq.empty, 1.ms))
-//    host3.neighborLatencies ++= Map(host1 -> (Seq.empty, 3.ms))
-//    host4.neighborLatencies ++= Map(host2 -> (Seq.empty, 1.ms))
+//    host1.neighborLatencies ++= Map(host2 -> (Seq(), 1.ms), host3 -> (Seq(), 1.ms))
+//    host2.neighborLatencies ++= Map(host1 -> (Seq(), 1.ms), host3 -> (Seq(), 1.ms), host4 -> (Seq(), 1.ms))
+//    host3.neighborLatencies ++= Map(host1 -> (Seq(), 100.ms), host2 -> (Seq(), 1.ms))
+//    host4.neighborLatencies ++= Map(host2 -> (Seq(), 1.ms))
 //
-//    host1.neighborBandwidths ++= Map(host2 -> (Seq.empty, 500.mbps), host3 -> (Seq.empty, 300.mbps))
-//    host2.neighborBandwidths ++= Map(host1 -> (Seq.empty, 500.mbps), host4 -> (Seq.empty, 100.mbps))
-//    host3.neighborBandwidths ++= Map(host1 -> (Seq.empty, 300.mbps))
-//    host4.neighborBandwidths ++= Map(host2 -> (Seq.empty, 100.mbps))
+//    host1.neighborBandwidths ++= Map(host2 -> (Seq(), 100.mbps), host3 -> (Seq(), 100.mbps))
+//    host2.neighborBandwidths ++= Map(host1 -> (Seq(), 10.mbps), host3 -> (Seq(), 100.mbps), host4 -> (Seq(), 100.mbps))
+//    host3.neighborBandwidths ++= Map(host1 -> (Seq(), 100.mbps), host2 -> (Seq(), 100.mbps))
+//    host4.neighborBandwidths ++= Map(host2 -> (Seq(), 100.mbps))
 //
-//    host1.neighborThroughputs ++= Map(host2 -> (Seq.empty, 50.mbps), host3 -> (Seq.empty, 30.mbps))
-//    host2.neighborThroughputs ++= Map(host1 -> (Seq.empty, 50.mbps), host4 -> (Seq.empty, 10.mbps))
-//    host3.neighborThroughputs ++= Map(host1 -> (Seq.empty, 30.mbps))
-//    host4.neighborThroughputs ++= Map(host2 -> (Seq.empty, 10.mbps))
+//    host1.neighborThroughputs ++= Map(host2 -> (Seq(), 50.mbps), host3 -> (Seq(), 30.mbps))
+//    host2.neighborThroughputs ++= Map(host1 -> (Seq(), 50.mbps), host4 -> (Seq(), 10.mbps))
+//    host3.neighborThroughputs ++= Map(host1 -> (Seq(), 30.mbps))
+//    host4.neighborThroughputs ++= Map(host2 -> (Seq(), 10.mbps))
 
     Var(Set(host1, host2, host3, host4))
   }
@@ -73,20 +73,20 @@ class TestHost(val id: Int, val position: Coordinate, val maxBandwidth: BitRate)
 
   override def measureFrequency(): Ratio = Ratio((math.random() * 10 + 5).toInt.instances, 5.sec)
 
-  override def measureNeighborLatencies(): Unit = neighbors.foreach(n =>
-    neighborLatencies += (n -> (Seq.empty, (math.random() * 5 + 1).toInt.ms)))
+    override def measureNeighborLatencies(): Unit = neighbors.foreach(n =>
+      neighborLatencies += (n -> (Seq.empty, (math.random() * 5 + 1).toInt.ms)))
 
 
-  override def measureNeighborBandwidths(): Unit = neighbors.foreach(n =>
-    neighborBandwidths += (n -> (Seq.empty, (math.random() * 50 + 50).toInt.mbps)))
+    override def measureNeighborBandwidths(): Unit = neighbors.foreach(n =>
+      neighborBandwidths += (n -> (Seq.empty, (math.random() * 50 + 50).toInt.mbps)))
 
   override def measureNeighborThroughputs(): Unit = neighbors.foreach(n =>
-      neighborThroughputs += (n -> (Seq.empty, (math.random() * (
-        if (neighborBandwidths.contains(n))
-          neighborBandwidths(n)._2.toKbps / 1024
-        else
-          0)
-        ).toInt.mbps)))
+    neighborThroughputs += (n -> (Seq.empty, (math.random() * (
+      if (neighborBandwidths.contains(n))
+        neighborBandwidths(n)._2.toKbps / 1024
+      else
+        0)
+      ).toInt.mbps)))
 
 //  override def measureNeighborLatencies(): Unit = {}
 //

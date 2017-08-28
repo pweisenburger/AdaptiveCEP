@@ -24,7 +24,7 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     query,
     publishers,
     AverageFrequencyMonitor(interval = 15, logging = false, testing = true),
-    PathDemandsMonitor(5, 30, 30, 30, logging = false, testing = true),
+    PathDemandsMonitor(5, 30, 30, 30, LatencyPriority, logging = false),
     () => testActor ! Created,
     event => testActor ! event)
 

@@ -41,8 +41,8 @@ trait Node extends Actor {
       system, context, query, childOperator, publishers,
       AverageFrequencyMonitor(frequencyMonitor.interval, frequencyMonitor.logging, frequencyMonitor.testing),
       PathDemandsMonitor(demandsMonitor.messageInterval, demandsMonitor.latencyInterval,
-        demandsMonitor.bandwidthInterval, demandsMonitor.throughputInterval,
-        demandsMonitor.logging, demandsMonitor.testing),
+        demandsMonitor.bandwidthInterval, demandsMonitor.throughputInterval, demandsMonitor.priority,
+        demandsMonitor.logging),
       None, None, s"$name-$id-")
 
 }
