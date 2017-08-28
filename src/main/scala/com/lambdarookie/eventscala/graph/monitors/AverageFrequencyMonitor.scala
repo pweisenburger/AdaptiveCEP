@@ -9,7 +9,7 @@ import com.lambdarookie.eventscala.data.Events._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.FiniteDuration
 
-case class AverageFrequencyMonitor(interval: Int, logging: Boolean, testing: Boolean) extends NodeMonitor {
+case class AverageFrequencyMonitor(interval: Int, logging: Boolean, counting: Boolean) extends Monitor {
   var currentOutput: Option[Int] = None
 
   override def onCreated(nodeData: NodeData): Unit = {
@@ -26,10 +26,10 @@ case class AverageFrequencyMonitor(interval: Int, logging: Boolean, testing: Boo
               require(fc.ratio.timeSpan.toSeconds <= interval)
               // `divisor`, e.g., if `interval` == 30, and `fc.ratio.timeSpan.toSeconds` == 10, then `divisor` == 3
               val divisor: Int = interval / fc.ratio.timeSpan.toSeconds
-              val current: Int = if(testing)
-                host.measureFrequency().instances.getInstanceNum
-              else
+              val current: Int = if(counting)
                 currentOutput.get / divisor
+              else
+                host.measureFrequency().instances.getInstanceNum
               if (logging) println(s"FREQUENCY:\tOn average, node `${nodeData.name}` emits $current events every " +
                 s"${fc.ratio.timeSpan.toSeconds} seconds. (Calculated every $interval seconds.)")
               val expected = fc.ratio.instances.getInstanceNum
@@ -48,6 +48,8 @@ case class AverageFrequencyMonitor(interval: Int, logging: Boolean, testing: Boo
       )
     }
   }
+
+  override def copy: AverageFrequencyMonitor = AverageFrequencyMonitor(interval, logging, counting)
 
   def onEventEmit(event: Event): Unit =  if (currentOutput.isDefined) currentOutput = Some(currentOutput.get + 1)
 

@@ -13,8 +13,7 @@ case class FilterNode(
                        query: FilterQuery,
                        operator: UnaryOperator,
                        publishers: Map[String, ActorRef],
-                       frequencyMonitor: AverageFrequencyMonitor,
-                       demandsMonitor: PathDemandsMonitor,
+                       monitors: Set[_ <: Monitor],
                        createdCallback: Option[() => Any],
                        eventCallback: Option[(Event) => Any])
   extends UnaryNode {
@@ -25,8 +24,7 @@ case class FilterNode(
     case event: Event if sender() == childNode =>
       if (query.cond(event)) emitEvent(event)
     case unhandledMessage =>
-      frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
-      demandsMonitor.onMessageReceive(unhandledMessage, nodeData)
+      monitors.foreach(_.onMessageReceive(unhandledMessage, nodeData))
   }
 
 }

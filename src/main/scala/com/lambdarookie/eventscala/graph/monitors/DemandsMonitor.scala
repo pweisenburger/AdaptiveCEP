@@ -12,9 +12,10 @@ import com.lambdarookie.eventscala.backend.system.traits._
 import com.lambdarookie.eventscala.data.Queries._
 
 
-case class ChildInfoRequest()
-case class ChildInfoResponse(childNode: ActorRef)
-case class PathInfoMessage(childNode: ActorRef, pathInfo: PathInfo)
+trait InfoMessage
+case class ChildInfoRequest() extends InfoMessage
+case class ChildInfoResponse(childNode: ActorRef) extends InfoMessage
+case class PathInfoMessage(childNode: ActorRef, pathInfo: PathInfo) extends InfoMessage
 
 case class PathInfo(latencyInfo: LatencyInfo, bandwidthInfo: BandwidthInfo, throughputInfo: ThroughputInfo)
 case class LatencyInfo(path: Seq[Host], latency: Duration)
@@ -26,8 +27,8 @@ case object LatencyPriority extends Priority
 case object BandwidthPriority extends Priority
 case object ThroughputPriority extends Priority
 
-case class PathDemandsMonitor(messageInterval: Int, latencyInterval: Int, bandwidthInterval: Int, throughputInterval: Int,
-                              priority: Priority, logging: Boolean) extends NodeMonitor {
+case class DemandsMonitor(messageInterval: Int, latencyInterval: Int, bandwidthInterval: Int, throughputInterval: Int,
+                          priority: Priority, logging: Boolean) extends Monitor {
 
   val clock: Clock = Clock.systemDefaultZone
 
@@ -92,7 +93,7 @@ case class PathDemandsMonitor(messageInterval: Int, latencyInterval: Int, bandwi
         case ThroughputPriority => system.calculateHighestThroughput(childHost, host)._1
       }
 
-    nodeData match {
+    if (message.isInstanceOf[InfoMessage]) nodeData match {
       case _: LeafNodeData => message match {
         case ChildInfoRequest() =>
           nodeData.context.parent ! ChildInfoResponse(self)
@@ -175,6 +176,9 @@ case class PathDemandsMonitor(messageInterval: Int, latencyInterval: Int, bandwi
     }
   }
 
+  override def copy: DemandsMonitor =
+    DemandsMonitor(messageInterval, latencyInterval, bandwidthInterval, throughputInterval, priority, logging)
+
   private def isDemandNotMet(pathInfo: PathInfo, d: Demand): Boolean = {
     val met: Boolean = d match {
       case ld: LatencyDemand =>
@@ -245,4 +249,4 @@ case class PathDemandsMonitor(messageInterval: Int, latencyInterval: Int, bandwi
         path2Info.throughputInfo
     )
   }
-  }
+}

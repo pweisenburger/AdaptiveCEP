@@ -13,8 +13,7 @@ case class DisjunctionNode(
                             query: DisjunctionQuery,
                             operator: BinaryOperator,
                             publishers: Map[String, ActorRef],
-                            frequencyMonitor: AverageFrequencyMonitor,
-                            demandsMonitor: PathDemandsMonitor,
+                            monitors: Set[_ <: Monitor],
                             createdCallback: Option[() => Any],
                             eventCallback: Option[(Event) => Any])
   extends BinaryNode {
@@ -83,8 +82,7 @@ case class DisjunctionNode(
       case Event6(e1, e2, e3, e4, e5, e6) => handleEvent(Array(Right(e1), Right(e2), Right(e3), Right(e4), Right(e5), Right(e6)))
     }
     case unhandledMessage =>
-      frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
-      demandsMonitor.onMessageReceive(unhandledMessage, nodeData)
+      monitors.foreach(_.onMessageReceive(unhandledMessage, nodeData))
   }
 
 }

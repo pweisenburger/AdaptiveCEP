@@ -13,8 +13,7 @@ case class DropElemNode(
                          query: DropElemQuery,
                          operator: UnaryOperator,
                          publishers: Map[String, ActorRef],
-                         frequencyMonitor: AverageFrequencyMonitor,
-                         demandsMonitor: PathDemandsMonitor,
+                         monitors: Set[_ <: Monitor],
                          createdCallback: Option[() => Any],
                          eventCallback: Option[(Event) => Any])
   extends UnaryNode {
@@ -89,8 +88,7 @@ case class DropElemNode(
       case Event6(e1, e2, e3, e4, e5, e6) => handleEvent6(e1, e2, e3, e4, e5, e6)
     }
     case unhandledMessage =>
-      frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
-      demandsMonitor.onMessageReceive(unhandledMessage, nodeData)
+      monitors.foreach(_.onMessageReceive(unhandledMessage, nodeData))
   }
 
 }

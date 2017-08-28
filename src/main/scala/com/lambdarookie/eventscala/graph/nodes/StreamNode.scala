@@ -14,8 +14,7 @@ case class StreamNode(
                        query: StreamQuery,
                        operator: EventSource,
                        publishers: Map[String, ActorRef],
-                       frequencyMonitor: AverageFrequencyMonitor,
-                       demandsMonitor: PathDemandsMonitor,
+                       monitors: Set[_ <: Monitor],
                        createdCallback: Option[() => Any],
                        eventCallback: Option[(Event) => Any])
   extends LeafNode {
@@ -30,8 +29,7 @@ case class StreamNode(
     case event: Event if sender() == publisher =>
       emitEvent(event)
     case unhandledMessage =>
-      frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
-      demandsMonitor.onMessageReceive(unhandledMessage, nodeData)
+      monitors.foreach(_.onMessageReceive(unhandledMessage, nodeData))
   }
 
 }

@@ -15,8 +15,7 @@ case class ConjunctionNode(
                             query: ConjunctionQuery,
                             operator: BinaryOperator,
                             publishers: Map[String, ActorRef],
-                            frequencyMonitor: AverageFrequencyMonitor,
-                            demandsMonitor: PathDemandsMonitor,
+                            monitors: Set[_ <: Monitor],
                             createdCallback: Option[() => Any],
                             eventCallback: Option[(Event) => Any])
   extends BinaryNode with EsperEngine {
@@ -50,8 +49,7 @@ case class ConjunctionNode(
       case Event6(e1, e2, e3, e4, e5, e6) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5), toAnyRef(e6)))
     }
     case unhandledMessage =>
-      frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
-      demandsMonitor.onMessageReceive(unhandledMessage, nodeData)
+      monitors.foreach(_.onMessageReceive(unhandledMessage, nodeData))
   }
 
   override def postStop(): Unit = {

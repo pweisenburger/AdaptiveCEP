@@ -83,7 +83,7 @@ class TestHost(val id: Int, val position: Coordinate, val maxBandwidth: BitRate)
   override def measureNeighborThroughputs(): Unit = neighbors.foreach(n =>
     neighborThroughputs += (n -> (Seq.empty, (math.random() * (
       if (neighborBandwidths.contains(n))
-        neighborBandwidths(n)._2.toKbps / 1024
+        neighborBandwidths(n)._2.toMbps
       else
         0)
       ).toInt.mbps)))

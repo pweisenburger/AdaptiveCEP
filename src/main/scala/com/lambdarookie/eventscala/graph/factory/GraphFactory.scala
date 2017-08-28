@@ -13,13 +13,12 @@ object GraphFactory {
                   actorSystem: ActorSystem,
                   query: Query,
                   publishers: Map[String, ActorRef],
-                  frequencyMonitor: AverageFrequencyMonitor,
-                  demandsMonitor: PathDemandsMonitor,
+                  monitors: Set[_ <: Monitor],
                   createdCallback: () => Any,
                   eventCallback: (Event) => Any): ActorRef =
     NodeFactory.createNode(system, actorSystem, query,
       OperatorFactory.createOperator(Operator.ROOT, system, query, Set.empty[Operator]),
-      publishers, frequencyMonitor, demandsMonitor, Some(createdCallback), Some(eventCallback), "")
+      publishers, monitors, Some(createdCallback), Some(eventCallback), "")
 
   // This is why `eventCallback` is listed separately:
   // https://stackoverflow.com/questions/21147001/why-scala-doesnt-infer-type-from-generic-type-parameters
@@ -28,8 +27,7 @@ object GraphFactory {
                  actorSystem: ActorSystem,
                  query: Query1[A],
                  publishers: Map[String, ActorRef],
-                 frequencyMonitor: AverageFrequencyMonitor,
-                 demandsMonitor: PathDemandsMonitor,
+                 monitors: Set[_ <: Monitor],
                  createdCallback: () => Any)(
       eventCallback: (A) => Any): ActorRef =
     createImpl(
@@ -37,8 +35,7 @@ object GraphFactory {
       actorSystem,
       query.asInstanceOf[Query],
       publishers,
-      frequencyMonitor,
-      demandsMonitor,
+      monitors,
       createdCallback,
       toFunEventAny(eventCallback))
 
@@ -47,8 +44,7 @@ object GraphFactory {
                     actorSystem: ActorSystem,
                     query: Query2[A, B],
                     publishers: Map[String, ActorRef],
-                    frequencyMonitor: AverageFrequencyMonitor,
-                    demandsMonitor: PathDemandsMonitor,
+                    monitors: Set[_ <: Monitor],
                     createdCallback: () => Any)(
       eventCallback: (A, B) => Any): ActorRef =
     createImpl(
@@ -56,8 +52,7 @@ object GraphFactory {
       actorSystem,
       query.asInstanceOf[Query],
       publishers,
-      frequencyMonitor,
-      demandsMonitor,
+      monitors,
       createdCallback,
       toFunEventAny(eventCallback))
 
@@ -66,8 +61,7 @@ object GraphFactory {
                        actorSystem: ActorSystem,
                        query: Query3[A, B, C],
                        publishers: Map[String, ActorRef],
-                       frequencyMonitor: AverageFrequencyMonitor,
-                       demandsMonitor: PathDemandsMonitor,
+                       monitors: Set[_ <: Monitor],
                        createdCallback: () => Any)(
       eventCallback: (A, B, C) => Any): ActorRef =
     createImpl(
@@ -75,8 +69,7 @@ object GraphFactory {
       actorSystem,
       query.asInstanceOf[Query],
       publishers,
-      frequencyMonitor,
-      demandsMonitor,
+      monitors,
       createdCallback,
       toFunEventAny(eventCallback))
 
@@ -85,8 +78,7 @@ object GraphFactory {
                           actorSystem: ActorSystem,
                           query: Query4[A, B, C, D],
                           publishers: Map[String, ActorRef],
-                          frequencyMonitor: AverageFrequencyMonitor,
-                          demandsMonitor: PathDemandsMonitor,
+                          monitors: Set[_ <: Monitor],
                           createdCallback: () => Any)(
       eventCallback: (A, B, C, D) => Any): ActorRef =
     createImpl(
@@ -94,8 +86,7 @@ object GraphFactory {
       actorSystem,
       query.asInstanceOf[Query],
       publishers,
-      frequencyMonitor,
-      demandsMonitor,
+      monitors,
       createdCallback,
       toFunEventAny(eventCallback))
 
@@ -104,8 +95,7 @@ object GraphFactory {
                              actorSystem: ActorSystem,
                              query: Query5[A, B, C, D, E],
                              publishers: Map[String, ActorRef],
-                             frequencyMonitor: AverageFrequencyMonitor,
-                             demandsMonitor: PathDemandsMonitor,
+                             monitors: Set[_ <: Monitor],
                              createdCallback: () => Any)(
       eventCallback: (A, B, C, D, E) => Any): ActorRef =
     createImpl(
@@ -113,8 +103,7 @@ object GraphFactory {
       actorSystem,
       query.asInstanceOf[Query],
       publishers,
-      frequencyMonitor,
-      demandsMonitor,
+      monitors,
       createdCallback,
       toFunEventAny(eventCallback))
 
@@ -123,8 +112,7 @@ object GraphFactory {
                                 actorSystem: ActorSystem,
                                 query: Query6[A, B, C, D, E, F],
                                 publishers: Map[String, ActorRef],
-                                frequencyMonitor: AverageFrequencyMonitor,
-                                demandsMonitor: PathDemandsMonitor,
+                                monitors: Set[_ <: Monitor],
                                 createdCallback: () => Any)(
       eventCallback: (A, B, C, D, E, F) => Any): ActorRef =
     createImpl(
@@ -132,8 +120,7 @@ object GraphFactory {
       actorSystem,
       query.asInstanceOf[Query],
       publishers,
-      frequencyMonitor,
-      demandsMonitor,
+      monitors,
       createdCallback,
       toFunEventAny(eventCallback))
 
