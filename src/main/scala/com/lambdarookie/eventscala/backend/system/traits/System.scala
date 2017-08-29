@@ -145,16 +145,31 @@ trait CEPSystem {
     out
   }
 
+  /**
+    * Calculate the latency on a given path
+    * @param path Path as a sequence of hosts
+    * @return Calculated latency as [[TimeSpan]]
+    */
   def calculateLatency(path: Seq[Host]): TimeSpan = if (path.nonEmpty && path.tail.nonEmpty)
     path.head.neighborLatencies(path(1))._2 + calculateLatency(path.tail)
   else
     0.ms
 
+  /**
+    * Calculate the bandwidth on a given path
+    * @param path Path as a sequence of hosts
+    * @return Calculated bandwidth as [[BitRate]]
+    */
   def calculateBandwidth(path: Seq[Host]): BitRate = if (path.nonEmpty && path.tail.nonEmpty)
     min(path.head.neighborBandwidths(path(1))._2, calculateBandwidth(path.tail))
   else
     Int.MaxValue.gbps
 
+  /**
+    * Calculate the throughput on a given path
+    * @param path Path as a sequence of hosts
+    * @return Calculated throughput as [[BitRate]]
+    */
   def calculateThroughput(path: Seq[Host]): BitRate = if (path.nonEmpty && path.tail.nonEmpty)
     min(path.head.neighborThroughputs(path(1))._2, calculateThroughput(path.tail))
   else
@@ -168,6 +183,8 @@ trait QoSSystem {
 
   val queries: Signal[Set[Query]] = queriesVar
   val demandViolated: Event[Violation] = fireDemandViolated
+
+  demandViolated += {v => v.operator.query.addViolatedDemand(v)}
 
   def addQuery(query: Query): Unit = queriesVar.transform(x => x + query)
 

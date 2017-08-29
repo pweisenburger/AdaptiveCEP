@@ -12,8 +12,6 @@ case class TestSystem(logging: Boolean) extends System {
 
   override val hosts: Signal[Set[Host]] = createRandomHosts
 
-  demandViolated += {v => v.operator.query.addViolatedDemand(v)}
-
   override def placeOperator(operator: Operator): Host = {
     val host: Host = if (hosts.now.exists(_.operators.now.isEmpty))
       hosts.now.filter(_.operators.now.isEmpty).head
@@ -73,12 +71,12 @@ class TestHost(val id: Int, val position: Coordinate, val maxBandwidth: BitRate)
 
   override def measureFrequency(): Ratio = Ratio((math.random() * 10 + 5).toInt.instances, 5.sec)
 
-    override def measureNeighborLatencies(): Unit = neighbors.foreach(n =>
-      neighborLatencies += (n -> (Seq.empty, (math.random() * 5 + 1).toInt.ms)))
+  override def measureNeighborLatencies(): Unit = neighbors.foreach(n =>
+    neighborLatencies += (n -> (Seq.empty, (math.random() * 5 + 1).toInt.ms)))
 
 
-    override def measureNeighborBandwidths(): Unit = neighbors.foreach(n =>
-      neighborBandwidths += (n -> (Seq.empty, (math.random() * 50 + 50).toInt.mbps)))
+  override def measureNeighborBandwidths(): Unit = neighbors.foreach(n =>
+    neighborBandwidths += (n -> (Seq.empty, (math.random() * 50 + 50).toInt.mbps)))
 
   override def measureNeighborThroughputs(): Unit = neighbors.foreach(n =>
     neighborThroughputs += (n -> (Seq.empty, (math.random() * (

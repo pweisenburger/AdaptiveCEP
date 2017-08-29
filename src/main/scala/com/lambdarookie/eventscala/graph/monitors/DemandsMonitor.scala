@@ -215,11 +215,12 @@ case class DemandsMonitor(messageInterval: Int, latencyInterval: Int, bandwidthI
     !met
   }
 
-  private def areConditionsMet(d: Demand): Boolean = if(d.conditions.exists(_.notFulfilled)) {
-    if (logging)
-      println("LOG:\tSome conditions for the demand are not met.")
+  private def areConditionsMet(d: Demand): Boolean = if (d.conditions.exists(_.notFulfilled)) {
+    if (logging) println("LOG:\t\tSome conditions for the demand are not met.")
     false
-  } else true
+  } else {
+    true
+  }
 
   private def logDemands(demands: Set[Demand], name: String, pathInfo: PathInfo): Unit = {
     if (demands.exists(_.isInstanceOf[LatencyDemand]))

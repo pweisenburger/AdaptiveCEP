@@ -16,9 +16,9 @@ case class BinaryNodeData(name: String, query: Query, system: System,
                           context: ActorContext, childNode1: ActorRef, childNode2: ActorRef) extends NodeData
 
 trait Monitor {
+  def copy: Monitor
+
   def onCreated(nodeData: NodeData): Unit = ()
   def onEventEmit(event: Event, nodeData: NodeData): Unit = ()
   def onMessageReceive(message: Any, nodeData: NodeData): Unit = ()
-
-  def copy: Monitor
 }

@@ -62,7 +62,9 @@ object Main extends App {
         stream[String]("B"),
         tumblingWindow(1.instances),
         tumblingWindow(1.instances),
-        latency < 10.ms, bandwidth > 100.mbps, throughput > 50.mbps)
+        latency < (10.ms, proximity > 1.m),
+        bandwidth > (100.mbps, frequency > Ratio(10.instances, 5.sec)),
+        throughput > (50.mbps, proximity < 1.m))
 
 
   GraphFactory.create(
@@ -70,7 +72,7 @@ object Main extends App {
     actorSystem =             actorSystem,
     query =                   query3,
     publishers =              publishers,
-    monitors =                Set(AverageFrequencyMonitor (15, logging = true, counting = true),
+    monitors =                Set(ConditionsMonitor (15, logging = true),
                                   DemandsMonitor (5, 30, 30, 30, LatencyPriority,  logging = true)),
     createdCallback =         () => println("STATUS:\t\tGraph has been created."))(
     eventCallback =           {
