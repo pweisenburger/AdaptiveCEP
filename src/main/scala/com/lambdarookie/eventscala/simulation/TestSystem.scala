@@ -1,9 +1,9 @@
-package com.lambdarookie.eventscala.backend.system
+package com.lambdarookie.eventscala.simulation
 
 import com.lambdarookie.eventscala.backend.data.Coordinate
+import com.lambdarookie.eventscala.backend.data.QoSUnits._
 import com.lambdarookie.eventscala.backend.system.traits._
 import rescala._
-import com.lambdarookie.eventscala.backend.data.QoSUnits._
 
 /**
   * Created by monur.

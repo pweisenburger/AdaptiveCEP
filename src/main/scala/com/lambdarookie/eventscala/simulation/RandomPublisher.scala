@@ -1,10 +1,13 @@
-package com.lambdarookie.eventscala.publishers
+package com.lambdarookie.eventscala.simulation
 
 import java.util.concurrent.TimeUnit
-import scala.util.Random
+
+import com.lambdarookie.eventscala.data.Events._
+import com.lambdarookie.eventscala.publishers.Publisher
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.FiniteDuration
-import com.lambdarookie.eventscala.data.Events._
+import scala.util.Random
 
 case class RandomPublisher(createEventFromId: Integer => Event) extends Publisher {
 

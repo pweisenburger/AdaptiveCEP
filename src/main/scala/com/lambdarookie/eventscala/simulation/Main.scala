@@ -1,7 +1,6 @@
 package com.lambdarookie.eventscala.simulation
 
 import akka.actor.{ActorRef, ActorSystem, Props}
-import com.lambdarookie.eventscala.backend.system.TestSystem
 import com.lambdarookie.eventscala.data.Events._
 import com.lambdarookie.eventscala.data.Queries._
 import com.lambdarookie.eventscala.dsl.Dsl._

@@ -2,7 +2,6 @@ package com.lambdarookie.eventscala
 
 import akka.actor.{ActorRef, ActorSystem, PoisonPill, Props}
 import akka.testkit.{TestKit, TestProbe}
-import com.lambdarookie.eventscala.backend.system.TestSystem
 import org.scalatest.{BeforeAndAfterAll, FunSuiteLike}
 import com.lambdarookie.eventscala.data.Events._
 import com.lambdarookie.eventscala.data.Queries._
@@ -11,6 +10,7 @@ import com.lambdarookie.eventscala.graph.factory._
 import com.lambdarookie.eventscala.publishers._
 import com.lambdarookie.eventscala.graph.monitors._
 import com.lambdarookie.eventscala.backend.data.QoSUnits._
+import com.lambdarookie.eventscala.simulation.TestSystem
 
 class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAndAfterAll {
 
