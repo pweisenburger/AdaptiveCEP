@@ -17,7 +17,7 @@ object GraphFactory {
                   createdCallback: () => Any,
                   eventCallback: (Event) => Any): ActorRef =
     NodeFactory.createNode(system, actorSystem, query,
-      OperatorFactory.createOperator(Operator.ROOT, system, query, Set.empty[Operator]),
+      system.createOperator(Operator.ROOT, query, Set.empty[Operator]),
       publishers, monitors, Some(createdCallback), Some(eventCallback), "")
 
   // This is why `eventCallback` is listed separately:

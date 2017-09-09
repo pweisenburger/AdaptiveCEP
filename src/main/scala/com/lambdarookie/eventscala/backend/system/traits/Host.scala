@@ -35,8 +35,6 @@ trait Host {
   def measureProximities(): Unit =
     neighbors.foreach(n => lastProximities += (n -> position.calculateDistanceTo(n.position).m))
 
-  def sortByProximity(): Unit = lastProximities = Map(lastProximities.toSeq.sortWith(_._2 < _._2): _*)
-
   def measureMetrics(): Unit = {
     measureFrequency()
     measureProximities()

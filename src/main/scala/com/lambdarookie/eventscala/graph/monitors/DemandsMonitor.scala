@@ -8,6 +8,7 @@ import scala.concurrent.duration.FiniteDuration
 import akka.actor.ActorRef
 import com.lambdarookie.eventscala.backend.data.QoSUnits._
 import com.lambdarookie.eventscala.backend.qos.QualityOfService._
+import com.lambdarookie.eventscala.backend.system.Utilities
 import com.lambdarookie.eventscala.backend.system.traits._
 import com.lambdarookie.eventscala.data.Queries._
 
@@ -83,14 +84,14 @@ case class DemandsMonitor(messageInterval: Int, latencyInterval: Int, bandwidthI
 
     def createPathInfo(childNodeChosenPath: Option[Seq[Host]], childNodePathInfo: Option[PathInfo]): PathInfo = {
       val path = childNodePathInfo.get.latencyInfo.path ++ childNodeChosenPath.get
-      PathInfo(LatencyInfo(path, system.calculateLatency(path).toDuration),
-        BandwidthInfo(path, system.calculateBandwidth(path)), ThroughputInfo(path, system.calculateThroughput(path)))
+      PathInfo(LatencyInfo(path, Utilities.calculateLatency(path).toDuration),
+        BandwidthInfo(path, Utilities.calculateBandwidth(path)), ThroughputInfo(path, Utilities.calculateThroughput(path)))
     }
 
     def getChosenPathFromChild(childHost: Host): Seq[Host] = priority match {
-        case LatencyPriority => system.calculateLowestLatency(childHost, host)._1
-        case BandwidthPriority => system.calculateHighestBandwidth(childHost, host)._1
-        case ThroughputPriority => system.calculateHighestThroughput(childHost, host)._1
+        case LatencyPriority => Utilities.calculateLowestLatency(childHost, host)._1
+        case BandwidthPriority => Utilities.calculateHighestBandwidth(childHost, host)._1
+        case ThroughputPriority => Utilities.calculateHighestThroughput(childHost, host)._1
       }
 
     if (message.isInstanceOf[InfoMessage]) nodeData match {
