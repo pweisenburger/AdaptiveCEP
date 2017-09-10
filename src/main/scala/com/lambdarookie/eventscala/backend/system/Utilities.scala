@@ -13,17 +13,17 @@ object Utilities {
     * @param dest Destination host
     * @return The tuple of the path (For the path 'source -> A -> B -> dest' returns 'Seq(A, B, dest)') and the latency
     */
-  def calculateLowestLatency(source: Host, dest: Host): (Seq[Host], TimeSpan) = {
+  def calculateLowestLatency(source: Host, dest: Host): (Seq[Host], TimeSpan) = if (source == dest) {
+    source.neighborLatencies(dest)
+  } else {
     var visited: Set[Host] = Set(source)
     var latencies: Map[Host, (Seq[Host], TimeSpan)] = source.neighborLatencies - source
-    var out: (Seq[Host], TimeSpan) = null
     while (latencies.nonEmpty) {
       latencies = latencies.toSeq.sortWith(_._2._2 < _._2._2).toMap
       val n: (Host, (Seq[Host], TimeSpan)) = latencies.head
       if (!visited.contains(n._1))
         if (n._1 == dest) {
-          out = (n._2._1 :+ dest, n._2._2)
-          latencies = Map.empty
+          return (n._2._1 :+ dest, n._2._2)
         } else {
           visited += n._1
           val inters: Seq[Host] = n._2._1 :+ n._1
@@ -35,7 +35,7 @@ object Utilities {
           latencies -= n._1
         }
     }
-    out
+    throw new RuntimeException("ERROR:\tMethod should never reach here.")
   }
 
   /**
@@ -44,17 +44,17 @@ object Utilities {
     * @param dest Destination host
     * @return The tuple of the path (For the path 'source -> A -> B -> dest' returns 'Seq(A, B, dest)') and the bandwidth
     */
-  def calculateHighestBandwidth(source: Host, dest: Host): (Seq[Host], BitRate) = {
+  def calculateHighestBandwidth(source: Host, dest: Host): (Seq[Host], BitRate) = if (source == dest) {
+    source.neighborBandwidths(dest)
+  } else {
     var visited: Set[Host] = Set(source)
     var bandwidths: Map[Host, (Seq[Host], BitRate)] = source.neighborBandwidths - source
-    var out: (Seq[Host], BitRate) = null
     while (bandwidths.nonEmpty) {
       bandwidths = bandwidths.toSeq.sortWith(_._2._2 > _._2._2).toMap
       val n: (Host, (Seq[Host], BitRate)) = bandwidths.head
       if (!visited.contains(n._1))
         if (n._1 == dest) {
-          out = (n._2._1 :+ dest, n._2._2)
-          bandwidths = Map.empty
+          return (n._2._1 :+ dest, n._2._2)
         } else {
           visited += n._1
           val inters: Seq[Host] = n._2._1 :+ n._1
@@ -66,7 +66,7 @@ object Utilities {
           bandwidths -= n._1
         }
     }
-    out
+    throw new RuntimeException("ERROR:\tMethod should never reach here.")
   }
 
   /**
@@ -75,17 +75,17 @@ object Utilities {
     * @param dest Destination host
     * @return The tuple of the path (For the path 'source -> A -> B -> dest' returns 'Seq(A, B, dest)') and the throughput
     */
-  def calculateHighestThroughput(source: Host, dest: Host): (Seq[Host], BitRate) = {
+  def calculateHighestThroughput(source: Host, dest: Host): (Seq[Host], BitRate) = if (source == dest) {
+    source.neighborThroughputs(dest)
+  } else {
     var visited: Set[Host] = Set(source)
     var throughputs: Map[Host, (Seq[Host], BitRate)] = source.neighborThroughputs - source
-    var out: (Seq[Host], BitRate) = null
     while (throughputs.nonEmpty) {
       throughputs = throughputs.toSeq.sortWith(_._2._2 > _._2._2).toMap
       val n: (Host, (Seq[Host], BitRate)) = throughputs.head
       if (!visited.contains(n._1))
         if (n._1 == dest) {
-          out = (n._2._1 :+ dest, n._2._2)
-          throughputs = Map.empty
+          return (n._2._1 :+ dest, n._2._2)
         } else {
           visited += n._1
           val inters: Seq[Host] = n._2._1 :+ n._1
@@ -97,7 +97,7 @@ object Utilities {
           throughputs -= n._1
         }
     }
-    out
+    throw new RuntimeException("ERROR:\tMethod should never reach here.")
   }
 
   /**
