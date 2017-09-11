@@ -21,22 +21,9 @@ object Queries {
 
   sealed trait Query extends Demands { val demands: Set[Demand] }
 
-  sealed trait LeafQuery   extends Query {
-    override val violatedDemands: rescala.Signal[Set[Violation]] = violatedDemandsVar
-  }
-  sealed trait UnaryQuery  extends Query {
-    val sq: Query
-
-    override val violatedDemands: rescala.Signal[Set[Violation]] =
-      rescala.Signal{violatedDemandsVar() ++ sq.violatedDemands()}
-  }
-  sealed trait BinaryQuery extends Query {
-    val sq1: Query
-    val sq2: Query
-
-    override val violatedDemands: rescala.Signal[Set[Violation]] =
-      rescala.Signal{violatedDemandsVar() ++ sq1.violatedDemands() ++ sq2.violatedDemands()}
-  }
+  sealed trait LeafQuery extends Query
+  sealed trait UnaryQuery  extends Query { val sq: Query }
+  sealed trait BinaryQuery extends Query { val sq1: Query; val sq2: Query }
 
   sealed trait StreamQuery      extends LeafQuery   { val publisherName: String }
   sealed trait SequenceQuery    extends LeafQuery   { val s1: NStream; val s2: NStream }

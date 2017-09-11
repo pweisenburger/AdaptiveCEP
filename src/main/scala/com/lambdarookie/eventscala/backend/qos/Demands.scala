@@ -8,13 +8,15 @@ import rescala._
   * Created by monur.
   */
 trait Demands {
-  protected val violatedDemandsVar: Var[Set[Violation]] = Var(Set.empty)
+  private val violatedDemandsVar: Var[Set[Violation]] = Var(Set.empty)
+  private val adaptingVar: Var[Option[Set[Violation]]] = Var(None)
+  private val fireAdaptationPlanned: Evt[Set[Violation]] = Evt[Set[Violation]]
 
-  val violatedDemands: Signal[Set[Violation]]
-//  def adapting: Signal[Option[Set[Demand]]]
-//  def adaptationPlanned: Event[Set[Demand]]
-//  def delayAdaptation(delay: Event[TimeSpan]): Unit
+  val violatedDemands: Signal[Set[Violation]] = violatedDemandsVar
+  val adapting: Signal[Option[Set[Violation]]] = adaptingVar
+  val adaptationPlanned: Event[Set[Violation]] = fireAdaptationPlanned
 
-
-  def addViolatedDemand(violation: Violation): Unit = violatedDemandsVar.transform(x => x + violation)
+  def addViolatedDemand(violation: Violation): Unit = violatedDemandsVar.transform(_ + violation)
+  def removeViolatedDemand(violation: Violation): Unit = violatedDemandsVar.transform(_ - violation)
+  def fireAdaptationPlanned(violations: Set[Violation]): Unit = fireAdaptationPlanned fire violations
 }
