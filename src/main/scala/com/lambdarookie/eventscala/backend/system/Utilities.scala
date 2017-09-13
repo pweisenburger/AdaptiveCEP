@@ -101,6 +101,26 @@ object Utilities {
   }
 
   /**
+    * Calculate the distance from a coordinate to another coordinate
+    * @param from Coordinate of type [[Coordinate]]
+    * @param to Coordinate of type [[Coordinate]]
+    * @return Distance in meters
+    */
+  def calculateDistance(from: Coordinate, to: Coordinate): Int = {
+    import math._
+
+    val R = 6371 // Radius of the earth
+    val latDistance = toRadians(from.latitude - to.latitude)
+    val lonDistance = toRadians(from.longitude - to.longitude)
+    val a = sin(latDistance / 2) * sin(latDistance / 2) +
+      cos(toRadians(from.latitude)) * cos(toRadians(to.latitude))* sin(lonDistance / 2) * sin(lonDistance / 2)
+    val c = 2 * atan2(sqrt(a), sqrt(1-a))
+    val distance = R * c * 1000 // convert to meters
+    val height = from.altitude - to.altitude
+    sqrt(pow(distance, 2) + pow(height, 2)).toInt
+  }
+
+  /**
     * Calculate the latency on a given path
     * @param path Path as a sequence of hosts
     * @return Calculated latency as [[TimeSpan]]

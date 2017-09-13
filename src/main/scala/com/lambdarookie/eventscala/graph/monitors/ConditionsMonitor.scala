@@ -3,8 +3,9 @@ package com.lambdarookie.eventscala.graph.monitors
 import java.util.concurrent.TimeUnit
 
 import akka.actor.{ActorContext, ActorRef}
-import com.lambdarookie.eventscala.backend.data.Coordinate
+import com.lambdarookie.eventscala.backend.data.QoSUnits.Coordinate
 import com.lambdarookie.eventscala.backend.qos.QualityOfService._
+import com.lambdarookie.eventscala.backend.system.Utilities
 import com.lambdarookie.eventscala.backend.system.traits.Host
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -59,7 +60,7 @@ case class ConditionsMonitor(interval: Int, logging: Boolean) extends Monitor {
       case _: UnaryNodeData => message match {
         case c: Coordinate if proximityConditions.isEmpty => parent ! c
         case c: Coordinate if proximityConditions.nonEmpty =>
-          highestProximity = Some(host.position.calculateDistanceTo(c))
+          highestProximity = Some(Utilities.calculateDistance(host.position, c))
           if (logging)
             println(s"LOG:\t\tProximity from $host to the farthest leaf host is ${highestProximity.get} meters.")
           setIfConditionsFulfilled(proximityConditions)
@@ -70,9 +71,9 @@ case class ConditionsMonitor(interval: Int, logging: Boolean) extends Monitor {
         case c: Coordinate if proximityConditions.isEmpty => parent ! c
         case c: Coordinate if proximityConditions.nonEmpty =>
           if (highestProximity.isEmpty) {
-            highestProximity = Some(host.position.calculateDistanceTo(c))
+            highestProximity = Some(Utilities.calculateDistance(host.position, c))
           } else {
-            highestProximity = Some(math.max(highestProximity.get, host.position.calculateDistanceTo(c)))
+            highestProximity = Some(math.max(highestProximity.get, Utilities.calculateDistance(host.position, c)))
             if (logging)
               println(s"LOG:\t\tProximity from $host to the farthest leaf host is ${highestProximity.get} meters.")
             setIfConditionsFulfilled(proximityConditions)

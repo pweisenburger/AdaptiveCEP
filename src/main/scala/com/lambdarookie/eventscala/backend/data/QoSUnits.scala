@@ -146,4 +146,14 @@ object QoSUnits {
 
   implicit def longToBitRateCreator(i: Long): BitRateUnits = BitRateUnits(i)
   //          BitRate End
+
+
+  //          Coordinate Begin
+  /**
+    * @param latitude Latitude
+    * @param longitude Longitude
+    * @param altitude Altitude in meters
+    */
+  case class Coordinate(latitude: Double, longitude: Double, altitude: Double)
+  //          Coordinate End
 }

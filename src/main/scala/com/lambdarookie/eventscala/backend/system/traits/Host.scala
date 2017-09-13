@@ -1,7 +1,7 @@
 package com.lambdarookie.eventscala.backend.system.traits
 
-import com.lambdarookie.eventscala.backend.data.Coordinate
 import com.lambdarookie.eventscala.backend.data.QoSUnits._
+import com.lambdarookie.eventscala.backend.system.Utilities
 import rescala._
 
 /**
@@ -32,7 +32,7 @@ trait Host {
   def removeOperator(operator: Operator): Unit = operatorsVar.transform(_ - operator)
 
   def measureProximities(): Unit =
-    neighbors.foreach(n => lastProximities += (n -> position.calculateDistanceTo(n.position).m))
+    neighbors.foreach(n => lastProximities += (n -> Utilities.calculateDistance(this.position, n.position).m))
 
   def measureMetrics(): Unit = {
     measureFrequency()
