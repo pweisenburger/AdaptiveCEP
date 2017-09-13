@@ -9,7 +9,6 @@ import rescala._
   */
 trait Host {
   val position: Coordinate
-  val maxBandwidth: BitRate
 
   def neighbors: Set[Host]
   def measureFrequency(): Ratio
@@ -24,8 +23,8 @@ trait Host {
   var lastFrequency: Ratio = Ratio(0.instances, 0.sec)
   var lastProximities: Map[Host, Distance] = Map(this -> 0.m)
   var neighborLatencies: Map[Host, (Seq[Host], TimeSpan)] = Map(this -> (Seq.empty, 0.ms))
-  var neighborThroughputs: Map[Host, (Seq[Host], BitRate)] = Map(this -> (Seq.empty, maxBandwidth))
-  var neighborBandwidths: Map[Host, (Seq[Host], BitRate)] = Map(this -> (Seq.empty, maxBandwidth))
+  var neighborThroughputs: Map[Host, (Seq[Host], BitRate)] = Map(this -> (Seq.empty, Int.MaxValue.gbps))
+  var neighborBandwidths: Map[Host, (Seq[Host], BitRate)] = Map(this -> (Seq.empty, Int.MaxValue.gbps))
 
 
   def addOperator(operator: Operator): Unit = operatorsVar.transform(_ + operator)

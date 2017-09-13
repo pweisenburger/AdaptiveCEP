@@ -100,7 +100,7 @@ case class DemandsMonitor(messageInterval: Int, latencyInterval: Int, bandwidthI
           nodeData.context.parent ! ChildInfoResponse(self)
           nodeData.context.parent !
             PathInfoMessage(self, PathInfo(LatencyInfo(Seq(host), Duration.ZERO),
-              BandwidthInfo(Seq(host), host.maxBandwidth), ThroughputInfo(Seq(host), host.maxBandwidth)))
+              BandwidthInfo(Seq(host), Int.MaxValue.gbps), ThroughputInfo(Seq(host), Int.MaxValue.gbps)))
       }
       case _: UnaryNodeData =>
         message match {
