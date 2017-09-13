@@ -60,9 +60,9 @@ object Main extends App {
         stream[String]("B"),
         tumblingWindow(1.instances),
         tumblingWindow(1.instances),
-        latency < (10.ms, proximity > 1.m),
+        latency < 1.ms,
         bandwidth > (100.mbps, frequency > Ratio(10.instances, 5.sec)),
-        throughput > (50.mbps, proximity < 1.m))
+        throughput > (50.mbps, proximity > 1.m))
 
 
   GraphFactory.create(

@@ -8,23 +8,37 @@ import com.lambdarookie.eventscala.backend.system.traits.Operator
   */
 object QualityOfService {
   sealed trait BooleanOperator
-  case object Equal        extends BooleanOperator
-  case object NotEqual     extends BooleanOperator
-  case object Greater      extends BooleanOperator
-  case object GreaterEqual extends BooleanOperator
-  case object Smaller      extends BooleanOperator
-  case object SmallerEqual extends BooleanOperator
+  case object Equal        extends BooleanOperator { override def toString: String = "==" }
+  case object NotEqual     extends BooleanOperator { override def toString: String = "!=" }
+  case object Greater      extends BooleanOperator { override def toString: String = ">"  }
+  case object GreaterEqual extends BooleanOperator { override def toString: String = ">=" }
+  case object Smaller      extends BooleanOperator { override def toString: String = "<"  }
+  case object SmallerEqual extends BooleanOperator { override def toString: String = "<=" }
 
-  sealed trait Condition{ var notFulfilled: Boolean = false }
+  sealed trait Condition{
+    var notFulfilled: Boolean = false
+
+    override def toString: String = this match {
+      case FrequencyCondition(bo, r) => s"Frequency $bo $r"
+      case ProximityCondition(po, d) => s"Proximity $po $d"
+      case LatencyDemand(bo, t, _) => s"Latency $bo $t"
+      case BandwidthDemand(bo, b, _) => s"Bandwidth $bo $b"
+      case ThroughputDemand(bo, b, _) => s"Throughput $bo $b"
+    }
+  }
   case class FrequencyCondition(booleanOperator: BooleanOperator, ratio: Ratio) extends Condition
   case class ProximityCondition(booleanOperator: BooleanOperator, distance: Distance) extends Condition
 
-  sealed trait Demand extends Condition { val conditions: Set[Condition] }
+  sealed trait Demand extends Condition {
+    val conditions: Set[Condition]
+
+    override def toString: String = super.toString + (if (conditions.nonEmpty) s" with conditions: $conditions" else "")
+  }
   case class LatencyDemand(booleanOperator: BooleanOperator, timeSpan: TimeSpan, conditions: Set[Condition])
     extends Demand
-  case class ThroughputDemand(booleanOperator: BooleanOperator, bitRate: BitRate, conditions: Set[Condition])
-    extends Demand
   case class BandwidthDemand(booleanOperator: BooleanOperator, bitRate: BitRate, conditions: Set[Condition])
+    extends Demand
+  case class ThroughputDemand(booleanOperator: BooleanOperator, bitRate: BitRate, conditions: Set[Condition])
     extends Demand
 
 

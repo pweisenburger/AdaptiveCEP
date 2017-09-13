@@ -32,6 +32,13 @@ object QoSUnits {
     def toNanos: Int = i.getNano
     def toMillis: Int = i.toMillis.toInt
     def toSeconds: Int = i.getSeconds.toInt
+
+    override def toString: String = if (toSeconds > 0)
+      s"$toSeconds.s"
+    else if (toMillis > 0)
+      s"$toMillis.ms"
+    else
+      s"$toNanos.ns"
   }
 
   case class TimeSpanUnits(private val i: Int) {
@@ -51,6 +58,11 @@ object QoSUnits {
     override def <(other: Distance): Boolean = this.toMeter < other.toMeter
     override def >(other: Distance): Boolean = this.toMeter > other.toMeter
     override def <=(other: Distance): Boolean = this.toMeter <= other.toMeter
+
+    override def toString: String = this match {
+      case Meter(m) => s"$m.m"
+      case Kilometer(km) => s"$km.km"
+    }
   }
 
   case class Meter(i: Int) extends Distance {
@@ -77,6 +89,8 @@ object QoSUnits {
     def -(other: Instances): Instances = (this.getInstanceNum - other.getInstanceNum).instances
     def instances: Instances = Instances(i)
     def getInstanceNum: Int = i
+
+    override def toString: String = s"$i.events"
   }
   implicit def intToInstancesCreator(i: Int): Instances = Instances(i)
 
@@ -87,6 +101,8 @@ object QoSUnits {
     override def >(other: Ratio): Boolean = this.exactRatio > other.exactRatio
     override def <=(other: Ratio): Boolean = this.exactRatio <= other.exactRatio
     override def -(other: Ratio): Ratio = Ratio(this.instances - other.instances, this.timeSpan - other.timeSpan)
+
+    override def toString: String = s"$instances per $timeSpan"
   }
   //          Ratio End
 
@@ -99,6 +115,12 @@ object QoSUnits {
     override def <(other: BitRate): Boolean = this.toKbps < other.toKbps
     override def >(other: BitRate): Boolean = this.toKbps > other.toKbps
     override def <=(other: BitRate): Boolean = this.toKbps <= other.toKbps
+
+    override def toString: String = this match {
+      case KilobitsPerSecond(kbps) => s"$kbps.kbps"
+      case MegabitsPerSecond(mbps) => s"$mbps.mbps"
+      case GigabitsPerSecond(gbps) => s"$gbps.gbps"
+    }
   }
 
   case class KilobitsPerSecond(i: Long) extends BitRate {
