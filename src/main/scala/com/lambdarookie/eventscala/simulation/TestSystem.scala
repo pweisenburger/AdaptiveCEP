@@ -1,6 +1,7 @@
 package com.lambdarookie.eventscala.simulation
 
 import com.lambdarookie.eventscala.backend.data.QoSUnits._
+import com.lambdarookie.eventscala.backend.qos.QualityOfService._
 import com.lambdarookie.eventscala.backend.system.traits._
 import rescala._
 
@@ -8,8 +9,8 @@ import rescala._
   * Created by monur.
   */
 case class TestSystem(logging: Boolean) extends System {
-
   override val hosts: Signal[Set[Host]] = createRandomHosts
+  override val adaptation: Adaptation = Adaptation(strategy)
 
   override def placeOperator(operator: Operator): Host = {
     val host: Host = if (hosts.now.exists(_.operators.now.isEmpty))
@@ -17,17 +18,34 @@ case class TestSystem(logging: Boolean) extends System {
     else
       hosts.now.toVector((math.random * hosts.now.size).toInt)
     host.addOperator(operator)
-    if (logging) println(s"LOG:\t$operator is placed on $host")
+    if (logging) println(s"LOG:\t\t$operator is placed on $host")
     host
   }
 
+  override def isAdaptationPlanned(violations: Set[Violation]): Boolean = true
+
   def getHostById(id: Int): Host = hosts.now.filter(h => h.asInstanceOf[TestHost].id == id).head
 
+  private def strategy(violations: Set[Violation]): Unit = {
+    violations.foreach(_.demand match {
+      case _: LatencyDemand =>
+        println(s"ADAPTATION:\tLatency adaptation strategy")
+      case _: BandwidthDemand =>
+        println(s"ADAPTATION:\tBandwidth adaptation strategy")
+      case _: ThroughputDemand =>
+        println(s"ADAPTATION:\tThroughput adaptation strategy")
+    })
+    Thread.sleep(6000)
+  }
+
   private def createRandomHosts: Var[Set[Host]] = {
-    val testHost1: TestHost = new TestHost(1, createRandomCoordinate, 1.gbps)
-    val testHost2: TestHost = new TestHost(2, createRandomCoordinate, 1.gbps)
-    val testHost3: TestHost = new TestHost(3, createRandomCoordinate, 1.gbps)
-    val testHost4: TestHost = new TestHost(4, createRandomCoordinate, 1.gbps)
+
+    def createRandomCoordinate = Coordinate(-90 + math.random * 180, -180 + math.random * 360, math.random * 100)
+
+    val testHost1: TestHost = TestHost(1, createRandomCoordinate)
+    val testHost2: TestHost = TestHost(2, createRandomCoordinate)
+    val testHost3: TestHost = TestHost(3, createRandomCoordinate)
+    val testHost4: TestHost = TestHost(4, createRandomCoordinate)
 
     testHost1.neighbors ++= Set(testHost2, testHost3)
     testHost2.neighbors ++= Set(testHost1, testHost3, testHost4)
@@ -61,11 +79,9 @@ case class TestSystem(logging: Boolean) extends System {
 
     Var(Set(host1, host2, host3, host4))
   }
-
-  private def createRandomCoordinate = Coordinate(-90 + math.random * 180, -180 + math.random * 360, math.random * 100)
 }
 
-class TestHost(val id: Int, val position: Coordinate, val maxBandwidth: BitRate) extends Host {
+case class TestHost(id: Int, position: Coordinate) extends Host {
   var neighbors: Set[Host] = Set.empty
 
   override def measureFrequency(): Ratio = Ratio((math.random() * 10 + 5).toInt.instances, 5.sec)

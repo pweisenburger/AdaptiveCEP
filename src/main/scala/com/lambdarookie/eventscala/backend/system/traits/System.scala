@@ -1,7 +1,7 @@
 package com.lambdarookie.eventscala.backend.system.traits
 
 import akka.actor.ActorRef
-import com.lambdarookie.eventscala.backend.qos.QualityOfService.Violation
+import com.lambdarookie.eventscala.backend.qos.QualityOfService.{Adaptation, Violation}
 import com.lambdarookie.eventscala.backend.system._
 import com.lambdarookie.eventscala.data.Queries._
 import rescala._
@@ -67,16 +67,61 @@ trait CEPSystem {
 
 
 trait QoSSystem {
+  val adaptation: Adaptation
+
+  def isAdaptationPlanned(violations: Set[Violation]): Boolean
+
+
   private val queriesVar: Var[Set[Query]] = Var(Set.empty)
-  private val fireDemandViolated: Evt[Violation] = Evt[Violation]
+  private val fireDemandsViolated: Evt[Set[Violation]] = Evt[Set[Violation]]
 
-  protected val demandViolated: Event[Violation] = fireDemandViolated
+  protected val demandsViolated: Event[Set[Violation]] = fireDemandsViolated
 
-  val queries: Signal[Set[Query]] = queriesVar
+  val violatedDemands: Signal[Set[Violation]] = Signal{ queriesVar().flatMap(_.violatedDemands()) }
+  val waiting: Signal[Set[Violation]] = Signal { queriesVar().flatMap(_.waiting()) }
+  val adapting: Signal[Option[Set[Violation]]] = Signal {
+    if (queriesVar().exists(_.adapting().nonEmpty))
+      Some(queriesVar().flatMap(_.adapting()).flatten)
+    else
+      None
+  }
 
-  demandViolated += {v => v.operator.query.addViolatedDemand(v)}
+  demandsViolated += { vs =>
+    val query: Query = if (vs.map(_.operator.query).size == 1)
+      vs.head.operator.query
+     else
+      throw new RuntimeException(s"ERROR: Every violation must belong to the same query")
+    vs.foreach(query.addViolatedDemand)
+    if (isAdaptationPlanned(vs)) query.fireAdaptationPlanned(vs)
+  }
+  waiting.change += { diff =>
+    val from: Set[Violation] = diff.from.get
+    val to: Set[Violation] = diff.to.get
+    if (from.isEmpty && to.nonEmpty) {
+      println(s"ADAPTATION:\t$to waiting adaptation")
+      if (adapting.now.isEmpty)  to.map(_.operator.query).foreach(_.startAdapting())
+    }
+  }
+  adapting.change += {diff =>
+    val from: Option[Set[Violation]] = diff.from.get
+    val to: Option[Set[Violation]] = diff.to.get
+    if (from.isEmpty) {
+      println(s"ADAPTATION:\tSystem is adapting violations: ${to.get}")
+      adaptation.strategy(to.get)
+      if (to.get.isEmpty)
+        queriesVar.now.foreach(_.stopAdapting())
+      else
+        to.get.foreach(_.operator.query.stopAdapting())
+    } else if (from.nonEmpty && to.nonEmpty) {
+      println(s"ADAPTATION:\tSystem is already adapting. Changed from $from to $to")
+    } else {
+      println(s"ADAPTATION:\tSystem is done adapting")
+      val vsQueue: Set[Violation] = waiting.now
+      if (vsQueue.nonEmpty) vsQueue.map(_.operator.query).foreach(_.startAdapting())
+    }
+  }
 
   def addQuery(query: Query): Unit = queriesVar.transform(x => x + query)
 
-  def fireDemandViolated(violation: Violation): Unit = fireDemandViolated fire violation
+  def fireDemandsViolated(violations: Set[Violation]): Unit =  fireDemandsViolated fire violations
 }

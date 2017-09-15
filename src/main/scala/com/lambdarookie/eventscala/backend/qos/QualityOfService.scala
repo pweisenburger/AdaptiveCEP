@@ -112,4 +112,6 @@ object QualityOfService {
 
 
   case class Violation(operator: Operator, demand: Demand)
+
+  case class Adaptation(strategy: Set[Violation] => Unit)
 }

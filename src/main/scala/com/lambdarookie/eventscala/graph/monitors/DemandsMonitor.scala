@@ -89,10 +89,13 @@ case class DemandsMonitor(messageInterval: Int, latencyInterval: Int, bandwidthI
     }
 
     def getChosenPathFromChild(childHost: Host): Seq[Host] = priority match {
-        case LatencyPriority => Utilities.calculateLowestLatency(childHost, host)._1
-        case BandwidthPriority => Utilities.calculateHighestBandwidth(childHost, host)._1
-        case ThroughputPriority => Utilities.calculateHighestThroughput(childHost, host)._1
-      }
+      case LatencyPriority => Utilities.calculateLowestLatency(childHost, host)._1
+      case BandwidthPriority => Utilities.calculateHighestBandwidth(childHost, host)._1
+      case ThroughputPriority => Utilities.calculateHighestThroughput(childHost, host)._1
+    }
+
+    def getViolatedDemands(demands: Set[Demand], pathInfo: PathInfo): Set[Violation] =
+      demands.collect { case d: Demand if isDemandNotMet(pathInfo, d) => Violation(operator, d) }
 
     if (message.isInstanceOf[InfoMessage]) nodeData match {
       case _: LeafNodeData => message match {
@@ -113,7 +116,8 @@ case class DemandsMonitor(messageInterval: Int, latencyInterval: Int, bandwidthI
               val demands: Set[Demand] = query.demands.collect { case d if areConditionsMet(d) => d }
               nodeData.context.parent ! PathInfoMessage(self, pathInfo)
               if (logging && demands.nonEmpty) logDemands(demands, nodeData.name, pathInfo)
-              demands.foreach(d => if (isDemandNotMet(pathInfo, d)) system.fireDemandViolated(Violation(operator, d)))
+              val violatedDemands: Set[Violation] = getViolatedDemands(demands, pathInfo)
+              if (violatedDemands.nonEmpty) system.fireDemandsViolated(violatedDemands)
               child1ChosenPath = None
               child1PathInfo = None
             }
@@ -123,7 +127,8 @@ case class DemandsMonitor(messageInterval: Int, latencyInterval: Int, bandwidthI
               val demands: Set[Demand] = query.demands.collect { case d if areConditionsMet(d) => d }
               nodeData.context.parent ! PathInfoMessage(self, pathInfo)
               if (logging && demands.nonEmpty) logDemands(demands, nodeData.name, pathInfo)
-              demands.foreach(d => if (isDemandNotMet(pathInfo, d)) system.fireDemandViolated(Violation(operator, d)))
+              val violatedDemands: Set[Violation] = getViolatedDemands(demands, pathInfo)
+              if (violatedDemands.nonEmpty) system.fireDemandsViolated(violatedDemands)
               child1ChosenPath = None
               child1PathInfo = None
             }
@@ -146,8 +151,8 @@ case class DemandsMonitor(messageInterval: Int, latencyInterval: Int, bandwidthI
               val demands: Set[Demand] = query.demands.collect { case d if areConditionsMet(d) => d }
               nodeData.context.parent ! PathInfoMessage(self, chosenPathInfo)
               if (logging && demands.nonEmpty) logDemands(demands, nodeData.name, chosenPathInfo)
-              demands.foreach(d =>
-                if (isDemandNotMet(chosenPathInfo, d)) system.fireDemandViolated(Violation(operator, d)))
+              val violatedDemands: Set[Violation] = getViolatedDemands(demands, chosenPathInfo)
+              if (violatedDemands.nonEmpty) system.fireDemandsViolated(violatedDemands)
               child1ChosenPath = None
               child2ChosenPath = None
               child1PathInfo = None
@@ -162,12 +167,12 @@ case class DemandsMonitor(messageInterval: Int, latencyInterval: Int, bandwidthI
               child1ChosenPath.isDefined && child2ChosenPath.isDefined) {
               val path1Info: PathInfo = createPathInfo(child1ChosenPath, child1PathInfo)
               val path2Info: PathInfo = createPathInfo(child2ChosenPath, child2PathInfo)
-              val chosenPathsInfo: PathInfo = choosePaths(path1Info, path2Info)
+              val chosenPathInfo: PathInfo = choosePaths(path1Info, path2Info)
               val demands: Set[Demand] = query.demands.collect { case d if areConditionsMet(d) => d }
-              nodeData.context.parent ! PathInfoMessage(self, chosenPathsInfo)
-              if (logging && demands.nonEmpty) logDemands(demands, nodeData.name, chosenPathsInfo)
-              demands.foreach(d =>
-                if (isDemandNotMet(chosenPathsInfo, d)) system.fireDemandViolated(Violation(operator, d)))
+              nodeData.context.parent ! PathInfoMessage(self, chosenPathInfo)
+              if (logging && demands.nonEmpty) logDemands(demands, nodeData.name, chosenPathInfo)
+              val violatedDemands: Set[Violation] = getViolatedDemands(demands, chosenPathInfo)
+              if (violatedDemands.nonEmpty) system.fireDemandsViolated(violatedDemands)
               child1ChosenPath = None
               child2ChosenPath = None
               child1PathInfo = None
