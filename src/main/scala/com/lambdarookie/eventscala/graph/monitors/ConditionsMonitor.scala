@@ -13,19 +13,20 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.FiniteDuration
 
 case class ConditionsMonitor(frequencyInterval: Int, proximityInterval: Int, logging: Boolean) extends Monitor {
-  private var frequencyConditions: Set[FrequencyCondition] = Set()
-  private var proximityConditions: Set[ProximityCondition] = Set()
+  private var frequencyConditions: Option[Set[FrequencyCondition]] = None
+  private var proximityConditions: Option[Set[ProximityCondition]] = None
   private var currentOutput: Option[Int] = None
   private var farthestDistance: Option[Int] = None
   private var lowestFrequency: Option[Ratio] = None
 
   override def onCreated(nodeData: NodeData): Unit = {
-    frequencyConditions = nodeData.query.demands.flatMap(_.conditions.collect { case fc: FrequencyCondition => fc })
-    proximityConditions = nodeData.query.demands.flatMap(_.conditions.collect { case pc: ProximityCondition => pc })
+    val demands: Set[Demand] = nodeData.query.demands
+    if (frequencyConditions.isEmpty)
+      frequencyConditions = Some(demands.flatMap(_.conditions.collect { case fc: FrequencyCondition => fc }))
+    if (proximityConditions.isEmpty)
+      proximityConditions = Some(demands.flatMap(_.conditions.collect { case pc: ProximityCondition => pc }))
     if (nodeData.isInstanceOf[LeafNodeData]) {
       currentOutput = Some(0)
-      val self = nodeData.context.self
-      val host: Host = nodeData.system.getHostByNode(self)
       val parent: ActorRef = nodeData.context.parent
       if (frequencyInterval > 0) nodeData.context.system.scheduler.schedule(
         initialDelay = FiniteDuration(frequencyInterval, TimeUnit.SECONDS),
@@ -37,7 +38,7 @@ case class ConditionsMonitor(frequencyInterval: Int, proximityInterval: Int, log
       if (proximityInterval > 0) nodeData.context.system.scheduler.schedule(
         initialDelay = FiniteDuration(0, TimeUnit.SECONDS),
         interval = FiniteDuration(proximityInterval, TimeUnit.SECONDS),
-        runnable = () => parent ! host.position)
+        runnable = () => parent ! nodeData.system.getHostByNode(nodeData.context.self).position)
     }
   }
 
@@ -46,6 +47,11 @@ case class ConditionsMonitor(frequencyInterval: Int, proximityInterval: Int, log
     val parent: ActorRef = context.parent
     val self: ActorRef = context.self
     val host: Host = nodeData.system.getHostByNode(self)
+    val demands: Set[Demand] = nodeData.query.demands
+    if (frequencyConditions.isEmpty)
+      frequencyConditions = Some(demands.flatMap(_.conditions.collect { case fc: FrequencyCondition => fc }))
+    if (proximityConditions.isEmpty)
+      proximityConditions = Some(demands.flatMap(_.conditions.collect { case pc: ProximityCondition => pc }))
     nodeData match {
       case _: LeafNodeData => if (logging && (message.isInstanceOf[Coordinate] || message.isInstanceOf[Ratio]))
         println("ERROR:\tA leaf node should not have gotten this message.")
@@ -97,7 +103,7 @@ case class ConditionsMonitor(frequencyInterval: Int, proximityInterval: Int, log
 
   override def copy: ConditionsMonitor = ConditionsMonitor(frequencyInterval, proximityInterval, logging)
 
-  private def setIfFrequencyConditionsFulfilled(): Unit = frequencyConditions.foreach{ fc =>
+  private def setIfFrequencyConditionsFulfilled(): Unit = frequencyConditions.get.foreach{ fc =>
     require(fc.ratio.timeSpan.toSeconds <= frequencyInterval)
     val current: Ratio = lowestFrequency.get
     val expected: Ratio = fc.ratio
@@ -112,7 +118,7 @@ case class ConditionsMonitor(frequencyInterval: Int, proximityInterval: Int, log
     lowestFrequency = None
   }
 
-  private def setIfProximityConditionsFulfilled(): Unit = proximityConditions.foreach{ pc =>
+  private def setIfProximityConditionsFulfilled(): Unit = proximityConditions.get.foreach{ pc =>
     val current: Int = farthestDistance.get
     val expected: Int = pc.distance.toMeter
     pc.booleanOperator match {

@@ -78,7 +78,7 @@ trait QoSSystem {
 
   protected val demandsViolated: Event[Set[Violation]] = fireDemandsViolated
 
-  val violatedDemands: Signal[Set[Violation]] = Signal{ queriesVar().flatMap(_.violatedDemands()) }
+  val violations: Signal[Set[Violation]] = Signal{ queriesVar().flatMap(_.violations()) }
   val waiting: Signal[Set[Violation]] = Signal { queriesVar().flatMap(_.waiting()) }
   val adapting: Signal[Option[Set[Violation]]] = Signal {
     if (queriesVar().exists(_.adapting().nonEmpty))
@@ -92,7 +92,7 @@ trait QoSSystem {
       vs.head.operator.query
      else
       throw new RuntimeException(s"ERROR: Every violation must belong to the same query")
-    vs.foreach(query.addViolatedDemand)
+    vs.foreach(query.addViolation)
     if (isAdaptationPlanned(vs)) query.fireAdaptationPlanned(vs)
   }
   waiting.change += { diff =>

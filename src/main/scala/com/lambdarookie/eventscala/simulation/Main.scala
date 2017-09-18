@@ -79,7 +79,7 @@ object Main extends App {
 //      case (Right(s), _, _)              => println(s"COMPLEX EVENT:\tEvent1($s)")
       // Callback for `query2`:
       // case (i1, i2, f, s)             => println(s"COMPLEX EVENT:\tEvent4($i1, $i2, $f,$s)")
-      // Callback for `query2`:
+      // Callback for `query3`:
        case (i1, i2, s)             => println(s"COMPLEX EVENT:\tEvent3($i1, $i2, $s)")
       // This is necessary to avoid warnings about non-exhaustive `match`:
       case _                             =>

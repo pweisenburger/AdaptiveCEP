@@ -12,6 +12,12 @@ case class TestSystem(logging: Boolean) extends System {
   override val hosts: Signal[Set[Host]] = createRandomHosts
   override val adaptation: Adaptation = Adaptation(strategy)
 
+  if (logging) violations.change += { vs =>
+    val from = vs.from.get
+    val to = vs.to.get
+    println(s"ADAPTATION:\tviolations changed from $from to $to")
+  }
+
   override def placeOperator(operator: Operator): Host = {
     val host: Host = if (hosts.now.exists(_.operators.now.isEmpty))
       hosts.now.filter(_.operators.now.isEmpty).head
@@ -86,7 +92,6 @@ case class TestHost(id: Int, position: Coordinate) extends Host {
 
   override def measureNeighborLatencies(): Unit = neighbors.foreach(n =>
     neighborLatencies += (n -> (Seq.empty, (math.random() * 5 + 1).toInt.ms)))
-
 
   override def measureNeighborBandwidths(): Unit = neighbors.foreach(n =>
     neighborBandwidths += (n -> (Seq.empty, (math.random() * 50 + 50).toInt.mbps)))

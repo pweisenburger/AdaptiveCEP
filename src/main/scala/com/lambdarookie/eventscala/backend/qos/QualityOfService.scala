@@ -16,7 +16,7 @@ object QualityOfService {
   case object SmallerEqual extends BooleanOperator { override def toString: String = "<=" }
 
   sealed trait Condition{
-    var notFulfilled: Boolean = false
+    var notFulfilled: Boolean = true
 
     override def toString: String = this match {
       case FrequencyCondition(bo, r) => s"Frequency $bo $r"
