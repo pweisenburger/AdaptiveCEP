@@ -31,13 +31,10 @@ case object ThroughputPriority extends Priority
 case class DemandsMonitor(messageInterval: Int, latencyInterval: Int, bandwidthInterval: Int, throughputInterval: Int,
                           priority: Priority, logging: Boolean) extends Monitor {
 
-  val clock: Clock = Clock.systemDefaultZone
-
-  var child1ChosenPath: Option[Seq[Host]] = None
-  var child1PathInfo: Option[PathInfo] = None
-  var child2ChosenPath: Option[Seq[Host]] = None
-  var child2PathInfo: Option[PathInfo] = None
-
+  private var child1ChosenPath: Option[Seq[Host]] = None
+  private var child1PathInfo: Option[PathInfo] = None
+  private var child2ChosenPath: Option[Seq[Host]] = None
+  private var child2PathInfo: Option[PathInfo] = None
 
   override def onCreated(nodeData: NodeData): Unit = {
     val childNodes: Seq[ActorRef] = nodeData match {
@@ -49,30 +46,22 @@ case class DemandsMonitor(messageInterval: Int, latencyInterval: Int, bandwidthI
       case bnd: BinaryNodeData => Seq(bnd.childNode1, bnd.childNode2)
     }
     val host: Host = nodeData.system.getHostByNode(nodeData.context.self)
-    if (childNodes.nonEmpty) nodeData.context.system.scheduler.schedule(
+    if (childNodes.nonEmpty && messageInterval > 0) nodeData.context.system.scheduler.schedule(
       initialDelay = FiniteDuration(messageInterval, TimeUnit.SECONDS),
       interval = FiniteDuration(messageInterval, TimeUnit.SECONDS),
-      runnable = () => {
-        childNodes.foreach(_ ! ChildInfoRequest())
-      })
-    nodeData.context.system.scheduler.schedule(
+      runnable = () => childNodes.foreach(_ ! ChildInfoRequest()))
+    if (latencyInterval > 0) nodeData.context.system.scheduler.schedule(
       initialDelay = FiniteDuration(messageInterval, TimeUnit.SECONDS),
       interval = FiniteDuration(latencyInterval, TimeUnit.SECONDS),
-      runnable = () => {
-        host.measureNeighborLatencies()
-      })
-    nodeData.context.system.scheduler.schedule(
+      runnable = () => host.measureNeighborLatencies())
+    if (bandwidthInterval > 0) nodeData.context.system.scheduler.schedule(
       initialDelay = FiniteDuration(messageInterval, TimeUnit.SECONDS),
       interval = FiniteDuration(bandwidthInterval, TimeUnit.SECONDS),
-      runnable = () => {
-        host.measureNeighborBandwidths()
-      })
-    nodeData.context.system.scheduler.schedule(
+      runnable = () => host.measureNeighborBandwidths())
+    if (throughputInterval > 0) nodeData.context.system.scheduler.schedule(
       initialDelay = FiniteDuration(messageInterval, TimeUnit.SECONDS),
       interval = FiniteDuration(throughputInterval, TimeUnit.SECONDS),
-      runnable = () => {
-        host.measureNeighborThroughputs()
-      })
+      runnable = () => host.measureNeighborThroughputs())
   }
 
   override def onMessageReceive(message: Any, nodeData: NodeData): Unit = {

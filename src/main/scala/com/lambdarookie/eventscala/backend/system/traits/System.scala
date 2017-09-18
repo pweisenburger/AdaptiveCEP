@@ -68,6 +68,7 @@ trait CEPSystem {
 
 trait QoSSystem {
   val adaptation: Adaptation
+  protected val logging: Boolean
 
   def isAdaptationPlanned(violations: Set[Violation]): Boolean
 
@@ -98,7 +99,7 @@ trait QoSSystem {
     val from: Set[Violation] = diff.from.get
     val to: Set[Violation] = diff.to.get
     if (from.isEmpty && to.nonEmpty) {
-      println(s"ADAPTATION:\t$to waiting adaptation")
+      if (logging) println(s"ADAPTATION:\t$to waiting adaptation")
       if (adapting.now.isEmpty)  to.map(_.operator.query).foreach(_.startAdapting())
     }
   }
@@ -106,16 +107,16 @@ trait QoSSystem {
     val from: Option[Set[Violation]] = diff.from.get
     val to: Option[Set[Violation]] = diff.to.get
     if (from.isEmpty) {
-      println(s"ADAPTATION:\tSystem is adapting violations: ${to.get}")
+      if (logging) println(s"ADAPTATION:\tSystem is adapting violations: ${to.get}")
       adaptation.strategy(to.get)
       if (to.get.isEmpty)
         queriesVar.now.foreach(_.stopAdapting())
       else
         to.get.foreach(_.operator.query.stopAdapting())
     } else if (from.nonEmpty && to.nonEmpty) {
-      println(s"ADAPTATION:\tSystem is already adapting. Changed from $from to $to")
+      if (logging) println(s"ADAPTATION:\tSystem is already adapting. Changed from $from to $to")
     } else {
-      println(s"ADAPTATION:\tSystem is done adapting")
+      if (logging) println(s"ADAPTATION:\tSystem is done adapting")
       val vsQueue: Set[Violation] = waiting.now
       if (vsQueue.nonEmpty) vsQueue.map(_.operator.query).foreach(_.startAdapting())
     }
