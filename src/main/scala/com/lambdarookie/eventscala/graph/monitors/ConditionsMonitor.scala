@@ -21,9 +21,9 @@ case class ConditionsMonitor(frequencyInterval: Int, proximityInterval: Int, log
 
   override def onCreated(nodeData: NodeData): Unit = {
     val demands: Set[Demand] = nodeData.query.demands
-    if (frequencyConditions.isEmpty)
+    if (frequencyConditions.isEmpty && demands.exists(_.conditions.exists(_.isInstanceOf[FrequencyCondition])))
       frequencyConditions = Some(demands.flatMap(_.conditions.collect { case fc: FrequencyCondition => fc }))
-    if (proximityConditions.isEmpty)
+    if (proximityConditions.isEmpty && demands.exists(_.conditions.exists(_.isInstanceOf[ProximityCondition])))
       proximityConditions = Some(demands.flatMap(_.conditions.collect { case pc: ProximityCondition => pc }))
     if (nodeData.isInstanceOf[LeafNodeData]) {
       currentOutput = Some(0)
@@ -48,9 +48,9 @@ case class ConditionsMonitor(frequencyInterval: Int, proximityInterval: Int, log
     val self: ActorRef = context.self
     val host: Host = nodeData.system.getHostByNode(self)
     val demands: Set[Demand] = nodeData.query.demands
-    if (frequencyConditions.isEmpty)
+    if (frequencyConditions.isEmpty && demands.exists(_.conditions.exists(_.isInstanceOf[FrequencyCondition])))
       frequencyConditions = Some(demands.flatMap(_.conditions.collect { case fc: FrequencyCondition => fc }))
-    if (proximityConditions.isEmpty)
+    if (proximityConditions.isEmpty && demands.exists(_.conditions.exists(_.isInstanceOf[ProximityCondition])))
       proximityConditions = Some(demands.flatMap(_.conditions.collect { case pc: ProximityCondition => pc }))
     nodeData match {
       case _: LeafNodeData => if (logging && (message.isInstanceOf[Coordinate] || message.isInstanceOf[Ratio]))

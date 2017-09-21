@@ -1,6 +1,7 @@
 package com.lambdarookie.eventscala.graph.factory
 
 import akka.actor.{ActorRef, ActorSystem}
+import com.lambdarookie.eventscala.backend.system.CentralScheduler
 import com.lambdarookie.eventscala.data.Events._
 import com.lambdarookie.eventscala.data.Queries._
 import com.lambdarookie.eventscala.graph.monitors._
@@ -13,12 +14,14 @@ object GraphFactory {
                   actorSystem: ActorSystem,
                   query: Query,
                   publishers: Map[String, ActorRef],
+                  centralScheduler: CentralScheduler,
                   monitors: Set[_ <: Monitor],
                   createdCallback: () => Any,
-                  eventCallback: (Event) => Any): ActorRef =
-    NodeFactory.createNode(system, actorSystem, query,
-      system.createOperator(Operator.ROOT, query, Set.empty[Operator]),
+                  eventCallback: (Event) => Any): ActorRef = {
+    centralScheduler.run(system, actorSystem)
+    NodeFactory.createNode(system, actorSystem, query, system.createOperator(Operator.ROOT, query, Set.empty[Operator]),
       publishers, monitors, Some(createdCallback), Some(eventCallback), "")
+  }
 
   // This is why `eventCallback` is listed separately:
   // https://stackoverflow.com/questions/21147001/why-scala-doesnt-infer-type-from-generic-type-parameters
@@ -27,6 +30,7 @@ object GraphFactory {
                  actorSystem: ActorSystem,
                  query: Query1[A],
                  publishers: Map[String, ActorRef],
+                 centralScheduler: CentralScheduler,
                  monitors: Set[_ <: Monitor],
                  createdCallback: () => Any)(
       eventCallback: (A) => Any): ActorRef =
@@ -35,6 +39,7 @@ object GraphFactory {
       actorSystem,
       query.asInstanceOf[Query],
       publishers,
+      centralScheduler,
       monitors,
       createdCallback,
       toFunEventAny(eventCallback))
@@ -44,6 +49,7 @@ object GraphFactory {
                     actorSystem: ActorSystem,
                     query: Query2[A, B],
                     publishers: Map[String, ActorRef],
+                    centralScheduler: CentralScheduler,
                     monitors: Set[_ <: Monitor],
                     createdCallback: () => Any)(
       eventCallback: (A, B) => Any): ActorRef =
@@ -52,6 +58,7 @@ object GraphFactory {
       actorSystem,
       query.asInstanceOf[Query],
       publishers,
+      centralScheduler,
       monitors,
       createdCallback,
       toFunEventAny(eventCallback))
@@ -61,6 +68,7 @@ object GraphFactory {
                        actorSystem: ActorSystem,
                        query: Query3[A, B, C],
                        publishers: Map[String, ActorRef],
+                       centralScheduler: CentralScheduler,
                        monitors: Set[_ <: Monitor],
                        createdCallback: () => Any)(
       eventCallback: (A, B, C) => Any): ActorRef =
@@ -69,6 +77,7 @@ object GraphFactory {
       actorSystem,
       query.asInstanceOf[Query],
       publishers,
+      centralScheduler,
       monitors,
       createdCallback,
       toFunEventAny(eventCallback))
@@ -78,6 +87,7 @@ object GraphFactory {
                           actorSystem: ActorSystem,
                           query: Query4[A, B, C, D],
                           publishers: Map[String, ActorRef],
+                          centralScheduler: CentralScheduler,
                           monitors: Set[_ <: Monitor],
                           createdCallback: () => Any)(
       eventCallback: (A, B, C, D) => Any): ActorRef =
@@ -86,6 +96,7 @@ object GraphFactory {
       actorSystem,
       query.asInstanceOf[Query],
       publishers,
+      centralScheduler,
       monitors,
       createdCallback,
       toFunEventAny(eventCallback))
@@ -95,6 +106,7 @@ object GraphFactory {
                              actorSystem: ActorSystem,
                              query: Query5[A, B, C, D, E],
                              publishers: Map[String, ActorRef],
+                             centralScheduler: CentralScheduler,
                              monitors: Set[_ <: Monitor],
                              createdCallback: () => Any)(
       eventCallback: (A, B, C, D, E) => Any): ActorRef =
@@ -103,6 +115,7 @@ object GraphFactory {
       actorSystem,
       query.asInstanceOf[Query],
       publishers,
+      centralScheduler,
       monitors,
       createdCallback,
       toFunEventAny(eventCallback))
@@ -112,6 +125,7 @@ object GraphFactory {
                                 actorSystem: ActorSystem,
                                 query: Query6[A, B, C, D, E, F],
                                 publishers: Map[String, ActorRef],
+                                centralScheduler: CentralScheduler,
                                 monitors: Set[_ <: Monitor],
                                 createdCallback: () => Any)(
       eventCallback: (A, B, C, D, E, F) => Any): ActorRef =
@@ -120,6 +134,7 @@ object GraphFactory {
       actorSystem,
       query.asInstanceOf[Query],
       publishers,
+      centralScheduler,
       monitors,
       createdCallback,
       toFunEventAny(eventCallback))

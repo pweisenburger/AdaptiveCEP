@@ -23,6 +23,7 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     system,
     query,
     publishers,
+    null,
     Set(),
     () => testActor ! Created,
     event => testActor ! event)

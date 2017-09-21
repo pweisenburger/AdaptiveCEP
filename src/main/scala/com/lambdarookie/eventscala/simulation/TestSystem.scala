@@ -52,21 +52,26 @@ case class TestSystem(logging: Boolean) extends System {
     val testHost2: TestHost = TestHost(2, createRandomCoordinate)
     val testHost3: TestHost = TestHost(3, createRandomCoordinate)
     val testHost4: TestHost = TestHost(4, createRandomCoordinate)
+    val testHost5: TestHost = TestHost(5, createRandomCoordinate)
 
     testHost1.neighbors ++= Set(testHost2, testHost3)
     testHost2.neighbors ++= Set(testHost1, testHost3, testHost4)
-    testHost3.neighbors ++= Set(testHost1, testHost2)
-    testHost4.neighbors ++= Set(testHost2)
+    testHost3.neighbors ++= Set(testHost1, testHost2, testHost5)
+    testHost4.neighbors ++= Set(testHost2, testHost5)
+    testHost5.neighbors ++= Set(testHost3, testHost4)
 
     val host1: Host = testHost1
     val host2: Host = testHost2
     val host3: Host = testHost3
     val host4: Host = testHost4
+    val host5: Host = testHost5
 
     host1.measureMetrics()
     host2.measureMetrics()
     host3.measureMetrics()
     host4.measureMetrics()
+    host5.measureMetrics()
+
 
 //    host1.neighborLatencies ++= Map(host2 -> (Seq(), 1.ms), host3 -> (Seq(), 1.ms))
 //    host2.neighborLatencies ++= Map(host1 -> (Seq(), 1.ms), host3 -> (Seq(), 1.ms), host4 -> (Seq(), 1.ms))
@@ -83,7 +88,7 @@ case class TestSystem(logging: Boolean) extends System {
 //    host3.neighborThroughputs ++= Map(host1 -> (Seq(), 30.mbps))
 //    host4.neighborThroughputs ++= Map(host2 -> (Seq(), 10.mbps))
 
-    Var(Set(host1, host2, host3, host4))
+    Var(Set(host1, host2, host3, host4, host5))
   }
 }
 

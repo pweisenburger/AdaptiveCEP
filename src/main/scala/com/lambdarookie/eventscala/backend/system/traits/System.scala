@@ -67,8 +67,9 @@ trait CEPSystem {
 
 
 trait QoSSystem {
-  val adaptation: Adaptation
   protected val logging: Boolean
+
+  val adaptation: Adaptation
 
   def isAdaptationPlanned(violations: Set[Violation]): Boolean
 

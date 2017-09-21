@@ -28,8 +28,7 @@ case object LatencyPriority extends Priority
 case object BandwidthPriority extends Priority
 case object ThroughputPriority extends Priority
 
-case class DemandsMonitor(messageInterval: Int, latencyInterval: Int, bandwidthInterval: Int, throughputInterval: Int,
-                          priority: Priority, logging: Boolean) extends Monitor {
+case class DemandsMonitor(interval: Int, priority: Priority, logging: Boolean) extends Monitor {
 
   private var child1ChosenPath: Option[Seq[Host]] = None
   private var child1PathInfo: Option[PathInfo] = None
@@ -45,23 +44,10 @@ case class DemandsMonitor(messageInterval: Int, latencyInterval: Int, bandwidthI
       case und: UnaryNodeData => Seq(und.childNode)
       case bnd: BinaryNodeData => Seq(bnd.childNode1, bnd.childNode2)
     }
-    val host: Host = nodeData.system.getHostByNode(nodeData.context.self)
-    if (childNodes.nonEmpty && messageInterval > 0) nodeData.context.system.scheduler.schedule(
-      initialDelay = FiniteDuration(messageInterval, TimeUnit.SECONDS),
-      interval = FiniteDuration(messageInterval, TimeUnit.SECONDS),
+    if (childNodes.nonEmpty && interval > 0) nodeData.context.system.scheduler.schedule(
+      initialDelay = FiniteDuration(interval, TimeUnit.SECONDS),
+      interval = FiniteDuration(interval, TimeUnit.SECONDS),
       runnable = () => childNodes.foreach(_ ! ChildInfoRequest()))
-    if (latencyInterval > 0) nodeData.context.system.scheduler.schedule(
-      initialDelay = FiniteDuration(messageInterval, TimeUnit.SECONDS),
-      interval = FiniteDuration(latencyInterval, TimeUnit.SECONDS),
-      runnable = () => host.measureNeighborLatencies())
-    if (bandwidthInterval > 0) nodeData.context.system.scheduler.schedule(
-      initialDelay = FiniteDuration(messageInterval, TimeUnit.SECONDS),
-      interval = FiniteDuration(bandwidthInterval, TimeUnit.SECONDS),
-      runnable = () => host.measureNeighborBandwidths())
-    if (throughputInterval > 0) nodeData.context.system.scheduler.schedule(
-      initialDelay = FiniteDuration(messageInterval, TimeUnit.SECONDS),
-      interval = FiniteDuration(throughputInterval, TimeUnit.SECONDS),
-      runnable = () => host.measureNeighborThroughputs())
   }
 
   override def onMessageReceive(message: Any, nodeData: NodeData): Unit = {
@@ -168,8 +154,7 @@ case class DemandsMonitor(messageInterval: Int, latencyInterval: Int, bandwidthI
     }
   }
 
-  override def copy: DemandsMonitor =
-    DemandsMonitor(messageInterval, latencyInterval, bandwidthInterval, throughputInterval, priority, logging)
+  override def copy: DemandsMonitor = DemandsMonitor(interval, priority, logging)
 
   private def isDemandNotMet(pathInfo: PathInfo, d: Demand): Boolean = {
     val met: Boolean = d match {
