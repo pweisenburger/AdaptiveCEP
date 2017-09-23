@@ -73,7 +73,7 @@ trait QoSSystem {
 
   val adaptation: Adaptation
 
-  def isAdaptationPlanned(violations: Set[Violation]): Boolean
+  def planAdaptation(violations: Set[Violation]): Set[Violation]
 
 
   private val qosVar: Var[Set[QoSMetric]] = Var(Set.empty)
@@ -98,7 +98,8 @@ trait QoSSystem {
      else
       throw new RuntimeException(s"ERROR: Every violation must belong to the same query")
     vs.foreach(query.addViolation)
-    if (isAdaptationPlanned(vs)) query.fireAdaptationPlanned(vs)
+    val adaptationPlanned: Set[Violation] = planAdaptation(vs)
+    if (adaptationPlanned.nonEmpty) query.fireAdaptationPlanned(adaptationPlanned)
   }
   waiting.change += { diff =>
     val from: Set[Violation] = diff.from.get

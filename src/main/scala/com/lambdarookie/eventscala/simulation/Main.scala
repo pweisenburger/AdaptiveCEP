@@ -15,7 +15,6 @@ import com.lambdarookie.eventscala.backend.system.CentralScheduler
 object Main extends App {
 
   val actorSystem: ActorSystem = ActorSystem()
-  val system: System = TestSystem(true)
 
   val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id))),             "A")
   val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id * 2))),         "B")
@@ -63,18 +62,18 @@ object Main extends App {
         tumblingWindow(1.instances),
         tumblingWindow(1.instances),
         latency < 1.ms,
-        bandwidth > (100.mbps, frequency > Ratio(10.instances, 5.sec)),
-        throughput > (50.mbps, proximity > 1.m))
+        bandwidth > (70.mbps, frequency > Ratio(10.instances, 5.sec)),
+        throughput > (30.mbps, proximity > 1.m))
 
 
   GraphFactory.create(
-    system =                  system,
+    system =                  TestSystem(logging = true),
     actorSystem =             actorSystem,
     query =                   query3,
     publishers =              publishers,
     centralScheduler =        CentralScheduler(30, 30, 30),
     monitors =                Set(ConditionsMonitor (15, 60, logging = true),
-                                  DemandsMonitor (5, Priority(1, 1, 0),  logging = true)),
+                                  DemandsMonitor (5, Priority(1, 1, 0), logging = true)),
     createdCallback =         () => println("STATUS:\t\tGraph has been created."))(
     eventCallback =           {
       // Callback for `query1`:

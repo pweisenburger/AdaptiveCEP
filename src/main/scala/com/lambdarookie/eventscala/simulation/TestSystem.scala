@@ -28,7 +28,38 @@ case class TestSystem(logging: Boolean) extends System {
     host
   }
 
-  override def isAdaptationPlanned(violations: Set[Violation]): Boolean = true
+  override def planAdaptation(violations: Set[Violation]): Set[Violation] = violations.collect {
+    case v@Violation(_, LatencyDemand(bo, ts, _)) if (bo match {
+      case Equal =>         hosts.now.exists(h => (h.neighborLatencies - h).values.exists(_ == ts))
+      case NotEqual =>      hosts.now.exists(h => (h.neighborLatencies - h).values.exists(_ != ts))
+      case Greater =>       hosts.now.exists(h => (h.neighborLatencies - h).values.exists(_ > ts))
+      case GreaterEqual =>  hosts.now.exists(h => (h.neighborLatencies - h).values.exists(_ >= ts))
+      case Smaller =>       hosts.now.exists(h => (h.neighborLatencies - h).values.exists(_ < ts))
+      case SmallerEqual =>  hosts.now.exists(h => (h.neighborLatencies - h).values.exists(_ <= ts))
+    }) =>
+      if (logging) println(s"ADAPTATION:\tSystem decided to try adapting $v")
+      v
+    case v@Violation(_, BandwidthDemand(bo, br, _)) if (bo match {
+      case Equal =>         hosts.now.exists(h => (h.neighborBandwidths - h).values.exists(_ == br))
+      case NotEqual =>      hosts.now.exists(h => (h.neighborBandwidths - h).values.exists(_ != br))
+      case Greater =>       hosts.now.exists(h => (h.neighborBandwidths - h).values.exists(_ > br))
+      case GreaterEqual =>  hosts.now.exists(h => (h.neighborBandwidths - h).values.exists(_ >= br))
+      case Smaller =>       hosts.now.exists(h => (h.neighborBandwidths - h).values.exists(_ < br))
+      case SmallerEqual =>  hosts.now.exists(h => (h.neighborBandwidths - h).values.exists(_ <= br))
+    }) =>
+      if (logging) println(s"ADAPTATION:\tSystem decided to try adapting $v")
+      v
+    case v@Violation(_, ThroughputDemand(bo, br, _)) if (bo match {
+      case Equal =>         hosts.now.exists(h => (h.neighborThroughputs - h).values.exists(_ == br))
+      case NotEqual =>      hosts.now.exists(h => (h.neighborThroughputs - h).values.exists(_ != br))
+      case Greater =>       hosts.now.exists(h => (h.neighborThroughputs - h).values.exists(_ > br))
+      case GreaterEqual =>  hosts.now.exists(h => (h.neighborThroughputs - h).values.exists(_ >= br))
+      case Smaller =>       hosts.now.exists(h => (h.neighborThroughputs - h).values.exists(_ < br))
+      case SmallerEqual =>  hosts.now.exists(h => (h.neighborThroughputs - h).values.exists(_ <= br))
+    }) =>
+      if (logging) println(s"ADAPTATION:\tSystem decided to try adapting $v")
+      v
+  }
 
   def getHostById(id: Int): Host = hosts.now.filter(h => h.asInstanceOf[TestHost].id == id).head
 

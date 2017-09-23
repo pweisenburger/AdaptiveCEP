@@ -21,9 +21,9 @@ object QualityOfService {
     override def toString: String = this match {
       case FrequencyCondition(bo, r) => s"Frequency $bo $r"
       case ProximityCondition(po, d) => s"Proximity $po $d"
-      case LatencyDemand(bo, t, _) => s"Latency $bo $t"
-      case BandwidthDemand(bo, b, _) => s"Bandwidth $bo $b"
-      case ThroughputDemand(bo, b, _) => s"Throughput $bo $b"
+      case LatencyDemand(bo, t, _) => s"'Latency $bo $t"
+      case BandwidthDemand(bo, b, _) => s"'Bandwidth $bo $b"
+      case ThroughputDemand(bo, b, _) => s"'Throughput $bo $b"
     }
   }
   case class FrequencyCondition(booleanOperator: BooleanOperator, ratio: Ratio) extends Condition
@@ -32,7 +32,7 @@ object QualityOfService {
   sealed trait Demand extends Condition {
     val conditions: Set[Condition]
 
-    override def toString: String = super.toString + (if (conditions.nonEmpty) s" with conditions: $conditions" else "")
+    override def toString: String = super.toString + (if (conditions.nonEmpty) s" with conditions: $conditions'" else "'")
   }
   case class LatencyDemand(booleanOperator: BooleanOperator, timeSpan: TimeSpan, conditions: Set[Condition])
     extends Demand
