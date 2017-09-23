@@ -57,7 +57,7 @@ case class DemandsMonitor(interval: Int, priority: Priority, logging: Boolean) e
     val host: Host = operator.host
 
     def updateViolations(pathMeasurements: Measurements): Unit = {
-      val demands: Set[Demand] = query.demands.collect { case d if areConditionsMet(d) => d }
+      val demands: Set[Demand] = query.demands.collect { case d if areConditionsMet(d, pathMeasurements) => d }
       if (logging && demands.nonEmpty) logDemands(demands, nodeData.name, pathMeasurements)
       val violatedDemands: Set[Demand] = demands.filter(isDemandNotMet(pathMeasurements, _))
       query.violations.now.foreach{
@@ -177,11 +177,15 @@ case class DemandsMonitor(interval: Int, priority: Priority, logging: Boolean) e
     !met
   }
 
-  private def areConditionsMet(d: Demand): Boolean = if (d.conditions.exists(_.notFulfilled)) {
-    if (logging) println(s"LOG:\t\tSome conditions for the demand $d are not met.")
-    false
-  } else {
-    true
+  private def areConditionsMet(demand: Demand, measurements: Measurements): Boolean = {
+    if (demand.conditions.exists(_.isInstanceOf[Demand]))
+      demand.conditions.foreach { case d: Demand if !isDemandNotMet(measurements, d) => d.notFulfilled = false; case _ => }
+    if (demand.conditions.exists(_.notFulfilled)) {
+      if (logging) println(s"LOG:\t\tSome conditions for the demand $demand are not met.")
+      false
+    } else {
+      true
+    }
   }
 
   private def logDemands(demands: Set[Demand], name: String, pathMeasurements: Measurements): Unit = {

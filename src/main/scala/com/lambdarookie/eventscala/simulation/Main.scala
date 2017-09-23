@@ -61,7 +61,7 @@ object Main extends App {
         stream[String]("B"),
         tumblingWindow(1.instances),
         tumblingWindow(1.instances),
-        latency < 1.ms,
+        latency < (1.ms, bandwidth > 20.mbps),
         bandwidth > (70.mbps, frequency > Ratio(10.instances, 5.sec)),
         throughput > (30.mbps, proximity > 1.m))
 
