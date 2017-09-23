@@ -21,17 +21,17 @@ object QoSUnits {
 
 
   //          TimeSpan Begin
-  case class TimeSpan(private val i: Duration) extends QoSUnit[TimeSpan] {
-    override def <(other: TimeSpan): Boolean = i.compareTo(other.toDuration) < 0
-    override def >(other: TimeSpan): Boolean = i.compareTo(other.toDuration) > 0
-    override def <=(other: TimeSpan): Boolean = i.compareTo(other.toDuration) <= 0
-    override def -(other: TimeSpan): TimeSpan = TimeSpan(i minus other.toDuration)
-    def +(other: TimeSpan): TimeSpan = TimeSpan(i plus other.toDuration)
+  case class TimeSpan(duration: Duration) extends QoSUnit[TimeSpan] {
+    override def <(other: TimeSpan): Boolean = duration.compareTo(other.duration) < 0
+    override def >(other: TimeSpan): Boolean = duration.compareTo(other.duration) > 0
+    override def <=(other: TimeSpan): Boolean = duration.compareTo(other.duration) <= 0
+    override def -(other: TimeSpan): TimeSpan = TimeSpan(duration minus other.duration)
+    def +(other: TimeSpan): TimeSpan = TimeSpan(duration plus other.duration)
 
-    def toDuration: Duration = i
-    def toNanos: Int = i.getNano
-    def toMillis: Int = i.toMillis.toInt
-    def toSeconds: Int = i.getSeconds.toInt
+    def toNanos: Long = duration.toNanos
+    def toMillis: Int = duration.toMillis.toInt
+    def toSeconds: Int = duration.getSeconds.toInt
+
 
     override def toString: String = if (toSeconds > 0)
       s"$toSeconds.s"
@@ -108,40 +108,28 @@ object QoSUnits {
 
 
   //          BitRate Begin
-  trait BitRate extends QoSUnit[BitRate] {
-    def toKbps: Long
-    def toMbps: Long = toKbps / 1024
+  case class BitRate(private val kbps: Long) extends QoSUnit[BitRate] {
+    def toKbps: Long = kbps
+    def toMbps: Long = kbps / 1024
+    def toGbps: Long = toMbps / 1024
 
     override def <(other: BitRate): Boolean = this.toKbps < other.toKbps
     override def >(other: BitRate): Boolean = this.toKbps > other.toKbps
     override def <=(other: BitRate): Boolean = this.toKbps <= other.toKbps
+    override def -(other: BitRate): BitRate = BitRate(kbps - other.toKbps)
 
-    override def toString: String = this match {
-      case KilobitsPerSecond(kbps) => s"$kbps.kbps"
-      case MegabitsPerSecond(mbps) => s"$mbps.mbps"
-      case GigabitsPerSecond(gbps) => s"$gbps.gbps"
-    }
+    override def toString: String = if (toGbps > 0)
+      s"$toGbps.gbps"
+    else if (toMbps > 0)
+      s"$toMbps.mbps"
+    else
+      s"$kbps.kbps"
   }
 
-  case class KilobitsPerSecond(i: Long) extends BitRate {
-    override def toKbps: Long = i
-    override def -(other: BitRate): BitRate = KilobitsPerSecond(this.toKbps - other.toKbps)
-  }
-
-  case class MegabitsPerSecond(i: Long) extends BitRate {
-    override def toKbps: Long = i * 1024
-    override def -(other: BitRate): BitRate = MegabitsPerSecond((this.toKbps - other.toKbps)/1024)
-  }
-
-  case class GigabitsPerSecond(i: Long) extends BitRate {
-    override def toKbps: Long = i * 1024 * 1024
-    override def -(other: BitRate): BitRate = GigabitsPerSecond((this.toKbps - other.toKbps)/1024/1024)
-  }
-
-  case class BitRateUnits(i: Long) {
-    def kbps: KilobitsPerSecond = KilobitsPerSecond(i)
-    def mbps: MegabitsPerSecond = MegabitsPerSecond(i)
-    def gbps: GigabitsPerSecond = GigabitsPerSecond(i)
+  case class BitRateUnits(private val i: Long) {
+    def kbps: BitRate = BitRate(i)
+    def mbps: BitRate = BitRate(i * 1024)
+    def gbps: BitRate = BitRate(i * 1024 * 1024)
   }
 
   implicit def longToBitRateCreator(i: Long): BitRateUnits = BitRateUnits(i)

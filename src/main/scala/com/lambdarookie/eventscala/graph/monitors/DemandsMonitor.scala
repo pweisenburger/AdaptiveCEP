@@ -7,8 +7,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.FiniteDuration
 import akka.actor.ActorRef
 import com.lambdarookie.eventscala.backend.data.QoSUnits._
+import com.lambdarookie.eventscala.backend.qos.QoSMetrics.Priority
 import com.lambdarookie.eventscala.backend.qos.QualityOfService._
-import com.lambdarookie.eventscala.backend.system.Utilities
 import com.lambdarookie.eventscala.backend.system.traits._
 import com.lambdarookie.eventscala.data.Queries._
 
@@ -16,24 +16,23 @@ import com.lambdarookie.eventscala.data.Queries._
 trait InfoMessage
 case class ChildInfoRequest() extends InfoMessage
 case class ChildInfoResponse(childNode: ActorRef) extends InfoMessage
-case class PathInfoMessage(childNode: ActorRef, pathInfo: PathInfo) extends InfoMessage
+case class PathInfo(childNode: ActorRef, measurements: Measurements) extends InfoMessage
 
-case class PathInfo(latencyInfo: LatencyInfo, bandwidthInfo: BandwidthInfo, throughputInfo: ThroughputInfo)
-case class LatencyInfo(path: Seq[Host], latency: Duration)
-case class BandwidthInfo(path: Seq[Host], bandwidth: BitRate)
-case class ThroughputInfo(path: Seq[Host], throughput: BitRate)
+case class Measurements(latency: TimeSpan, bandwidth: BitRate, throughput: BitRate) {
+  def this(from: Host, to: Host, system: System, priority: Priority) =
+    this(system.getLatency(from, to, priority), system.getBandwidth(from, to, priority),
+      system.getThroughput(from, to, priority))
 
-sealed trait Priority
-case object LatencyPriority extends Priority
-case object BandwidthPriority extends Priority
-case object ThroughputPriority extends Priority
+  def combine(other: Measurements): Measurements =
+    Measurements(latency + other.latency, min(bandwidth, other.bandwidth), min(throughput, other.throughput))
+}
 
 case class DemandsMonitor(interval: Int, priority: Priority, logging: Boolean) extends Monitor {
 
-  private var child1ChosenPath: Option[Seq[Host]] = None
-  private var child1PathInfo: Option[PathInfo] = None
-  private var child2ChosenPath: Option[Seq[Host]] = None
-  private var child2PathInfo: Option[PathInfo] = None
+  private var child1Measurements: Option[Measurements] = None
+  private var child1PathMeasurements: Option[Measurements] = None
+  private var child2Measurements: Option[Measurements] = None
+  private var child2PathMeasurements: Option[Measurements] = None
 
   override def onCreated(nodeData: NodeData): Unit = {
     val childNodes: Seq[ActorRef] = nodeData match {
@@ -57,22 +56,10 @@ case class DemandsMonitor(interval: Int, priority: Priority, logging: Boolean) e
     val operator: Operator = system.nodesToOperators.now.apply(self)
     val host: Host = operator.host
 
-    def createPathInfo(childNodeChosenPath: Option[Seq[Host]], childNodePathInfo: Option[PathInfo]): PathInfo = {
-      val path = childNodePathInfo.get.latencyInfo.path ++ childNodeChosenPath.get
-      PathInfo(LatencyInfo(path, Utilities.calculateLatency(path).toDuration),
-        BandwidthInfo(path, Utilities.calculateBandwidth(path)), ThroughputInfo(path, Utilities.calculateThroughput(path)))
-    }
-
-    def getChosenPathFromChild(childHost: Host): Seq[Host] = priority match {
-      case LatencyPriority => Utilities.calculateLowestLatency(childHost, host)._1
-      case BandwidthPriority => Utilities.calculateHighestBandwidth(childHost, host)._1
-      case ThroughputPriority => Utilities.calculateHighestThroughput(childHost, host)._1
-    }
-
-    def updateViolations(pathInfo: PathInfo): Unit = {
+    def updateViolations(pathMeasurements: Measurements): Unit = {
       val demands: Set[Demand] = query.demands.collect { case d if areConditionsMet(d) => d }
-      if (logging && demands.nonEmpty) logDemands(demands, nodeData.name, pathInfo)
-      val violatedDemands: Set[Demand] = demands.filter(isDemandNotMet(pathInfo, _))
+      if (logging && demands.nonEmpty) logDemands(demands, nodeData.name, pathMeasurements)
+      val violatedDemands: Set[Demand] = demands.filter(isDemandNotMet(pathMeasurements, _))
       query.violations.now.foreach{
         case v @ Violation(_, d) if (demands -- violatedDemands).contains(d) => query.removeViolation(v)
         case _ =>
@@ -85,30 +72,28 @@ case class DemandsMonitor(interval: Int, priority: Priority, logging: Boolean) e
       case _: LeafNodeData => message match {
         case ChildInfoRequest() =>
           nodeData.context.parent ! ChildInfoResponse(self)
-          nodeData.context.parent !
-            PathInfoMessage(self, PathInfo(LatencyInfo(Seq(host), Duration.ZERO),
-              BandwidthInfo(Seq(host), Int.MaxValue.gbps), ThroughputInfo(Seq(host), Int.MaxValue.gbps)))
+          nodeData.context.parent ! PathInfo(self, Measurements(0.ns, Int.MaxValue.gbps, Int.MaxValue.gbps))
       }
       case _: UnaryNodeData =>
         message match {
           case ChildInfoRequest() => nodeData.context.parent ! ChildInfoResponse(self)
           case ChildInfoResponse(childNode) =>
             val childHost: Host = system.getHostByNode(childNode)
-            child1ChosenPath = Some(getChosenPathFromChild(childHost))
-            if (child1PathInfo.isDefined) {
-              val pathInfo: PathInfo = createPathInfo(child1ChosenPath, child1PathInfo)
-              updateViolations(pathInfo)
-              nodeData.context.parent ! PathInfoMessage(self, pathInfo)
-              child1ChosenPath = None
-              child1PathInfo = None
+            child1Measurements = Some(new Measurements(childHost, host, system, priority))
+            if (child1PathMeasurements.isDefined) {
+              val pathMeasurements: Measurements = child1Measurements.get combine child1PathMeasurements.get
+              updateViolations(pathMeasurements)
+              nodeData.context.parent ! PathInfo(self, pathMeasurements)
+              child1Measurements = None
+              child1PathMeasurements = None
             }
-          case PathInfoMessage(_, childNodePathInfo) =>
-            if (child1ChosenPath.isDefined) {
-              val pathInfo: PathInfo = createPathInfo(child1ChosenPath, Some(childNodePathInfo))
-              updateViolations(pathInfo)
-              nodeData.context.parent ! PathInfoMessage(self, pathInfo)
-              child1ChosenPath = None
-              child1PathInfo = None
+          case PathInfo(_, childNodePathMeasurements) =>
+            if (child1Measurements.isDefined) {
+              val pathMeasurements: Measurements = child1Measurements.get combine childNodePathMeasurements
+              updateViolations(pathMeasurements)
+              nodeData.context.parent ! PathInfo(self, pathMeasurements)
+              child1Measurements = None
+              child1PathMeasurements = None
             }
         }
       case bnd: BinaryNodeData =>
@@ -116,39 +101,39 @@ case class DemandsMonitor(interval: Int, priority: Priority, logging: Boolean) e
           case ChildInfoRequest() => nodeData.context.parent ! ChildInfoResponse(self)
           case ChildInfoResponse(childNode) =>
             val childHost: Host = system.getHostByNode(childNode)
-            val childChosenPath: Seq[Host] = getChosenPathFromChild(childHost)
+            val childMeasurements: Measurements = new Measurements(childHost, host, system, priority)
             childNode match {
-              case bnd.childNode1 => child1ChosenPath = Some(childChosenPath)
-              case bnd.childNode2 => child2ChosenPath = Some(childChosenPath)
+              case bnd.childNode1 => child1Measurements = Some(childMeasurements)
+              case bnd.childNode2 => child2Measurements = Some(childMeasurements)
             }
-            if (child1PathInfo.isDefined && child2PathInfo.isDefined &&
-              child1ChosenPath.isDefined && child2ChosenPath.isDefined) {
-              val path1Info: PathInfo = createPathInfo(child1ChosenPath, child1PathInfo)
-              val path2Info: PathInfo = createPathInfo(child2ChosenPath, child2PathInfo)
-              val chosenPathInfo: PathInfo = choosePaths(path1Info, path2Info)
-              updateViolations(chosenPathInfo)
-              nodeData.context.parent ! PathInfoMessage(self, chosenPathInfo)
-              child1ChosenPath = None
-              child2ChosenPath = None
-              child1PathInfo = None
-              child2PathInfo = None
+            if (child1PathMeasurements.isDefined && child2PathMeasurements.isDefined &&
+              child1Measurements.isDefined && child2Measurements.isDefined) {
+              val path1Measurements: Measurements = child1Measurements.get combine child1PathMeasurements.get
+              val path2Measurements: Measurements = child2Measurements.get combine child2PathMeasurements.get
+              val chosenPathMeasurements: Measurements = choosePaths(path1Measurements, path2Measurements)
+              updateViolations(chosenPathMeasurements)
+              nodeData.context.parent ! PathInfo(self, chosenPathMeasurements)
+              child1Measurements = None
+              child2Measurements = None
+              child1PathMeasurements = None
+              child2PathMeasurements = None
             }
-          case PathInfoMessage(childNode, childNodePathInfo) =>
+          case PathInfo(childNode, childNodePathMeasurements) =>
             childNode match {
-              case bnd.childNode1 => child1PathInfo = Some(childNodePathInfo)
-              case bnd.childNode2 => child2PathInfo = Some(childNodePathInfo)
+              case bnd.childNode1 => child1PathMeasurements = Some(childNodePathMeasurements)
+              case bnd.childNode2 => child2PathMeasurements = Some(childNodePathMeasurements)
             }
-            if (child1PathInfo.isDefined && child2PathInfo.isDefined &&
-              child1ChosenPath.isDefined && child2ChosenPath.isDefined) {
-              val path1Info: PathInfo = createPathInfo(child1ChosenPath, child1PathInfo)
-              val path2Info: PathInfo = createPathInfo(child2ChosenPath, child2PathInfo)
-              val chosenPathInfo: PathInfo = choosePaths(path1Info, path2Info)
-              updateViolations(chosenPathInfo)
-              nodeData.context.parent ! PathInfoMessage(self, chosenPathInfo)
-              child1ChosenPath = None
-              child2ChosenPath = None
-              child1PathInfo = None
-              child2PathInfo = None
+            if (child1PathMeasurements.isDefined && child2PathMeasurements.isDefined &&
+              child1Measurements.isDefined && child2Measurements.isDefined) {
+              val path1Measurements: Measurements = child1Measurements.get combine child1PathMeasurements.get
+              val path2Measurements: Measurements = child2Measurements.get combine child2PathMeasurements.get
+              val chosenPathMeasurements: Measurements = choosePaths(path1Measurements, path2Measurements)
+              updateViolations(chosenPathMeasurements)
+              nodeData.context.parent ! PathInfo(self, chosenPathMeasurements)
+              child1Measurements = None
+              child2Measurements = None
+              child1PathMeasurements = None
+              child2PathMeasurements = None
             }
         }
     }
@@ -156,20 +141,20 @@ case class DemandsMonitor(interval: Int, priority: Priority, logging: Boolean) e
 
   override def copy: DemandsMonitor = DemandsMonitor(interval, priority, logging)
 
-  private def isDemandNotMet(pathInfo: PathInfo, d: Demand): Boolean = {
+  private def isDemandNotMet(pathMeasurements: Measurements, d: Demand): Boolean = {
     val met: Boolean = d match {
       case ld: LatencyDemand =>
-        val latency: Duration = pathInfo.latencyInfo.latency
+        val latency: TimeSpan = pathMeasurements.latency
         ld.booleanOperator match {
-          case Equal =>        latency.compareTo(ld.timeSpan.toDuration) == 0
-          case NotEqual =>     latency.compareTo(ld.timeSpan.toDuration) != 0
-          case Greater =>      latency.compareTo(ld.timeSpan.toDuration) >  0
-          case GreaterEqual => latency.compareTo(ld.timeSpan.toDuration) >= 0
-          case Smaller =>      latency.compareTo(ld.timeSpan.toDuration) <  0
-          case SmallerEqual => latency.compareTo(ld.timeSpan.toDuration) <= 0
+          case Equal =>        latency == ld.timeSpan
+          case NotEqual =>     latency != ld.timeSpan
+          case Greater =>      latency > ld.timeSpan
+          case GreaterEqual => latency >= ld.timeSpan
+          case Smaller =>      latency < ld.timeSpan
+          case SmallerEqual => latency <= ld.timeSpan
         }
       case bd: BandwidthDemand =>
-        val bandwidth: BitRate = pathInfo.bandwidthInfo.bandwidth
+        val bandwidth: BitRate = pathMeasurements.bandwidth
         bd.booleanOperator match {
           case Equal =>         bandwidth == bd.bitRate
           case NotEqual =>      bandwidth != bd.bitRate
@@ -179,7 +164,7 @@ case class DemandsMonitor(interval: Int, priority: Priority, logging: Boolean) e
           case SmallerEqual =>  bandwidth <= bd.bitRate
         }
       case td: ThroughputDemand =>
-        val throughput: BitRate = pathInfo.throughputInfo.throughput
+        val throughput: BitRate = pathMeasurements.throughput
         td.booleanOperator match {
           case Equal =>         throughput == td.bitRate
           case NotEqual =>      throughput != td.bitRate
@@ -199,32 +184,29 @@ case class DemandsMonitor(interval: Int, priority: Priority, logging: Boolean) e
     true
   }
 
-  private def logDemands(demands: Set[Demand], name: String, pathInfo: PathInfo): Unit = {
+  private def logDemands(demands: Set[Demand], name: String, pathMeasurements: Measurements): Unit = {
     if (demands.exists(_.isInstanceOf[LatencyDemand]))
-      println(s"LOG:\t\tNode `$name` has a highest latency of ${pathInfo.latencyInfo.latency.toMillis} ms " +
-        s"on the path ${pathInfo.latencyInfo.path}.")
+      println(s"LOG:\t\tNode `$name` has a highest latency of ${pathMeasurements.latency.toMillis} ms.")
     if (demands.exists(_.isInstanceOf[BandwidthDemand]))
-      println(s"LOG:\t\tNode `$name` has a lowest bandwidth of ${pathInfo.bandwidthInfo.bandwidth.toMbps} mbps " +
-        s"on the path ${pathInfo.bandwidthInfo.path}.")
+      println(s"LOG:\t\tNode `$name` has a lowest bandwidth of ${pathMeasurements.bandwidth.toMbps} mbps.")
     if (demands.exists(_.isInstanceOf[ThroughputDemand]))
-      println(s"LOG:\t\tNode `$name` has a lowest throughput of ${pathInfo.throughputInfo.throughput.toMbps} mbps " +
-        s"on the path ${pathInfo.throughputInfo.path}.")
+      println(s"LOG:\t\tNode `$name` has a lowest throughput of ${pathMeasurements.throughput.toMbps} mbps.")
   }
 
-  private def choosePaths(path1Info: PathInfo, path2Info: PathInfo): PathInfo = {
-    PathInfo(
-      if (path1Info.latencyInfo.latency.compareTo(path2Info.latencyInfo.latency) >= 0)
-        path1Info.latencyInfo
+  private def choosePaths(path1Measurements: Measurements, path2Measurements: Measurements): Measurements = {
+    Measurements(
+      if (path1Measurements.latency >= path2Measurements.latency)
+        path1Measurements.latency
       else
-        path2Info.latencyInfo,
-      if (path1Info.bandwidthInfo.bandwidth < path2Info.bandwidthInfo.bandwidth)
-        path1Info.bandwidthInfo
+        path2Measurements.latency,
+      if (path1Measurements.bandwidth < path2Measurements.bandwidth)
+        path1Measurements.bandwidth
       else
-        path2Info.bandwidthInfo,
-      if (path1Info.throughputInfo.throughput < path2Info.throughputInfo.throughput)
-        path1Info.throughputInfo
+        path2Measurements.bandwidth,
+      if (path1Measurements.throughput < path2Measurements.throughput)
+        path1Measurements.throughput
       else
-        path2Info.throughputInfo
+        path2Measurements.throughput
     )
   }
 }

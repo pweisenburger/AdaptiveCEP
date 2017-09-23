@@ -1,6 +1,8 @@
 package com.lambdarookie.eventscala.backend.system.traits
 
 import akka.actor.ActorRef
+import com.lambdarookie.eventscala.backend.data.QoSUnits.{BitRate, TimeSpan}
+import com.lambdarookie.eventscala.backend.qos.QoSMetrics._
 import com.lambdarookie.eventscala.backend.qos.QualityOfService.{Adaptation, Violation}
 import com.lambdarookie.eventscala.backend.system._
 import com.lambdarookie.eventscala.data.Queries._
@@ -74,11 +76,13 @@ trait QoSSystem {
   def isAdaptationPlanned(violations: Set[Violation]): Boolean
 
 
+  private val qosVar: Var[Set[QoSMetric]] = Var(Set.empty)
   private val queriesVar: Var[Set[Query]] = Var(Set.empty)
   private val fireDemandsViolated: Evt[Set[Violation]] = Evt[Set[Violation]]
 
   protected val demandsViolated: Event[Set[Violation]] = fireDemandsViolated
 
+  val qos: Signal[Set[QoSMetric]] = qosVar
   val violations: Signal[Set[Violation]] = Signal{ queriesVar().flatMap(_.violations()) }
   val waiting: Signal[Set[Violation]] = Signal { queriesVar().flatMap(_.waiting()) }
   val adapting: Signal[Option[Set[Violation]]] = Signal {
@@ -120,6 +124,75 @@ trait QoSSystem {
       if (logging) println(s"ADAPTATION:\tSystem is done adapting")
       val vsQueue: Set[Violation] = waiting.now
       if (vsQueue.nonEmpty) vsQueue.map(_.operator.query).foreach(_.startAdapting())
+    }
+  }
+
+  def getLatency(from: Host, to: Host, priority: Priority): TimeSpan = {
+    val latencies: Set[Latency] = qos.now.collect { case l@Latency(`from`, `to`, _) => l }
+    if (latencies.size == 1) {
+      latencies.head.latency
+    } else {
+      if (latencies.size > 1) qosVar.transform(_ -- latencies) // If there are duplicates it is en error. Remove them
+      val bestPath: QoSMetric = priority.choosePath(from, to)
+      bestPath match {
+        case l: Latency =>
+          qosVar.transform(_ + l + Bandwidth(from, to, bestPath.hops) + Throughput(from, to, bestPath.hops))
+          l.latency
+        case b: Bandwidth =>
+          val l = Latency(from, to, bestPath.hops)
+          qosVar.transform(_ + l + b + Throughput(from, to, bestPath.hops))
+          l.latency
+        case t: Throughput =>
+          val l = Latency(from, to, bestPath.hops)
+          qosVar.transform(_ + l + Bandwidth(from, to, bestPath.hops) + t)
+          l.latency
+      }
+    }
+  }
+
+  def getBandwidth(from: Host, to: Host, priority: Priority): BitRate = {
+    val bandwidths: Set[Bandwidth] = qos.now.collect { case b@Bandwidth(`from`, `to`, _) => b }
+    if (bandwidths.size == 1) {
+      bandwidths.head.bandwidth
+    } else {
+      if (bandwidths.size > 1) qosVar.transform(_ -- bandwidths) // If there are duplicates it is en error. Remove them
+      val bestPath: QoSMetric = priority.choosePath(from, to)
+      bestPath match {
+        case l: Latency =>
+          val b = Bandwidth(from, to, bestPath.hops)
+          qosVar.transform(_ + l + b + Throughput(from, to, bestPath.hops))
+          b.bandwidth
+        case b: Bandwidth =>
+          qosVar.transform(_ + Latency(from, to, bestPath.hops) + b + Throughput(from, to, bestPath.hops))
+          b.bandwidth
+        case t: Throughput =>
+          val b = Bandwidth(from, to, bestPath.hops)
+          qosVar.transform(_ + Latency(from, to, bestPath.hops) + b + t)
+          b.bandwidth
+      }
+    }
+  }
+
+  def getThroughput(from: Host, to: Host, priority: Priority): BitRate = {
+    val throughputs: Set[Throughput] = qos.now.collect { case t@Throughput(`from`, `to`, _) => t }
+    if (throughputs.size == 1) {
+      throughputs.head.throughput
+    } else {
+      if (throughputs.size > 1) qosVar.transform(_ -- throughputs) // If there are duplicates it is en error. Remove them
+      val bestPath: QoSMetric = priority.choosePath(from, to)
+      bestPath match {
+        case l: Latency =>
+          val t = Throughput(from, to, bestPath.hops)
+          qosVar.transform(_ + l + Bandwidth(from, to, bestPath.hops) + t)
+          t.throughput
+        case b: Bandwidth =>
+          val t = Throughput(from, to, bestPath.hops)
+          qosVar.transform(_ + Latency(from, to, bestPath.hops) + b + t)
+          t.throughput
+        case t: Throughput =>
+          qosVar.transform(_ + Latency(from, to, bestPath.hops) + Bandwidth(from, to, bestPath.hops) + t)
+          t.throughput
+      }
     }
   }
 

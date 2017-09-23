@@ -8,6 +8,7 @@ import com.lambdarookie.eventscala.graph.factory._
 import com.lambdarookie.eventscala.graph.monitors._
 import com.lambdarookie.eventscala.backend.system.traits._
 import com.lambdarookie.eventscala.backend.data.QoSUnits._
+import com.lambdarookie.eventscala.backend.qos.QoSMetrics.Priority
 import com.lambdarookie.eventscala.backend.qos.QualityOfService._
 import com.lambdarookie.eventscala.backend.system.CentralScheduler
 
@@ -73,7 +74,7 @@ object Main extends App {
     publishers =              publishers,
     centralScheduler =        CentralScheduler(30, 30, 30),
     monitors =                Set(ConditionsMonitor (15, 60, logging = true),
-                                  DemandsMonitor (5, LatencyPriority,  logging = true)),
+                                  DemandsMonitor (5, Priority(1, 1, 0),  logging = true)),
     createdCallback =         () => println("STATUS:\t\tGraph has been created."))(
     eventCallback =           {
       // Callback for `query1`:

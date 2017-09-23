@@ -167,12 +167,12 @@ case class PathLatencyMonitor(interval: Int, logging: Boolean) extends Monitor {
 
   def isDemandNotMet(latency: Duration, ld: LatencyDemand): Boolean = {
     val met: Boolean = ld.booleanOperator match {
-      case Equal =>        latency.compareTo(ld.timeSpan.toDuration) == 0
-      case NotEqual =>     latency.compareTo(ld.timeSpan.toDuration) != 0
-      case Greater =>      latency.compareTo(ld.timeSpan.toDuration) >  0
-      case GreaterEqual => latency.compareTo(ld.timeSpan.toDuration) >= 0
-      case Smaller =>      latency.compareTo(ld.timeSpan.toDuration) <  0
-      case SmallerEqual => latency.compareTo(ld.timeSpan.toDuration) <= 0
+      case Equal =>        latency.compareTo(ld.timeSpan.duration) == 0
+      case NotEqual =>     latency.compareTo(ld.timeSpan.duration) != 0
+      case Greater =>      latency.compareTo(ld.timeSpan.duration) >  0
+      case GreaterEqual => latency.compareTo(ld.timeSpan.duration) >= 0
+      case Smaller =>      latency.compareTo(ld.timeSpan.duration) <  0
+      case SmallerEqual => latency.compareTo(ld.timeSpan.duration) <= 0
     }
     !met
   }
