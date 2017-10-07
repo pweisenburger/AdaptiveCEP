@@ -19,7 +19,7 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
   }
 
   def createTestGraph(query: Query, publishers: Map[String, ActorRef], testActor: ActorRef): ActorRef = GraphFactory.createImpl(
-    TestSystem(false),
+    TestSystem(logging = false, null),
     system,
     query,
     publishers,

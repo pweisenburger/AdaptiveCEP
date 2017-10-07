@@ -8,43 +8,39 @@ import com.lambdarookie.eventscala.backend.system.traits.Host
   * Created by monur.
   */
 object QoSMetrics {
-  trait QoSMetric { val source: Host; val destination: Host; val hops: Seq[Host] }
-
-  case class Latency(source: Host, destination: Host, hops: Seq[Host]) extends QoSMetric {
+  case class Path (source: Host, destination: Host, hops: Seq[Host]) {
     def latency: TimeSpan = if (hops.isEmpty)
       source.neighborLatencies(destination)
     else
-      Utilities.calculateLatency(source +: hops :+ destination)
-  }
+      Utilities.calculateLatency(toSeq)
 
-  case class Bandwidth(source: Host, destination: Host, hops: Seq[Host]) extends QoSMetric {
     def bandwidth: BitRate = if (hops.isEmpty)
       source.neighborBandwidths(destination)
     else
-      Utilities.calculateBandwidth(source +: hops :+ destination)
-  }
+      Utilities.calculateBandwidth(toSeq)
 
-  case class Throughput(source: Host, destination: Host, hops: Seq[Host]) extends QoSMetric {
     def throughput: BitRate = if (hops.isEmpty)
       source.neighborThroughputs(destination)
     else
-      Utilities.calculateThroughput(source +: hops :+ destination)
+      Utilities.calculateThroughput(toSeq)
+
+    def toSeq: Seq[Host] = source +: hops :+ destination
   }
 
   case class Priority(latencyWeight: Int, bandwidthWeight: Int, throughputWeight: Int) {
-    def choosePath(from: Host, to: Host): QoSMetric = {
+    def choosePath(from: Host, to: Host, knownPaths: Set[Path]): Path = {
       def weightRate(weight: Float): Float = weight / (latencyWeight + bandwidthWeight + throughputWeight)
 
-      val latency: (Latency, TimeSpan) = Utilities.calculateLowestLatency(from, to)
-      val bandwidth: (Bandwidth, BitRate) = Utilities.calculateHighestBandwidth(from, to)
-      val throughput: (Throughput, BitRate) = Utilities.calculateHighestThroughput(from, to)
+      val latency: (Path, TimeSpan) = Utilities.calculateLowestLatency(from, to, knownPaths)
+      val bandwidth: (Path, BitRate) = Utilities.calculateHighestBandwidth(from, to, knownPaths)
+      val throughput: (Path, BitRate) = Utilities.calculateHighestThroughput(from, to, knownPaths)
 
-      val bandwidthOfLatencyPath: Float = Utilities.calculateBandwidth(from +: latency._1.hops :+ to).toKbps
-      val throughputOfLatencyPath: Float = Utilities.calculateThroughput(from +: latency._1.hops :+ to).toKbps
-      val latencyOfBandwidthPath: Float = Utilities.calculateLatency(from +: bandwidth._1.hops :+ to).toMillis
-      val throughputOfBandwidthPath: Float = Utilities.calculateThroughput(from +: bandwidth._1.hops :+ to).toKbps
-      val latencyOfThroughputPath: Float = Utilities.calculateLatency(from +: throughput._1.hops :+ to).toMillis
-      val bandwidthOfThroughputPath: Float = Utilities.calculateBandwidth(from +: throughput._1.hops :+ to).toKbps
+      val bandwidthOfLatencyPath: Float = Utilities.calculateBandwidth(latency._1.toSeq).toKbps
+      val throughputOfLatencyPath: Float = Utilities.calculateThroughput(latency._1.toSeq).toKbps
+      val latencyOfBandwidthPath: Float = Utilities.calculateLatency(bandwidth._1.toSeq).toMillis
+      val throughputOfBandwidthPath: Float = Utilities.calculateThroughput(bandwidth._1.toSeq).toKbps
+      val latencyOfThroughputPath: Float = Utilities.calculateLatency(throughput._1.toSeq).toMillis
+      val bandwidthOfThroughputPath: Float = Utilities.calculateBandwidth(throughput._1.toSeq).toKbps
 
       val latencyWeightRate: Float = weightRate(latencyWeight)
       val bandwidthWeightRate: Float = weightRate(bandwidthWeight)

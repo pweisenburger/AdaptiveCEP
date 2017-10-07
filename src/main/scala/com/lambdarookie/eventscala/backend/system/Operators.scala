@@ -1,22 +1,39 @@
 package com.lambdarookie.eventscala.backend.system
 
 import com.lambdarookie.eventscala.backend.system.traits._
-import com.lambdarookie.eventscala.data.Queries.{BinaryQuery, Query, UnaryQuery}
+import com.lambdarookie.eventscala.data.Queries.{BinaryQuery, LeafQuery, UnaryQuery}
 
 /**
   * Created by monur.
   */
 
-case class EventSource(id: String, cepSystem: CEPSystem, query: Query, outputs: Set[Operator]) extends Operator {
-  val host: Host = cepSystem.placeOperator(this)
-  val inputs = Seq.empty[Operator]
+trait EventSource extends Operator {
+  val query: LeafQuery
+
+  val inputs: Seq[Operator] = Seq.empty
 }
-case class UnaryOperator(id: String, cepSystem: CEPSystem, query: UnaryQuery, outputs: Set[Operator]) extends Operator {
-  val host: Host = cepSystem.placeOperator(this)
+trait UnaryOperator extends Operator {
+  val query: UnaryQuery
+
   val inputs = Seq(createChildOperator(id + "-" + Operator.SINGLE_CHILD, query.sq))
 }
-case class BinaryOperator(id: String, cepSystem: CEPSystem, query: BinaryQuery, outputs: Set[Operator]) extends Operator {
-  val host: Host = cepSystem.placeOperator(this)
+trait BinaryOperator extends Operator {
+  val query: BinaryQuery
+
   val inputs = Seq( createChildOperator(id + "-" + Operator.LEFT_CHILD, query.sq1),
-                    createChildOperator(id + "-" + Operator.RIGHT_CHILD, query.sq2))
+    createChildOperator(id + "-" + Operator.RIGHT_CHILD, query.sq2))
 }
+
+
+private[backend] sealed trait OperatorImpl extends Operator {
+  var host: Host = cepSystem.placeOperator(this)
+
+  def move(to: Host): Unit = host = to
+}
+
+private[backend] case class EventSourceImpl(id: String, cepSystem: CEPSystem, query: LeafQuery, outputs: Set[Operator])
+  extends EventSource with OperatorImpl
+private[backend] case class UnaryOperatorImpl(id: String, cepSystem: CEPSystem, query: UnaryQuery, outputs: Set[Operator])
+  extends UnaryOperator with OperatorImpl
+private[backend] case class BinaryOperatorImpl(id: String, cepSystem: CEPSystem, query: BinaryQuery, outputs: Set[Operator])
+  extends BinaryOperator with OperatorImpl

@@ -15,6 +15,8 @@ trait System extends CEPSystem with QoSSystem
 
 
 trait CEPSystem {
+  protected val logging: Boolean
+
   val hosts: Signal[Set[Host]]
 
   /**
@@ -40,9 +42,9 @@ trait CEPSystem {
     */
   def createOperator(id: String, query: Query, outputs: Set[Operator]): Operator = {
     val op: Operator = query match {
-      case q: LeafQuery => EventSource(id, this, q, outputs)
-      case q: UnaryQuery => UnaryOperator(id, this, q, outputs)
-      case q: BinaryQuery => BinaryOperator(id, this, q, outputs)
+      case q: LeafQuery => EventSourceImpl(id, this, q, outputs)
+      case q: UnaryQuery => UnaryOperatorImpl(id, this, q, outputs)
+      case q: BinaryQuery => BinaryOperatorImpl(id, this, q, outputs)
     }
     operatorsVar.transform(x => x + op)
     op
@@ -65,6 +67,12 @@ trait CEPSystem {
     case Some(operator) => operator.host
     case None => throw new NoSuchElementException("ERROR: Following node is not defined in the system: " + node)
   }
+
+  def replaceOperators(assignments: Map[Operator, Host]): Unit =
+    assignments.foreach { x =>
+      x._1.asInstanceOf[OperatorImpl].move(x._2)
+      if (logging) println(s"ADAPTATION:\t${x._1} is moved to ${x._2}")
+    }
 }
 
 
@@ -72,17 +80,18 @@ trait QoSSystem {
   protected val logging: Boolean
 
   val adaptation: Adaptation
+  val priority: Priority
 
   def planAdaptation(violations: Set[Violation]): Set[Violation]
 
 
-  private val qosVar: Var[Set[QoSMetric]] = Var(Set.empty)
+  private val pathsVar: Var[Set[Path]] = Var(Set.empty)
   private val queriesVar: Var[Set[Query]] = Var(Set.empty)
   private val fireDemandsViolated: Evt[Set[Violation]] = Evt[Set[Violation]]
 
   protected val demandsViolated: Event[Set[Violation]] = fireDemandsViolated
 
-  val qos: Signal[Set[QoSMetric]] = qosVar
+  val paths: Signal[Set[Path]] = pathsVar
   val violations: Signal[Set[Violation]] = Signal{ queriesVar().flatMap(_.violations()) }
   val waiting: Signal[Set[Violation]] = Signal { queriesVar().flatMap(_.waiting()) }
   val adapting: Signal[Option[Set[Violation]]] = Signal {
@@ -128,74 +137,60 @@ trait QoSSystem {
     }
   }
 
-  def getLatency(from: Host, to: Host, priority: Priority): TimeSpan = {
-    val latencies: Set[Latency] = qos.now.collect { case l@Latency(`from`, `to`, _) => l }
-    if (latencies.size == 1) {
-      latencies.head.latency
-    } else {
-      if (latencies.size > 1) qosVar.transform(_ -- latencies) // If there are duplicates it is en error. Remove them
-      val bestPath: QoSMetric = priority.choosePath(from, to)
-      bestPath match {
-        case l: Latency =>
-          qosVar.transform(_ + l + Bandwidth(from, to, bestPath.hops) + Throughput(from, to, bestPath.hops))
-          l.latency
-        case b: Bandwidth =>
-          val l = Latency(from, to, bestPath.hops)
-          qosVar.transform(_ + l + b + Throughput(from, to, bestPath.hops))
-          l.latency
-        case t: Throughput =>
-          val l = Latency(from, to, bestPath.hops)
-          qosVar.transform(_ + l + Bandwidth(from, to, bestPath.hops) + t)
-          l.latency
-      }
-    }
+  private def updatePaths(path: Seq[Host]): Unit = {
+    val path1 = path.init
+    var path2 = path.tail
+    pathsVar.transform(_ ++ path1.flatMap { h1 =>
+      val out: Set[Path] = path2.map { h2 => Path(h1, h2, path2.span(_ != h2)._1) }.toSet
+      path2 = path2.tail
+      out
+    })
   }
 
-  def getBandwidth(from: Host, to: Host, priority: Priority): BitRate = {
-    val bandwidths: Set[Bandwidth] = qos.now.collect { case b@Bandwidth(`from`, `to`, _) => b }
-    if (bandwidths.size == 1) {
-      bandwidths.head.bandwidth
+  def getLatencyAndUpdatePaths(from: Host, to: Host, through: Option[Host] = None): TimeSpan =
+    if (through.nonEmpty && through.get != to) {
+      getLatencyAndUpdatePaths(from, through.get) + getLatencyAndUpdatePaths(through.get, to)
     } else {
-      if (bandwidths.size > 1) qosVar.transform(_ -- bandwidths) // If there are duplicates it is en error. Remove them
-      val bestPath: QoSMetric = priority.choosePath(from, to)
-      bestPath match {
-        case l: Latency =>
-          val b = Bandwidth(from, to, bestPath.hops)
-          qosVar.transform(_ + l + b + Throughput(from, to, bestPath.hops))
-          b.bandwidth
-        case b: Bandwidth =>
-          qosVar.transform(_ + Latency(from, to, bestPath.hops) + b + Throughput(from, to, bestPath.hops))
-          b.bandwidth
-        case t: Throughput =>
-          val b = Bandwidth(from, to, bestPath.hops)
-          qosVar.transform(_ + Latency(from, to, bestPath.hops) + b + t)
-          b.bandwidth
+      val found: Set[Path] = paths.now collect { case p@Path(`from`, `to`, _) => p }
+      if (found.size == 1) {
+        found.head.latency
+      } else {
+        if (found.size > 1) pathsVar.transform(_ -- found) // If there are duplicates it is en error. Remove them
+        val bestPath: Path = priority.choosePath(from, to, paths.now)
+        updatePaths(bestPath.toSeq)
+        bestPath.latency
       }
     }
-  }
 
-  def getThroughput(from: Host, to: Host, priority: Priority): BitRate = {
-    val throughputs: Set[Throughput] = qos.now.collect { case t@Throughput(`from`, `to`, _) => t }
-    if (throughputs.size == 1) {
-      throughputs.head.throughput
+  def getBandwidthAndUpdatePaths(from: Host, to: Host, through: Option[Host] = None): BitRate =
+    if (through.nonEmpty && through.get != to) {
+      getBandwidthAndUpdatePaths(from, through.get) + getBandwidthAndUpdatePaths(through.get, to)
     } else {
-      if (throughputs.size > 1) qosVar.transform(_ -- throughputs) // If there are duplicates it is en error. Remove them
-      val bestPath: QoSMetric = priority.choosePath(from, to)
-      bestPath match {
-        case l: Latency =>
-          val t = Throughput(from, to, bestPath.hops)
-          qosVar.transform(_ + l + Bandwidth(from, to, bestPath.hops) + t)
-          t.throughput
-        case b: Bandwidth =>
-          val t = Throughput(from, to, bestPath.hops)
-          qosVar.transform(_ + Latency(from, to, bestPath.hops) + b + t)
-          t.throughput
-        case t: Throughput =>
-          qosVar.transform(_ + Latency(from, to, bestPath.hops) + Bandwidth(from, to, bestPath.hops) + t)
-          t.throughput
+      val found: Set[Path] = paths.now collect { case p@Path(`from`, `to`, _) => p }
+      if (found.size == 1) {
+        found.head.bandwidth
+      } else {
+        if (found.size > 1) pathsVar.transform(_ -- found) // If there are duplicates it is en error. Remove them
+        val bestPath: Path = priority.choosePath(from, to, paths.now)
+        updatePaths(bestPath.toSeq)
+        bestPath.bandwidth
       }
     }
-  }
+
+  def getThroughputAndUpdatePaths(from: Host, to: Host, through: Option[Host] = None): BitRate =
+    if (through.nonEmpty && through.get != to) {
+      getThroughputAndUpdatePaths(from, through.get) + getThroughputAndUpdatePaths(through.get, to)
+    } else {
+      val found: Set[Path] = paths.now collect { case p@Path(`from`, `to`, _) => p }
+      if (found.size == 1) {
+        found.head.throughput
+      } else {
+        if (found.size > 1) pathsVar.transform(_ -- found) // If there are duplicates it is en error. Remove them
+        val bestPath: Path = priority.choosePath(from, to, paths.now)
+        updatePaths(bestPath.toSeq)
+        bestPath.throughput
+      }
+    }
 
   def addQuery(query: Query): Unit = queriesVar.transform(x => x + query)
 

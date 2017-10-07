@@ -2,110 +2,71 @@ package com.lambdarookie.eventscala.backend.system
 
 import com.lambdarookie.eventscala.backend.data.QoSUnits._
 import com.lambdarookie.eventscala.backend.qos.QoSMetrics._
-import com.lambdarookie.eventscala.backend.system.traits.Host
+import com.lambdarookie.eventscala.backend.qos.QualityOfService._
+import com.lambdarookie.eventscala.backend.system.traits.{Host, Operator}
 
 /**
   * Created by monur.
   */
 object Utilities {
-  /**
-    * Calculate the path with the lowest latency between two hosts using Dijkstra's shortest path algorithm
-    * @param from Source host
-    * @param to Destination host
-    * @return A tuple of [[Latency]](from, to, hops), hops being the hosts between from and to (if any), and the
-    *         duration of type [[TimeSpan]].
-    */
-  def calculateLowestLatency(from: Host, to: Host): (Latency, TimeSpan) = if (from == to) {
-    (Latency(from, to, Seq.empty), from.neighborLatencies(to))
-  } else {
-    var visited: Set[Host] = Set(from)
-    var latencies: Map[Host, (Seq[Host], TimeSpan)] =
-      from.neighbors.map(n => n -> (Seq.empty, from.neighborLatencies(n))).toMap
-    while (latencies.nonEmpty) {
-      latencies = latencies.toSeq.sortWith(_._2._2 < _._2._2).toMap
-      val next: (Host, (Seq[Host], TimeSpan)) = latencies.head
-      if (!visited.contains(next._1))
-        if (next._1 == to) {
-          return (Latency(from, to, next._2._1), next._2._2)
-        } else {
-          visited += next._1
-          val hops: Seq[Host] = next._2._1 :+ next._1
-          next._1.neighborLatencies.foreach(nn => if (!visited.contains(nn._1)) {
-            val sourceToNnLatency: TimeSpan = latencies(next._1)._2 + nn._2
-            if (!latencies.contains(nn._1) || latencies(nn._1)._2 > sourceToNnLatency)
-              latencies += nn._1 -> (hops, sourceToNnLatency)
-          })
-          latencies -= next._1
-        }
-    }
-    throw new RuntimeException("ERROR:\tMethod should never reach here.")
-  }
 
-  /**
-    * Calculate the path with the highest bandwidth between two hosts using a modified Dijkstra's shortest path algorithm
-    * @param from Source host
-    * @param to Destination host
-    * @return A tuple of [[Bandwidth]](from, to, hops), hops being the hosts between from and to (if any), and the
-    *         bandwidth of type [[BitRate]].
-    */
-  def calculateHighestBandwidth(from: Host, to: Host): (Bandwidth, BitRate) = if (from == to) {
-    (Bandwidth(from, to, Seq.empty), from.neighborBandwidths(to))
-  } else {
-    var visited: Set[Host] = Set(from)
-    var bandwidths: Map[Host, (Seq[Host], BitRate)] =
-      from.neighbors.map(n => n -> (Seq.empty, from.neighborBandwidths(n))).toMap
-    while (bandwidths.nonEmpty) {
-      bandwidths = bandwidths.toSeq.sortWith(_._2._2 > _._2._2).toMap
-      val next: (Host, (Seq[Host], BitRate)) = bandwidths.head
-      if (!visited.contains(next._1))
-        if (next._1 == to) {
-          return (Bandwidth(from, to, next._2._1), next._2._2)
-        } else {
-          visited += next._1
-          val hops: Seq[Host] = next._2._1 :+ next._1
-          next._1.neighborBandwidths.foreach(nn => if (!visited.contains(nn._1)) {
-            val sourceToNnBandwidth: BitRate = min(bandwidths(next._1)._2, nn._2)
-            if (!bandwidths.contains(nn._1) || bandwidths(nn._1)._2 < sourceToNnBandwidth)
-              bandwidths += nn._1 -> (hops, sourceToNnBandwidth)
-          })
-          bandwidths -= next._1
-        }
+  def calculateLowestLatency(from: Host, to: Host, knownPaths: Set[Path], visited: Set[Host] = Set()): (Path, TimeSpan) =
+    if (from == to) {
+      (Path(from, to, Seq.empty), from.neighborLatencies(to))
+    } else {
+      val foundOption: Option[Path] = knownPaths.collectFirst { case p@Path(`from`, `to`, _) => p }
+      if (foundOption.nonEmpty) {
+        (foundOption.get, foundOption.get.latency)
+      } else {
+        val best: Seq[(Path, TimeSpan)] = (from.neighborLatencies -- visited - from).map { h_t =>
+          calculateLowestLatency(h_t._1, to, knownPaths, visited + from)
+        }.toSeq.sortWith(_._2 < _._2)
+        if (best.isEmpty)
+          (Path(from, to, Seq.empty), Int.MaxValue.sec)
+        else
+          (Path(from, to, best.head._1.source +: best.head._1.hops),
+            from.neighborLatencies(best.head._1.source) + best.head._2)
+      }
     }
-    throw new RuntimeException("ERROR:\tMethod should never reach here.")
-  }
 
-  /**
-    * Calculate the path with the highest throughput between two hosts using a modified Dijkstra's shortest path algorithm
-    * @param from Source host
-    * @param to Destination host
-    * @return A tuple of [[Throughput]](from, to, hops), hops being the hosts between from and to (if any), and the
-    *         throughput of type [[BitRate]].
-    */
-  def calculateHighestThroughput(from: Host, to: Host): (Throughput, BitRate) = if (from == to) {
-    (Throughput(from, to, Seq.empty), from.neighborThroughputs(to))
-  } else {
-    var visited: Set[Host] = Set(from)
-    var throughputs: Map[Host, (Seq[Host], BitRate)] =
-      from.neighbors.map(n => n -> (Seq.empty, from.neighborThroughputs(n))).toMap
-    while (throughputs.nonEmpty) {
-      throughputs = throughputs.toSeq.sortWith(_._2._2 > _._2._2).toMap
-      val next: (Host, (Seq[Host], BitRate)) = throughputs.head
-      if (!visited.contains(next._1))
-        if (next._1 == to) {
-          return (Throughput(from, to, next._2._1), next._2._2)
-        } else {
-          visited += next._1
-          val hops: Seq[Host] = next._2._1 :+ next._1
-          next._1.neighborThroughputs.foreach(nn => if (!visited.contains(nn._1)) {
-            val sourceToNnThroughput: BitRate = min(throughputs(next._1)._2, nn._2)
-            if (!throughputs.contains(nn._1) || throughputs(nn._1)._2 < sourceToNnThroughput)
-              throughputs += nn._1 -> (hops, sourceToNnThroughput)
-          })
-          throughputs -= next._1
-        }
+
+  def calculateHighestBandwidth(from: Host, to: Host, knownPaths: Set[Path], visited: Set[Host] = Set()): (Path, BitRate) =
+    if (from == to) {
+      (Path(from, to, Seq.empty), from.neighborBandwidths(to))
+    } else {
+      val foundOption: Option[Path] = knownPaths.collectFirst { case p@Path(`from`, `to`, _) => p }
+      if (foundOption.nonEmpty) {
+        (foundOption.get, foundOption.get.bandwidth)
+      } else {
+        val best: Seq[(Path, BitRate)] = (from.neighborBandwidths -- visited - from).map { h_t =>
+          calculateHighestBandwidth(h_t._1, to, knownPaths, visited + from)
+        }.toSeq.sortWith(_._2 > _._2)
+        if (best.isEmpty)
+          (Path(from, to, Seq.empty), 0.kbps)
+        else
+          (Path(from, to, best.head._1.source +: best.head._1.hops),
+            from.neighborBandwidths(best.head._1.source) + best.head._2)
+      }
     }
-    throw new RuntimeException("ERROR:\tMethod should never reach here.")
-  }
+
+  def calculateHighestThroughput(from: Host, to: Host, knownPaths: Set[Path], visited: Set[Host] = Set()): (Path, BitRate) =
+    if (from == to) {
+      (Path(from, to, Seq.empty), from.neighborThroughputs(to))
+    } else {
+      val foundOption: Option[Path] = knownPaths.collectFirst { case p@Path(`from`, `to`, _) => p }
+      if (foundOption.nonEmpty) {
+        (foundOption.get, foundOption.get.throughput)
+      } else {
+        val best: Seq[(Path, BitRate)] = (from.neighborThroughputs -- visited - from).map { h_t =>
+          calculateHighestThroughput(h_t._1, to, knownPaths, visited + from)
+        }.toSeq.sortWith(_._2 > _._2)
+        if (best.isEmpty)
+          (Path(from, to, Seq.empty), 0.kbps)
+        else
+          (Path(from, to, best.head._1.source +: best.head._1.hops),
+            from.neighborThroughputs(best.head._1.source) + best.head._2)
+      }
+    }
 
   /**
     * Calculate the distance from a coordinate to another coordinate
@@ -156,6 +117,64 @@ object Utilities {
     min(path.head.neighborThroughputs(path(1)), calculateThroughput(path.tail))
   else
     Int.MaxValue.gbps
+
+  def isFulfilled[T <: QoSUnit[T]](value: QoSUnit[T], condition: Condition): Boolean = condition match {
+    case FrequencyCondition(bo, r) =>
+      if (!value.isInstanceOf[Ratio]) throw new IllegalArgumentException("QoS metric does not match the condition.")
+      val frequency: Ratio = value.asInstanceOf[Ratio]
+      bo match {
+        case Equal =>        frequency == r
+        case NotEqual =>     frequency != r
+        case Greater =>      frequency > r
+        case GreaterEqual => frequency >= r
+        case Smaller =>      frequency < r
+        case SmallerEqual => frequency <= r
+      }
+    case ProximityCondition(bo, d) =>
+      if (!value.isInstanceOf[Distance]) throw new IllegalArgumentException("QoS metric does not match the condition.")
+      val proximity: Distance = value.asInstanceOf[Distance]
+      bo match {
+        case Equal =>        proximity == d
+        case NotEqual =>     proximity != d
+        case Greater =>      proximity > d
+        case GreaterEqual => proximity >= d
+        case Smaller =>      proximity < d
+        case SmallerEqual => proximity <= d
+      }
+    case LatencyDemand(bo, ts, _) =>
+      if (!value.isInstanceOf[TimeSpan]) throw new IllegalArgumentException("QoS metric does not match the demand.")
+      val latency: TimeSpan = value.asInstanceOf[TimeSpan]
+      bo match {
+        case Equal =>        latency == ts
+        case NotEqual =>     latency != ts
+        case Greater =>      latency > ts
+        case GreaterEqual => latency >= ts
+        case Smaller =>      latency < ts
+        case SmallerEqual => latency <= ts
+      }
+    case BandwidthDemand(bo, br, _) =>
+      if (!value.isInstanceOf[BitRate]) throw new IllegalArgumentException("QoS metric does not match the demand.")
+      val bandwidth: BitRate = value.asInstanceOf[BitRate]
+      bo match {
+        case Equal =>        bandwidth == br
+        case NotEqual =>     bandwidth != br
+        case Greater =>      bandwidth > br
+        case GreaterEqual => bandwidth >= br
+        case Smaller =>      bandwidth < br
+        case SmallerEqual => bandwidth <= br
+      }
+    case ThroughputDemand(bo, br, _) =>
+      if (!value.isInstanceOf[BitRate]) throw new IllegalArgumentException("QoS metric does not match the demand.")
+      val throughput: BitRate = value.asInstanceOf[BitRate]
+      bo match {
+        case Equal =>        throughput == br
+        case NotEqual =>     throughput != br
+        case Greater =>      throughput > br
+        case GreaterEqual => throughput >= br
+        case Smaller =>      throughput < br
+        case SmallerEqual => throughput <= br
+      }
+  }
 
   /**
     * Used to see how long a method takes

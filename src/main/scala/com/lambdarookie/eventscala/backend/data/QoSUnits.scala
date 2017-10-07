@@ -117,6 +117,7 @@ object QoSUnits {
     override def >(other: BitRate): Boolean = this.toKbps > other.toKbps
     override def <=(other: BitRate): Boolean = this.toKbps <= other.toKbps
     override def -(other: BitRate): BitRate = BitRate(kbps - other.toKbps)
+    def +(other: BitRate): BitRate = BitRate(kbps + other.toKbps)
 
     override def toString: String = if (toGbps > 0)
       s"$toGbps.gbps"

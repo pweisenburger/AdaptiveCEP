@@ -1,14 +1,13 @@
 package com.lambdarookie.eventscala.graph.monitors
 
-import java.time._
 import java.util.concurrent.TimeUnit
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.FiniteDuration
 import akka.actor.ActorRef
 import com.lambdarookie.eventscala.backend.data.QoSUnits._
-import com.lambdarookie.eventscala.backend.qos.QoSMetrics.Priority
 import com.lambdarookie.eventscala.backend.qos.QualityOfService._
+import com.lambdarookie.eventscala.backend.system.Utilities
 import com.lambdarookie.eventscala.backend.system.traits._
 import com.lambdarookie.eventscala.data.Queries._
 
@@ -19,15 +18,14 @@ case class ChildInfoResponse(childNode: ActorRef) extends InfoMessage
 case class PathInfo(childNode: ActorRef, measurements: Measurements) extends InfoMessage
 
 case class Measurements(latency: TimeSpan, bandwidth: BitRate, throughput: BitRate) {
-  def this(from: Host, to: Host, system: System, priority: Priority) =
-    this(system.getLatency(from, to, priority), system.getBandwidth(from, to, priority),
-      system.getThroughput(from, to, priority))
+  def this(from: Host, to: Host, system: System) = this(system.getLatencyAndUpdatePaths(from, to),
+    system.getBandwidthAndUpdatePaths(from, to), system.getThroughputAndUpdatePaths(from, to))
 
   def combine(other: Measurements): Measurements =
     Measurements(latency + other.latency, min(bandwidth, other.bandwidth), min(throughput, other.throughput))
 }
 
-case class DemandsMonitor(interval: Int, priority: Priority, logging: Boolean) extends Monitor {
+case class DemandsMonitor(interval: Int, logging: Boolean) extends Monitor {
 
   private var child1Measurements: Option[Measurements] = None
   private var child1PathMeasurements: Option[Measurements] = None
@@ -79,7 +77,7 @@ case class DemandsMonitor(interval: Int, priority: Priority, logging: Boolean) e
           case ChildInfoRequest() => nodeData.context.parent ! ChildInfoResponse(self)
           case ChildInfoResponse(childNode) =>
             val childHost: Host = system.getHostByNode(childNode)
-            child1Measurements = Some(new Measurements(childHost, host, system, priority))
+            child1Measurements = Some(new Measurements(childHost, host, system))
             if (child1PathMeasurements.isDefined) {
               val pathMeasurements: Measurements = child1Measurements.get combine child1PathMeasurements.get
               updateViolations(pathMeasurements)
@@ -101,7 +99,7 @@ case class DemandsMonitor(interval: Int, priority: Priority, logging: Boolean) e
           case ChildInfoRequest() => nodeData.context.parent ! ChildInfoResponse(self)
           case ChildInfoResponse(childNode) =>
             val childHost: Host = system.getHostByNode(childNode)
-            val childMeasurements: Measurements = new Measurements(childHost, host, system, priority)
+            val childMeasurements: Measurements = new Measurements(childHost, host, system)
             childNode match {
               case bnd.childNode1 => child1Measurements = Some(childMeasurements)
               case bnd.childNode2 => child2Measurements = Some(childMeasurements)
@@ -139,40 +137,19 @@ case class DemandsMonitor(interval: Int, priority: Priority, logging: Boolean) e
     }
   }
 
-  override def copy: DemandsMonitor = DemandsMonitor(interval, priority, logging)
+  override def copy: DemandsMonitor = DemandsMonitor(interval, logging)
 
   private def isDemandNotMet(pathMeasurements: Measurements, d: Demand): Boolean = {
     val met: Boolean = d match {
       case ld: LatencyDemand =>
         val latency: TimeSpan = pathMeasurements.latency
-        ld.booleanOperator match {
-          case Equal =>        latency == ld.timeSpan
-          case NotEqual =>     latency != ld.timeSpan
-          case Greater =>      latency > ld.timeSpan
-          case GreaterEqual => latency >= ld.timeSpan
-          case Smaller =>      latency < ld.timeSpan
-          case SmallerEqual => latency <= ld.timeSpan
-        }
+        Utilities.isFulfilled(latency, ld)
       case bd: BandwidthDemand =>
         val bandwidth: BitRate = pathMeasurements.bandwidth
-        bd.booleanOperator match {
-          case Equal =>         bandwidth == bd.bitRate
-          case NotEqual =>      bandwidth != bd.bitRate
-          case Greater =>       bandwidth > bd.bitRate
-          case GreaterEqual =>  bandwidth >= bd.bitRate
-          case Smaller =>       bandwidth < bd.bitRate
-          case SmallerEqual =>  bandwidth <= bd.bitRate
-        }
+        Utilities.isFulfilled(bandwidth, bd)
       case td: ThroughputDemand =>
         val throughput: BitRate = pathMeasurements.throughput
-        td.booleanOperator match {
-          case Equal =>         throughput == td.bitRate
-          case NotEqual =>      throughput != td.bitRate
-          case Greater =>       throughput > td.bitRate
-          case GreaterEqual =>  throughput >= td.bitRate
-          case Smaller =>       throughput < td.bitRate
-          case SmallerEqual =>  throughput <= td.bitRate
-        }
+        Utilities.isFulfilled(throughput, td)
     }
     !met
   }

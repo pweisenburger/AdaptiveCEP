@@ -54,26 +54,24 @@ object Main extends App {
 
   val query3: Query3[Int, Int, String] =
     stream[Int]("A")
-      .selfJoin(
-        slidingWindow(3.sec),
-        slidingWindow(3.sec))
+      .and(stream[Int]("B"))
       .join(
-        stream[String]("B"),
+        stream[String]("C"),
         tumblingWindow(1.instances),
         tumblingWindow(1.instances),
-        latency < (1.ms, bandwidth > 20.mbps),
-        bandwidth > (70.mbps, frequency > Ratio(10.instances, 5.sec)),
-        throughput > (30.mbps, proximity > 1.m))
+        latency < 12.ms,
+        bandwidth > 30.mbps,
+        throughput > 20.mbps)
 
 
   GraphFactory.create(
-    system =                  TestSystem(logging = true),
+    system =                  TestSystem(logging = true, Priority(1, 0, 0)),
     actorSystem =             actorSystem,
     query =                   query3,
     publishers =              publishers,
     centralScheduler =        CentralScheduler(30, 30, 30),
     monitors =                Set(ConditionsMonitor (15, 60, logging = true),
-                                  DemandsMonitor (5, Priority(1, 1, 0), logging = true)),
+                                  DemandsMonitor (5, logging = true)),
     createdCallback =         () => println("STATUS:\t\tGraph has been created."))(
     eventCallback =           {
       // Callback for `query1`:

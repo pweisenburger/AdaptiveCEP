@@ -8,10 +8,11 @@ import com.lambdarookie.eventscala.data.Queries.Query
 trait Operator {
   val id: String
   val cepSystem: CEPSystem
-  val host: Host
   val query: Query
   val inputs: Seq[Operator]
   val outputs: Set[Operator]
+
+  def host: Host
 
   protected def createChildOperator(id: String, subQuery: Query): Operator =
     cepSystem.createOperator(id, subQuery, Set(this))
