@@ -7,6 +7,8 @@ import com.lambdarookie.eventscala.backend.system.Utilities
 import com.lambdarookie.eventscala.backend.system.traits._
 import rescala._
 
+import scala.util.Random
+
 /**
   * Created sortBy monur.
   */
@@ -17,11 +19,12 @@ case class TestSystem(logging: Boolean, priority: Priority) extends System {
   if (logging) violations.change += { vs => println(s"ADAPTATION:\tViolations changed to ${vs.to.get}") }
 
   override def placeOperator(operator: Operator): Host = {
-    val host: Host = if (hosts.now.exists(_.operators.now.isEmpty))
-      hosts.now.filter(_.operators.now.isEmpty).head
+    val hosts: Set[Host] = this.hosts.now
+    val freeHosts: Set[Host] = hosts -- operators.now.map(_.host)
+    val host: Host = if (freeHosts.nonEmpty)
+      freeHosts.head
     else
-      hosts.now.toVector((math.random * hosts.now.size).toInt)
-    host.addOperator(operator)
+      hosts.iterator.drop(Random.nextInt(hosts.size)).next()
     if (logging) println(s"LOG:\t\t$operator is placed on $host")
     host
   }
@@ -186,6 +189,14 @@ case class TestSystem(logging: Boolean, priority: Priority) extends System {
     }
   }
 
+  private def checkNeighborhoodValidity(hosts: Set[Host]): Unit = {
+    hosts.foreach {h =>
+      h.neighbors.foreach { n =>
+        if (!n.neighbors.contains(h)) throw new IllegalStateException("Neighborhood must be a two-way relationship")
+      }
+    }
+  }
+
   private def createRandomHosts: Set[Host] = {
 
     def createRandomCoordinate = Coordinate(-90 + math.random * 180, -180 + math.random * 360, math.random * 100)
@@ -199,61 +210,55 @@ case class TestSystem(logging: Boolean, priority: Priority) extends System {
     val testHost7: TestHost = TestHost(7, createRandomCoordinate)
 
     testHost1.neighbors ++= Set(testHost2, testHost3)
-    testHost2.neighbors ++= Set(testHost1, testHost3, testHost4)
+    testHost2.neighbors ++= Set(testHost1, testHost3, testHost4, testHost5, testHost6, testHost7)
     testHost3.neighbors ++= Set(testHost1, testHost2)
     testHost4.neighbors ++= Set(testHost2)
     testHost5.neighbors ++= Set(testHost2)
     testHost6.neighbors ++= Set(testHost2)
     testHost7.neighbors ++= Set(testHost2)
 
-    val host1: Host = testHost1
-    val host2: Host = testHost2
-    val host3: Host = testHost3
-    val host4: Host = testHost4
-    val host5: Host = testHost5
-    val host6: Host = testHost6
-    val host7: Host = testHost7
-
-//    host1.neighborLatencies ++= Map(host2 -> 10.ms, host3 -> 10.ms)
-//    host2.neighborLatencies ++= Map(host1 -> 10.ms, host3 -> 10.ms, host4 -> 10.ms)
-//    host3.neighborLatencies ++= Map(host1 -> 10.ms, host2 -> 10.ms)
-//    host4.neighborLatencies ++= Map(host2 -> 10.ms)
-//    host5.neighborLatencies ++= Map(host2 -> 10.ms)
-//    host6.neighborLatencies ++= Map(host2 -> 1.ms)
-//    host7.neighborLatencies ++= Map(host2 -> 1.ms)
+//    testHost1.neighborLatencies ++= Map(testHost2 -> 10.ms, testHost3 -> 10.ms)
+//    testHost2.neighborLatencies ++= Map(testHost1 -> 10.ms, testHost3 -> 10.ms,
+//      testHost4 -> 10.ms, testHost5 -> 10.ms, testHost6 -> 10.ms, testHost7 -> 10.ms)
+//    testHost3.neighborLatencies ++= Map(testHost1 -> 10.ms, testHost2 -> 10.ms)
+//    testHost4.neighborLatencies ++= Map(testHost2 -> 10.ms)
+//    testHost5.neighborLatencies ++= Map(testHost2 -> 10.ms)
+//    testHost6.neighborLatencies ++= Map(testHost2 -> 1.ms)
+//    testHost7.neighborLatencies ++= Map(testHost2 -> 1.ms)
 //
-//    host1.neighborBandwidths ++= Map(host2 -> 100.mbps, host3 -> 100.mbps)
-//    host2.neighborBandwidths ++= Map(host1 -> 100.mbps, host3 -> 100.mbps, host4 -> 100.mbps)
-//    host3.neighborBandwidths ++= Map(host1 -> 100.mbps, host2 -> 100.mbps)
-//    host4.neighborBandwidths ++= Map(host2 -> 100.mbps)
-//    host5.neighborBandwidths ++= Map(host2 -> 100.mbps)
-//    host6.neighborBandwidths ++= Map(host2 -> 100.mbps)
-//    host7.neighborBandwidths ++= Map(host2 -> 100.mbps)
+//    testHost1.neighborBandwidths ++= Map(testHost2 -> 100.mbps, testHost3 -> 100.mbps)
+//    testHost2.neighborBandwidths ++= Map(testHost1 -> 100.mbps, testHost3 -> 100.mbps,
+//      testHost4 -> 100.mbps, testHost5 -> 100.mbps, testHost6 -> 100.mbps, testHost7 -> 100.mbps)
+//    testHost3.neighborBandwidths ++= Map(testHost1 -> 100.mbps, testHost2 -> 100.mbps)
+//    testHost4.neighborBandwidths ++= Map(testHost2 -> 100.mbps)
+//    testHost5.neighborBandwidths ++= Map(testHost2 -> 100.mbps)
+//    testHost6.neighborBandwidths ++= Map(testHost2 -> 100.mbps)
+//    testHost7.neighborBandwidths ++= Map(testHost2 -> 100.mbps)
 //
-//    host1.neighborThroughputs ++= Map(host2 -> 100.mbps, host3 -> 100.mbps)
-//    host2.neighborThroughputs ++= Map(host1 -> 100.mbps, host3 -> 100.mbps, host4 -> 100.mbps)
-//    host3.neighborThroughputs ++= Map(host1 -> 100.mbps, host2 -> 100.mbps)
-//    host4.neighborThroughputs ++= Map(host2 -> 100.mbps)
-//    host5.neighborThroughputs ++= Map(host2 -> 100.mbps)
-//    host6.neighborThroughputs ++= Map(host2 -> 100.mbps)
-//    host7.neighborThroughputs ++= Map(host2 -> 100.mbps)
+//    testHost1.neighborThroughputs ++= Map(testHost2 -> 100.mbps, testHost3 -> 100.mbps)
+//    testHost2.neighborThroughputs ++= Map(testHost1 -> 100.mbps, testHost3 -> 100.mbps,
+//      testHost4 -> 100.mbps, testHost5 -> 100.mbps, testHost6 -> 100.mbps, testHost7 -> 100.mbps)
+//    testHost3.neighborThroughputs ++= Map(testHost1 -> 100.mbps, testHost2 -> 100.mbps)
+//    testHost4.neighborThroughputs ++= Map(testHost2 -> 100.mbps)
+//    testHost5.neighborThroughputs ++= Map(testHost2 -> 100.mbps)
+//    testHost6.neighborThroughputs ++= Map(testHost2 -> 100.mbps)
+//    testHost7.neighborThroughputs ++= Map(testHost2 -> 100.mbps)
 
-    Set(host4, host5, host2, host3, host1, host6, host7)
+    val out: Set[Host] = Set(testHost1, testHost2, testHost3, testHost4, testHost5, testHost6, testHost7)
+    checkNeighborhoodValidity(out)
+    out
   }
 }
 
-case class TestHost(id: Int, position: Coordinate) extends Host {
-  var neighbors: Set[Host] = Set.empty
+case class TestHost(id: Int, position: Coordinate) extends HostImpl {
+  override def measureLatencyToNeighbor(neighbor: Host): TimeSpan = (Random.nextInt(10) + 1).ms
 
-  override def measureLatencyToNeighbor(neighbor: Host): TimeSpan = (math.random() * 5 + 1).toInt.ms
+  override def measureBandwidthToNeighbor(neighbor: Host): BitRate = (Random.nextInt(50) + 50).mbps
 
-  override def measureBandwidthToNeighbor(neighbor: Host): BitRate = (math.random() * 50 + 50).toInt.mbps
-
-  override def measureThroughputToNeighbor(neighbor: Host): BitRate = (math.random() *
-    (if (neighborBandwidths.contains(neighbor))
-      neighborBandwidths(neighbor).toMbps
-    else
-      0)).toInt.mbps
+  override def measureThroughputToNeighbor(neighbor: Host): BitRate = (if (neighborBandwidths.contains(neighbor))
+    Random.nextInt(neighborBandwidths(neighbor).toMbps.toInt)
+  else
+    Random.nextInt(50)).mbps
 
 //  override def measureLatencyToNeighbor(neighbor: Host): TimeSpan = neighborLatencies(neighbor)
 //

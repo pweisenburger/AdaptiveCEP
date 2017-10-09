@@ -70,7 +70,7 @@ case class DemandsMonitor(interval: Int, logging: Boolean) extends Monitor {
       case _: LeafNodeData => message match {
         case ChildInfoRequest() =>
           nodeData.context.parent ! ChildInfoResponse(self)
-          nodeData.context.parent ! PathInfo(self, Measurements(0.ns, Int.MaxValue.gbps, Int.MaxValue.gbps))
+          nodeData.context.parent ! PathInfo(self, Measurements(0.ms, Int.MaxValue.gbps, Int.MaxValue.gbps))
       }
       case _: UnaryNodeData =>
         message match {

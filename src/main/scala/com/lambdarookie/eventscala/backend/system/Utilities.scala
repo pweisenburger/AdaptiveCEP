@@ -22,7 +22,7 @@ object Utilities {
           calculateLowestLatency(h_t._1, to, knownPaths, visited + from)
         }.toSeq.sortWith(_._2 < _._2)
         if (best.isEmpty)
-          (Path(from, to, Seq.empty), Int.MaxValue.sec)
+          (Path(from, to, Seq.empty), Float.PositiveInfinity.sec)
         else
           (Path(from, to, best.head._1.source +: best.head._1.hops),
             from.neighborLatencies(best.head._1.source) + best.head._2)
@@ -45,7 +45,7 @@ object Utilities {
           (Path(from, to, Seq.empty), 0.kbps)
         else
           (Path(from, to, best.head._1.source +: best.head._1.hops),
-            from.neighborBandwidths(best.head._1.source) + best.head._2)
+            min(from.neighborBandwidths(best.head._1.source), best.head._2))
       }
     }
 
@@ -64,7 +64,7 @@ object Utilities {
           (Path(from, to, Seq.empty), 0.kbps)
         else
           (Path(from, to, best.head._1.source +: best.head._1.hops),
-            from.neighborThroughputs(best.head._1.source) + best.head._2)
+            min(from.neighborThroughputs(best.head._1.source), best.head._2))
       }
     }
 

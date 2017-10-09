@@ -10,16 +10,21 @@ trait Host {
   val position: Coordinate
 
   def neighbors: Set[Host]
+  def neighborLatencies: Map[Host, TimeSpan]
+  def neighborBandwidths: Map[Host, BitRate]
+  def neighborThroughputs: Map[Host, BitRate]
+}
+
+
+
+trait HostImpl extends Host {
   def measureLatencyToNeighbor(neighbor: Host): TimeSpan
   def measureBandwidthToNeighbor(neighbor: Host): BitRate
   def measureThroughputToNeighbor(neighbor: Host): BitRate
 
 
-  private val operatorsVar: Var[Set[Operator]] = Var(Set.empty)
-
-  val operators: Signal[Set[Operator]] = operatorsVar
-
-  var neighborLatencies: Map[Host, TimeSpan] = Map(this -> 0.ns)
+  var neighbors: Set[Host] = Set.empty
+  var neighborLatencies: Map[Host, TimeSpan] = Map(this -> 0.ms)
   var neighborBandwidths: Map[Host, BitRate] = Map(this -> Int.MaxValue.gbps)
   var neighborThroughputs: Map[Host, BitRate] = Map(this -> Int.MaxValue.gbps)
 
@@ -32,13 +37,9 @@ trait Host {
   def measureNeighborThroughputs(): Unit =
     neighbors.foreach { n => neighborThroughputs += n -> measureThroughputToNeighbor(n) }
 
-  def measureMetrics(): Unit = {
+  def measureNeighborMetrics(): Unit = {
     measureNeighborLatencies()
     measureNeighborBandwidths()
     measureNeighborThroughputs()
   }
-
-  def addOperator(operator: Operator): Unit = operatorsVar.transform(_ + operator)
-
-  def removeOperator(operator: Operator): Unit = operatorsVar.transform(_ - operator)
 }

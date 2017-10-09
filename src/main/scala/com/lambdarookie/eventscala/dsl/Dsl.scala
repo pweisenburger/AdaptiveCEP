@@ -8,9 +8,9 @@ import com.lambdarookie.eventscala.data.Queries._
 object Dsl {
 
   def slidingWindow  (instances: Instances): Window = SlidingInstances  (instances.getInstanceNum)
-  def slidingWindow  (timeSpan: TimeSpan):     Window = SlidingTime       (timeSpan.toSeconds)
+  def slidingWindow  (timeSpan: TimeSpan):   Window = SlidingTime       (timeSpan.toSeconds.toInt)
   def tumblingWindow (instances: Instances): Window = TumblingInstances (instances.getInstanceNum)
-  def tumblingWindow (timeSpan: TimeSpan):     Window = TumblingTime      (timeSpan.toSeconds)
+  def tumblingWindow (timeSpan: TimeSpan):   Window = TumblingTime      (timeSpan.toSeconds.toInt)
 
   def nStream[A]                (publisherName: String): NStream1[A] =                NStream1 (publisherName)
   def nStream[A, B]             (publisherName: String): NStream2[A, B] =             NStream2 (publisherName)

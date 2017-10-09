@@ -69,7 +69,7 @@ object Main extends App {
     actorSystem =             actorSystem,
     query =                   query3,
     publishers =              publishers,
-    centralScheduler =        CentralScheduler(30, 30, 30),
+    centralScheduler =        CentralScheduler(0, 30, 30, 30),
     monitors =                Set(ConditionsMonitor (15, 60, logging = true),
                                   DemandsMonitor (5, logging = true)),
     createdCallback =         () => println("STATUS:\t\tGraph has been created."))(

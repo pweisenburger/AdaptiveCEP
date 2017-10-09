@@ -21,33 +21,34 @@ object QoSUnits {
 
 
   //          TimeSpan Begin
-  case class TimeSpan(duration: Duration) extends QoSUnit[TimeSpan] {
-    override def <(other: TimeSpan): Boolean = duration.compareTo(other.duration) < 0
-    override def >(other: TimeSpan): Boolean = duration.compareTo(other.duration) > 0
-    override def <=(other: TimeSpan): Boolean = duration.compareTo(other.duration) <= 0
-    override def -(other: TimeSpan): TimeSpan = TimeSpan(duration minus other.duration)
-    def +(other: TimeSpan): TimeSpan = TimeSpan(duration plus other.duration)
+  case class TimeSpan(millis: Float) extends QoSUnit[TimeSpan] {
+    override def <(other: TimeSpan): Boolean = millis < other.toMillis
+    override def >(other: TimeSpan): Boolean = millis > other.toMillis
+    override def <=(other: TimeSpan): Boolean = millis <= other.toMillis
+    override def -(other: TimeSpan): TimeSpan = TimeSpan(millis - other.toMillis)
+    def +(other: TimeSpan): TimeSpan = TimeSpan(millis + other.toMillis)
 
-    def toNanos: Long = duration.toNanos
-    def toMillis: Int = duration.toMillis.toInt
-    def toSeconds: Int = duration.getSeconds.toInt
+    def toMillis: Float = millis
+    def toMicros: Float = millis / 1000f
+    def toSeconds: Float = millis / 1000000f
+    def toDuration: Duration = Duration.ofMillis(millis.toInt)
 
 
-    override def toString: String = if (toSeconds > 0)
-      s"$toSeconds.s"
-    else if (toMillis > 0)
-      s"$toMillis.ms"
+    override def toString: String = if (toSeconds > 1)
+      s"$toSeconds s"
+    else if (toMicros > 1)
+      s"$toMicros mics"
     else
-      s"$toNanos.ns"
+      s"$toMillis ms"
   }
 
-  case class TimeSpanUnits(private val i: Int) {
-    def ns: TimeSpan = TimeSpan(Duration.ofNanos(i))
-    def ms: TimeSpan = TimeSpan(Duration.ofMillis(i))
-    def sec: TimeSpan = TimeSpan(Duration.ofSeconds(i))
+  case class TimeSpanUnits(private val i: Float) {
+    def ms: TimeSpan = TimeSpan(i)
+    def mics: TimeSpan = TimeSpan(i * 1000f)
+    def sec: TimeSpan = TimeSpan(i * 1000000f)
   }
 
-  implicit def intToTimeSpanCreator(i: Int): TimeSpanUnits = TimeSpanUnits(i)
+  implicit def floatToTimeSpanCreator(i: Float): TimeSpanUnits = TimeSpanUnits(i)
   //          TimeSpan End
 
 
@@ -95,7 +96,7 @@ object QoSUnits {
   implicit def intToInstancesCreator(i: Int): Instances = Instances(i)
 
   case class Ratio(instances: Instances, timeSpan: TimeSpan) extends QoSUnit[Ratio] {
-    val exactRatio: Double = instances.getInstanceNum.toDouble / timeSpan.toNanos.toDouble
+    val exactRatio: Float = instances.getInstanceNum.toFloat / timeSpan.toMillis
 
     override def <(other: Ratio): Boolean = this.exactRatio < other.exactRatio
     override def >(other: Ratio): Boolean = this.exactRatio > other.exactRatio
@@ -117,7 +118,6 @@ object QoSUnits {
     override def >(other: BitRate): Boolean = this.toKbps > other.toKbps
     override def <=(other: BitRate): Boolean = this.toKbps <= other.toKbps
     override def -(other: BitRate): BitRate = BitRate(kbps - other.toKbps)
-    def +(other: BitRate): BitRate = BitRate(kbps + other.toKbps)
 
     override def toString: String = if (toGbps > 0)
       s"$toGbps.gbps"

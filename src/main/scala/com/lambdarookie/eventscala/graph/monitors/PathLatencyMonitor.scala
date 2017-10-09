@@ -167,5 +167,6 @@ case class PathLatencyMonitor(interval: Int, logging: Boolean) extends Monitor {
 
   override def copy: PathLatencyMonitor = PathLatencyMonitor(interval, logging)
 
-  def isDemandNotMet(latency: Duration, ld: LatencyDemand): Boolean = !Utilities.isFulfilled(TimeSpan(latency), ld)
+  def isDemandNotMet(latency: Duration, ld: LatencyDemand): Boolean =
+    !Utilities.isFulfilled(TimeSpan(latency.toMillis), ld)
 }

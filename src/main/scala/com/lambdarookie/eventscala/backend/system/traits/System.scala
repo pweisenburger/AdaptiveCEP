@@ -1,7 +1,7 @@
 package com.lambdarookie.eventscala.backend.system.traits
 
 import akka.actor.ActorRef
-import com.lambdarookie.eventscala.backend.data.QoSUnits.{BitRate, TimeSpan}
+import com.lambdarookie.eventscala.backend.data.QoSUnits._
 import com.lambdarookie.eventscala.backend.qos.QoSMetrics._
 import com.lambdarookie.eventscala.backend.qos.QualityOfService.{Adaptation, Violation}
 import com.lambdarookie.eventscala.backend.system._
@@ -164,7 +164,7 @@ trait QoSSystem {
 
   def getBandwidthAndUpdatePaths(from: Host, to: Host, through: Option[Host] = None): BitRate =
     if (through.nonEmpty && through.get != to) {
-      getBandwidthAndUpdatePaths(from, through.get) + getBandwidthAndUpdatePaths(through.get, to)
+      min(getBandwidthAndUpdatePaths(from, through.get), getBandwidthAndUpdatePaths(through.get, to))
     } else {
       val found: Set[Path] = paths.now collect { case p@Path(`from`, `to`, _) => p }
       if (found.size == 1) {
@@ -179,7 +179,7 @@ trait QoSSystem {
 
   def getThroughputAndUpdatePaths(from: Host, to: Host, through: Option[Host] = None): BitRate =
     if (through.nonEmpty && through.get != to) {
-      getThroughputAndUpdatePaths(from, through.get) + getThroughputAndUpdatePaths(through.get, to)
+      min(getThroughputAndUpdatePaths(from, through.get), getThroughputAndUpdatePaths(through.get, to))
     } else {
       val found: Set[Path] = paths.now collect { case p@Path(`from`, `to`, _) => p }
       if (found.size == 1) {
