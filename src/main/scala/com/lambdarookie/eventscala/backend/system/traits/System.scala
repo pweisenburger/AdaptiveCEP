@@ -101,15 +101,15 @@ trait QoSSystem {
       None
   }
 
+
   demandsViolated += { vs =>
-    val query: Query = if (vs.map(_.operator.query).size == 1)
-      vs.head.operator.query
-     else
-      throw new RuntimeException(s"ERROR: Every violation must belong to the same query")
+    require(vs.map(_.operator.query).size == 1)
+    val query: Query = vs.head.operator.query
     vs.foreach(query.addViolation)
     val adaptationPlanned: Set[Violation] = planAdaptation(vs)
     if (adaptationPlanned.nonEmpty) query.fireAdaptationPlanned(adaptationPlanned)
   }
+
   waiting.change += { diff =>
     val from: Set[Violation] = diff.from.get
     val to: Set[Violation] = diff.to.get
@@ -118,6 +118,7 @@ trait QoSSystem {
       if (adapting.now.isEmpty)  to.map(_.operator.query).foreach(_.startAdapting())
     }
   }
+
   adapting.change += {diff =>
     val from: Option[Set[Violation]] = diff.from.get
     val to: Option[Set[Violation]] = diff.to.get
@@ -129,13 +130,14 @@ trait QoSSystem {
       else
         to.get.foreach(_.operator.query.stopAdapting())
     } else if (from.nonEmpty && to.nonEmpty) {
-      if (logging) println(s"ADAPTATION:\tSystem is already adapting. Changed from $from to $to")
+      if (logging) println(s"ADAPTATION:\tSystem is already adapting. Waiting for the current adaptation to end.")
     } else {
       if (logging) println(s"ADAPTATION:\tSystem is done adapting")
       val vsQueue: Set[Violation] = waiting.now
       if (vsQueue.nonEmpty) vsQueue.map(_.operator.query).foreach(_.startAdapting())
     }
   }
+
 
   private def updatePaths(path: Seq[Host]): Unit = {
     val path1 = path.init
