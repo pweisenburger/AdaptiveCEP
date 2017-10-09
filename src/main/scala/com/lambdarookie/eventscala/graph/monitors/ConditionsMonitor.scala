@@ -108,12 +108,12 @@ case class ConditionsMonitor(frequencyInterval: Int, proximityInterval: Int, log
     val current: Ratio = lowestFrequency.get
     val expected: Ratio = fc.ratio
     fc.booleanOperator match {
-      case Equal =>         fc.notFulfilled = !(current == expected)
-      case NotEqual =>      fc.notFulfilled = !(current != expected)
-      case Greater =>       fc.notFulfilled = !(current > expected)
-      case GreaterEqual =>  fc.notFulfilled = !(current >= expected)
-      case Smaller =>       fc.notFulfilled = !(current < expected)
-      case SmallerEqual =>  fc.notFulfilled = !(current <= expected)
+      case Equal =>         fc.asInstanceOf[ConditionImpl].notFulfilled = !(current == expected)
+      case NotEqual =>      fc.asInstanceOf[ConditionImpl].notFulfilled = !(current != expected)
+      case Greater =>       fc.asInstanceOf[ConditionImpl].notFulfilled = !(current > expected)
+      case GreaterEqual =>  fc.asInstanceOf[ConditionImpl].notFulfilled = !(current >= expected)
+      case Smaller =>       fc.asInstanceOf[ConditionImpl].notFulfilled = !(current < expected)
+      case SmallerEqual =>  fc.asInstanceOf[ConditionImpl].notFulfilled = !(current <= expected)
     }
     lowestFrequency = None
   }
@@ -122,12 +122,12 @@ case class ConditionsMonitor(frequencyInterval: Int, proximityInterval: Int, log
     val current: Int = farthestDistance.get
     val expected: Int = pc.distance.toMeter
     pc.booleanOperator match {
-      case Equal =>         pc.notFulfilled = !(current == expected)
-      case NotEqual =>      pc.notFulfilled = !(current != expected)
-      case Greater =>       pc.notFulfilled = !(current > expected)
-      case GreaterEqual =>  pc.notFulfilled = !(current >= expected)
-      case Smaller =>       pc.notFulfilled = !(current < expected)
-      case SmallerEqual =>  pc.notFulfilled = !(current <= expected)
+      case Equal =>         pc.asInstanceOf[ConditionImpl].notFulfilled = !(current == expected)
+      case NotEqual =>      pc.asInstanceOf[ConditionImpl].notFulfilled = !(current != expected)
+      case Greater =>       pc.asInstanceOf[ConditionImpl].notFulfilled = !(current > expected)
+      case GreaterEqual =>  pc.asInstanceOf[ConditionImpl].notFulfilled = !(current >= expected)
+      case Smaller =>       pc.asInstanceOf[ConditionImpl].notFulfilled = !(current < expected)
+      case SmallerEqual =>  pc.asInstanceOf[ConditionImpl].notFulfilled = !(current <= expected)
     }
     farthestDistance = None
   }

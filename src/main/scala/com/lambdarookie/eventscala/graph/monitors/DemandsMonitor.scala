@@ -156,7 +156,10 @@ case class DemandsMonitor(interval: Int, logging: Boolean) extends Monitor {
 
   private def areConditionsMet(demand: Demand, measurements: Measurements): Boolean = {
     if (demand.conditions.exists(_.isInstanceOf[Demand]))
-      demand.conditions.foreach { case d: Demand if !isDemandNotMet(measurements, d) => d.notFulfilled = false; case _ => }
+      demand.conditions.foreach {
+        case d: Demand if !isDemandNotMet(measurements, d) => d.asInstanceOf[ConditionImpl].notFulfilled = false
+        case _ =>
+      }
     if (demand.conditions.exists(_.notFulfilled)) {
       if (logging) println(s"LOG:\t\tSome conditions for the demand $demand are not met.")
       false

@@ -119,60 +119,60 @@ object Utilities {
     Int.MaxValue.gbps
 
   def isFulfilled[T <: QoSUnit[T]](value: QoSUnit[T], condition: Condition): Boolean = condition match {
-    case FrequencyCondition(bo, r) =>
+    case fc: FrequencyCondition =>
       if (!value.isInstanceOf[Ratio]) throw new IllegalArgumentException("QoS metric does not match the condition.")
       val frequency: Ratio = value.asInstanceOf[Ratio]
-      bo match {
-        case Equal =>        frequency == r
-        case NotEqual =>     frequency != r
-        case Greater =>      frequency > r
-        case GreaterEqual => frequency >= r
-        case Smaller =>      frequency < r
-        case SmallerEqual => frequency <= r
+      fc.booleanOperator match {
+        case Equal =>        frequency == fc.ratio
+        case NotEqual =>     frequency != fc.ratio
+        case Greater =>      frequency > fc.ratio
+        case GreaterEqual => frequency >= fc.ratio
+        case Smaller =>      frequency < fc.ratio
+        case SmallerEqual => frequency <= fc.ratio
       }
-    case ProximityCondition(bo, d) =>
+    case pc: ProximityCondition =>
       if (!value.isInstanceOf[Distance]) throw new IllegalArgumentException("QoS metric does not match the condition.")
       val proximity: Distance = value.asInstanceOf[Distance]
-      bo match {
-        case Equal =>        proximity == d
-        case NotEqual =>     proximity != d
-        case Greater =>      proximity > d
-        case GreaterEqual => proximity >= d
-        case Smaller =>      proximity < d
-        case SmallerEqual => proximity <= d
+      pc.booleanOperator match {
+        case Equal =>        proximity == pc.distance
+        case NotEqual =>     proximity != pc.distance
+        case Greater =>      proximity > pc.distance
+        case GreaterEqual => proximity >= pc.distance
+        case Smaller =>      proximity < pc.distance
+        case SmallerEqual => proximity <= pc.distance
       }
-    case LatencyDemand(bo, ts, _) =>
+    case lc: LatencyDemand =>
       if (!value.isInstanceOf[TimeSpan]) throw new IllegalArgumentException("QoS metric does not match the demand.")
       val latency: TimeSpan = value.asInstanceOf[TimeSpan]
-      bo match {
-        case Equal =>        latency == ts
-        case NotEqual =>     latency != ts
-        case Greater =>      latency > ts
-        case GreaterEqual => latency >= ts
-        case Smaller =>      latency < ts
-        case SmallerEqual => latency <= ts
+      lc.booleanOperator match {
+        case Equal =>        latency == lc.timeSpan
+        case NotEqual =>     latency != lc.timeSpan
+        case Greater =>      latency > lc.timeSpan
+        case GreaterEqual => latency >= lc.timeSpan
+        case Smaller =>      latency < lc.timeSpan
+        case SmallerEqual => latency <= lc.timeSpan
       }
-    case BandwidthDemand(bo, br, _) =>
+    case bd: BandwidthDemand =>
       if (!value.isInstanceOf[BitRate]) throw new IllegalArgumentException("QoS metric does not match the demand.")
       val bandwidth: BitRate = value.asInstanceOf[BitRate]
-      bo match {
-        case Equal =>        bandwidth == br
-        case NotEqual =>     bandwidth != br
-        case Greater =>      bandwidth > br
-        case GreaterEqual => bandwidth >= br
-        case Smaller =>      bandwidth < br
-        case SmallerEqual => bandwidth <= br
+      bd.booleanOperator match {
+        case Equal =>        bandwidth == bd.bitRate
+        case NotEqual =>     bandwidth != bd.bitRate
+        case Greater =>      bandwidth > bd.bitRate
+        case GreaterEqual => bandwidth >= bd.bitRate
+        case Smaller =>      bandwidth < bd.bitRate
+        case SmallerEqual => bandwidth <= bd.bitRate
       }
-    case ThroughputDemand(bo, br, _) =>
+    case td: ThroughputDemand =>
       if (!value.isInstanceOf[BitRate]) throw new IllegalArgumentException("QoS metric does not match the demand.")
       val throughput: BitRate = value.asInstanceOf[BitRate]
-      bo match {
-        case Equal =>        throughput == br
-        case NotEqual =>     throughput != br
-        case Greater =>      throughput > br
-        case GreaterEqual => throughput >= br
-        case Smaller =>      throughput < br
-        case SmallerEqual => throughput <= br
+      td.booleanOperator match {
+        case Equal =>        throughput == td.bitRate
+        case NotEqual =>     throughput != td.bitRate
+        case Greater =>      throughput > td.bitRate
+        case GreaterEqual => throughput >= td.bitRate
+        case Smaller =>      throughput < td.bitRate
+        case SmallerEqual => throughput <= td.bitRate
       }
   }
 

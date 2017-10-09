@@ -84,12 +84,12 @@ case class TestSystem(logging: Boolean, priority: Priority) extends System {
     }
 
     val out: Set[Violation] = violations.collect {
-      case v@Violation(_, LatencyDemand(bo, ts, _))
-        if boMatcher(hosts.now, (h) => h.neighborLatencies - h, bo, ts) => v
-      case v@Violation(_, BandwidthDemand(bo, br, _))
-        if boMatcher(hosts.now, (h) => h.neighborBandwidths - h, bo, br) => v
-      case v@Violation(_, ThroughputDemand(bo, br, _))
-        if boMatcher(hosts.now, (h) => h.neighborThroughputs - h, bo, br) => v
+      case v@Violation(_, ld: LatencyDemand)
+        if boMatcher(hosts.now, (h) => h.neighborLatencies - h, ld.booleanOperator, ld.timeSpan) => v
+      case v@Violation(_, bd: BandwidthDemand)
+        if boMatcher(hosts.now, (h) => h.neighborBandwidths - h, bd.booleanOperator, bd.bitRate) => v
+      case v@Violation(_, td: ThroughputDemand)
+        if boMatcher(hosts.now, (h) => h.neighborThroughputs - h, td.booleanOperator, td.bitRate) => v
     }
     if (logging) {
       println(s"ADAPTATION:\tSystem decided to try adapting to $out")
