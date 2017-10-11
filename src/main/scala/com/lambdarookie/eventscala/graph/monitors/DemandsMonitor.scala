@@ -63,7 +63,10 @@ case class DemandsMonitor(interval: Int, logging: Boolean) extends Monitor {
         case _ =>
       }
       val violations: Set[Violation] = violatedDemands.map(Violation(operator, _))
-      if (violations.nonEmpty) system.fireDemandsViolated(violations)
+      if (violations.nonEmpty) {
+        require(violations.map(_.operator.query).size == 1)
+        system.fireDemandsViolated(violations)
+      }
     }
 
     if (message.isInstanceOf[InfoMessage]) nodeData match {

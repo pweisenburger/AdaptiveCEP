@@ -103,7 +103,6 @@ trait QoSSystem {
 
 
   demandsViolated += { vs =>
-    require(vs.map(_.operator.query).size == 1)
     val query: Query = vs.head.operator.query
     vs.foreach(query.addViolation)
     val adaptationPlanned: Set[Violation] = planAdaptation(vs)
