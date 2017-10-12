@@ -59,7 +59,7 @@ case class DemandsMonitor(interval: Int, logging: Boolean) extends Monitor {
       if (logging && demands.nonEmpty) logDemands(demands, nodeData.name, pathMeasurements)
       val violatedDemands: Set[Demand] = demands.filter(isDemandNotMet(pathMeasurements, _))
       query.violations.now.foreach{
-        case v @ Violation(_, d) if (demands -- violatedDemands).contains(d) => query.removeViolation(v)
+        case v@Violation(_, d) if (demands -- violatedDemands).contains(d) => query.removeViolation(v)
         case _ =>
       }
       val violations: Set[Violation] = violatedDemands.map(Violation(operator, _))

@@ -122,7 +122,7 @@ trait QoSSystem {
     val from: Option[Set[Violation]] = diff.from.get
     val to: Option[Set[Violation]] = diff.to.get
     if (from.isEmpty) {
-      if (logging) println(s"ADAPTATION:\tSystem is adapting violations: ${to.get}")
+      if (logging) println(s"ADAPTATION:\tSystem is adapting to violations: ${to.get}")
       adaptation.strategy(to.get)
       if (to.get.isEmpty)
         queriesVar.now.foreach(_.stopAdapting())

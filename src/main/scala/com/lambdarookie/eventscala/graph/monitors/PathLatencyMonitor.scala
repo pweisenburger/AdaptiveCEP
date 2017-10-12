@@ -46,6 +46,18 @@ case class PathLatencyMonitor(interval: Int, logging: Boolean) extends Monitor {
   override def onMessageReceive(message: Any, nodeData: NodeData): Unit = {
     val system: System = nodeData.system
     val operator: Operator = system.nodesToOperators.now.apply(nodeData.context.self)
+
+    def updateViolations(pathLatency: Duration, latencyDemands: Set[LatencyDemand]): Unit = {
+      val violatedDemands: Set[LatencyDemand] = latencyDemands.filter(isDemandNotMet(pathLatency, _))
+      nodeData.query.violations.now.foreach{
+        case v@Violation(_, ld: LatencyDemand) if (latencyDemands -- violatedDemands).contains(ld) =>
+          nodeData.query.removeViolation(v)
+        case _ =>
+      }
+      val violations: Set[Violation] = violatedDemands.map(Violation(operator, _))
+      if (violations.nonEmpty) system.fireDemandsViolated(violations)
+    }
+
     if (message.isInstanceOf[LatencyMessage]) nodeData match {
       case _: LeafNodeData => message match {
         case ChildLatencyRequest(requestTime) =>
@@ -67,8 +79,7 @@ case class PathLatencyMonitor(interval: Int, logging: Boolean) extends Monitor {
                 println(
                   s"LATENCY:\tEvents reach node `${nodeData.name}` after $pathLatency. " +
                     s"(Calculated every $interval seconds.)")
-              latencyDemands.foreach(ld => if (isDemandNotMet(pathLatency, ld))
-                fireDemandsViolated(system, Set(Violation(operator, ld))))
+              updateViolations(pathLatency, latencyDemands)
               childNodeLatency = None
               childNodePathLatency = None
             }
@@ -81,8 +92,7 @@ case class PathLatencyMonitor(interval: Int, logging: Boolean) extends Monitor {
                 println(
                   s"LATENCY:\tEvents reach node `${nodeData.name}` after $pathLatency. " +
                     s"(Calculated every $interval seconds.)")
-              latencyDemands.foreach(ld => if (isDemandNotMet(pathLatency, ld))
-                fireDemandsViolated(system, Set(Violation(operator, ld))))
+              updateViolations(pathLatency, latencyDemands)
               childNodeLatency = None
               childNodePathLatency = None
             }
@@ -112,16 +122,14 @@ case class PathLatencyMonitor(interval: Int, logging: Boolean) extends Monitor {
                   println(
                     s"LATENCY:\tEvents reach node `${nodeData.name}` after $pathLatency1. " +
                       s"(Calculated every $interval seconds.)")
-                latencyDemands.foreach(ld => if (isDemandNotMet(pathLatency1, ld))
-                  fireDemandsViolated(system, Set(Violation(operator, ld))))
+                updateViolations(pathLatency1, latencyDemands)
               } else {
                 nodeData.context.parent ! PathLatency(nodeData.context.self, pathLatency2)
                 if (logging && latencyDemands.nonEmpty)
                   println(
                     s"LATENCY:\tEvents reach node `${nodeData.name}` after $pathLatency2. " +
                       s"(Calculated every $interval seconds.)")
-                latencyDemands.foreach(ld => if (isDemandNotMet(pathLatency2, ld))
-                  fireDemandsViolated(system, Set(Violation(operator, ld))))
+                updateViolations(pathLatency2, latencyDemands)
               }
               childNode1Latency = None
               childNode2Latency = None
@@ -145,16 +153,14 @@ case class PathLatencyMonitor(interval: Int, logging: Boolean) extends Monitor {
                   println(
                     s"LATENCY:\tEvents reach node `${nodeData.name}` after $pathLatency1. " +
                       s"(Calculated every $interval seconds.)")
-                latencyDemands.foreach(ld => if (isDemandNotMet(pathLatency1, ld))
-                  fireDemandsViolated(system, Set(Violation(operator, ld))))
+                updateViolations(pathLatency1, latencyDemands)
               } else {
                 nodeData.context.parent ! PathLatency(nodeData.context.self, pathLatency2)
                 if (logging && nodeData.query.demands.collect { case ld: LatencyDemand => ld }.nonEmpty)
                   println(
                     s"LATENCY:\tEvents reach node `${nodeData.name}` after $pathLatency2. " +
                       s"(Calculated every $interval seconds.)")
-                nodeData.query.demands.collect { case ld: LatencyDemand => ld }.foreach(ld =>
-                  if (isDemandNotMet(pathLatency2, ld)) fireDemandsViolated(system, Set(Violation(operator, ld))))
+                updateViolations(pathLatency2, latencyDemands)
               }
               childNode1Latency = None
               childNode2Latency = None
@@ -169,9 +175,4 @@ case class PathLatencyMonitor(interval: Int, logging: Boolean) extends Monitor {
 
   def isDemandNotMet(latency: Duration, ld: LatencyDemand): Boolean =
     !Utilities.isFulfilled(TimeSpan(latency.toMillis), ld)
-
-  private def fireDemandsViolated(system: System, violations: Set[Violation]): Unit = {
-    require(violations.map(_.operator.query).size == 1)
-    system.fireDemandsViolated(violations)
-  }
 }
