@@ -11,13 +11,15 @@ import rescala._
 /**
   * Created by monur.
   */
-trait System extends CEPSystem with QoSSystem
+sealed trait System extends CEPSystem with QoSSystem
+
+abstract class SystemImpl(val strategy: System => Event[Adaptation]) extends System {
+  strategy(this) += { adaptation => replaceOperators(adaptation.assignments) }
+}
 
 
 trait CEPSystem {
   protected val logging: Boolean
-
-  val hosts: Signal[Set[Host]]
 
   /**
     * Select the best host for a given operator
@@ -27,11 +29,16 @@ trait CEPSystem {
   def placeOperator(operator: Operator): Host
 
 
+
   private val operatorsVar: Var[Set[Operator]] = Var(Set.empty)
   private val nodesToOperatorsVar: Var[Map[ActorRef, Operator]] = Var(Map.empty)
 
+  protected val hostsVar: Var[Set[Host]] = Var(Set.empty)
+
   val operators: Signal[Set[Operator]] = operatorsVar
+  val hosts: Signal[Set[Host]] = hostsVar
   val nodesToOperators: Signal[Map[ActorRef, Operator]] = nodesToOperatorsVar
+
 
   /**
     * Create and add an operator to the system's [[operators]] signal
@@ -79,7 +86,6 @@ trait CEPSystem {
 trait QoSSystem {
   protected val logging: Boolean
 
-  val adaptation: Adaptation
   val priority: Priority
 
   def planAdaptation(violations: Set[Violation]): Set[Violation]
@@ -88,52 +94,50 @@ trait QoSSystem {
   private val pathsVar: Var[Set[Path]] = Var(Set.empty)
   private val queriesVar: Var[Set[Query]] = Var(Set.empty)
   private val fireDemandsViolated: Evt[Set[Violation]] = Evt[Set[Violation]]
-
-  protected val demandsViolated: Event[Set[Violation]] = fireDemandsViolated
-
-  val paths: Signal[Set[Path]] = pathsVar
-  val violations: Signal[Set[Violation]] = Signal{ queriesVar().flatMap(_.violations()) }
-  val waiting: Signal[Set[Violation]] = Signal { queriesVar().flatMap(_.waiting()) }
-  val adapting: Signal[Option[Set[Violation]]] = Signal {
+  private val adaptingVar: Var[Option[Set[Violation]]] = Var(None)
+  private val adaptingHelper: Signal[Option[Set[Violation]]] = Signal {
     if (queriesVar().exists(_.adapting().nonEmpty))
       Some(queriesVar().flatMap(_.adapting()).flatten)
     else
       None
   }
 
+  protected val demandsViolated: Event[Set[Violation]] = fireDemandsViolated
+
+  val paths: Signal[Set[Path]] = pathsVar
+  val violations: Signal[Set[Violation]] = Signal{ queriesVar().flatMap(_.violations()) }
+  val waiting: Signal[Set[Violation]] = Signal { queriesVar().flatMap(_.waiting()) }
+  val adapting: Signal[Option[Set[Violation]]] = adaptingVar
+
 
   demandsViolated += { vs =>
     val query: Query = vs.head.operator.query
-    vs.foreach(query.addViolation)
+    query.addViolations(vs)
     val adaptationPlanned: Set[Violation] = planAdaptation(vs)
     if (adaptationPlanned.nonEmpty) query.fireAdaptationPlanned(adaptationPlanned)
   }
 
   waiting.change += { diff =>
-    val from: Set[Violation] = diff.from.get
-    val to: Set[Violation] = diff.to.get
-    if (from.isEmpty && to.nonEmpty) {
-      if (logging) println(s"ADAPTATION:\t$to waiting adaptation")
-      if (adapting.now.isEmpty)  to.map(_.operator.query).foreach(_.startAdapting())
+    if (diff.from.get.isEmpty && diff.to.get.nonEmpty) {
+      if (logging) println(s"ADAPTATION:\t${diff.to.get} waiting adaptation")
+      if (adaptingHelper.now.isEmpty) diff.to.get.map(_.operator.query).foreach(_.startAdapting())
     }
   }
 
-  adapting.change += {diff =>
+  adaptingHelper.change += { diff =>
     val from: Option[Set[Violation]] = diff.from.get
     val to: Option[Set[Violation]] = diff.to.get
-    if (from.isEmpty) {
-      if (logging) println(s"ADAPTATION:\tSystem is adapting to violations: ${to.get}")
-      adaptation.strategy(to.get)
-      if (to.get.isEmpty)
-        queriesVar.now.foreach(_.stopAdapting())
-      else
-        to.get.foreach(_.operator.query.stopAdapting())
-    } else if (from.nonEmpty && to.nonEmpty) {
-      if (logging) println(s"ADAPTATION:\tSystem is already adapting. Waiting for the current adaptation to end.")
-    } else {
+    if (from.isEmpty && to.isEmpty) {
+      adaptingVar.transform(_ => None)
       if (logging) println(s"ADAPTATION:\tSystem is done adapting")
-      val vsQueue: Set[Violation] = waiting.now
-      if (vsQueue.nonEmpty) vsQueue.map(_.operator.query).foreach(_.startAdapting())
+    } else if (from.isEmpty && to.nonEmpty) {
+      if (logging) println(s"ADAPTATION:\tSystem is adapting to violations: ${to.get}")
+      adaptingVar.transform(_ => to)
+      to.get.foreach(_.operator.query.stopAdapting())
+    } else if (from.nonEmpty && to.isEmpty) {
+      adaptingVar.transform(_ => None)
+      if (logging) println(s"ADAPTATION:\tSystem is done adapting")
+      waiting.now.map(_.operator.query).foreach(_.startAdapting())
     }
   }
 

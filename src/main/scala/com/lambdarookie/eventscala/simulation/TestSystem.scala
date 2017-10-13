@@ -12,11 +12,19 @@ import scala.util.Random
 /**
   * Created sortBy monur.
   */
-case class TestSystem(logging: Boolean, priority: Priority) extends System {
-  override val hosts: Signal[Set[Host]] = Signal { createRandomHosts }
-  override val adaptation: Adaptation = Adaptation(strategy)
+case class TestSystem(override val strategy: System => Event[Adaptation], priority: Priority, logging: Boolean)
+  extends SystemImpl(strategy) {
 
-  if (logging) violations.change += { vs => println(s"ADAPTATION:\tViolations changed to ${vs.to.get}") }
+  hostsVar.transform(_ => createRandomHosts )
+
+  if (logging) violations.change += { vs =>
+    val from = vs.from.get
+    val to = vs.to.get
+    if (from.diff(to).nonEmpty)
+      println(s"ADAPTATION:\tViolations removed: ${from diff to}")
+    if (to.diff(from).nonEmpty)
+      println(s"ADAPTATION:\tViolations added: ${to diff from}")
+  }
 
   override def placeOperator(operator: Operator): Host = {
     val hosts: Set[Host] = this.hosts.now
@@ -34,7 +42,7 @@ case class TestSystem(logging: Boolean, priority: Priority) extends System {
 
   private def planAdaptation1(violations: Set[Violation], hosts: Set[Host], operators: Set[Operator]): Set[Violation] = {
     val out: Set[Violation] = violations.filter { v =>
-      val descendants: Set[Operator] = getDescendants(v.operator)
+      val descendants: Set[Operator] = Utilities.getDescendants(v.operator)
       val freeHosts: Set[Host] = hosts -- operators.map(_.host)
       v.demand match {
         case ld: LatencyDemand =>
@@ -42,7 +50,7 @@ case class TestSystem(logging: Boolean, priority: Priority) extends System {
             !Utilities.isFulfilled(getLatencyAndUpdatePaths(o.host, v.operator.host), ld)).exists { vo =>
             freeHosts.exists { fh =>
               Utilities.isFulfilled(getLatencyAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)), ld) &&
-                !violatesNewDemands(vo.host, fh, operators)
+                !Utilities.violatesNewDemands(this, vo.host, fh, operators)
             }
           }
         case bd: BandwidthDemand =>
@@ -50,7 +58,7 @@ case class TestSystem(logging: Boolean, priority: Priority) extends System {
             !Utilities.isFulfilled(getBandwidthAndUpdatePaths(o.host, v.operator.host), bd)).exists { vo =>
             freeHosts.exists { fh =>
               Utilities.isFulfilled(getBandwidthAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)), bd) &&
-                !violatesNewDemands(vo.host, fh, operators)
+                !Utilities.violatesNewDemands(this, vo.host, fh, operators)
             }
           }
         case td: ThroughputDemand =>
@@ -58,7 +66,7 @@ case class TestSystem(logging: Boolean, priority: Priority) extends System {
             !Utilities.isFulfilled(getThroughputAndUpdatePaths(o.host, v.operator.host), td)).exists { vo =>
             freeHosts.exists { fh =>
               Utilities.isFulfilled(getThroughputAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)), td) &&
-                !violatesNewDemands(vo.host, fh, operators)
+                !Utilities.violatesNewDemands(this, vo.host, fh, operators)
             }
           }
       }
@@ -91,102 +99,11 @@ case class TestSystem(logging: Boolean, priority: Priority) extends System {
       case v@Violation(_, td: ThroughputDemand)
         if boMatcher(hosts.now, (h) => h.neighborThroughputs - h, td.booleanOperator, td.bitRate) => v
     }
-    if (logging) {
+    if (logging && out.nonEmpty)
       println(s"ADAPTATION:\tSystem decided to try adapting to $out")
+    if (logging && out.size < violations.size)
       println(s"ADAPTATION:\tSystem decided not to adapt to ${violations -- out}")
-    }
     out
-  }
-
-  private def strategy(violations: Set[Violation]): Unit =
-    strategyHelper(violations, hosts.now, operators.now, priority)
-
-  private def strategyHelper(violations: Set[Violation],
-                             hosts: Set[Host],
-                             operators: Set[Operator],
-                             priority: Priority): Unit = {
-    var assignments: Map[Operator, Host] = Map.empty
-    def assignViolatingOperatorsIfPossible(current: (Operator, Set[Host]),
-                                           rest: Map[Operator, Set[Host]],
-                                           taken: Set[Host] = Set.empty,
-                                           assigned: Map[Operator, Host] = Map.empty): Boolean = {
-      val choices: Set[Host] = current._2 -- taken
-      if (choices.isEmpty) {
-        false
-      } else if (rest.isEmpty) {
-        assignments = assigned + (current._1 -> choices.head)
-        true
-      } else {
-        choices.exists { i =>
-          assignViolatingOperatorsIfPossible(rest.head, rest.tail, taken + i, assigned + (current._1 -> i))
-        }
-      }
-    }
-
-    violations.foreach { v =>
-      val descendants: Set[Operator] = getDescendants(v.operator)
-      val freeHosts: Set[Host] = hosts -- operators.map(_.host)
-      val hostChoices: Map[Operator, Set[Host]] = v.demand match {
-        case ld: LatencyDemand =>
-          println(s"ADAPTATION:\tLatency adaptation has begun")
-          descendants.filter(o =>
-            !Utilities.isFulfilled(getLatencyAndUpdatePaths(o.host, v.operator.host), ld)).map { vo =>
-            vo -> freeHosts.collect {
-              case fh if
-              Utilities.isFulfilled(getLatencyAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)), ld) &&
-                !violatesNewDemands(vo.host, fh, operators) => fh
-            }
-          }.filter(_._2.nonEmpty).toMap
-        case bd: BandwidthDemand =>
-          println(s"ADAPTATION:\tBandwidth adaptation has begun")
-          descendants.filter(o =>
-            !Utilities.isFulfilled(getBandwidthAndUpdatePaths(o.host, v.operator.host), bd)).map { vo =>
-            vo -> freeHosts.collect {
-              case fh if
-              Utilities.isFulfilled(getBandwidthAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)), bd) &&
-                !violatesNewDemands(vo.host, fh, operators) => fh
-            }
-          }.filter(_._2.nonEmpty).toMap
-        case td: ThroughputDemand =>
-          println(s"ADAPTATION:\tThroughput adaptation has begun")
-          descendants.filter(o =>
-            !Utilities.isFulfilled(getThroughputAndUpdatePaths(o.host, v.operator.host), td)).map { vo =>
-            vo -> freeHosts.collect {
-              case fh if
-              Utilities.isFulfilled(getThroughputAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)), td) &&
-                !violatesNewDemands(vo.host, fh, operators) => fh
-            }
-          }.filter(_._2.nonEmpty).toMap
-      }
-
-      if (hostChoices.isEmpty)
-        println(s"ADAPTATION:\tNo right host could be found for the violating operators of $v. " +
-          s"No replacement will be made.")
-      else if (assignViolatingOperatorsIfPossible(hostChoices.head, hostChoices.tail))
-        replaceOperators(assignments)
-      else
-        println(s"ADAPTATION:\tThere are not enough suitable hosts for every violating operator of $v. " +
-          s"No replacement will be made.")
-    }
-  }
-
-  private def getDescendants(operator: Operator): Set[Operator] =
-    operator.inputs.toSet ++ operator.inputs.flatMap(getDescendants)
-
-  private def violatesNewDemands(oldHost: Host, newHost: Host, operators: Set[Operator]): Boolean = {
-    val operatorsToDemands: Map[Operator, Set[Demand]] = operators.collect {
-      case o if o.query.demands.nonEmpty => o -> o.query.demands
-    }.toMap
-    operatorsToDemands.exists { o_d =>
-      o_d._2 exists {
-        case ld: LatencyDemand => Utilities.isFulfilled(getLatencyAndUpdatePaths(oldHost, o_d._1.host), ld) &&
-          !Utilities.isFulfilled(getLatencyAndUpdatePaths(newHost, o_d._1.host), ld)
-        case bd: BandwidthDemand => Utilities.isFulfilled(getBandwidthAndUpdatePaths(oldHost, o_d._1.host), bd) &&
-          !Utilities.isFulfilled(getBandwidthAndUpdatePaths(newHost, o_d._1.host), bd)
-        case td: ThroughputDemand => Utilities.isFulfilled(getThroughputAndUpdatePaths(oldHost, o_d._1.host), td) &&
-          !Utilities.isFulfilled(getThroughputAndUpdatePaths(newHost, o_d._1.host), td)
-      }
-    }
   }
 
   private def checkNeighborhoodValidity(hosts: Set[Host]): Unit = {
@@ -208,43 +125,77 @@ case class TestSystem(logging: Boolean, priority: Priority) extends System {
     val testHost5: TestHost = TestHost(5, createRandomCoordinate)
     val testHost6: TestHost = TestHost(6, createRandomCoordinate)
     val testHost7: TestHost = TestHost(7, createRandomCoordinate)
+    val testHost8: TestHost = TestHost(8, createRandomCoordinate)
+    val testHost9: TestHost = TestHost(9, createRandomCoordinate)
+    val testHost10: TestHost = TestHost(10, createRandomCoordinate)
+    val testHost11: TestHost = TestHost(11, createRandomCoordinate)
+    val testHost12: TestHost = TestHost(12, createRandomCoordinate)
+    val testHost13: TestHost = TestHost(13, createRandomCoordinate)
 
-    testHost1.neighbors ++= Set(testHost2, testHost3)
-    testHost2.neighbors ++= Set(testHost1, testHost3, testHost4, testHost5, testHost6, testHost7)
-    testHost3.neighbors ++= Set(testHost1, testHost2)
+    testHost1.neighbors ++= Set(testHost2, testHost3, testHost12)
+    testHost2.neighbors ++= Set(testHost1, testHost3, testHost4, testHost5, testHost6, testHost7, testHost10)
+    testHost3.neighbors ++= Set(testHost1, testHost2, testHost10, testHost13)
     testHost4.neighbors ++= Set(testHost2)
     testHost5.neighbors ++= Set(testHost2)
-    testHost6.neighbors ++= Set(testHost2)
-    testHost7.neighbors ++= Set(testHost2)
+    testHost6.neighbors ++= Set(testHost2, testHost8)
+    testHost7.neighbors ++= Set(testHost2, testHost9, testHost10)
+    testHost8.neighbors ++= Set(testHost6, testHost9, testHost11)
+    testHost9.neighbors ++= Set(testHost7, testHost8)
+    testHost10.neighbors ++= Set(testHost2, testHost3, testHost7)
+    testHost11.neighbors ++= Set(testHost8)
+    testHost12.neighbors ++= Set(testHost1)
+    testHost13.neighbors ++= Set(testHost3)
 
-//    testHost1.neighborLatencies ++= Map(testHost2 -> 10.ms, testHost3 -> 10.ms)
+//    testHost1.neighborLatencies ++= Map(testHost2 -> 10.ms, testHost3 -> 10.ms, testHost12 -> 10.ms)
 //    testHost2.neighborLatencies ++= Map(testHost1 -> 10.ms, testHost3 -> 10.ms,
-//      testHost4 -> 10.ms, testHost5 -> 10.ms, testHost6 -> 10.ms, testHost7 -> 10.ms)
-//    testHost3.neighborLatencies ++= Map(testHost1 -> 10.ms, testHost2 -> 10.ms)
+//      testHost4 -> 10.ms, testHost5 -> 10.ms, testHost6 -> 10.ms, testHost7 -> 10.ms, testHost10 -> 10.ms)
+//    testHost3.neighborLatencies ++= Map(testHost1 -> 10.ms, testHost2 -> 10.ms, testHost10 -> 10.ms,
+//      testHost13 -> 10.ms)
 //    testHost4.neighborLatencies ++= Map(testHost2 -> 10.ms)
 //    testHost5.neighborLatencies ++= Map(testHost2 -> 10.ms)
-//    testHost6.neighborLatencies ++= Map(testHost2 -> 1.ms)
-//    testHost7.neighborLatencies ++= Map(testHost2 -> 1.ms)
+//    testHost6.neighborLatencies ++= Map(testHost2 -> 10.ms, testHost8 -> 10.ms)
+//    testHost7.neighborLatencies ++= Map(testHost2 -> 10.ms, testHost9 -> 10.ms, testHost10 -> 10.ms)
+//    testHost8.neighborLatencies ++= Map(testHost6 -> 10.ms, testHost9 -> 10.ms, testHost11 -> 10.ms)
+//    testHost9.neighborLatencies ++= Map(testHost7 -> 10.ms, testHost8 -> 10.ms)
+//    testHost10.neighborLatencies ++= Map(testHost2 -> 10.ms, testHost3 -> 10.ms, testHost7 -> 10.ms)
+//    testHost11.neighborLatencies ++= Map(testHost8 -> 10.ms)
+//    testHost12.neighborLatencies ++= Map(testHost1 -> 10.ms)
+//    testHost13.neighborLatencies ++= Map(testHost3 -> 10.ms)
 //
-//    testHost1.neighborBandwidths ++= Map(testHost2 -> 100.mbps, testHost3 -> 100.mbps)
-//    testHost2.neighborBandwidths ++= Map(testHost1 -> 100.mbps, testHost3 -> 100.mbps,
-//      testHost4 -> 100.mbps, testHost5 -> 100.mbps, testHost6 -> 100.mbps, testHost7 -> 100.mbps)
-//    testHost3.neighborBandwidths ++= Map(testHost1 -> 100.mbps, testHost2 -> 100.mbps)
+//    testHost1.neighborBandwidths ++= Map(testHost2 -> 100.mbps, testHost3 -> 100.mbps, testHost12 -> 100.mbps)
+//    testHost2.neighborBandwidths ++= Map(testHost1 -> 100.mbps, testHost3 -> 100.mbps, testHost4 -> 100.mbps,
+//      testHost5 -> 100.mbps, testHost6 -> 100.mbps, testHost7 -> 100.mbps, testHost10 -> 100.mbps)
+//    testHost3.neighborBandwidths ++= Map(testHost1 -> 100.mbps, testHost2 -> 100.mbps, testHost10 -> 100.mbps,
+//      testHost13 -> 100.mbps)
 //    testHost4.neighborBandwidths ++= Map(testHost2 -> 100.mbps)
 //    testHost5.neighborBandwidths ++= Map(testHost2 -> 100.mbps)
-//    testHost6.neighborBandwidths ++= Map(testHost2 -> 100.mbps)
-//    testHost7.neighborBandwidths ++= Map(testHost2 -> 100.mbps)
+//    testHost6.neighborBandwidths ++= Map(testHost2 -> 100.mbps, testHost8 -> 100.mbps)
+//    testHost7.neighborBandwidths ++= Map(testHost2 -> 100.mbps, testHost9 -> 100.mbps, testHost10 -> 100.mbps)
+//    testHost8.neighborBandwidths ++= Map(testHost6 -> 100.mbps, testHost9 -> 100.mbps, testHost11 -> 100.mbps)
+//    testHost9.neighborBandwidths ++= Map(testHost7 -> 100.mbps, testHost8 -> 100.mbps)
+//    testHost10.neighborBandwidths ++= Map(testHost2 -> 100.mbps, testHost3 -> 100.mbps, testHost7 -> 100.mbps)
+//    testHost11.neighborBandwidths ++= Map(testHost8 -> 100.mbps)
+//    testHost12.neighborBandwidths ++= Map(testHost1 -> 100.mbps)
+//    testHost13.neighborBandwidths ++= Map(testHost3 -> 100.mbps)
 //
-//    testHost1.neighborThroughputs ++= Map(testHost2 -> 100.mbps, testHost3 -> 100.mbps)
-//    testHost2.neighborThroughputs ++= Map(testHost1 -> 100.mbps, testHost3 -> 100.mbps,
-//      testHost4 -> 100.mbps, testHost5 -> 100.mbps, testHost6 -> 100.mbps, testHost7 -> 100.mbps)
-//    testHost3.neighborThroughputs ++= Map(testHost1 -> 100.mbps, testHost2 -> 100.mbps)
-//    testHost4.neighborThroughputs ++= Map(testHost2 -> 100.mbps)
-//    testHost5.neighborThroughputs ++= Map(testHost2 -> 100.mbps)
-//    testHost6.neighborThroughputs ++= Map(testHost2 -> 100.mbps)
-//    testHost7.neighborThroughputs ++= Map(testHost2 -> 100.mbps)
+//    testHost1.neighborThroughputs ++= Map(testHost2 -> 70.mbps, testHost3 -> 70.mbps, testHost12 -> 70.mbps)
+//    testHost2.neighborThroughputs ++= Map(testHost1 -> 70.mbps, testHost3 -> 70.mbps, testHost4 -> 70.mbps,
+//      testHost5 -> 70.mbps, testHost6 -> 70.mbps, testHost7 -> 70.mbps, testHost10 -> 70.mbps)
+//    testHost3.neighborThroughputs ++= Map(testHost1 -> 70.mbps, testHost2 -> 70.mbps, testHost10 -> 70.mbps,
+//      testHost13 -> 70.mbps)
+//    testHost4.neighborThroughputs ++= Map(testHost2 -> 70.mbps)
+//    testHost5.neighborThroughputs ++= Map(testHost2 -> 70.mbps)
+//    testHost6.neighborThroughputs ++= Map(testHost2 -> 70.mbps, testHost8 -> 70.mbps)
+//    testHost7.neighborThroughputs ++= Map(testHost2 -> 70.mbps, testHost9 -> 70.mbps, testHost10 -> 70.mbps)
+//    testHost8.neighborThroughputs ++= Map(testHost6 -> 70.mbps, testHost9 -> 70.mbps, testHost11 -> 70.mbps)
+//    testHost9.neighborThroughputs ++= Map(testHost7 -> 70.mbps, testHost8 -> 70.mbps)
+//    testHost10.neighborThroughputs ++= Map(testHost2 -> 70.mbps, testHost3 -> 70.mbps, testHost7 -> 70.mbps)
+//    testHost11.neighborThroughputs ++= Map(testHost8 -> 70.mbps)
+//    testHost12.neighborThroughputs ++= Map(testHost1 -> 70.mbps)
+//    testHost13.neighborThroughputs ++= Map(testHost3 -> 70.mbps)
 
-    val out: Set[Host] = Set(testHost1, testHost2, testHost3, testHost4, testHost5, testHost6, testHost7)
+    val out: Set[Host] = Set(testHost1, testHost2, testHost3, testHost4, testHost5, testHost6, testHost7, testHost8,
+      testHost9, testHost10, testHost11, testHost12, testHost13)
     checkNeighborhoodValidity(out)
     out
   }

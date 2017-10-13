@@ -1,7 +1,7 @@
 package com.lambdarookie.eventscala.backend.qos
 
 import com.lambdarookie.eventscala.backend.data.QoSUnits._
-import com.lambdarookie.eventscala.backend.system.traits.Operator
+import com.lambdarookie.eventscala.backend.system.traits.{Host, Operator}
 
 /**
   * Created by monur.
@@ -54,6 +54,12 @@ object QualityOfService {
     extends BandwidthDemand with ConditionImpl
   case class ThroughputDemandImpl(booleanOperator: BooleanOperator, bitRate: BitRate, conditions: Set[Condition])
     extends ThroughputDemand with ConditionImpl
+
+
+  case class Violation(operator: Operator, demand: Demand)
+
+  case class Adaptation(assignments: Map[Operator, Host])
+
 
 
   def frequency: FrequencyConditionCreator.type = FrequencyConditionCreator
@@ -123,9 +129,4 @@ object QualityOfService {
     def <=  (bitRate: BitRate, conditions: Condition*): ThroughputDemand =
       ThroughputDemandImpl (SmallerEqual, bitRate, conditions.toSet)
   }
-
-
-  case class Violation(operator: Operator, demand: Demand)
-
-  case class Adaptation(strategy: Set[Violation] => Unit)
 }

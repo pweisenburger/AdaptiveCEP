@@ -3,7 +3,7 @@ package com.lambdarookie.eventscala.backend.system
 import com.lambdarookie.eventscala.backend.data.QoSUnits._
 import com.lambdarookie.eventscala.backend.qos.QoSMetrics._
 import com.lambdarookie.eventscala.backend.qos.QualityOfService._
-import com.lambdarookie.eventscala.backend.system.traits.{Host, Operator}
+import com.lambdarookie.eventscala.backend.system.traits.{Host, Operator, System}
 
 /**
   * Created by monur.
@@ -174,6 +174,28 @@ object Utilities {
         case Smaller =>      throughput < td.bitRate
         case SmallerEqual => throughput <= td.bitRate
       }
+  }
+
+  def getDescendants(operator: Operator): Set[Operator] =
+    operator.inputs.toSet ++ operator.inputs.flatMap(getDescendants)
+
+  def violatesNewDemands(system: System, oldHost: Host, newHost: Host, operators: Set[Operator]): Boolean = {
+    val operatorsToDemands: Map[Operator, Set[Demand]] = operators.collect {
+      case o if o.query.demands.nonEmpty => o -> o.query.demands
+    }.toMap
+    operatorsToDemands.exists { o_d =>
+      o_d._2 exists {
+        case ld: LatencyDemand =>
+          Utilities.isFulfilled(system.getLatencyAndUpdatePaths(oldHost, o_d._1.host), ld) &&
+            !Utilities.isFulfilled(system.getLatencyAndUpdatePaths(newHost, o_d._1.host), ld)
+        case bd: BandwidthDemand =>
+          Utilities.isFulfilled(system.getBandwidthAndUpdatePaths(oldHost, o_d._1.host), bd) &&
+            !Utilities.isFulfilled(system.getBandwidthAndUpdatePaths(newHost, o_d._1.host), bd)
+        case td: ThroughputDemand =>
+          Utilities.isFulfilled(system.getThroughputAndUpdatePaths(oldHost, o_d._1.host), td) &&
+            !Utilities.isFulfilled(system.getThroughputAndUpdatePaths(newHost, o_d._1.host), td)
+      }
+    }
   }
 
   /**

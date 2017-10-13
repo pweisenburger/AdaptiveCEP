@@ -6,7 +6,6 @@ import com.lambdarookie.eventscala.data.Queries._
 import com.lambdarookie.eventscala.dsl.Dsl._
 import com.lambdarookie.eventscala.graph.factory._
 import com.lambdarookie.eventscala.graph.monitors._
-import com.lambdarookie.eventscala.backend.system.traits._
 import com.lambdarookie.eventscala.backend.data.QoSUnits._
 import com.lambdarookie.eventscala.backend.qos.QoSMetrics.Priority
 import com.lambdarookie.eventscala.backend.qos.QualityOfService._
@@ -32,15 +31,35 @@ object Main extends App {
     .join(
       stream[Int]("B"),
       slidingWindow(2.sec),
-      slidingWindow(2.sec))
-    .where(_ < _)
+      slidingWindow(2.sec),
+      latency < 1.ms,
+      bandwidth > 60.mbps,
+      throughput > 20.mbps)
+    .where(
+      _ < _,
+      latency < 2.ms,
+      bandwidth > 59.mbps,
+      throughput > 19.mbps)
     .dropElem1(
-      latency < (1.ms, frequency > Ratio(10.instances, 5.sec)))
+      latency < 3.ms,
+      bandwidth > 58.mbps,
+      throughput > 18.mbps)
     .selfJoin(
       tumblingWindow(1.instances),
-      tumblingWindow(1.instances))
-    .and(stream[Float]("C"))
-    .or(stream[String]("D"))
+      tumblingWindow(1.instances),
+      latency < 4.ms,
+      bandwidth > 57.mbps,
+      throughput > 17.mbps)
+    .and(
+      stream[Float]("C"),
+      latency < 5.ms,
+      bandwidth > 56.mbps,
+      throughput > 16.mbps)
+    .or(
+      stream[String]("D"),
+      latency < 5.ms,
+      bandwidth > 55.mbps,
+      throughput > 15.mbps)
 
   val query2: Query4[Int, Int, Float, String] =
     stream[Int]("A")
@@ -54,18 +73,22 @@ object Main extends App {
 
   val query3: Query3[Int, Int, String] =
     stream[Int]("A")
-      .and(stream[Int]("B"))
+      .and(
+        stream[Int]("B"),
+        latency < 10.ms,
+        throughput > 40.mbps,
+        bandwidth > 70.mbps)
       .join(
         stream[String]("C"),
         tumblingWindow(1.instances),
         tumblingWindow(1.instances),
-        latency < 12.ms,
-        bandwidth > 30.mbps,
-        throughput > 20.mbps)
+        bandwidth > 60.mbps,
+        throughput > 20.mbps,
+        latency < 12.ms)
 
 
   GraphFactory.create(
-    system =                  TestSystem(logging = true, Priority(1, 0, 0)),
+    system =                  TestSystem(Strategies.strategy1, Priority(1, 0, 0), logging = true),
     actorSystem =             actorSystem,
     query =                   query3,
     publishers =              publishers,
