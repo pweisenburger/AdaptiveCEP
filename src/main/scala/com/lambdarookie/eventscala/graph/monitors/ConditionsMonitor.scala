@@ -3,9 +3,8 @@ package com.lambdarookie.eventscala.graph.monitors
 import java.util.concurrent.TimeUnit
 
 import akka.actor.{ActorContext, ActorRef}
-import com.lambdarookie.eventscala.backend.data.QoSUnits._
+import com.lambdarookie.eventscala.backend.qos.QoSUnits._
 import com.lambdarookie.eventscala.backend.qos.QualityOfService._
-import com.lambdarookie.eventscala.backend.system.Utilities
 import com.lambdarookie.eventscala.backend.system.traits.Host
 import com.lambdarookie.eventscala.data.Events.Event
 
@@ -64,7 +63,7 @@ case class ConditionsMonitor(frequencyInterval: Int, proximityInterval: Int, log
           parent ! f
         case c: Coordinate if proximityConditions.isEmpty => parent ! c
         case c: Coordinate if proximityConditions.nonEmpty =>
-          farthestDistance = Some(Utilities.calculateDistance(host.position, c))
+          farthestDistance = Some(calculateDistance(host.position, c))
           if (logging)
             println(s"LOG:\t\tProximity from $host to the farthest leaf host is ${farthestDistance.get} meters.")
           setIfProximityConditionsFulfilled()
@@ -85,9 +84,9 @@ case class ConditionsMonitor(frequencyInterval: Int, proximityInterval: Int, log
         case c: Coordinate if proximityConditions.isEmpty => parent ! c
         case c: Coordinate if proximityConditions.nonEmpty =>
           if (farthestDistance.isEmpty) {
-            farthestDistance = Some(Utilities.calculateDistance(host.position, c))
+            farthestDistance = Some(calculateDistance(host.position, c))
           } else {
-            farthestDistance = Some(math.max(farthestDistance.get, Utilities.calculateDistance(host.position, c)))
+            farthestDistance = Some(math.max(farthestDistance.get, calculateDistance(host.position, c)))
             if (logging)
               println(s"LOG:\t\tProximity from $host to the farthest leaf host is ${farthestDistance.get} meters.")
             setIfProximityConditionsFulfilled()
@@ -130,6 +129,26 @@ case class ConditionsMonitor(frequencyInterval: Int, proximityInterval: Int, log
       case SmallerEqual =>  pc.asInstanceOf[ConditionImpl].notFulfilled = !(current <= expected)
     }
     farthestDistance = None
+  }
+
+  /**
+    * Calculate the distance from a coordinate to another coordinate
+    * @param from Coordinate of type [[Coordinate]]
+    * @param to Coordinate of type [[Coordinate]]
+    * @return Distance in meters
+    */
+  private def calculateDistance(from: Coordinate, to: Coordinate): Int = {
+    import math._
+
+    val R = 6371 // Radius of the earth
+    val latDistance = toRadians(from.latitude - to.latitude)
+    val lonDistance = toRadians(from.longitude - to.longitude)
+    val a = sin(latDistance / 2) * sin(latDistance / 2) +
+      cos(toRadians(from.latitude)) * cos(toRadians(to.latitude))* sin(lonDistance / 2) * sin(lonDistance / 2)
+    val c = 2 * atan2(sqrt(a), sqrt(1-a))
+    val distance = R * c * 1000 // convert to meters
+    val height = from.altitude - to.altitude
+    sqrt(pow(distance, 2) + pow(height, 2)).toInt
   }
 }
 

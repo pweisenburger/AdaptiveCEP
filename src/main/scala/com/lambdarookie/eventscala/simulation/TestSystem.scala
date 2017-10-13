@@ -1,9 +1,8 @@
 package com.lambdarookie.eventscala.simulation
 
-import com.lambdarookie.eventscala.backend.data.QoSUnits._
-import com.lambdarookie.eventscala.backend.qos.QoSMetrics.Priority
+import com.lambdarookie.eventscala.backend.qos.QoSUnits._
+import com.lambdarookie.eventscala.backend.qos.PathFinding.Priority
 import com.lambdarookie.eventscala.backend.qos.QualityOfService._
-import com.lambdarookie.eventscala.backend.system.Utilities
 import com.lambdarookie.eventscala.backend.system.traits._
 import rescala._
 
@@ -42,31 +41,31 @@ case class TestSystem(override val strategy: System => Event[Adaptation], priori
 
   private def planAdaptation1(violations: Set[Violation], hosts: Set[Host], operators: Set[Operator]): Set[Violation] = {
     val out: Set[Violation] = violations.filter { v =>
-      val descendants: Set[Operator] = Utilities.getDescendants(v.operator)
+      val descendants: Set[Operator] = v.operator.getDescendants
       val freeHosts: Set[Host] = hosts -- operators.map(_.host)
       v.demand match {
         case ld: LatencyDemand =>
           descendants.filter(o =>
-            !Utilities.isFulfilled(getLatencyAndUpdatePaths(o.host, v.operator.host), ld)).exists { vo =>
+            !isFulfilled(getLatencyAndUpdatePaths(o.host, v.operator.host), ld)).exists { vo =>
             freeHosts.exists { fh =>
-              Utilities.isFulfilled(getLatencyAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)), ld) &&
-                !Utilities.violatesNewDemands(this, vo.host, fh, operators)
+              isFulfilled(getLatencyAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)), ld) &&
+                !Strategies.violatesNewDemands(this, vo.host, fh, operators)
             }
           }
         case bd: BandwidthDemand =>
           descendants.filter(o =>
-            !Utilities.isFulfilled(getBandwidthAndUpdatePaths(o.host, v.operator.host), bd)).exists { vo =>
+            !isFulfilled(getBandwidthAndUpdatePaths(o.host, v.operator.host), bd)).exists { vo =>
             freeHosts.exists { fh =>
-              Utilities.isFulfilled(getBandwidthAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)), bd) &&
-                !Utilities.violatesNewDemands(this, vo.host, fh, operators)
+              isFulfilled(getBandwidthAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)), bd) &&
+                !Strategies.violatesNewDemands(this, vo.host, fh, operators)
             }
           }
         case td: ThroughputDemand =>
           descendants.filter(o =>
-            !Utilities.isFulfilled(getThroughputAndUpdatePaths(o.host, v.operator.host), td)).exists { vo =>
+            !isFulfilled(getThroughputAndUpdatePaths(o.host, v.operator.host), td)).exists { vo =>
             freeHosts.exists { fh =>
-              Utilities.isFulfilled(getThroughputAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)), td) &&
-                !Utilities.violatesNewDemands(this, vo.host, fh, operators)
+              isFulfilled(getThroughputAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)), td) &&
+                !Strategies.violatesNewDemands(this, vo.host, fh, operators)
             }
           }
       }

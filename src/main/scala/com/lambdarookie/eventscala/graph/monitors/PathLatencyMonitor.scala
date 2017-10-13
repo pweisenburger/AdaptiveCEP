@@ -6,9 +6,8 @@ import java.util.concurrent.TimeUnit
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.FiniteDuration
 import akka.actor.ActorRef
-import com.lambdarookie.eventscala.backend.data.QoSUnits.TimeSpan
+import com.lambdarookie.eventscala.backend.qos.QoSUnits.TimeSpan
 import com.lambdarookie.eventscala.backend.qos.QualityOfService._
-import com.lambdarookie.eventscala.backend.system.Utilities
 import com.lambdarookie.eventscala.backend.system.traits._
 
 trait LatencyMessage
@@ -174,5 +173,5 @@ case class PathLatencyMonitor(interval: Int, logging: Boolean) extends Monitor {
   override def copy: PathLatencyMonitor = PathLatencyMonitor(interval, logging)
 
   def isDemandNotMet(latency: Duration, ld: LatencyDemand): Boolean =
-    !Utilities.isFulfilled(TimeSpan(latency.toMillis), ld)
+    !isFulfilled(TimeSpan(latency.toMillis), ld)
 }

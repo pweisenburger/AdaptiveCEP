@@ -1,6 +1,6 @@
 package com.lambdarookie.eventscala.backend.system.traits
 
-import com.lambdarookie.eventscala.backend.data.QoSUnits._
+import com.lambdarookie.eventscala.backend.qos.QoSUnits._
 import rescala._
 
 /**

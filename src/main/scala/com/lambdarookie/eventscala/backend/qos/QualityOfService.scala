@@ -1,6 +1,6 @@
 package com.lambdarookie.eventscala.backend.qos
 
-import com.lambdarookie.eventscala.backend.data.QoSUnits._
+import QoSUnits._
 import com.lambdarookie.eventscala.backend.system.traits.{Host, Operator}
 
 /**
@@ -14,6 +14,8 @@ object QualityOfService {
   case object GreaterEqual extends BooleanOperator { override def toString: String = ">=" }
   case object Smaller      extends BooleanOperator { override def toString: String = "<"  }
   case object SmallerEqual extends BooleanOperator { override def toString: String = "<=" }
+
+
 
   sealed trait Condition{
     val booleanOperator: BooleanOperator
@@ -32,14 +34,17 @@ object QualityOfService {
   trait FrequencyCondition extends Condition { val ratio: Ratio }
   trait ProximityCondition extends Condition { val distance: Distance }
 
+
   sealed trait Demand extends Condition {
     val conditions: Set[Condition]
 
     override def toString: String = super.toString + (if (conditions.nonEmpty) s" with conditions: $conditions" else "")
   }
+
   trait LatencyDemand extends Demand { val timeSpan: TimeSpan }
   trait BandwidthDemand extends Demand { val bitRate: BitRate }
   trait ThroughputDemand extends Demand { val bitRate: BitRate }
+
 
   sealed trait ConditionImpl extends  Condition { var notFulfilled: Boolean = true }
 
@@ -128,5 +133,63 @@ object QualityOfService {
       ThroughputDemandImpl (Smaller, bitRate, conditions.toSet)
     def <=  (bitRate: BitRate, conditions: Condition*): ThroughputDemand =
       ThroughputDemandImpl (SmallerEqual, bitRate, conditions.toSet)
+  }
+
+  def isFulfilled[T <: QoSUnit[T]](value: QoSUnit[T], condition: Condition): Boolean = condition match {
+    case fc: FrequencyCondition =>
+      if (!value.isInstanceOf[Ratio]) throw new IllegalArgumentException("QoS metric does not match the condition.")
+      val frequency: Ratio = value.asInstanceOf[Ratio]
+      fc.booleanOperator match {
+        case Equal =>        frequency == fc.ratio
+        case NotEqual =>     frequency != fc.ratio
+        case Greater =>      frequency > fc.ratio
+        case GreaterEqual => frequency >= fc.ratio
+        case Smaller =>      frequency < fc.ratio
+        case SmallerEqual => frequency <= fc.ratio
+      }
+    case pc: ProximityCondition =>
+      if (!value.isInstanceOf[Distance]) throw new IllegalArgumentException("QoS metric does not match the condition.")
+      val proximity: Distance = value.asInstanceOf[Distance]
+      pc.booleanOperator match {
+        case Equal =>        proximity == pc.distance
+        case NotEqual =>     proximity != pc.distance
+        case Greater =>      proximity > pc.distance
+        case GreaterEqual => proximity >= pc.distance
+        case Smaller =>      proximity < pc.distance
+        case SmallerEqual => proximity <= pc.distance
+      }
+    case lc: LatencyDemand =>
+      if (!value.isInstanceOf[TimeSpan]) throw new IllegalArgumentException("QoS metric does not match the demand.")
+      val latency: TimeSpan = value.asInstanceOf[TimeSpan]
+      lc.booleanOperator match {
+        case Equal =>        latency == lc.timeSpan
+        case NotEqual =>     latency != lc.timeSpan
+        case Greater =>      latency > lc.timeSpan
+        case GreaterEqual => latency >= lc.timeSpan
+        case Smaller =>      latency < lc.timeSpan
+        case SmallerEqual => latency <= lc.timeSpan
+      }
+    case bd: BandwidthDemand =>
+      if (!value.isInstanceOf[BitRate]) throw new IllegalArgumentException("QoS metric does not match the demand.")
+      val bandwidth: BitRate = value.asInstanceOf[BitRate]
+      bd.booleanOperator match {
+        case Equal =>        bandwidth == bd.bitRate
+        case NotEqual =>     bandwidth != bd.bitRate
+        case Greater =>      bandwidth > bd.bitRate
+        case GreaterEqual => bandwidth >= bd.bitRate
+        case Smaller =>      bandwidth < bd.bitRate
+        case SmallerEqual => bandwidth <= bd.bitRate
+      }
+    case td: ThroughputDemand =>
+      if (!value.isInstanceOf[BitRate]) throw new IllegalArgumentException("QoS metric does not match the demand.")
+      val throughput: BitRate = value.asInstanceOf[BitRate]
+      td.booleanOperator match {
+        case Equal =>        throughput == td.bitRate
+        case NotEqual =>     throughput != td.bitRate
+        case Greater =>      throughput > td.bitRate
+        case GreaterEqual => throughput >= td.bitRate
+        case Smaller =>      throughput < td.bitRate
+        case SmallerEqual => throughput <= td.bitRate
+      }
   }
 }

@@ -5,9 +5,8 @@ import java.util.concurrent.TimeUnit
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.FiniteDuration
 import akka.actor.ActorRef
-import com.lambdarookie.eventscala.backend.data.QoSUnits._
+import com.lambdarookie.eventscala.backend.qos.QoSUnits._
 import com.lambdarookie.eventscala.backend.qos.QualityOfService._
-import com.lambdarookie.eventscala.backend.system.Utilities
 import com.lambdarookie.eventscala.backend.system.traits._
 import com.lambdarookie.eventscala.data.Queries._
 
@@ -146,13 +145,13 @@ case class DemandsMonitor(interval: Int, logging: Boolean) extends Monitor {
     val met: Boolean = d match {
       case ld: LatencyDemand =>
         val latency: TimeSpan = pathMeasurements.latency
-        Utilities.isFulfilled(latency, ld)
+        isFulfilled(latency, ld)
       case bd: BandwidthDemand =>
         val bandwidth: BitRate = pathMeasurements.bandwidth
-        Utilities.isFulfilled(bandwidth, bd)
+        isFulfilled(bandwidth, bd)
       case td: ThroughputDemand =>
         val throughput: BitRate = pathMeasurements.throughput
-        Utilities.isFulfilled(throughput, td)
+        isFulfilled(throughput, td)
     }
     !met
   }

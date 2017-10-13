@@ -8,7 +8,6 @@ import com.lambdarookie.eventscala.data.Queries._
 import com.lambdarookie.eventscala.graph.monitors._
 
 trait BinaryNode extends Node {
-
   override val query: BinaryQuery
   override val operator: BinaryOperator
 

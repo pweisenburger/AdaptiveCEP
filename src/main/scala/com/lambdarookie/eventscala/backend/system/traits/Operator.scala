@@ -14,8 +14,11 @@ trait Operator {
 
   def host: Host
 
+
   protected def createChildOperator(id: String, subQuery: Query): Operator =
     cepSystem.createOperator(id, subQuery, Set(this))
+
+  def getDescendants: Set[Operator] = inputs.toSet ++ inputs.flatMap(_.getDescendants)
 
   override def toString: String = s"Operator$id"
 }

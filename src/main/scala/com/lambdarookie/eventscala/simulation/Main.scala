@@ -6,8 +6,8 @@ import com.lambdarookie.eventscala.data.Queries._
 import com.lambdarookie.eventscala.dsl.Dsl._
 import com.lambdarookie.eventscala.graph.factory._
 import com.lambdarookie.eventscala.graph.monitors._
-import com.lambdarookie.eventscala.backend.data.QoSUnits._
-import com.lambdarookie.eventscala.backend.qos.QoSMetrics.Priority
+import com.lambdarookie.eventscala.backend.qos.QoSUnits._
+import com.lambdarookie.eventscala.backend.qos.PathFinding.Priority
 import com.lambdarookie.eventscala.backend.qos.QualityOfService._
 import com.lambdarookie.eventscala.backend.system.CentralScheduler
 

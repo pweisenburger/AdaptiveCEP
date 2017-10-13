@@ -23,10 +23,10 @@ trait Demands {
   def addViolations(violations: Set[Violation]): Unit = violationsVar.transform(_ ++ violations)
   def removeViolation(violation: Violation): Unit = violationsVar.transform(_ - violation)
   def fireAdaptationPlanned(violations: Set[Violation]): Unit = fireAdaptationPlanned fire violations
+  def stopAdapting(): Unit = adaptingVar.transform(_ => None)
   def startAdapting(): Unit = if (adapting.now.isEmpty) {
     val w: Set[Violation] = waiting.now
     waitingVar.transform(_ => Set.empty)
     adaptingVar.transform(_ => Some(w))
   }
-  def stopAdapting(): Unit = adaptingVar.transform(_ => None)
 }

@@ -1,4 +1,4 @@
-package com.lambdarookie.eventscala.backend.data
+package com.lambdarookie.eventscala.backend.qos
 
 import java.time._
 

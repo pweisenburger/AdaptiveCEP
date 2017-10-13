@@ -8,7 +8,6 @@ import com.lambdarookie.eventscala.data.Queries._
 import com.lambdarookie.eventscala.graph.monitors._
 
 trait UnaryNode extends Node {
-
   override val query: UnaryQuery
   override val operator: UnaryOperator
 
@@ -19,5 +18,4 @@ trait UnaryNode extends Node {
   val childNode: ActorRef = createChildNode(1, query.sq, childOperator)
 
   val nodeData: UnaryNodeData = UnaryNodeData(name, query, system, context, childNode)
-
 }

@@ -1,8 +1,8 @@
 package com.lambdarookie.eventscala.backend.system.traits
 
 import akka.actor.ActorRef
-import com.lambdarookie.eventscala.backend.data.QoSUnits._
-import com.lambdarookie.eventscala.backend.qos.QoSMetrics._
+import com.lambdarookie.eventscala.backend.qos.QoSUnits._
+import com.lambdarookie.eventscala.backend.qos.PathFinding._
 import com.lambdarookie.eventscala.backend.qos.QualityOfService.{Adaptation, Violation}
 import com.lambdarookie.eventscala.backend.system._
 import com.lambdarookie.eventscala.data.Queries._
@@ -16,6 +16,9 @@ sealed trait System extends CEPSystem with QoSSystem
 abstract class SystemImpl(val strategy: System => Event[Adaptation]) extends System {
   strategy(this) += { adaptation => replaceOperators(adaptation.assignments) }
 }
+
+
+
 
 
 trait CEPSystem {
@@ -81,6 +84,9 @@ trait CEPSystem {
       if (logging) println(s"ADAPTATION:\t${x._1} is moved to ${x._2}")
     }
 }
+
+
+
 
 
 trait QoSSystem {

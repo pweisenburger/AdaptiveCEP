@@ -1,7 +1,7 @@
 package com.lambdarookie.eventscala.backend
 
 import org.scalatest.FunSuiteLike
-import com.lambdarookie.eventscala.backend.data.QoSUnits._
+import com.lambdarookie.eventscala.backend.qos.QoSUnits._
 
 /**
   * Created by monur.
