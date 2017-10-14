@@ -36,10 +36,4 @@ trait HostImpl extends Host {
 
   def measureNeighborThroughputs(): Unit =
     neighbors.foreach { n => neighborThroughputs += n -> measureThroughputToNeighbor(n) }
-
-  def measureNeighborMetrics(): Unit = {
-    measureNeighborLatencies()
-    measureNeighborBandwidths()
-    measureNeighborThroughputs()
-  }
 }
