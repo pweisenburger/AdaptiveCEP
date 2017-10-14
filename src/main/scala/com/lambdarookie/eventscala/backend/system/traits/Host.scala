@@ -6,7 +6,7 @@ import rescala._
 /**
   * Created by monur.
   */
-trait Host {
+sealed trait Host {
   val position: Coordinate
 
   def neighbors: Set[Host]
