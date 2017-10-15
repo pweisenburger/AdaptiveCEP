@@ -15,7 +15,7 @@ sealed trait System extends CEPSystem with QoSSystem
 
 abstract class SystemImpl(val strategy: System => Event[Adaptation]) extends System {
   strategy(this) += { adaptation => replaceOperators(adaptation.assignments) }
-  hosts.changed += { _ => pathsVar.transform(_ => Set.empty) }
+  hosts.changed += { _ => forgetPaths() }
 }
 
 
@@ -35,8 +35,8 @@ trait CEPSystem {
 
 
   private val operatorsVar: Var[Set[Operator]] = Var(Set.empty)
-  private val nodesToOperatorsVar: Var[Map[ActorRef, Operator]] = Var(Map.empty)
   private val hostsVar: Var[Set[Host]] = Var(Set.empty)
+  private val nodesToOperatorsVar: Var[Map[ActorRef, Operator]] = Var(Map.empty)
 
   val operators: Signal[Set[Operator]] = operatorsVar
   val hosts: Signal[Set[Host]] = hostsVar
@@ -68,6 +68,12 @@ trait CEPSystem {
   def addNodeOperatorPair(node: ActorRef, operator: Operator): Unit =
     nodesToOperatorsVar.transform(x => x + (node -> operator))
 
+  def replaceOperators(assignments: Map[Operator, Host]): Unit =
+    assignments.foreach { x =>
+      x._1.asInstanceOf[OperatorImpl].move(x._2)
+      if (logging) println(s"ADAPTATION:\t${x._1} is moved to ${x._2}")
+    }
+
   /**
     * Get the host of a node. Every node is mapped to an operator and therefore a host
     * @param node Node, whose host we are seeking
@@ -77,12 +83,6 @@ trait CEPSystem {
     case Some(operator) => operator.host
     case None => throw new NoSuchElementException("ERROR: Following node is not defined in the system: " + node)
   }
-
-  def replaceOperators(assignments: Map[Operator, Host]): Unit =
-    assignments.foreach { x =>
-      x._1.asInstanceOf[OperatorImpl].move(x._2)
-      if (logging) println(s"ADAPTATION:\t${x._1} is moved to ${x._2}")
-    }
 
   def addHosts(hosts: Set[Host]): Unit = hosts.foreach { host =>
     host.neighbors.foreach(_.asInstanceOf[HostImpl].neighbors += host)
@@ -113,6 +113,7 @@ trait QoSSystem {
   def planAdaptation(violations: Set[Violation]): Set[Violation]
 
 
+  private val pathsVar: Var[Set[Path]] = Var(Set.empty)
   private val queriesVar: Var[Set[Query]] = Var(Set.empty)
   private val fireDemandsViolated: Evt[Set[Violation]] = Evt[Set[Violation]]
   private val adaptingVar: Var[Option[Set[Violation]]] = Var(None)
@@ -122,8 +123,6 @@ trait QoSSystem {
     else
       None
   }
-
-  private[traits] val pathsVar: Var[Set[Path]] = Var(Set.empty)
 
   protected val demandsViolated: Event[Set[Violation]] = fireDemandsViolated
 
@@ -175,6 +174,12 @@ trait QoSSystem {
     })
   }
 
+  def forgetPaths(): Unit = pathsVar.transform(_ => Set.empty)
+
+  def addQuery(query: Query): Unit = queriesVar.transform(x => x + query)
+
+  def fireDemandsViolated(violations: Set[Violation]): Unit =  fireDemandsViolated fire violations
+
   def getLatencyAndUpdatePaths(from: Host, to: Host, through: Option[Host] = None): TimeSpan =
     if (through.nonEmpty && through.get != to) {
       getLatencyAndUpdatePaths(from, through.get) + getLatencyAndUpdatePaths(through.get, to)
@@ -219,8 +224,4 @@ trait QoSSystem {
         bestPath.throughput
       }
     }
-
-  def addQuery(query: Query): Unit = queriesVar.transform(x => x + query)
-
-  def fireDemandsViolated(violations: Set[Violation]): Unit =  fireDemandsViolated fire violations
 }
