@@ -14,7 +14,7 @@ import scala.util.Random
 case class TestSystem(override val strategy: System => Event[Adaptation], priority: Priority, logging: Boolean)
   extends SystemImpl(strategy) {
 
-  hostsVar.transform(_ => createRandomHosts )
+  addHosts(createRandomHosts)
 
   if (logging) violations.change += { vs =>
     val from = vs.from.get

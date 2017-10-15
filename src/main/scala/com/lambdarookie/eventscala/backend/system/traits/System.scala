@@ -36,8 +36,7 @@ trait CEPSystem {
 
   private val operatorsVar: Var[Set[Operator]] = Var(Set.empty)
   private val nodesToOperatorsVar: Var[Map[ActorRef, Operator]] = Var(Map.empty)
-
-  protected val hostsVar: Var[Set[Host]] = Var(Set.empty)
+  private val hostsVar: Var[Set[Host]] = Var(Set.empty)
 
   val operators: Signal[Set[Operator]] = operatorsVar
   val hosts: Signal[Set[Host]] = hostsVar
@@ -86,13 +85,7 @@ trait CEPSystem {
     }
 
   def addHosts(hosts: Set[Host]): Unit = hosts.foreach { host =>
-    host.neighbors.foreach { n =>
-      val hostImpl: HostImpl = n.asInstanceOf[HostImpl]
-      hostImpl.neighbors += host
-      hostImpl.neighborLatencies += (host -> Float.PositiveInfinity.sec)
-      hostImpl.neighborBandwidths += (host -> 0.kbps)
-      hostImpl.neighborThroughputs += (host -> 0.kbps)
-    }
+    host.neighbors.foreach(_.asInstanceOf[HostImpl].neighbors += host)
     hostsVar.transform(_ + host)
   }
 
