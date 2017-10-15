@@ -15,6 +15,7 @@ sealed trait System extends CEPSystem with QoSSystem
 
 abstract class SystemImpl(val strategy: System => Event[Adaptation]) extends System {
   strategy(this) += { adaptation => replaceOperators(adaptation.assignments) }
+  hosts.changed += { _ => pathsVar.transform(_ => Set.empty) }
 }
 
 
@@ -83,6 +84,28 @@ trait CEPSystem {
       x._1.asInstanceOf[OperatorImpl].move(x._2)
       if (logging) println(s"ADAPTATION:\t${x._1} is moved to ${x._2}")
     }
+
+  def addHosts(hosts: Set[Host]): Unit = hosts.foreach { host =>
+    host.neighbors.foreach { n =>
+      val hostImpl: HostImpl = n.asInstanceOf[HostImpl]
+      hostImpl.neighbors += host
+      hostImpl.neighborLatencies += (host -> Float.PositiveInfinity.sec)
+      hostImpl.neighborBandwidths += (host -> 0.kbps)
+      hostImpl.neighborThroughputs += (host -> 0.kbps)
+    }
+    hostsVar.transform(_ + host)
+  }
+
+  def removeHosts(hosts: Set[Host]): Unit = hosts.foreach { host =>
+    host.neighbors.foreach { n =>
+      val hostImpl: HostImpl = n.asInstanceOf[HostImpl]
+      hostImpl.neighbors -= host
+      hostImpl.neighborLatencies -= host
+      hostImpl.neighborBandwidths -= host
+      hostImpl.neighborThroughputs -= host
+    }
+    hostsVar.transform(_ - host)
+  }
 }
 
 
@@ -97,7 +120,6 @@ trait QoSSystem {
   def planAdaptation(violations: Set[Violation]): Set[Violation]
 
 
-  private val pathsVar: Var[Set[Path]] = Var(Set.empty)
   private val queriesVar: Var[Set[Query]] = Var(Set.empty)
   private val fireDemandsViolated: Evt[Set[Violation]] = Evt[Set[Violation]]
   private val adaptingVar: Var[Option[Set[Violation]]] = Var(None)
@@ -107,6 +129,8 @@ trait QoSSystem {
     else
       None
   }
+
+  private[traits] val pathsVar: Var[Set[Path]] = Var(Set.empty)
 
   protected val demandsViolated: Event[Set[Violation]] = fireDemandsViolated
 

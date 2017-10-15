@@ -4,6 +4,8 @@ import com.lambdarookie.eventscala.backend.qos.QualityOfService._
 import com.lambdarookie.eventscala.backend.system.traits._
 import rescala._
 
+import scala.util.Random
+
 /**
   * Created by monur.
   */
@@ -34,56 +36,65 @@ object Strategies {
     }
 
     Event {
-      system.adapting().map { violations =>
-        Adaptation(violations.flatMap { v =>
-          val descendants: Set[Operator] = v.operator.getDescendants
-          val operators: Set[Operator] = system.operators()
-          val freeHosts: Set[Host] = system.hosts() -- operators.map(_.host)
-          val hostChoices: Map[Operator, Set[Host]] = v.demand match {
-            case ld: LatencyDemand =>
-//              println(s"ADAPTATION:\tLatency adaptation has begun")
-              descendants.filter(o =>
-                !isFulfilled(system.getLatencyAndUpdatePaths(o.host, v.operator.host), ld)).map { vo =>
-                vo -> freeHosts.collect {
-                  case fh if
-                  isFulfilled(system.getLatencyAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)), ld) &&
-                    !violatesNewDemands(system, vo.host, fh, operators) => fh
-                }
-              }.filter(_._2.nonEmpty).toMap
-            case bd: BandwidthDemand =>
-//              println(s"ADAPTATION:\tBandwidth adaptation has begun")
-              descendants.filter(o =>
-                !isFulfilled(system.getBandwidthAndUpdatePaths(o.host, v.operator.host), bd)).map { vo =>
-                vo -> freeHosts.collect {
-                  case fh if
-                  isFulfilled(system.getBandwidthAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)), bd) &&
-                    !violatesNewDemands(system, vo.host, fh, operators) => fh
-                }
-              }.filter(_._2.nonEmpty).toMap
-            case td: ThroughputDemand =>
-//              println(s"ADAPTATION:\tThroughput adaptation has begun")
-              descendants.filter(o =>
-                !isFulfilled(system.getThroughputAndUpdatePaths(o.host, v.operator.host), td)).map { vo =>
-                vo -> freeHosts.collect {
-                  case fh if
-                  isFulfilled(system.getThroughputAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)), td) &&
-                    !violatesNewDemands(system, vo.host, fh, operators) => fh
-                }
-              }.filter(_._2.nonEmpty).toMap
-          }
+      val operators: Set[Operator] = system.operators()
+      val hosts: Set[Host] = system.hosts()
+      val hostlessOperators: Set[Operator] = operators.filter(o => !hosts.contains(o.host))
+      if (hostlessOperators.nonEmpty) {
+        val freeHosts: Set[Host] = hosts -- operators.map(_.host)
+        Some(Adaptation(hostlessOperators.map { o =>
+          o -> (if (freeHosts.nonEmpty) freeHosts.head else hosts.iterator.drop(Random.nextInt(hosts.size)).next())
+        }.toMap))
+      } else {
+        system.adapting().map { violations =>
+          Adaptation(violations.flatMap { v =>
+            val descendants: Set[Operator] = v.operator.getDescendants
+            val freeHosts: Set[Host] = hosts -- operators.map(_.host)
+            val hostChoices: Map[Operator, Set[Host]] = v.demand match {
+              case ld: LatencyDemand =>
+                //              println(s"ADAPTATION:\tLatency adaptation has begun")
+                descendants.filter(o =>
+                  !isFulfilled(system.getLatencyAndUpdatePaths(o.host, v.operator.host), ld)).map { vo =>
+                  vo -> freeHosts.collect {
+                    case fh if
+                    isFulfilled(system.getLatencyAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)), ld) &&
+                      !violatesNewDemands(system, vo.host, fh, operators) => fh
+                  }
+                }.filter(_._2.nonEmpty).toMap
+              case bd: BandwidthDemand =>
+                //              println(s"ADAPTATION:\tBandwidth adaptation has begun")
+                descendants.filter(o =>
+                  !isFulfilled(system.getBandwidthAndUpdatePaths(o.host, v.operator.host), bd)).map { vo =>
+                  vo -> freeHosts.collect {
+                    case fh if
+                    isFulfilled(system.getBandwidthAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)), bd) &&
+                      !violatesNewDemands(system, vo.host, fh, operators) => fh
+                  }
+                }.filter(_._2.nonEmpty).toMap
+              case td: ThroughputDemand =>
+                //              println(s"ADAPTATION:\tThroughput adaptation has begun")
+                descendants.filter(o =>
+                  !isFulfilled(system.getThroughputAndUpdatePaths(o.host, v.operator.host), td)).map { vo =>
+                  vo -> freeHosts.collect {
+                    case fh if
+                    isFulfilled(system.getThroughputAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)), td) &&
+                      !violatesNewDemands(system, vo.host, fh, operators) => fh
+                  }
+                }.filter(_._2.nonEmpty).toMap
+            }
 
-          if (hostChoices.isEmpty) {
-//            println(s"ADAPTATION:\tNo right host could be found for the violating operators of $v. " +
-//              s"No replacement will be made.")
-            Map.empty[Operator, Host]
-          } else if (assignViolatingOperatorsIfPossible(hostChoices.head, hostChoices.tail)) {
-            assignments
-          } else {
-//            println(s"ADAPTATION:\tThere are not enough suitable hosts for every violating operator of $v. " +
-//              s"No replacement will be made.")
-            Map.empty[Operator, Host]
-          }
-        }.toMap)
+            if (hostChoices.isEmpty) {
+              //            println(s"ADAPTATION:\tNo right host could be found for the violating operators of $v. " +
+              //              s"No replacement will be made.")
+              Map.empty[Operator, Host]
+            } else if (assignViolatingOperatorsIfPossible(hostChoices.head, hostChoices.tail)) {
+              assignments
+            } else {
+              //            println(s"ADAPTATION:\tThere are not enough suitable hosts for every violating operator of $v. " +
+              //              s"No replacement will be made.")
+              Map.empty[Operator, Host]
+            }
+          }.toMap)
+        }
       }
     }
   }

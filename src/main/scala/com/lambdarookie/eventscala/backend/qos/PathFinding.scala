@@ -9,20 +9,11 @@ import com.lambdarookie.eventscala.backend.system.traits.Host
 object PathFinding {
 
   case class Path (source: Host, destination: Host, hops: Seq[Host]) {
-    def latency: TimeSpan = if (hops.isEmpty)
-      source.neighborLatencies(destination)
-    else
-      calculateLatency(toSeq)
+    def latency: TimeSpan = calculateLatency(toSeq)
 
-    def bandwidth: BitRate = if (hops.isEmpty)
-      source.neighborBandwidths(destination)
-    else
-      calculateBandwidth(toSeq)
+    def bandwidth: BitRate = calculateBandwidth(toSeq)
 
-    def throughput: BitRate = if (hops.isEmpty)
-      source.neighborThroughputs(destination)
-    else
-      calculateThroughput(toSeq)
+    def throughput: BitRate = calculateThroughput(toSeq)
 
     def toSeq: Seq[Host] = source +: hops :+ destination
   }
@@ -137,28 +128,40 @@ object PathFinding {
     * @param path Path as a sequence of hosts
     * @return Calculated latency as [[TimeSpan]]
     */
-  private def calculateLatency(path: Seq[Host]): TimeSpan = if (path.nonEmpty && path.tail.nonEmpty)
-    path.head.neighborLatencies(path(1)) + calculateLatency(path.tail)
-  else
-    0.ms
+  private def calculateLatency(path: Seq[Host]): TimeSpan =
+    if (path.nonEmpty && path.tail.nonEmpty)
+      if (path.head.neighborLatencies.contains(path(1)))
+        path.head.neighborLatencies(path(1)) + calculateLatency(path.tail)
+      else
+        Float.PositiveInfinity.sec
+    else
+      0.ms
 
   /**
     * Calculate the bandwidth on a given path
     * @param path Path as a sequence of hosts
     * @return Calculated bandwidth as [[BitRate]]
     */
-  private def calculateBandwidth(path: Seq[Host]): BitRate = if (path.nonEmpty && path.tail.nonEmpty)
-    min(path.head.neighborBandwidths(path(1)), calculateBandwidth(path.tail))
-  else
-    Int.MaxValue.gbps
+  private def calculateBandwidth(path: Seq[Host]): BitRate =
+    if (path.nonEmpty && path.tail.nonEmpty)
+      if (path.head.neighborBandwidths.contains(path(1)))
+        min(path.head.neighborBandwidths(path(1)), calculateBandwidth(path.tail))
+      else
+        0.kbps
+    else
+      Int.MaxValue.gbps
 
   /**
     * Calculate the throughput on a given path
     * @param path Path as a sequence of hosts
     * @return Calculated throughput as [[BitRate]]
     */
-  private def calculateThroughput(path: Seq[Host]): BitRate = if (path.nonEmpty && path.tail.nonEmpty)
-    min(path.head.neighborThroughputs(path(1)), calculateThroughput(path.tail))
-  else
-    Int.MaxValue.gbps
+  private def calculateThroughput(path: Seq[Host]): BitRate =
+    if (path.nonEmpty && path.tail.nonEmpty)
+      if (path.head.neighborThroughputs.contains(path(1)))
+        min(path.head.neighborThroughputs(path(1)), calculateThroughput(path.tail))
+      else
+        0.kbps
+    else
+      Int.MaxValue.gbps
 }

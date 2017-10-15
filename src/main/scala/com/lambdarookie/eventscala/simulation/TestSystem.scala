@@ -39,6 +39,16 @@ case class TestSystem(override val strategy: System => Event[Adaptation], priori
   override def planAdaptation(violations: Set[Violation]): Set[Violation] =
     planAdaptation1(violations, hosts.now, operators.now)
 
+  override def addHosts(hosts: Set[Host]): Unit = {
+    super.addHosts(hosts)
+    if (logging) println(s"LOG:\t\tHosts added: $hosts")
+  }
+
+  override def removeHosts(hosts: Set[Host]): Unit = {
+    super.removeHosts(hosts)
+    if (logging) if (logging) println(s"LOG:\t\tHosts removed: $hosts")
+  }
+
   private def planAdaptation1(violations: Set[Violation], hosts: Set[Host], operators: Set[Operator]): Set[Violation] = {
     val out: Set[Violation] = violations.filter { v =>
       val descendants: Set[Operator] = v.operator.getDescendants
