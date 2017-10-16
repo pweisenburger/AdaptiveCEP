@@ -113,7 +113,8 @@ trait QoSSystem {
   def planAdaptation(violations: Set[Violation]): Set[Violation]
 
 
-  private val pathsVar: Var[Set[Path]] = Var(Set.empty)
+  private var paths: Set[Path] = Set.empty
+
   private val queriesVar: Var[Set[Query]] = Var(Set.empty)
   private val fireDemandsViolated: Evt[Set[Violation]] = Evt[Set[Violation]]
   private val adaptingVar: Var[Option[Set[Violation]]] = Var(None)
@@ -126,7 +127,6 @@ trait QoSSystem {
 
   protected val demandsViolated: Event[Set[Violation]] = fireDemandsViolated
 
-  val paths: Signal[Set[Path]] = pathsVar
   val violations: Signal[Set[Violation]] = Signal{ queriesVar().flatMap(_.violations()) }
   val waiting: Signal[Set[Violation]] = Signal { queriesVar().flatMap(_.waiting()) }
   val adapting: Signal[Option[Set[Violation]]] = adaptingVar
@@ -167,14 +167,14 @@ trait QoSSystem {
   private def updatePaths(path: Seq[Host]): Unit = {
     val path1 = path.init
     var path2 = path.tail
-    pathsVar.transform(_ ++ path1.flatMap { h1 =>
+    paths ++ path1.flatMap { h1 =>
       val out: Set[Path] = path2.map { h2 => Path(h1, h2, path2.span(_ != h2)._1) }.toSet
       path2 = path2.tail
       out
-    })
+    }
   }
 
-  def forgetPaths(): Unit = pathsVar.transform(_ => Set.empty)
+  def forgetPaths(): Unit = paths = Set.empty
 
   def addQuery(query: Query): Unit = queriesVar.transform(x => x + query)
 
@@ -184,12 +184,12 @@ trait QoSSystem {
     if (through.nonEmpty && through.get != to) {
       getLatencyAndUpdatePaths(from, through.get) + getLatencyAndUpdatePaths(through.get, to)
     } else {
-      val found: Set[Path] = paths.now collect { case p@Path(`from`, `to`, _) => p }
+      val found: Set[Path] = paths collect { case p@Path(`from`, `to`, _) => p }
       if (found.size == 1) {
         found.head.latency
       } else {
-        if (found.size > 1) pathsVar.transform(_ -- found) // If there are duplicates it is en error. Remove them
-        val bestPath: Path = priority.choosePath(from, to, paths.now)
+        if (found.size > 1) paths --= found // If there are duplicates it is en error. Remove them
+        val bestPath: Path = priority.choosePath(from, to, paths)
         updatePaths(bestPath.toSeq)
         bestPath.latency
       }
@@ -199,12 +199,12 @@ trait QoSSystem {
     if (through.nonEmpty && through.get != to) {
       min(getBandwidthAndUpdatePaths(from, through.get), getBandwidthAndUpdatePaths(through.get, to))
     } else {
-      val found: Set[Path] = paths.now collect { case p@Path(`from`, `to`, _) => p }
+      val found: Set[Path] = paths collect { case p@Path(`from`, `to`, _) => p }
       if (found.size == 1) {
         found.head.bandwidth
       } else {
-        if (found.size > 1) pathsVar.transform(_ -- found) // If there are duplicates it is en error. Remove them
-        val bestPath: Path = priority.choosePath(from, to, paths.now)
+        if (found.size > 1) paths --= found // If there are duplicates it is en error. Remove them
+        val bestPath: Path = priority.choosePath(from, to, paths)
         updatePaths(bestPath.toSeq)
         bestPath.bandwidth
       }
@@ -214,12 +214,12 @@ trait QoSSystem {
     if (through.nonEmpty && through.get != to) {
       min(getThroughputAndUpdatePaths(from, through.get), getThroughputAndUpdatePaths(through.get, to))
     } else {
-      val found: Set[Path] = paths.now collect { case p@Path(`from`, `to`, _) => p }
+      val found: Set[Path] = paths collect { case p@Path(`from`, `to`, _) => p }
       if (found.size == 1) {
         found.head.throughput
       } else {
-        if (found.size > 1) pathsVar.transform(_ -- found) // If there are duplicates it is en error. Remove them
-        val bestPath: Path = priority.choosePath(from, to, paths.now)
+        if (found.size > 1) paths --= found // If there are duplicates it is en error. Remove them
+        val bestPath: Path = priority.choosePath(from, to, paths)
         updatePaths(bestPath.toSeq)
         bestPath.throughput
       }
