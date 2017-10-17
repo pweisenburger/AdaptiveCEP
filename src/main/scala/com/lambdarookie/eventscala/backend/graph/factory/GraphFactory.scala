@@ -1,10 +1,10 @@
-package com.lambdarookie.eventscala.graph.factory
+package com.lambdarookie.eventscala.backend.graph.factory
 
 import akka.actor.{ActorRef, ActorSystem}
 import com.lambdarookie.eventscala.backend.system.CentralScheduler
 import com.lambdarookie.eventscala.data.Events._
 import com.lambdarookie.eventscala.data.Queries._
-import com.lambdarookie.eventscala.graph.monitors._
+import com.lambdarookie.eventscala.backend.graph.monitors._
 import com.lambdarookie.eventscala.backend.system.traits.{Operator, System}
 
 object GraphFactory {

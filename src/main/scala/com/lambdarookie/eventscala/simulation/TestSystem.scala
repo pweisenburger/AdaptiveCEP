@@ -25,7 +25,7 @@ case class TestSystem(override val strategy: System => Event[Adaptation], priori
       println(s"ADAPTATION:\tViolations added: ${to diff from}")
   }
 
-  override def placeOperator(operator: Operator): Host = {
+  override def chooseHost(operator: Operator): Host = {
     val hosts: Set[Host] = this.hosts.now
     val freeHosts: Set[Host] = hosts -- operators.now.map(_.host)
     val host: Host = if (freeHosts.nonEmpty)

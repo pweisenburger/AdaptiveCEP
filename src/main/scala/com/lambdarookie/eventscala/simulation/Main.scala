@@ -4,8 +4,8 @@ import akka.actor.{ActorRef, ActorSystem, Props}
 import com.lambdarookie.eventscala.data.Events._
 import com.lambdarookie.eventscala.data.Queries._
 import com.lambdarookie.eventscala.dsl.Dsl._
-import com.lambdarookie.eventscala.graph.factory._
-import com.lambdarookie.eventscala.graph.monitors._
+import com.lambdarookie.eventscala.backend.graph.factory._
+import com.lambdarookie.eventscala.backend.graph.monitors._
 import com.lambdarookie.eventscala.backend.qos.QoSUnits._
 import com.lambdarookie.eventscala.backend.qos.PathFinding.Priority
 import com.lambdarookie.eventscala.backend.qos.QualityOfService._

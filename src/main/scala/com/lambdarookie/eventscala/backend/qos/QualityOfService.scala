@@ -46,18 +46,18 @@ object QualityOfService {
   trait ThroughputDemand extends Demand { val bitRate: BitRate }
 
 
-  sealed trait ConditionImpl extends  Condition { var notFulfilled: Boolean = true }
+  private[backend] sealed trait ConditionImpl extends  Condition { var notFulfilled: Boolean = true }
 
-  case class FrequencyConditionImpl(booleanOperator: BooleanOperator, ratio: Ratio)
+  private[backend] case class FrequencyConditionImpl(booleanOperator: BooleanOperator, ratio: Ratio)
     extends FrequencyCondition with ConditionImpl
-  case class ProximityConditionImpl(booleanOperator: BooleanOperator, distance: Distance)
+  private[backend] case class ProximityConditionImpl(booleanOperator: BooleanOperator, distance: Distance)
     extends ProximityCondition with ConditionImpl
 
-  case class LatencyDemandImpl(booleanOperator: BooleanOperator, timeSpan: TimeSpan, conditions: Set[Condition])
+  private[backend] case class LatencyDemandImpl(booleanOperator: BooleanOperator, timeSpan: TimeSpan, conditions: Set[Condition])
     extends LatencyDemand with ConditionImpl
-  case class BandwidthDemandImpl(booleanOperator: BooleanOperator, bitRate: BitRate, conditions: Set[Condition])
+  private[backend] case class BandwidthDemandImpl(booleanOperator: BooleanOperator, bitRate: BitRate, conditions: Set[Condition])
     extends BandwidthDemand with ConditionImpl
-  case class ThroughputDemandImpl(booleanOperator: BooleanOperator, bitRate: BitRate, conditions: Set[Condition])
+  private[backend] case class ThroughputDemandImpl(booleanOperator: BooleanOperator, bitRate: BitRate, conditions: Set[Condition])
     extends ThroughputDemand with ConditionImpl
 
 

@@ -1,4 +1,4 @@
-package com.lambdarookie.eventscala.graph.monitors
+package com.lambdarookie.eventscala.backend.graph.monitors
 
 
 import akka.actor.{ActorContext, ActorRef}

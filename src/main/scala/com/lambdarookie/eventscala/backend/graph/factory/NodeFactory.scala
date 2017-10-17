@@ -1,12 +1,12 @@
-package com.lambdarookie.eventscala.graph.factory
+package com.lambdarookie.eventscala.backend.graph.factory
 
 import akka.actor.{ActorRef, ActorRefFactory, Props}
 import com.lambdarookie.eventscala.backend.system.traits.{Operator, System}
 import com.lambdarookie.eventscala.backend.system.{BinaryOperator, EventSource, UnaryOperator}
 import com.lambdarookie.eventscala.data.Events.Event
 import com.lambdarookie.eventscala.data.Queries._
-import com.lambdarookie.eventscala.graph.monitors.Monitor
-import com.lambdarookie.eventscala.graph.nodes._
+import com.lambdarookie.eventscala.backend.graph.monitors.Monitor
+import com.lambdarookie.eventscala.backend.graph.nodes._
 
 /**
   * Created by monur.

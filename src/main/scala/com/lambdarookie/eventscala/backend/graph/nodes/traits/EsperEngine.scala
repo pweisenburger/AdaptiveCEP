@@ -1,4 +1,4 @@
-package com.lambdarookie.eventscala.graph.nodes.traits
+package com.lambdarookie.eventscala.backend.graph.nodes.traits
 
 import com.espertech.esper.client._
 import com.lambdarookie.eventscala.data.Queries._

@@ -1,11 +1,11 @@
-package com.lambdarookie.eventscala.graph.nodes.traits
+package com.lambdarookie.eventscala.backend.graph.nodes.traits
 
 import akka.actor.ActorRef
 import com.lambdarookie.eventscala.backend.system.BinaryOperator
 import com.lambdarookie.eventscala.backend.system.traits.Operator
 import com.lambdarookie.eventscala.data.Events._
 import com.lambdarookie.eventscala.data.Queries._
-import com.lambdarookie.eventscala.graph.monitors._
+import com.lambdarookie.eventscala.backend.graph.monitors._
 
 trait BinaryNode extends Node {
   override val query: BinaryQuery

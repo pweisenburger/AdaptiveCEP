@@ -28,12 +28,12 @@ trait HostImpl extends Host {
   var neighborBandwidths: Map[Host, BitRate] = Map(this -> Int.MaxValue.gbps)
   var neighborThroughputs: Map[Host, BitRate] = Map(this -> Int.MaxValue.gbps)
 
-  def measureNeighborLatencies(): Unit =
+  private[backend] def measureNeighborLatencies(): Unit =
     neighbors.foreach { n => neighborLatencies += n -> measureLatencyToNeighbor(n) }
 
-  def measureNeighborBandwidths(): Unit =
+  private[backend] def measureNeighborBandwidths(): Unit =
     neighbors.foreach { n => neighborBandwidths += n -> measureBandwidthToNeighbor(n) }
 
-  def measureNeighborThroughputs(): Unit =
+  private[backend] def measureNeighborThroughputs(): Unit =
     neighbors.foreach { n => neighborThroughputs += n -> measureThroughputToNeighbor(n) }
 }

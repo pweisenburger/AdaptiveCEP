@@ -20,11 +20,11 @@ trait Demands {
 
   adaptationPlanned += { vs => waitingVar.transform(w => w ++ vs) }
 
-  def addViolations(violations: Set[Violation]): Unit = violationsVar.transform(_ ++ violations)
-  def removeViolation(violation: Violation): Unit = violationsVar.transform(_ - violation)
-  def fireAdaptationPlanned(violations: Set[Violation]): Unit = fireAdaptationPlanned fire violations
-  def stopAdapting(): Unit = adaptingVar.transform(_ => None)
-  def startAdapting(): Unit = if (adapting.now.isEmpty) {
+  private[backend] def addViolations(violations: Set[Violation]): Unit = violationsVar.transform(_ ++ violations)
+  private[backend] def removeViolation(violation: Violation): Unit = violationsVar.transform(_ - violation)
+  private[backend] def fireAdaptationPlanned(violations: Set[Violation]): Unit = fireAdaptationPlanned fire violations
+  private[backend] def stopAdapting(): Unit = adaptingVar.transform(_ => None)
+  private[backend] def startAdapting(): Unit = if (adapting.now.isEmpty) {
     val w: Set[Violation] = waiting.now
     waitingVar.transform(_ => Set.empty)
     adaptingVar.transform(_ => Some(w))

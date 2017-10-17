@@ -1,12 +1,12 @@
-package com.lambdarookie.eventscala.graph.nodes
+package com.lambdarookie.eventscala.backend.graph.nodes
 
 import akka.actor.ActorRef
 import com.lambdarookie.eventscala.backend.system.UnaryOperator
 import com.lambdarookie.eventscala.backend.system.traits.{Operator, System}
 import com.lambdarookie.eventscala.data.Events._
 import com.lambdarookie.eventscala.data.Queries._
-import com.lambdarookie.eventscala.graph.nodes.traits._
-import com.lambdarookie.eventscala.graph.monitors._
+import com.lambdarookie.eventscala.backend.graph.nodes.traits._
+import com.lambdarookie.eventscala.backend.graph.monitors._
 
 case class DropElemNode(
                          system: System,

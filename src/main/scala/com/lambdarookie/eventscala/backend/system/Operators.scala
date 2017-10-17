@@ -26,9 +26,9 @@ trait BinaryOperator extends Operator {
 
 
 private[backend] sealed trait OperatorImpl extends Operator {
-  var host: Host = cepSystem.placeOperator(this)
+  var host: Host = cepSystem.chooseHost(this)
 
-  def move(to: Host): Unit = host = to
+  private[backend] def move(to: Host): Unit = host = to
 }
 
 private[backend] case class EventSourceImpl(id: String, cepSystem: CEPSystem, query: LeafQuery, outputs: Set[Operator])

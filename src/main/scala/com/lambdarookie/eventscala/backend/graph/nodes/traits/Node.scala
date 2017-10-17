@@ -1,11 +1,11 @@
-package com.lambdarookie.eventscala.graph.nodes.traits
+package com.lambdarookie.eventscala.backend.graph.nodes.traits
 
 import akka.actor.{Actor, ActorRef}
 import com.lambdarookie.eventscala.data.Queries._
-import com.lambdarookie.eventscala.graph.monitors._
+import com.lambdarookie.eventscala.backend.graph.monitors._
 import com.lambdarookie.eventscala.backend.system.traits.{Operator, System}
 import com.lambdarookie.eventscala.data.Events.{Created, Event}
-import com.lambdarookie.eventscala.graph.factory.NodeFactory
+import com.lambdarookie.eventscala.backend.graph.factory.NodeFactory
 
 trait Node extends Actor {
 
