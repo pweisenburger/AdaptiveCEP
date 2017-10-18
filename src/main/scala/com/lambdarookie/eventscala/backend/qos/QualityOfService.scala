@@ -17,7 +17,7 @@ object QualityOfService {
 
 
 
-  sealed trait Condition{
+  sealed trait Condition {
     val booleanOperator: BooleanOperator
 
     def notFulfilled: Boolean
