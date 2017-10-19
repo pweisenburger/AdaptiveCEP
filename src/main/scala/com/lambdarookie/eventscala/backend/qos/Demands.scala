@@ -18,7 +18,7 @@ trait Demands {
   val waiting: Signal[Set[Violation]] = waitingVar
   val adapting: Signal[Option[Set[Violation]]] = adaptingVar
 
-  adaptationPlanned += { vs => waitingVar.transform(w => w ++ vs) }
+  adaptationPlanned += { vs => waitingVar.transform(_ ++ vs) }
 
   private[backend] def addViolations(violations: Set[Violation]): Unit = violationsVar.transform(_ ++ violations)
   private[backend] def removeViolation(violation: Violation): Unit = violationsVar.transform(_ - violation)
