@@ -18,6 +18,7 @@ object QoSUnits {
   }
 
   def min[T <: QoSUnit[T]](first: T, second: T): T = if(first < second) first else second
+  def max[T <: QoSUnit[T]](first: T, second: T): T = if(first > second) first else second
 
 
   //          TimeSpan Begin
@@ -53,32 +54,21 @@ object QoSUnits {
 
 
   //          Distance Begin
-  trait Distance extends QoSUnit[Distance] {
-    def toMeter: Int
+  case class Distance(private val meters: Int) extends QoSUnit[Distance] {
+    def toMeter: Int = meters
+    def toKm: Int = meters / 1000
 
     override def <(other: Distance): Boolean = this.toMeter < other.toMeter
     override def >(other: Distance): Boolean = this.toMeter > other.toMeter
     override def <=(other: Distance): Boolean = this.toMeter <= other.toMeter
+    override def -(other: Distance): Distance = Distance(meters - other.toMeter)
 
-    override def toString: String = this match {
-      case Meter(m) => s"$m.m"
-      case Kilometer(km) => s"$km.km"
-    }
-  }
-
-  case class Meter(i: Int) extends Distance {
-    override def toMeter: Int = i
-    override def -(other: Distance): Distance = Meter(this.toMeter - other.toMeter)
-  }
-
-  case class Kilometer(i: Int) extends Distance {
-    override def toMeter: Int = i * 1000
-    override def -(other: Distance): Distance = Kilometer((this.toMeter - other.toMeter)/1000)
+    override def toString: String = if (toKm > 0) s"$toKm.km" else s"$meters.m"
   }
 
   case class DistanceUnits(i: Int) {
-    def m: Meter = Meter(i)
-    def km: Kilometer = Kilometer(i)
+    def m: Distance = Distance(i)
+    def km: Distance = Distance(i * 1000)
   }
 
   implicit def intToDistanceCreator(i: Int): DistanceUnits = DistanceUnits(i)

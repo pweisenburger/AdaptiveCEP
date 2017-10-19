@@ -11,11 +11,13 @@ import com.lambdarookie.eventscala.data.Events.Event
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.FiniteDuration
 
+case class CoordinateWrapper(coordinates: Set[Coordinate])
+
 case class ConditionsMonitor(frequencyInterval: Int, proximityInterval: Int, logging: Boolean) extends Monitor {
   private var frequencyConditions: Option[Set[FrequencyCondition]] = None
   private var proximityConditions: Option[Set[ProximityCondition]] = None
   private var currentOutput: Option[Int] = None
-  private var farthestDistance: Option[Int] = None
+  private var leafCoordinates: Option[Set[Coordinate]] = None
   private var lowestFrequency: Option[Ratio] = None
 
   override def onCreated(nodeData: NodeData): Unit = {
@@ -37,7 +39,7 @@ case class ConditionsMonitor(frequencyInterval: Int, proximityInterval: Int, log
       if (proximityInterval > 0) nodeData.context.system.scheduler.schedule(
         initialDelay = FiniteDuration(0, TimeUnit.SECONDS),
         interval = FiniteDuration(proximityInterval, TimeUnit.SECONDS),
-        runnable = () => parent ! nodeData.system.getHostByNode(nodeData.context.self).position)
+        runnable = () => parent ! CoordinateWrapper(Set(nodeData.system.getHostByNode(nodeData.context.self).position)))
     }
   }
 
@@ -52,7 +54,7 @@ case class ConditionsMonitor(frequencyInterval: Int, proximityInterval: Int, log
     if (proximityConditions.isEmpty && demands.exists(_.conditions.exists(_.isInstanceOf[ProximityCondition])))
       proximityConditions = Some(demands.flatMap(_.conditions.collect { case pc: ProximityCondition => pc }))
     nodeData match {
-      case _: LeafNodeData => if (logging && (message.isInstanceOf[Coordinate] || message.isInstanceOf[Ratio]))
+      case _: LeafNodeData => if (logging && (message.isInstanceOf[CoordinateWrapper] || message.isInstanceOf[Ratio]))
         println("ERROR:\tA leaf node should not have gotten this message.")
       case _: UnaryNodeData => message match {
         case f: Ratio if frequencyConditions.isEmpty => parent ! f
@@ -61,13 +63,13 @@ case class ConditionsMonitor(frequencyInterval: Int, proximityInterval: Int, log
           if (logging) println(s"LOG:\t\tDescendant leaf node with the lowest frequency emits ${lowestFrequency.get}")
           setIfFrequencyConditionsFulfilled()
           parent ! f
-        case c: Coordinate if proximityConditions.isEmpty => parent ! c
-        case c: Coordinate if proximityConditions.nonEmpty =>
-          farthestDistance = Some(calculateDistance(host.position, c))
+        case cw@CoordinateWrapper(_) if proximityConditions.isEmpty => parent ! cw
+        case cw@CoordinateWrapper(cs) if proximityConditions.nonEmpty =>
+          val farthestDistance: Distance = cs.foldLeft(0.m)((d, c) => max(d, calculateDistance(host.position, c)))
           if (logging)
-            println(s"LOG:\t\tProximity from $host to the farthest leaf host is ${farthestDistance.get} meters.")
-          setIfProximityConditionsFulfilled()
-          parent ! c
+            println(s"LOG:\t\tProximity from $host to the farthest leaf host is $farthestDistance.")
+          setIfProximityConditionsFulfilled(farthestDistance)
+          parent ! cw
         case _ => // We don't care about messages that aren't coordinates or frequency
       }
       case _: BinaryNodeData => message match {
@@ -81,17 +83,23 @@ case class ConditionsMonitor(frequencyInterval: Int, proximityInterval: Int, log
             setIfFrequencyConditionsFulfilled()
           }
           parent ! f
-        case c: Coordinate if proximityConditions.isEmpty => parent ! c
-        case c: Coordinate if proximityConditions.nonEmpty =>
-          if (farthestDistance.isEmpty) {
-            farthestDistance = Some(calculateDistance(host.position, c))
+        case CoordinateWrapper(cs) if proximityConditions.isEmpty =>
+          if (leafCoordinates.isEmpty)
+            leafCoordinates = Some(cs)
+          else
+            parent ! CoordinateWrapper(leafCoordinates.get ++ cs)
+        case CoordinateWrapper(cs) if proximityConditions.nonEmpty =>
+          if (leafCoordinates.isEmpty) {
+            leafCoordinates = Some(cs)
           } else {
-            farthestDistance = Some(math.max(farthestDistance.get, calculateDistance(host.position, c)))
+            val leafCoordinates: Set[Coordinate] = this.leafCoordinates.get ++ cs
+            val farthestDistance: Distance =
+              leafCoordinates.foldLeft(0.m)((d, c) => max(d, calculateDistance(host.position, c)))
             if (logging)
-              println(s"LOG:\t\tProximity from $host to the farthest leaf host is ${farthestDistance.get} meters.")
-            setIfProximityConditionsFulfilled()
+              println(s"LOG:\t\tProximity from $host to the farthest leaf host is $farthestDistance")
+            setIfProximityConditionsFulfilled(farthestDistance)
+            parent ! CoordinateWrapper(leafCoordinates)
           }
-          parent ! c
         case _ => // We don't care about messages that aren't coordinates or frequency
       }
     }
@@ -117,18 +125,17 @@ case class ConditionsMonitor(frequencyInterval: Int, proximityInterval: Int, log
     lowestFrequency = None
   }
 
-  private def setIfProximityConditionsFulfilled(): Unit = proximityConditions.get.foreach{ pc =>
-    val current: Int = farthestDistance.get
-    val expected: Int = pc.distance.toMeter
+  private def setIfProximityConditionsFulfilled(farthestDistance: Distance): Unit = proximityConditions.get.foreach{ pc =>
+    val expected: Distance = pc.distance
     pc.booleanOperator match {
-      case Equal =>         pc.asInstanceOf[ConditionImpl].notFulfilled = !(current == expected)
-      case NotEqual =>      pc.asInstanceOf[ConditionImpl].notFulfilled = !(current != expected)
-      case Greater =>       pc.asInstanceOf[ConditionImpl].notFulfilled = !(current > expected)
-      case GreaterEqual =>  pc.asInstanceOf[ConditionImpl].notFulfilled = !(current >= expected)
-      case Smaller =>       pc.asInstanceOf[ConditionImpl].notFulfilled = !(current < expected)
-      case SmallerEqual =>  pc.asInstanceOf[ConditionImpl].notFulfilled = !(current <= expected)
+      case Equal =>         pc.asInstanceOf[ConditionImpl].notFulfilled = !(farthestDistance == expected)
+      case NotEqual =>      pc.asInstanceOf[ConditionImpl].notFulfilled = !(farthestDistance != expected)
+      case Greater =>       pc.asInstanceOf[ConditionImpl].notFulfilled = !(farthestDistance > expected)
+      case GreaterEqual =>  pc.asInstanceOf[ConditionImpl].notFulfilled = !(farthestDistance >= expected)
+      case Smaller =>       pc.asInstanceOf[ConditionImpl].notFulfilled = !(farthestDistance < expected)
+      case SmallerEqual =>  pc.asInstanceOf[ConditionImpl].notFulfilled = !(farthestDistance <= expected)
     }
-    farthestDistance = None
+    leafCoordinates = None
   }
 
   /**
@@ -137,7 +144,7 @@ case class ConditionsMonitor(frequencyInterval: Int, proximityInterval: Int, log
     * @param to Coordinate of type [[Coordinate]]
     * @return Distance in meters
     */
-  private def calculateDistance(from: Coordinate, to: Coordinate): Int = {
+  private def calculateDistance(from: Coordinate, to: Coordinate): Distance = {
     import math._
 
     val R = 6371 // Radius of the earth
@@ -148,7 +155,7 @@ case class ConditionsMonitor(frequencyInterval: Int, proximityInterval: Int, log
     val c = 2 * atan2(sqrt(a), sqrt(1-a))
     val distance = R * c * 1000 // convert to meters
     val height = from.altitude - to.altitude
-    sqrt(pow(distance, 2) + pow(height, 2)).toInt
+    sqrt(pow(distance, 2) + pow(height, 2)).toInt.m
   }
 }
 
