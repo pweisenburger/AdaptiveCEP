@@ -40,9 +40,13 @@ object PathFinding {
 
       def latencyRate(millis: Float): Float =
         (1f / millis) / (1f / latency._2.toMillis + 1f / latencyOfBandwidthPath + 1f / latencyOfThroughputPath)
-      def bandwidthRate(kbps: Float): Float =
+      def bandwidthRate(kbps: Float): Float = if (kbps == 0f)
+        0f
+      else
         kbps / (bandwidthOfLatencyPath + bandwidth._2.toKbps + bandwidthOfThroughputPath)
-      def throughputRate(kbps: Float): Float =
+      def throughputRate(kbps: Float): Float = if (kbps == 0f)
+        0f
+      else
         kbps / (throughputOfLatencyPath + throughputOfBandwidthPath + throughput._2.toKbps)
 
       val latencyScore: Float = latencyWeightRate * latencyRate(latency._2.toMillis) +
@@ -55,9 +59,11 @@ object PathFinding {
         bandwidthWeightRate * bandwidthRate(bandwidthOfThroughputPath) +
         throughputWeightRate * throughputRate(throughput._2.toKbps)
 
-      if (latencyScore > math.max(bandwidthScore, throughputScore))
-        latency._1
-      else if (bandwidthScore > math.max(latencyScore, throughputScore))
+      if (latencyScore >= math.max(bandwidthScore, throughputScore))
+        {
+          latency._1
+        }
+      else if (bandwidthScore >= math.max(latencyScore, throughputScore))
         bandwidth._1
       else
         throughput._1
