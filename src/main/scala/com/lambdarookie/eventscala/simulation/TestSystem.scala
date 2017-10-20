@@ -4,6 +4,7 @@ import com.lambdarookie.eventscala.backend.qos.QoSUnits._
 import com.lambdarookie.eventscala.backend.qos.PathFinding.Priority
 import com.lambdarookie.eventscala.backend.qos.QualityOfService._
 import com.lambdarookie.eventscala.backend.system.traits._
+import com.lambdarookie.eventscala.simulation.Strategies.{measurePathBandwidth, measurePathLatency, measurePathThroughput, violatesNewDemands}
 import rescala._
 
 import scala.util.Random
@@ -27,9 +28,10 @@ case class TestSystem(override val strategy: System => Event[Adaptation], priori
 
   override def chooseHost(operator: Operator): Host = {
     val hosts: Set[Host] = this.hosts.now
-    val freeHosts: Set[Host] = hosts -- operators.now.map(_.host)
-    val host: Host = if (freeHosts.nonEmpty)
-      freeHosts.head
+    val orderedFreeHosts: Seq[Host] =
+      (hosts -- operators.now.map(_.host)).toSeq.sortWith(_.asInstanceOf[TestHost].id < _.asInstanceOf[TestHost].id)
+    val host: Host = if (orderedFreeHosts.nonEmpty)
+      orderedFreeHosts.head
     else
       hosts.iterator.drop(Random.nextInt(hosts.size)).next()
     if (logging) println(s"LOG:\t\t$operator is placed on $host")
@@ -58,24 +60,27 @@ case class TestSystem(override val strategy: System => Event[Adaptation], priori
           descendants.filter(o =>
             !isFulfilled(getLatencyAndUpdatePaths(o.host, v.operator.host), ld)).exists { vo =>
             freeHosts.exists { fh =>
-              isFulfilled(getLatencyAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)), ld) &&
-                !Strategies.violatesNewDemands(this, vo.host, fh, operators)
+              isFulfilled(getLatencyAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)) +
+                          measurePathLatency(vo, this, Some(fh)), ld) &&
+                !violatesNewDemands(this, vo.host, fh, operators)
             }
           }
         case bd: BandwidthDemand =>
           descendants.filter(o =>
             !isFulfilled(getBandwidthAndUpdatePaths(o.host, v.operator.host), bd)).exists { vo =>
             freeHosts.exists { fh =>
-              isFulfilled(getBandwidthAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)), bd) &&
-                !Strategies.violatesNewDemands(this, vo.host, fh, operators)
+              isFulfilled(min(getBandwidthAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)),
+                              measurePathBandwidth(vo, this, Some(fh))), bd) &&
+                !violatesNewDemands(this, vo.host, fh, operators)
             }
           }
         case td: ThroughputDemand =>
           descendants.filter(o =>
             !isFulfilled(getThroughputAndUpdatePaths(o.host, v.operator.host), td)).exists { vo =>
             freeHosts.exists { fh =>
-              isFulfilled(getThroughputAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)), td) &&
-                !Strategies.violatesNewDemands(this, vo.host, fh, operators)
+              isFulfilled(min(getThroughputAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)),
+                          measurePathThroughput(vo, this, Some(fh))), td) &&
+                !violatesNewDemands(this, vo.host, fh, operators)
             }
           }
       }
@@ -135,25 +140,15 @@ case class TestSystem(override val strategy: System => Event[Adaptation], priori
     val testHost6: TestHost = TestHost(6, createRandomCoordinate)
     val testHost7: TestHost = TestHost(7, createRandomCoordinate)
     val testHost8: TestHost = TestHost(8, createRandomCoordinate)
-    val testHost9: TestHost = TestHost(9, createRandomCoordinate)
-    val testHost10: TestHost = TestHost(10, createRandomCoordinate)
-    val testHost11: TestHost = TestHost(11, createRandomCoordinate)
-    val testHost12: TestHost = TestHost(12, createRandomCoordinate)
-    val testHost13: TestHost = TestHost(13, createRandomCoordinate)
 
-    testHost1.neighbors ++= Set(testHost2, testHost3, testHost12)
-    testHost2.neighbors ++= Set(testHost1, testHost3, testHost4, testHost5, testHost6, testHost7, testHost10)
-    testHost3.neighbors ++= Set(testHost1, testHost2, testHost10, testHost13)
-    testHost4.neighbors ++= Set(testHost2)
-    testHost5.neighbors ++= Set(testHost2)
-    testHost6.neighbors ++= Set(testHost2, testHost8)
-    testHost7.neighbors ++= Set(testHost2, testHost9, testHost10)
-    testHost8.neighbors ++= Set(testHost6, testHost9, testHost11)
-    testHost9.neighbors ++= Set(testHost7, testHost8)
-    testHost10.neighbors ++= Set(testHost2, testHost3, testHost7)
-    testHost11.neighbors ++= Set(testHost8)
-    testHost12.neighbors ++= Set(testHost1)
-    testHost13.neighbors ++= Set(testHost3)
+    testHost1.neighbors ++= Set(testHost3)
+    testHost2.neighbors ++= Set(testHost3, testHost8)
+    testHost3.neighbors ++= Set(testHost1, testHost2, testHost4, testHost7, testHost8)
+    testHost4.neighbors ++= Set(testHost3, testHost5, testHost7)
+    testHost5.neighbors ++= Set(testHost4, testHost6, testHost7)
+    testHost6.neighbors ++= Set(testHost5, testHost7)
+    testHost7.neighbors ++= Set(testHost3, testHost4, testHost5, testHost6, testHost8)
+    testHost8.neighbors ++= Set(testHost2, testHost3, testHost7)
 
 //    testHost1.neighborLatencies ++= Map(testHost2 -> 10.ms, testHost3 -> 10.ms, testHost12 -> 10.ms)
 //    testHost2.neighborLatencies ++= Map(testHost1 -> 10.ms, testHost3 -> 10.ms,
@@ -203,17 +198,16 @@ case class TestSystem(override val strategy: System => Event[Adaptation], priori
 //    testHost12.neighborThroughputs ++= Map(testHost1 -> 70.mbps)
 //    testHost13.neighborThroughputs ++= Map(testHost3 -> 70.mbps)
 
-    val out: Set[Host] = Set(testHost1, testHost2, testHost3, testHost4, testHost5, testHost6, testHost7, testHost8,
-      testHost9, testHost10, testHost11, testHost12, testHost13)
+    val out: Set[Host] = Set(testHost1, testHost2, testHost3, testHost4, testHost5, testHost6, testHost7, testHost8)
     checkNeighborhoodValidity(out)
     out
   }
 }
 
 case class TestHost(id: Int, position: Coordinate) extends HostImpl {
-  override def measureLatencyToNeighbor(neighbor: Host): TimeSpan = (Random.nextInt(10) + 1).ms
+  override def measureLatencyToNeighbor(neighbor: Host): TimeSpan = Random.nextInt(10).ms
 
-  override def measureBandwidthToNeighbor(neighbor: Host): BitRate = (Random.nextInt(50) + 50).mbps
+  override def measureBandwidthToNeighbor(neighbor: Host): BitRate = (Random.nextInt(50) + 55).mbps
 
   override def measureThroughputToNeighbor(neighbor: Host): BitRate = (if (neighborBandwidths.contains(neighbor))
     Random.nextInt(neighborBandwidths(neighbor).toMbps.toInt)

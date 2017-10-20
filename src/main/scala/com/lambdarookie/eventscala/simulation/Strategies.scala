@@ -1,5 +1,6 @@
 package com.lambdarookie.eventscala.simulation
 
+import com.lambdarookie.eventscala.backend.qos.QoSUnits._
 import com.lambdarookie.eventscala.backend.qos.QualityOfService._
 import com.lambdarookie.eventscala.backend.system.traits._
 import rescala._
@@ -56,7 +57,8 @@ object Strategies {
                   !isFulfilled(system.getLatencyAndUpdatePaths(o.host, v.operator.host), ld)).map { vo =>
                   vo -> freeHosts.collect {
                     case fh if
-                    isFulfilled(system.getLatencyAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)), ld) &&
+                    isFulfilled(system.getLatencyAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)) +
+                                measurePathLatency(vo, system, Some(fh)), ld) &&
                       !violatesNewDemands(system, vo.host, fh, operators) => fh
                   }
                 }.filter(_._2.nonEmpty).toMap
@@ -66,7 +68,8 @@ object Strategies {
                   !isFulfilled(system.getBandwidthAndUpdatePaths(o.host, v.operator.host), bd)).map { vo =>
                   vo -> freeHosts.collect {
                     case fh if
-                    isFulfilled(system.getBandwidthAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)), bd) &&
+                    isFulfilled(min(system.getBandwidthAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)),
+                                measurePathBandwidth(vo, system, Some(fh))), bd) &&
                       !violatesNewDemands(system, vo.host, fh, operators) => fh
                   }
                 }.filter(_._2.nonEmpty).toMap
@@ -76,7 +79,8 @@ object Strategies {
                   !isFulfilled(system.getThroughputAndUpdatePaths(o.host, v.operator.host), td)).map { vo =>
                   vo -> freeHosts.collect {
                     case fh if
-                    isFulfilled(system.getThroughputAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)), td) &&
+                    isFulfilled(min(system.getThroughputAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)),
+                                    measurePathThroughput(vo, system, Some(fh))), td) &&
                       !violatesNewDemands(system, vo.host, fh, operators) => fh
                   }
                 }.filter(_._2.nonEmpty).toMap
@@ -117,4 +121,54 @@ object Strategies {
       }
     }
   }
+
+  def measurePathLatency(operator: Operator, system: System, newHost: Option[Host] = None): TimeSpan = {
+    val inputs: Seq[Operator] = operator.inputs
+    if (inputs.isEmpty)
+      0.ms
+    else {
+      val host: Host = if (newHost.isDefined) newHost.get else operator.host
+      if (inputs.size == 1)
+        system.getLatencyAndUpdatePaths(inputs.head.host, host) + measurePathLatency(inputs.head, system)
+      else
+        max(
+          system.getLatencyAndUpdatePaths(inputs.head.host, host) + measurePathLatency(inputs.head, system),
+          system.getLatencyAndUpdatePaths(inputs(1).host, host) + measurePathLatency(inputs(1), system)
+        )
+    }
+  }
+
+  def measurePathBandwidth(operator: Operator, system: System, newHost: Option[Host] = None): BitRate = {
+    val inputs: Seq[Operator] = operator.inputs
+    if (inputs.isEmpty)
+      Int.MaxValue.gbps
+    else {
+      val host: Host = if (newHost.isDefined) newHost.get else operator.host
+      if (inputs.size == 1)
+        min(system.getBandwidthAndUpdatePaths(inputs.head.host, host), measurePathBandwidth(inputs.head, system))
+      else
+        min(
+          min(system.getBandwidthAndUpdatePaths(inputs.head.host, host), measurePathBandwidth(inputs.head, system)),
+          min(system.getBandwidthAndUpdatePaths(inputs(1).host, host), measurePathBandwidth(inputs(1), system))
+        )
+    }
+  }
+
+  def measurePathThroughput(operator: Operator, system: System, newHost: Option[Host] = None): BitRate = {
+    val inputs: Seq[Operator] = operator.inputs
+    if (inputs.isEmpty)
+      Int.MaxValue.gbps
+    else {
+      val host: Host = if (newHost.isDefined) newHost.get else operator.host
+      if (inputs.size == 1)
+        min(system.getThroughputAndUpdatePaths(inputs.head.host, host), measurePathThroughput(inputs.head, system))
+      else
+        min(
+          min(system.getThroughputAndUpdatePaths(inputs.head.host, host), measurePathThroughput(inputs.head, system)),
+          min(system.getThroughputAndUpdatePaths(inputs(1).host, host), measurePathThroughput(inputs(1), system))
+        )
+    }
+  }
+
+
 }
