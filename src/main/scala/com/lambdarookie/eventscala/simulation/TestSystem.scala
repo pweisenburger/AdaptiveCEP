@@ -38,8 +38,7 @@ case class TestSystem(override val strategy: System => Event[Adaptation], priori
     host
   }
 
-  override def planAdaptation(violations: Set[Violation]): Set[Violation] =
-    planAdaptation1(violations, hosts.now, operators.now)
+  override def decideAdaptation(violations: Set[Violation]): Set[Violation] = okDecision(violations, hosts.now, operators.now)
 
   override def addHosts(hosts: Set[Host]): Unit = {
     super.addHosts(hosts)
@@ -51,7 +50,37 @@ case class TestSystem(override val strategy: System => Event[Adaptation], priori
     if (logging) if (logging) println(s"LOG:\t\tHosts removed: $hosts")
   }
 
-  private def planAdaptation1(violations: Set[Violation], hosts: Set[Host], operators: Set[Operator]): Set[Violation] = {
+  private def dummyDecision: Set[Violation] = Set.empty
+
+  private def trivialDecision(violations: Set[Violation], hosts: Set[Host]): Set[Violation] = {
+    def boMatcher[T <: QoSUnit[T]](hosts: Set[Host],
+                                   metricMap: Host => Map[Host, T],
+                                   booleanOperator: BooleanOperator,
+                                   value: T): Boolean = booleanOperator match {
+      case Equal => hosts.exists(h => metricMap(h).values.exists(_ == value))
+      case NotEqual => hosts.exists(h => metricMap(h).values.exists(_ != value))
+      case Greater => hosts.exists(h => metricMap(h).values.exists(_ > value))
+      case GreaterEqual => hosts.exists(h => metricMap(h).values.exists(_ >= value))
+      case Smaller => hosts.exists(h => metricMap(h).values.exists(_ < value))
+      case SmallerEqual => hosts.exists(h => metricMap(h).values.exists(_ <= value))
+    }
+
+    val out: Set[Violation] = violations.collect {
+      case v@Violation(_, ld: LatencyDemand)
+        if boMatcher(hosts, (h) => h.neighborLatencies - h, ld.booleanOperator, ld.timeSpan) => v
+      case v@Violation(_, bd: BandwidthDemand)
+        if boMatcher(hosts, (h) => h.neighborBandwidths - h, bd.booleanOperator, bd.bitRate) => v
+      case v@Violation(_, td: ThroughputDemand)
+        if boMatcher(hosts, (h) => h.neighborThroughputs - h, td.booleanOperator, td.bitRate) => v
+    }
+    if (logging && out.nonEmpty)
+      println(s"ADAPTATION:\tSystem decided to try adapting to $out")
+    if (logging && out.size < violations.size)
+      println(s"ADAPTATION:\tSystem decided not to adapt to ${violations -- out}")
+    out
+  }
+
+  private def okDecision(violations: Set[Violation], hosts: Set[Host], operators: Set[Operator]): Set[Violation] = {
     val out: Set[Violation] = violations.filter { v =>
       val descendants: Set[Operator] = v.operator.getDescendants
       val freeHosts: Set[Host] = hosts -- operators.map(_.host)
@@ -92,34 +121,6 @@ case class TestSystem(override val strategy: System => Event[Adaptation], priori
     out
   }
 
-  private def planAdaptation2(violations: Set[Violation]): Set[Violation] = {
-    def boMatcher[T <: QoSUnit[T]](hosts: Set[Host],
-                                metricMap: Host => Map[Host, T],
-                                booleanOperator: BooleanOperator,
-                                value: T): Boolean = booleanOperator match {
-      case Equal => hosts.exists(h => metricMap(h).values.exists(_ == value))
-      case NotEqual => hosts.exists(h => metricMap(h).values.exists(_ != value))
-      case Greater => hosts.exists(h => metricMap(h).values.exists(_ > value))
-      case GreaterEqual => hosts.exists(h => metricMap(h).values.exists(_ >= value))
-      case Smaller => hosts.exists(h => metricMap(h).values.exists(_ < value))
-      case SmallerEqual => hosts.exists(h => metricMap(h).values.exists(_ <= value))
-    }
-
-    val out: Set[Violation] = violations.collect {
-      case v@Violation(_, ld: LatencyDemand)
-        if boMatcher(hosts.now, (h) => h.neighborLatencies - h, ld.booleanOperator, ld.timeSpan) => v
-      case v@Violation(_, bd: BandwidthDemand)
-        if boMatcher(hosts.now, (h) => h.neighborBandwidths - h, bd.booleanOperator, bd.bitRate) => v
-      case v@Violation(_, td: ThroughputDemand)
-        if boMatcher(hosts.now, (h) => h.neighborThroughputs - h, td.booleanOperator, td.bitRate) => v
-    }
-    if (logging && out.nonEmpty)
-      println(s"ADAPTATION:\tSystem decided to try adapting to $out")
-    if (logging && out.size < violations.size)
-      println(s"ADAPTATION:\tSystem decided not to adapt to ${violations -- out}")
-    out
-  }
-
   private def checkNeighborhoodValidity(hosts: Set[Host]): Unit = {
     hosts.foreach {h =>
       h.neighbors.foreach { n =>
@@ -149,54 +150,6 @@ case class TestSystem(override val strategy: System => Event[Adaptation], priori
     testHost6.neighbors ++= Set(testHost5, testHost7)
     testHost7.neighbors ++= Set(testHost3, testHost4, testHost5, testHost6, testHost8)
     testHost8.neighbors ++= Set(testHost2, testHost3, testHost7)
-
-//    testHost1.neighborLatencies ++= Map(testHost2 -> 10.ms, testHost3 -> 10.ms, testHost12 -> 10.ms)
-//    testHost2.neighborLatencies ++= Map(testHost1 -> 10.ms, testHost3 -> 10.ms,
-//      testHost4 -> 10.ms, testHost5 -> 10.ms, testHost6 -> 10.ms, testHost7 -> 10.ms, testHost10 -> 10.ms)
-//    testHost3.neighborLatencies ++= Map(testHost1 -> 10.ms, testHost2 -> 10.ms, testHost10 -> 10.ms,
-//      testHost13 -> 10.ms)
-//    testHost4.neighborLatencies ++= Map(testHost2 -> 10.ms)
-//    testHost5.neighborLatencies ++= Map(testHost2 -> 10.ms)
-//    testHost6.neighborLatencies ++= Map(testHost2 -> 10.ms, testHost8 -> 10.ms)
-//    testHost7.neighborLatencies ++= Map(testHost2 -> 10.ms, testHost9 -> 10.ms, testHost10 -> 10.ms)
-//    testHost8.neighborLatencies ++= Map(testHost6 -> 10.ms, testHost9 -> 10.ms, testHost11 -> 10.ms)
-//    testHost9.neighborLatencies ++= Map(testHost7 -> 10.ms, testHost8 -> 10.ms)
-//    testHost10.neighborLatencies ++= Map(testHost2 -> 10.ms, testHost3 -> 10.ms, testHost7 -> 10.ms)
-//    testHost11.neighborLatencies ++= Map(testHost8 -> 10.ms)
-//    testHost12.neighborLatencies ++= Map(testHost1 -> 10.ms)
-//    testHost13.neighborLatencies ++= Map(testHost3 -> 10.ms)
-//
-//    testHost1.neighborBandwidths ++= Map(testHost2 -> 100.mbps, testHost3 -> 100.mbps, testHost12 -> 100.mbps)
-//    testHost2.neighborBandwidths ++= Map(testHost1 -> 100.mbps, testHost3 -> 100.mbps, testHost4 -> 100.mbps,
-//      testHost5 -> 100.mbps, testHost6 -> 100.mbps, testHost7 -> 100.mbps, testHost10 -> 100.mbps)
-//    testHost3.neighborBandwidths ++= Map(testHost1 -> 100.mbps, testHost2 -> 100.mbps, testHost10 -> 100.mbps,
-//      testHost13 -> 100.mbps)
-//    testHost4.neighborBandwidths ++= Map(testHost2 -> 100.mbps)
-//    testHost5.neighborBandwidths ++= Map(testHost2 -> 100.mbps)
-//    testHost6.neighborBandwidths ++= Map(testHost2 -> 100.mbps, testHost8 -> 100.mbps)
-//    testHost7.neighborBandwidths ++= Map(testHost2 -> 100.mbps, testHost9 -> 100.mbps, testHost10 -> 100.mbps)
-//    testHost8.neighborBandwidths ++= Map(testHost6 -> 100.mbps, testHost9 -> 100.mbps, testHost11 -> 100.mbps)
-//    testHost9.neighborBandwidths ++= Map(testHost7 -> 100.mbps, testHost8 -> 100.mbps)
-//    testHost10.neighborBandwidths ++= Map(testHost2 -> 100.mbps, testHost3 -> 100.mbps, testHost7 -> 100.mbps)
-//    testHost11.neighborBandwidths ++= Map(testHost8 -> 100.mbps)
-//    testHost12.neighborBandwidths ++= Map(testHost1 -> 100.mbps)
-//    testHost13.neighborBandwidths ++= Map(testHost3 -> 100.mbps)
-//
-//    testHost1.neighborThroughputs ++= Map(testHost2 -> 70.mbps, testHost3 -> 70.mbps, testHost12 -> 70.mbps)
-//    testHost2.neighborThroughputs ++= Map(testHost1 -> 70.mbps, testHost3 -> 70.mbps, testHost4 -> 70.mbps,
-//      testHost5 -> 70.mbps, testHost6 -> 70.mbps, testHost7 -> 70.mbps, testHost10 -> 70.mbps)
-//    testHost3.neighborThroughputs ++= Map(testHost1 -> 70.mbps, testHost2 -> 70.mbps, testHost10 -> 70.mbps,
-//      testHost13 -> 70.mbps)
-//    testHost4.neighborThroughputs ++= Map(testHost2 -> 70.mbps)
-//    testHost5.neighborThroughputs ++= Map(testHost2 -> 70.mbps)
-//    testHost6.neighborThroughputs ++= Map(testHost2 -> 70.mbps, testHost8 -> 70.mbps)
-//    testHost7.neighborThroughputs ++= Map(testHost2 -> 70.mbps, testHost9 -> 70.mbps, testHost10 -> 70.mbps)
-//    testHost8.neighborThroughputs ++= Map(testHost6 -> 70.mbps, testHost9 -> 70.mbps, testHost11 -> 70.mbps)
-//    testHost9.neighborThroughputs ++= Map(testHost7 -> 70.mbps, testHost8 -> 70.mbps)
-//    testHost10.neighborThroughputs ++= Map(testHost2 -> 70.mbps, testHost3 -> 70.mbps, testHost7 -> 70.mbps)
-//    testHost11.neighborThroughputs ++= Map(testHost8 -> 70.mbps)
-//    testHost12.neighborThroughputs ++= Map(testHost1 -> 70.mbps)
-//    testHost13.neighborThroughputs ++= Map(testHost3 -> 70.mbps)
 
     val out: Set[Host] = Set(testHost1, testHost2, testHost3, testHost4, testHost5, testHost6, testHost7, testHost8)
     checkNeighborhoodValidity(out)

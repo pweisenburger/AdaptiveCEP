@@ -16,8 +16,16 @@ object Strategies {
       Adaptation(Map.empty)
     }
   }
+  def trivialStrategy(system: System): Event[Adaptation] = Event {
+    system.adapting().map { _ =>
+      val operators: Set[Operator] = system.operators()
+      val freeHosts: Set[Host] = system.hosts() -- operators.map(_.host)
+      Adaptation(Map(operators.iterator.drop(Random.nextInt(operators.size)).next() ->
+        freeHosts.iterator.drop(Random.nextInt(freeHosts.size)).next()))
+    }
+  }
 
-  def strategy1(system: System): Event[Adaptation] = {
+  def okStrategy(system: System): Event[Adaptation] = {
     var assignments: Map[Operator, Host] = Map.empty
     def assignViolatingOperatorsIfPossible(current: (Operator, Set[Host]),
                                            rest: Map[Operator, Set[Host]],

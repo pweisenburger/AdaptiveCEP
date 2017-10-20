@@ -14,7 +14,7 @@ trait QoSSystem {
 
   val priority: Priority
 
-  def planAdaptation(violations: Set[Violation]): Set[Violation]
+  def decideAdaptation(violations: Set[Violation]): Set[Violation]
 
 
   private var paths: Set[Path] = Set.empty
@@ -39,7 +39,7 @@ trait QoSSystem {
   demandsViolated += { vs =>
     val query: Query = vs.head.operator.query
     query.addViolations(vs)
-    val adaptationPlanned: Set[Violation] = planAdaptation(vs)
+    val adaptationPlanned: Set[Violation] = decideAdaptation(vs)
     if (adaptationPlanned.nonEmpty) query.fireAdaptationPlanned(adaptationPlanned)
   }
 
