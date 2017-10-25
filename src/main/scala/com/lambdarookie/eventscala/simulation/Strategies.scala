@@ -54,51 +54,49 @@ object Strategies {
         o -> (if (freeHosts.nonEmpty) freeHosts.head else hosts.iterator.drop(Random.nextInt(hosts.size)).next())
       }.toMap))
 
-      val decidedAdaptation: Option[Adaptation] =
-        system.adapting().map { violations =>
-          Adaptation(violations.flatMap { v =>
-            val descendants: Set[Operator] = v.operator.getDescendants
-            val hostChoices: Map[Operator, Set[Host]] = v.demand match {
-              case ld: LatencyDemand =>
-                descendants.filter(o =>
-                  !isFulfilled(system.getLatencyAndUpdatePaths(o.host, v.operator.host), ld)).map { vo =>
-                  vo -> freeHosts.collect {
-                    case fh if
-                    isFulfilled(system.getLatencyAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)) +
-                                measurePathLatency(vo, system, Some(fh)), ld) &&
-                      !violatesNewDemands(system, vo.host, fh, operators) => fh
-                  }
-                }.filter(_._2.nonEmpty).toMap
-              case bd: BandwidthDemand =>
-                descendants.filter(o =>
-                  !isFulfilled(system.getBandwidthAndUpdatePaths(o.host, v.operator.host), bd)).map { vo =>
-                  vo -> freeHosts.collect {
-                    case fh if
-                    isFulfilled(min(system.getBandwidthAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)),
-                                measurePathBandwidth(vo, system, Some(fh))), bd) &&
-                      !violatesNewDemands(system, vo.host, fh, operators) => fh
-                  }
-                }.filter(_._2.nonEmpty).toMap
-              case td: ThroughputDemand =>
-                descendants.filter(o =>
-                  !isFulfilled(system.getThroughputAndUpdatePaths(o.host, v.operator.host), td)).map { vo =>
-                  vo -> freeHosts.collect {
-                    case fh if
-                    isFulfilled(min(system.getThroughputAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)),
-                                    measurePathThroughput(vo, system, Some(fh))), td) &&
-                      !violatesNewDemands(system, vo.host, fh, operators) => fh
-                  }
-                }.filter(_._2.nonEmpty).toMap
-            }
+      val decidedAdaptation: Option[Adaptation] = system.adapting().map { violations =>
+        Adaptation(violations.flatMap { v =>
+          val descendants: Set[Operator] = v.operator.getDescendants
+          val hostChoices: Map[Operator, Set[Host]] = v.demand match {
+            case ld: LatencyDemand =>
+              descendants.filter(o =>
+                !isFulfilled(system.getLatencyAndUpdatePaths(o.host, v.operator.host), ld)).map { vo =>
+                vo -> freeHosts.collect {
+                  case fh if
+                  isFulfilled(system.getLatencyAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)) +
+                              measurePathLatency(vo, system, Some(fh)), ld) &&
+                    !violatesNewDemands(system, vo.host, fh, operators) => fh
+                }
+              }.filter(_._2.nonEmpty).toMap
+            case bd: BandwidthDemand =>
+              descendants.filter(o =>
+                !isFulfilled(system.getBandwidthAndUpdatePaths(o.host, v.operator.host), bd)).map { vo =>
+                vo -> freeHosts.collect {
+                  case fh if
+                  isFulfilled(min(system.getBandwidthAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)),
+                              measurePathBandwidth(vo, system, Some(fh))), bd) &&
+                    !violatesNewDemands(system, vo.host, fh, operators) => fh
+                }
+              }.filter(_._2.nonEmpty).toMap
+            case td: ThroughputDemand =>
+              descendants.filter(o =>
+                !isFulfilled(system.getThroughputAndUpdatePaths(o.host, v.operator.host), td)).map { vo =>
+                vo -> freeHosts.collect {
+                  case fh if
+                  isFulfilled(min(system.getThroughputAndUpdatePaths(fh, v.operator.host, Some(vo.outputs.head.host)),
+                                  measurePathThroughput(vo, system, Some(fh))), td) &&
+                    !violatesNewDemands(system, vo.host, fh, operators) => fh
+                }
+              }.filter(_._2.nonEmpty).toMap
+          }
 
-            if (hostChoices.isEmpty)
-              Map.empty[Operator, Host]
-            else if (assignViolatingOperatorsIfPossible(hostChoices.head, hostChoices.tail))
-              assignments
-            else
-              Map.empty[Operator, Host]
-          }.toMap)
-        }
+          if (assignViolatingOperatorsIfPossible(hostChoices.head, hostChoices.tail))
+            assignments
+          else
+            Map.empty[Operator, Host]
+        }.toMap)
+      }
+
       if (hostlessOperators.nonEmpty) emergencyAdaptation else decidedAdaptation
     }
   }

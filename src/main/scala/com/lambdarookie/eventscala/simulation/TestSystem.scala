@@ -38,6 +38,8 @@ case class TestSystem(override val strategy: System => Event[Adaptation], priori
     host
   }
 
+//  override def decideAdaptation(violations: Set[Violation]): Set[Violation] = dummyDecision
+//  override def decideAdaptation(violations: Set[Violation]): Set[Violation] = trivialDecision(violations, hosts.now)
   override def decideAdaptation(violations: Set[Violation]): Set[Violation] = okDecision(violations, hosts.now, operators.now)
 
   override def addHosts(hosts: Set[Host]): Unit = {
@@ -140,38 +142,66 @@ case class TestSystem(override val strategy: System => Event[Adaptation], priori
     val testHost5: TestHost = TestHost(5, createRandomCoordinate)
     val testHost6: TestHost = TestHost(6, createRandomCoordinate)
     val testHost7: TestHost = TestHost(7, createRandomCoordinate)
-    val testHost8: TestHost = TestHost(8, createRandomCoordinate)
 
     testHost1.neighbors ++= Set(testHost3)
-    testHost2.neighbors ++= Set(testHost3, testHost8)
-    testHost3.neighbors ++= Set(testHost1, testHost2, testHost4, testHost7, testHost8)
-    testHost4.neighbors ++= Set(testHost3, testHost5, testHost7)
-    testHost5.neighbors ++= Set(testHost4, testHost6, testHost7)
-    testHost6.neighbors ++= Set(testHost5, testHost7)
-    testHost7.neighbors ++= Set(testHost3, testHost4, testHost5, testHost6, testHost8)
-    testHost8.neighbors ++= Set(testHost2, testHost3, testHost7)
+    testHost2.neighbors ++= Set(testHost3)
+    testHost3.neighbors ++= Set(testHost1, testHost2, testHost4, testHost6, testHost7)
+    testHost4.neighbors ++= Set(testHost3, testHost5)
+    testHost5.neighbors ++= Set(testHost4)
+    testHost6.neighbors ++= Set(testHost3)
+    testHost7.neighbors ++= Set(testHost3)
 
-    val out: Set[Host] = Set(testHost1, testHost2, testHost3, testHost4, testHost5, testHost6, testHost7, testHost8)
+    testHost1.neighborLatencies ++= Map(testHost3 -> 5.ms)
+    testHost2.neighborLatencies ++= Map(testHost3 -> 5.ms)
+    testHost3.neighborLatencies ++= Map(testHost1 -> 5.ms, testHost2 -> 5.ms, testHost4 -> 5.ms,
+      testHost6 -> 5.ms, testHost7 -> 5.ms)
+    testHost4.neighborLatencies ++= Map(testHost3 -> 5.ms, testHost5 -> 5.ms)
+    testHost5.neighborLatencies ++= Map(testHost4 -> 5.ms)
+    testHost6.neighborLatencies ++= Map(testHost3 -> 1.ms)
+    testHost7.neighborLatencies ++= Map(testHost3 -> 5.ms)
+
+    testHost1.neighborBandwidths ++= Map(testHost3 -> 100.mbps)
+    testHost2.neighborBandwidths ++= Map(testHost3 -> 100.mbps)
+    testHost3.neighborBandwidths ++= Map(testHost1 -> 100.mbps, testHost2 -> 100.mbps, testHost4 -> 100.mbps,
+      testHost6 -> 100.mbps, testHost7 -> 100.mbps)
+    testHost4.neighborBandwidths ++= Map(testHost3 -> 100.mbps, testHost5 -> 100.mbps)
+    testHost5.neighborBandwidths ++= Map(testHost4 -> 100.mbps)
+    testHost6.neighborBandwidths ++= Map(testHost3 -> 60.mbps)
+    testHost7.neighborBandwidths ++= Map(testHost3 -> 80.mbps)
+
+    testHost1.neighborThroughputs ++= Map(testHost3 -> 70.mbps)
+    testHost2.neighborThroughputs ++= Map(testHost3 -> 70.mbps)
+    testHost3.neighborThroughputs ++= Map(testHost1 -> 70.mbps, testHost2 -> 70.mbps, testHost4 -> 70.mbps,
+      testHost6 -> 70.mbps, testHost7 -> 70.mbps)
+    testHost4.neighborThroughputs ++= Map(testHost3 -> 70.mbps, testHost5 -> 70.mbps)
+    testHost5.neighborThroughputs ++= Map(testHost4 -> 70.mbps)
+    testHost6.neighborThroughputs ++= Map(testHost3 -> 70.mbps)
+    testHost7.neighborThroughputs ++= Map(testHost3 -> 70.mbps)
+
+
+    val out: Set[Host] = Set(testHost1, testHost2, testHost3, testHost4, testHost5, testHost6, testHost7)
     checkNeighborhoodValidity(out)
     out
   }
+
+  def getHostById(id: Int): Option[TestHost] = hosts.now.collectFirst { case th@TestHost(`id`, _) => th }
 }
 
 case class TestHost(id: Int, position: Coordinate) extends HostImpl {
-  override def measureLatencyToNeighbor(neighbor: Host): TimeSpan = Random.nextInt(10).ms
-
-  override def measureBandwidthToNeighbor(neighbor: Host): BitRate = (Random.nextInt(50) + 55).mbps
-
-  override def measureThroughputToNeighbor(neighbor: Host): BitRate = (if (neighborBandwidths.contains(neighbor))
-    Random.nextInt(neighborBandwidths(neighbor).toMbps.toInt)
-  else
-    Random.nextInt(50)).mbps
-
-//  override def measureLatencyToNeighbor(neighbor: Host): TimeSpan = neighborLatencies(neighbor)
+//  override def measureLatencyToNeighbor(neighbor: Host): TimeSpan = Random.nextInt(10).ms
 //
-//  override def measureBandwidthToNeighbor(neighbor: Host): BitRate = neighborBandwidths(neighbor)
+//  override def measureBandwidthToNeighbor(neighbor: Host): BitRate = (Random.nextInt(50) + 55).mbps
 //
-//  override def measureThroughputToNeighbor(neighbor: Host): BitRate = neighborThroughputs(neighbor)
+//  override def measureThroughputToNeighbor(neighbor: Host): BitRate = (if (neighborBandwidths.contains(neighbor))
+//    Random.nextInt(neighborBandwidths(neighbor).toMbps.toInt)
+//  else
+//    Random.nextInt(55)).mbps
+
+  override def measureLatencyToNeighbor(neighbor: Host): TimeSpan = neighborLatencies(neighbor)
+
+  override def measureBandwidthToNeighbor(neighbor: Host): BitRate = neighborBandwidths(neighbor)
+
+  override def measureThroughputToNeighbor(neighbor: Host): BitRate = neighborThroughputs(neighbor)
 
   override def toString: String = s"Host$id"
 }
