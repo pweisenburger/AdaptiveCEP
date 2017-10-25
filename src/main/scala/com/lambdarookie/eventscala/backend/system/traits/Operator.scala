@@ -24,8 +24,8 @@ trait Operator {
 }
 
 object Operator {
-  val ROOT: String = "00"
-  val SINGLE_CHILD: String = "0"
-  val LEFT_CHILD: String = "1"
-  val RIGHT_CHILD: String = "2"
+  val ROOT: String = "root"
+  val SINGLE_CHILD: String = "single"
+  val LEFT_CHILD: String = "left"
+  val RIGHT_CHILD: String = "right"
 }
