@@ -77,12 +77,17 @@ trait CEPSystem {
 
   def removeHosts(hosts: Set[Host]): Unit = hosts.foreach { host =>
     host.neighbors.foreach { n =>
-      val hostImpl: HostImpl = n.asInstanceOf[HostImpl]
-      hostImpl.neighbors -= host
-      hostImpl.neighborLatencies -= host
-      hostImpl.neighborBandwidths -= host
-      hostImpl.neighborThroughputs -= host
+      val neighborImpl: HostImpl = n.asInstanceOf[HostImpl]
+      neighborImpl.neighbors -= host
+      neighborImpl.neighborLatencies -= host
+      neighborImpl.neighborBandwidths -= host
+      neighborImpl.neighborThroughputs -= host
     }
     hostsVar.transform(_ - host)
+    val hostImpl: HostImpl = host.asInstanceOf[HostImpl]
+    hostImpl.neighbors = Set.empty
+    hostImpl.neighborLatencies = Map.empty
+    hostImpl.neighborBandwidths = Map.empty
+    hostImpl.neighborThroughputs = Map.empty
   }
 }

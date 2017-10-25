@@ -172,11 +172,11 @@ case class DemandsMonitor(interval: Int, logging: Boolean) extends Monitor {
 
   private def logDemands(demands: Set[Demand], name: String, pathMeasurements: Measurements): Unit = {
     if (demands.exists(_.isInstanceOf[LatencyDemand]))
-      println(s"LOG:\t\tNode `$name` has a highest latency of ${pathMeasurements.latency.toMillis} ms.")
+      println(s"LOG:\t\tNode `$name` has the highest latency of ${pathMeasurements.latency}")
     if (demands.exists(_.isInstanceOf[BandwidthDemand]))
-      println(s"LOG:\t\tNode `$name` has a lowest bandwidth of ${pathMeasurements.bandwidth.toMbps} mbps.")
+      println(s"LOG:\t\tNode `$name` has the lowest bandwidth of ${pathMeasurements.bandwidth}")
     if (demands.exists(_.isInstanceOf[ThroughputDemand]))
-      println(s"LOG:\t\tNode `$name` has a lowest throughput of ${pathMeasurements.throughput.toMbps} mbps.")
+      println(s"LOG:\t\tNode `$name` has the lowest throughput of ${pathMeasurements.throughput}")
   }
 
   private def choosePaths(path1Measurements: Measurements, path2Measurements: Measurements): Measurements = {

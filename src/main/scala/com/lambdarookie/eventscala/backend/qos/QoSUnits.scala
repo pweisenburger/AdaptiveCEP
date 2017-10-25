@@ -22,30 +22,30 @@ object QoSUnits {
 
 
   //          TimeSpan Begin
-  case class TimeSpan(millis: Float) extends QoSUnit[TimeSpan] {
-    override def <(other: TimeSpan): Boolean = millis < other.toMillis
-    override def >(other: TimeSpan): Boolean = millis > other.toMillis
-    override def <=(other: TimeSpan): Boolean = millis <= other.toMillis
-    override def -(other: TimeSpan): TimeSpan = TimeSpan(millis - other.toMillis)
-    def +(other: TimeSpan): TimeSpan = TimeSpan(millis + other.toMillis)
+  case class TimeSpan(private val micros: Float) extends QoSUnit[TimeSpan] {
+    override def <(other: TimeSpan): Boolean = micros < other.toMicros
+    override def >(other: TimeSpan): Boolean = micros > other.toMicros
+    override def <=(other: TimeSpan): Boolean = micros <= other.toMicros
+    override def -(other: TimeSpan): TimeSpan = TimeSpan(micros - other.toMicros)
+    def +(other: TimeSpan): TimeSpan = TimeSpan(micros + other.toMicros)
 
-    def toMillis: Float = millis
-    def toMicros: Float = millis / 1000f
-    def toSeconds: Float = millis / 1000000f
-    def toDuration: Duration = Duration.ofMillis(millis.toInt)
+    def toMicros: Float = micros
+    def toMillis: Float = micros / 1000f
+    def toSeconds: Float = micros / 1000000f
+    def toDuration: Duration = Duration.ofMillis(toMillis.toInt)
 
 
     override def toString: String = if (toSeconds > 1)
       s"$toSeconds s"
-    else if (toMicros > 1)
-      s"$toMicros mics"
-    else
+    else if (toMillis > 1)
       s"$toMillis ms"
+    else
+      s"$toMicros μs"
   }
 
   case class TimeSpanUnits(private val i: Float) {
-    def ms: TimeSpan = TimeSpan(i)
-    def mics: TimeSpan = TimeSpan(i * 1000f)
+    def micros: TimeSpan = TimeSpan(i)
+    def ms: TimeSpan = TimeSpan(i * 1000f)
     def sec: TimeSpan = TimeSpan(i * 1000000f)
   }
 
