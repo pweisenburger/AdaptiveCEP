@@ -1,4 +1,4 @@
-package peersim.distributed;
+package peersim.distributed.algorithm1;
 
 
 import distributedadaptivecep.system.Operator;
@@ -8,6 +8,8 @@ import peersim.centralized.NodeParameters;
 import peersim.config.Configuration;
 import peersim.config.FastConfig;
 import peersim.core.*;
+import peersim.distributed.ActiveOperator;
+import peersim.distributed.TentativeOperator;
 import scala.collection.JavaConverters;
 import scala.collection.Seq;
 import scala.collection.mutable.ListBuffer;

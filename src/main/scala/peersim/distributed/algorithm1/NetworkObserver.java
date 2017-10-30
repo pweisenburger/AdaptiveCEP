@@ -1,4 +1,4 @@
-package peersim.distributed;
+package peersim.distributed.algorithm1;
 
 import peersim.config.Configuration;
 import peersim.config.FastConfig;
@@ -6,10 +6,9 @@ import peersim.core.Control;
 import peersim.core.Linkable;
 import peersim.core.Network;
 import peersim.core.Node;
+import peersim.distributed.ActiveOperator;
 
 import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 /**

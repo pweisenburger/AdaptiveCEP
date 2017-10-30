@@ -16,7 +16,7 @@
  *
  */
 
-package peersim.distributed;
+package peersim.distributed.algorithm1;
 
 import peersim.cdsim.CDSimulator;
 import peersim.config.Configuration;

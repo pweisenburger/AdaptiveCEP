@@ -1,5 +1,4 @@
-package peersim.distributed;
-
+package peersim.distributed.algorithm2;
 import peersim.cdsim.CDProtocol;
 import peersim.centralized.NodeParameters;
 import peersim.centralized.Pair;
@@ -8,6 +7,8 @@ import peersim.core.CommonState;
 import peersim.core.Linkable;
 import peersim.core.Network;
 import peersim.core.Node;
+import peersim.distributed.ActiveOperator;
+import peersim.distributed.TentativeOperator;
 import peersim.distributed.messages.ActualCostMessage;
 import peersim.distributed.messages.OptimumCostMessage;
 import peersim.distributed.messages.StateTransferMessage;
@@ -16,6 +17,7 @@ import peersim.edsim.EDProtocol;
 import peersim.transport.Transport;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
@@ -30,27 +32,27 @@ public class AdaptiveCepProtocol extends StaticValuesHolder implements EDProtoco
     private Optional<TentativeOperator> tentativeOperator = Optional.empty();
     private HashMap<Integer, NodeParameters> hostProps = new HashMap<>();
 
-    public HashMap<Integer, NodeParameters> getHostProps() {
+    HashMap<Integer, NodeParameters> getHostProps() {
         return hostProps;
     }
 
-    public void setHostProps(HashMap<Integer, NodeParameters> hostProps) {
+    void setHostProps(HashMap<Integer, NodeParameters> hostProps) {
         this.hostProps = hostProps;
     }
 
-    public Optional<ActiveOperator> getActiveOperator() {
+    Optional<ActiveOperator> getActiveOperator() {
         return activeOperator;
     }
 
-    public void setActiveOperator(Optional<ActiveOperator> activeOperator) {
+    void setActiveOperator(Optional<ActiveOperator> activeOperator) {
         this.activeOperator = activeOperator;
     }
 
-    public Optional<TentativeOperator> getTentativeOperator() {
+    Optional<TentativeOperator> getTentativeOperator() {
         return tentativeOperator;
     }
 
-    public void setTentativeOperator(Optional<TentativeOperator> tentativeOperator) {
+    void setTentativeOperator(Optional<TentativeOperator> tentativeOperator) {
         this.tentativeOperator = tentativeOperator;
     }
 
@@ -59,6 +61,7 @@ public class AdaptiveCepProtocol extends StaticValuesHolder implements EDProtoco
         try {
             prot =  super.clone();
         } catch (Exception e) {
+            e.printStackTrace();
         }
         return prot;
     }
@@ -92,9 +95,16 @@ public class AdaptiveCepProtocol extends StaticValuesHolder implements EDProtoco
                 }
             }
         }
-        for (int j = 0; j < 2; ++j) {
+        /*for (int j = 0; j < 2; ++j) {
             cepProtocol.advance();
+        }*/
+        if(CommonState.getTime()%8.0 ==0){
+            for (int j = 0; j < 3; ++j) {
+                cepProtocol.advance();
+            }
         }
+        //cepProtocol.advance();
+        cepProtocol.setTemperature(cepProtocol.getTemperature() * cepProtocol.getTemperatureReductionFactor());
     }
 
     @Override
@@ -113,7 +123,7 @@ public class AdaptiveCepProtocol extends StaticValuesHolder implements EDProtoco
                     HashMap<Node, NodeParameters> childrenNodeParameters = activeOperator.getChildrenNodeParameters();
                     childrenNodeParameters = (HashMap<Node, NodeParameters>)childrenNodeParameters.entrySet().stream()
                             .filter(e -> activeOperator.getDependencies().contains(e.getKey()))
-                            .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
                     childrenNodeParameters.put(source, params);
                     activeOperator.setChildrenNodeParameters(childrenNodeParameters);
                     /*send the actual cost message to the parent when cost message from all dependencies is received*/
@@ -175,11 +185,28 @@ public class AdaptiveCepProtocol extends StaticValuesHolder implements EDProtoco
                     });
 
                     HashMap<Node, HashMap<Node, NodeParameters>> optimumPath = activeOperator.getOptimumPath();
-                /*find the optimized value from each dependency tree direction*/
+                    /*find the optimized value from each dependency tree direction*/
                     optimumPath = this.findOptimizedPath(nodeParamValues, tentativeOperatorOfChildren, cepProtocol, optimumPath);
-
-                /*Send a optimum value only when an optimum value is received from direction of all branches/dependencies */
+                    AtomicBoolean acceptWorseSolution = new AtomicBoolean(false);
+                     /*Send a optimum value only when an optimum value is received from direction of all branches/dependencies */
                     if(optimumPath.size() == nodeParamValues.size()) {
+                        HashMap<Node, HashMap<Node, NodeParameters>> finalNodeParamValues = nodeParamValues;
+                        optimumPath = (HashMap<Node, HashMap<Node, NodeParameters>>) optimumPath.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> {
+                            Node currentChildBranch = entry.getKey();
+                            //checks if the current optimum is the current child itself
+                            if(entry.getValue().containsKey(currentChildBranch)) {
+                                HashMap<Node, NodeParameters> acceptedWorseSolution = this.findWorseAcceptableSolution(finalNodeParamValues, tentativeOperatorOfChildren, currentChildBranch, cepProtocol);
+                                if(acceptedWorseSolution.size() == 0) {
+                                    return entry.getValue();
+                                }
+                                else  {
+                                    acceptWorseSolution.set(true);
+                                    return acceptedWorseSolution;
+                                }
+                            } else {
+                                return entry.getValue();
+                            }
+                        }));
                     /*find the optimum value among the optimum node from the branches*/
                         NodeParameters optimumValue = this.findOptimumValue(optimumPath, cepProtocol);
 
@@ -187,11 +214,6 @@ public class AdaptiveCepProtocol extends StaticValuesHolder implements EDProtoco
                             Optional<Node> optionalParent = activeOperator.getParent();
                             if(!optionalParent.isPresent()) {
                                 List<Node> dependencies = activeOperator.getDependencies();
-                                /*HashMap<Node, HashMap<Node, NodeParameters>> finalNodeParamValues = nodeParamValues;
-                                List<NodeParameters> dependencyValue = dependencies.stream().map(dependency -> {
-                                    HashMap<Node, NodeParameters> allValues = finalNodeParamValues.get(dependency);
-                                    return allValues.get(dependency);
-                                }).collect(Collectors.toList());*/
 
                                 if(cepProtocol.isAdaptiveLatency() && cepProtocol.isAdaptiveBandwidth()) {
                                     List<NodeParameters> dependencyValue = new ArrayList<>(activeOperator.getChildrenNodeParameters().values());
@@ -201,7 +223,7 @@ public class AdaptiveCepProtocol extends StaticValuesHolder implements EDProtoco
                                         System.out.println(currentValue.getLatency().intValue() + "," + currentValue.getBandwidth().intValue());
                                         /*Ask the child node to adapt only if threshold is breached
                                          **/
-                                        if ((currentValue.getBandwidth() < 25.00 && optimumValue.getLatency() < currentValue.getLatency()) || (currentValue.getLatency() > 80.00 && optimumValue.getLatency() < currentValue.getLatency())) {
+                                        if ((currentValue.getBandwidth() < 25.00 && optimumValue.getBandwidth() < currentValue.getBandwidth() || acceptWorseSolution.get()) || (currentValue.getLatency() > 80.00 && optimumValue.getLatency() < currentValue.getLatency() || acceptWorseSolution.get())) {
                                             HashMap<Node, HashMap<Node, NodeParameters>> finalOptimumPath = optimumPath;
                                             List<Node> newDependencies = dependencies.stream().map(dependency -> {
                                                 HashMap<Node, NodeParameters> optimumNodeMap = finalOptimumPath.get(dependency);
@@ -224,7 +246,7 @@ public class AdaptiveCepProtocol extends StaticValuesHolder implements EDProtoco
                                         /*Ask the child node to adapt only if threshold is breached and the optimum value from other tentative
                                          * operator is less than the current value
                                          **/
-                                        if(currentLatencyValue > 80.00 && optimumValue.getLatency() < currentLatencyValue) {
+                                        if(currentLatencyValue > 80.00 && (optimumValue.getLatency() < currentLatencyValue || acceptWorseSolution.get())) {
                                             HashMap<Node, HashMap<Node, NodeParameters>> finalOptimumPath = optimumPath;
                                             List<Node> newDependencies = dependencies.stream().map(dependency -> {
                                                 HashMap<Node, NodeParameters> optimumNodeMap = finalOptimumPath.get(dependency);
@@ -246,7 +268,7 @@ public class AdaptiveCepProtocol extends StaticValuesHolder implements EDProtoco
                                         /*Ask the child node to adapt only if threshold is breached and the optimum value from other tentative
                                          * operator is less than the current value
                                          **/
-                                        if (currentBandwidthValue < 25.00 && optimumValue.getBandwidth() > currentBandwidthValue) {
+                                        if (currentBandwidthValue < 25.00 && (optimumValue.getBandwidth() > currentBandwidthValue || acceptWorseSolution.get())) {
                                             HashMap<Node, HashMap<Node, NodeParameters>> finalOptimumPath = optimumPath;
                                             List<Node> newDependencies = dependencies.stream().map(dependency -> {
                                                 HashMap<Node, NodeParameters> optimumNodeMap = finalOptimumPath.get(dependency);
@@ -469,13 +491,13 @@ public class AdaptiveCepProtocol extends StaticValuesHolder implements EDProtoco
                     optimumNode = minmaxBy("Maximizing", paramValues);
                 } else if(cepProtocol.isAdaptiveLatency()) {
                     HashMap<Node, Double> latencyMap = (HashMap<Node, Double>) paramValues.entrySet().stream().collect(Collectors.toMap(
-                            e -> e.getKey(),
+                            Map.Entry::getKey,
                             e -> e.getValue().getLatency()
                     ));
                     optimumNode = minmaxBy("Minimizing", latencyMap);
                 } else {
                     HashMap<Node, Double> bandiwdthMap = (HashMap<Node, Double>) paramValues.entrySet().stream().collect(Collectors.toMap(
-                            e -> e.getKey(),
+                            Map.Entry::getKey,
                             e -> e.getValue().getBandwidth()
                     ));
                     optimumNode = minmaxBy("Maximizing", bandiwdthMap);
@@ -488,6 +510,41 @@ public class AdaptiveCepProtocol extends StaticValuesHolder implements EDProtoco
             }
         }
         return optimumPath;
+    }
+
+    private HashMap<Node, NodeParameters> findWorseAcceptableSolution(HashMap<Node, HashMap<Node, NodeParameters>> nodeParamValues, HashMap<Node, Integer> tentativeOperatorOfChildren, Node currentChildBranch, AdaptiveCepProtocol cepProtocol) {
+        HashMap<Node, NodeParameters> paramValues = nodeParamValues.get(currentChildBranch);
+        HashMap<Node, NodeParameters> acceptedWorseValue = new HashMap<>();
+        if (paramValues.size() == tentativeOperatorOfChildren.get(currentChildBranch)) {
+            //To calculate the difference, value from the current child operator is needed
+            if(paramValues.containsKey(currentChildBranch)) {
+                NodeParameters childParams = paramValues.get(currentChildBranch);
+                Map<Node, Boolean> acceptedSoln = paramValues.entrySet().stream().filter(e->e.getKey()!=currentChildBranch)
+                        .collect(Collectors.toMap(Map.Entry::getKey, nodeParameters -> {
+                            Double diff;
+                            if(cepProtocol.isAdaptiveLatency() && cepProtocol.isAdaptiveBandwidth()) {
+                                diff =  (childParams.getBandwidth() + 1 / childParams.getLatency()) - (nodeParameters.getValue().getBandwidth() + 1/nodeParameters.getValue().getLatency());
+                            } else if(cepProtocol.isAdaptiveLatency()) {
+                                diff =  childParams.getLatency() - nodeParameters.getValue().getLatency();
+                            } else {
+                                diff =  nodeParameters.getValue().getBandwidth() - childParams.getBandwidth();
+                            }
+
+                            Double acceptanceProbability = null;
+                            if(diff < 0 && cepProtocol.getTemperature() > cepProtocol.getMinTemperature()) {
+                                acceptanceProbability = Math.exp(diff / cepProtocol.getTemperature());
+                            } else
+                                acceptanceProbability = 0.0;
+                            return acceptanceProbability > Math.random();
+                        }));
+                Optional<Node> selectedSolution = acceptedSoln.entrySet().stream().filter(Map.Entry::getValue).map(Map.Entry::getKey).findAny();
+
+                if(selectedSolution.isPresent()) {
+                    acceptedWorseValue.put(selectedSolution.get(), paramValues.get(selectedSolution.get()));
+                }
+            }
+        }
+        return acceptedWorseValue;
     }
 
     private void sendMessage(NodeParameters value, Node src, Node dest, AdaptiveCepProtocol cepProtocol, Integer pid) {
@@ -536,17 +593,17 @@ public class AdaptiveCepProtocol extends StaticValuesHolder implements EDProtoco
         return nodeParamValues;
     }
 
-    public double randomLatency()
+    double randomLatency()
     {
         return (2 + 98 * CommonState.r.nextDouble());
     }
 
-    public double randomBandwidth()
+    double randomBandwidth()
     {
         return (5 + 95 * CommonState.r.nextDouble());
     }
 
-    public void advance() {
+    void advance() {
         HashMap<Integer, NodeParameters> hostProps = this.getHostProps();
         for (int j = 0; j < Network.size(); ++j) {
             Node other = Network.get(j);

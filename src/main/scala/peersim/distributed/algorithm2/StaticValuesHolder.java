@@ -1,4 +1,4 @@
-package peersim.distributed;
+package peersim.distributed.algorithm2;
 
 import peersim.config.Configuration;
 import peersim.core.Protocol;
@@ -28,6 +28,28 @@ public class StaticValuesHolder implements Protocol {
      *	Adaptive Bandwidth identifier, obtained from config property
      */
     private final boolean adaptiveBandwidth;
+
+    private Double temperature = 1.0;
+
+    private Double minTemperature = 0.01;
+
+    private Double temperatureReductionFactor = 0.9;
+
+    public Double getTemperatureReductionFactor() {
+        return temperatureReductionFactor;
+    }
+
+    public Double getMinTemperature() {
+        return minTemperature;
+    }
+
+    public Double getTemperature() {
+        return temperature;
+    }
+
+    public void setTemperature(Double temperature) {
+        this.temperature = temperature;
+    }
 
     public StaticValuesHolder(String prefix) {
         adaptiveLatency = Configuration.getBoolean(prefix + "." + PAR_ADAPTIVE_LATENCY);
