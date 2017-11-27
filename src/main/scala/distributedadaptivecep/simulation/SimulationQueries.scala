@@ -127,6 +127,51 @@ object SimulationQueries {
         slidingWindow(30.seconds),
         slidingWindow(30.seconds))
       .removeElement1()
+	  
+  val depth5: Query =
+	stream[Int]("A")
+	  .join(
+		  stream[Int]("B"),
+		  slidingWindow(30.seconds),
+		  slidingWindow(30.seconds))
+	  .where { (a, b) => a < b }
+	  .where { (a, b) => a * b > 20 }
+	  .join(
+		  stream[Int]("C"),
+		  slidingWindow(30.seconds),
+		  slidingWindow(30.seconds))
+	  .removeElement1()
+
+  val depth6: Query =
+    stream[Int]("A")
+      .join(
+        stream[Int]("B"),
+        slidingWindow(30.seconds),
+        slidingWindow(30.seconds))
+      .where { (a, b) => a < b }
+      .where { (a, b) => a * b > 20 }
+      .where { (a, b) => a * a < 200 }
+      .join(
+        stream[Int]("C"),
+        slidingWindow(30.seconds),
+        slidingWindow(30.seconds))
+      .removeElement1()
+
+  val depth7: Query =
+    stream[Int]("A")
+      .join(
+        stream[Int]("B"),
+        slidingWindow(30.seconds),
+        slidingWindow(30.seconds))
+      .where { (a, b) => a < b }
+      .where { (a, b) => a * b > 20 }
+      .where { (a, b) => a * a < 200 }
+      .where { (a, b) => b * b < a }
+      .join(
+        stream[Int]("C"),
+        slidingWindow(30.seconds),
+        slidingWindow(30.seconds))
+      .removeElement1()
 
   val sourcesQuery3: Query =stream[Int]("A")
     .join(
