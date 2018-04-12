@@ -70,3 +70,7 @@ Internally, queries expressed using AdaptiveCEP DSL are represented by case clas
 As said, the AdaptiveCEP backend is a tree of Akka actors representing a query, with each actor representing a primitive or an operator of that query. Given a query as well as the `ActorRef`s to the event publishers, the backend will automatically build and start emitting events.
 
 A node representing a primitive (so far, there's only one primitive: a subscription to a stream) is just a plain Akka actor subscribing to the respective publisher, whereas nodes representing operators are all running an independent instance of the Esper event processing engine.
+
+# Publications
+
+Pascal Weisenburger, Manisha Luthra, Boris Koldehofe, and Guido Salvaneschi. 2017. Quality-aware runtime adaptation in complex event processing. In Proceedings of the 12th International Symposium on Software Engineering for Adaptive and Self-Managing Systems (SEAMS '17). IEEE Press, Piscataway, NJ, USA, 140-151
