@@ -18,7 +18,7 @@ simulation.endtime CYCLE * CYCLES
 ################### protocols ===========================
 protocol.link peersim.core.IdleProtocol
 
-protocol.cep peersim.distributed.AdaptiveCepProtocol
+protocol.cep peersim.distributed.algorithm1.AdaptiveCepProtocol
 protocol.cep.linkable link
 #step is to specify how long is a cycle
 protocol.cep.step CYCLE
@@ -26,29 +26,29 @@ protocol.cep.transport tr
 protocol.cep.adaptiveLatency true
 protocol.cep.adaptiveBandwidth true
 
-protocol.urt UniformRandomTransport
+protocol.urt peersim.transport.UniformRandomTransport
 protocol.urt.mindelay (CYCLE*MINDELAY)/100
 protocol.urt.maxdelay (CYCLE*MAXDELAY)/100
 
-protocol.tr UnreliableTransport
+protocol.tr peersim.transport.UnreliableTransport
 protocol.tr.transport urt
 protocol.tr.drop DROP
 
 ################### initialization ======================
 include.init rndlink sch ani
-init.rndlink WireKOut
+init.rndlink peersim.dynamics.WireKOut
 init.rndlink.k 11
 init.rndlink.protocol link
 
-init.sch CDScheduler
+init.sch peersim.edsim.CDScheduler
 init.sch.protocol cep
 init.sch.randstart
 
-init.ani DistributedNetworkInitializer
+init.ani peersim.distributed.algorithm1.DistributedNetworkInitializer
 init.ani.protocol cep
 
 ################ control ==============================
 ##Used to calculate total number of tentative operators available in the entire network
-#control.0 NetworkObserver
+#control.0 peersim.distributed.algorithm1.NetworkObserver
 #control.0.protocol cep
 #control.0.step CYCLE

@@ -24,30 +24,30 @@ protocol.cep.linkable link
 protocol.cep.step CYCLE
 protocol.cep.transport tr
 
-protocol.urt UniformRandomTransport
+protocol.urt peersim.transport.UniformRandomTransport
 protocol.urt.mindelay (CYCLE*MINDELAY)/100
 protocol.urt.maxdelay (CYCLE*MAXDELAY)/100
 
-protocol.tr UnreliableTransport
+protocol.tr peersim.transport.UnreliableTransport
 protocol.tr.transport urt
 protocol.tr.drop DROP
 
 ################### initialization ======================
 include.init rndlink sch ani
-init.rndlink WireKOut
+init.rndlink peersim.dynamics.WireKOut
 init.rndlink.k 11
 init.rndlink.protocol link
 
-init.sch CDScheduler
+init.sch peersim.edsim.CDScheduler
 init.sch.protocol cep
 init.sch.randstart
 
-init.ani AdaptiveNetworkInitializer
+init.ani peersim.centralized.AdaptiveNetworkInitializer
 init.ani.protocol cep
 
 ################ control ==============================
 
-control.0 AdaptiveObserver
+control.0 peersim.centralized.AdaptiveObserver
 control.0.protocol cep
 control.0.transportprotocol urt
 control.0.adaptiveLatency true
