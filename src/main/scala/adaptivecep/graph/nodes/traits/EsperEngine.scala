@@ -2,6 +2,9 @@ package adaptivecep.graph.nodes.traits
 
 import com.espertech.esper.client._
 import adaptivecep.data.Queries._
+import shapeless.HList
+import shapeless.ops.hlist.HKernelAux
+
 
 trait EsperEngine {
 
@@ -31,30 +34,22 @@ trait EsperEngine {
   def destroyServiceProvider(): Unit = {
     serviceProvider.destroy()
   }
-
 }
 
 object EsperEngine {
+  // hack to only let this method be invokable for arg hlistquery
+  def createArrayOfNames(query: Query): Array[String] =
+    throw new IllegalArgumentException("Argument has to be of type HListQuery")
 
-  def createArrayOfNames(query: Query): Array[String] = query match {
-    case _: Query1[_] => Array("e1")
-    case _: Query2[_, _] => Array("e1", "e2")
-    case _: Query3[_, _, _] => Array("e1", "e2", "e3")
-    case _: Query4[_, _, _, _] => Array("e1", "e2", "e3", "e4")
-    case _: Query5[_, _, _, _, _] => Array("e1", "e2", "e3", "e4", "e5")
-    case _: Query6[_, _, _, _, _, _] => Array("e1", "e2", "e3", "e4", "e5", "e6")
-  }
+  def createArrayOfNames[T <: HList](query: HListQuery[T])(implicit op: HKernelAux[T]): Array[String] =
+    (for (i <- 1 to query.length(op)) yield "e"+i).toArray
 
-  def createArrayOfClasses(query: Query): Array[Class[_]] = {
+  def createArrayOfClasses(query: Query): Array[Class[_]] =
+    throw new IllegalArgumentException("Argument has to be of type HListQuery")
+
+  def createArrayOfClasses[T <: HList](query: HListQuery[T])(implicit op: HKernelAux[T]): Array[Class[_]] = {
     val clazz: Class[_] = classOf[AnyRef]
-    query match {
-      case _: Query1[_] => Array(clazz)
-      case _: Query2[_, _] => Array(clazz, clazz)
-      case _: Query3[_, _, _] => Array(clazz, clazz, clazz)
-      case _: Query4[_, _, _, _] => Array(clazz, clazz, clazz, clazz)
-      case _: Query5[_, _, _, _, _] => Array(clazz, clazz, clazz, clazz, clazz)
-      case _: Query6[_, _, _, _, _, _] => Array(clazz, clazz, clazz, clazz, clazz, clazz)
-    }
+    (for (i <- 1 to query.length(op)) yield clazz).toArray
   }
 
   def toAnyRef(any: Any): AnyRef = {

@@ -7,14 +7,16 @@ import adaptivecep.data.Queries._
 import adaptivecep.graph.nodes.traits._
 import adaptivecep.graph.nodes.traits.EsperEngine._
 import adaptivecep.graph.qos._
+import shapeless.HList
+import shapeless.ops.hlist.HKernelAux
 
-case class ConjunctionNode(
+case class ConjunctionNode[A <: HList](
     query: ConjunctionQuery,
     publishers: Map[String, ActorRef],
     frequencyMonitorFactory: MonitorFactory,
     latencyMonitorFactory: MonitorFactory,
     createdCallback: Option[() => Any],
-    eventCallback: Option[(Event) => Any])
+    eventCallback: Option[(Event) => Any])(implicit op: HKernelAux[A])
   extends BinaryNode with EsperEngine {
 
   override val esperServiceProviderUri: String = name

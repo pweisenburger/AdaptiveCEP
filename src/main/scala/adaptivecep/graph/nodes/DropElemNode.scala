@@ -16,26 +16,7 @@ case class DropElemNode(
   extends UnaryNode {
 
   val elemToBeDropped: Int = query match {
-    case DropElem1Of2(_, _) => 1
-    case DropElem1Of3(_, _) => 1
-    case DropElem1Of4(_, _) => 1
-    case DropElem1Of5(_, _) => 1
-    case DropElem1Of6(_, _) => 1
-    case DropElem2Of2(_, _) => 2
-    case DropElem2Of3(_, _) => 2
-    case DropElem2Of4(_, _) => 2
-    case DropElem2Of5(_, _) => 2
-    case DropElem2Of6(_, _) => 2
-    case DropElem3Of3(_, _) => 3
-    case DropElem3Of4(_, _) => 3
-    case DropElem3Of5(_, _) => 3
-    case DropElem3Of6(_, _) => 3
-    case DropElem4Of4(_, _) => 4
-    case DropElem4Of5(_, _) => 4
-    case DropElem4Of6(_, _) => 4
-    case DropElem5Of5(_, _) => 5
-    case DropElem5Of6(_, _) => 5
-    case DropElem6Of6(_, _) => 6
+    case DropElem(_, pos, _) => pos
   }
 
   def handleEvent2(e1: Any, e2: Any): Unit = elemToBeDropped match {

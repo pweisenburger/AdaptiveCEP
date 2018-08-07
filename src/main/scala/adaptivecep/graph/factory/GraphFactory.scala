@@ -5,17 +5,19 @@ import adaptivecep.data.Events._
 import adaptivecep.data.Queries._
 import adaptivecep.graph.nodes._
 import adaptivecep.graph.qos._
+import shapeless.ops.hlist.HKernelAux
+import shapeless.{::, HList, HNil}
 
 object GraphFactory {
 
-  def createImpl(
+  def createImpl[A <: HList, B <: HList](
       actorSystem: ActorSystem,
       query: Query,
       publishers: Map[String, ActorRef],
       frequencyMonitorFactory: MonitorFactory,
       latencyMonitorFactory: MonitorFactory,
       createdCallback: () => Any,
-      eventCallback: (Event) => Any): ActorRef = query match {
+      eventCallback: (Event) => Any)(implicit opA: HKernelAux[A], opB: HKernelAux[B]): ActorRef = query match {
     case streamQuery: StreamQuery =>
       actorSystem.actorOf(Props(
         StreamNode(
@@ -25,7 +27,7 @@ object GraphFactory {
           Some(createdCallback),
           Some(eventCallback))),
         "stream")
-    case sequenceQuery: SequenceQuery =>
+    case sequenceQuery: SequenceQuery[A, B] =>
       actorSystem.actorOf(Props(
         SequenceNode(
           sequenceQuery,
@@ -83,7 +85,7 @@ object GraphFactory {
           frequencyMonitorFactory,
           latencyMonitorFactory,
           Some(createdCallback),
-          Some(eventCallback))),
+          Some(eventCallback))(opA)),
         "conjunction")
     case disjunctionQuery: DisjunctionQuery =>
       actorSystem.actorOf(Props(
@@ -101,12 +103,12 @@ object GraphFactory {
   // https://stackoverflow.com/questions/21147001/why-scala-doesnt-infer-type-from-generic-type-parameters
   def create[A](
       actorSystem: ActorSystem,
-      query: Query1[A],
+      query: HListQuery[A :: HNil],
       publishers: Map[String, ActorRef],
       frequencyMonitorFactory: MonitorFactory,
       latencyMonitorFactory: MonitorFactory,
       createdCallback: () => Any)(
-      eventCallback: (A) => Any): ActorRef =
+      eventCallback: (A) => Any)(implicit op: HKernelAux[A :: HNil]): ActorRef =
     createImpl(
       actorSystem,
       query.asInstanceOf[Query],
@@ -118,12 +120,12 @@ object GraphFactory {
 
   def create[A, B](
       actorSystem: ActorSystem,
-      query: Query2[A, B],
+      query: HListQuery[A :: B :: HNil],
       publishers: Map[String, ActorRef],
       frequencyMonitorFactory: MonitorFactory,
       latencyMonitorFactory: MonitorFactory,
       createdCallback: () => Any)(
-      eventCallback: (A, B) => Any): ActorRef =
+      eventCallback: (A, B) => Any)(implicit op: HKernelAux[A :: B :: HNil]): ActorRef =
     createImpl(
       actorSystem,
       query.asInstanceOf[Query],
@@ -135,12 +137,12 @@ object GraphFactory {
 
   def create[A, B, C](
       actorSystem: ActorSystem,
-      query: Query3[A, B, C],
+      query: HListQuery[A :: B :: C :: HNil],
       publishers: Map[String, ActorRef],
       frequencyMonitorFactory: MonitorFactory,
       latencyMonitorFactory: MonitorFactory,
       createdCallback: () => Any)(
-      eventCallback: (A, B, C) => Any): ActorRef =
+      eventCallback: (A, B, C) => Any)(implicit op: HKernelAux[A :: B :: C :: HNil]): ActorRef =
     createImpl(
       actorSystem,
       query.asInstanceOf[Query],
@@ -152,12 +154,12 @@ object GraphFactory {
 
   def create[A, B, C, D](
       actorSystem: ActorSystem,
-      query: Query4[A, B, C, D],
+      query: HListQuery[A :: B :: C :: D :: HNil],
       publishers: Map[String, ActorRef],
       frequencyMonitorFactory: MonitorFactory,
       latencyMonitorFactory: MonitorFactory,
       createdCallback: () => Any)(
-      eventCallback: (A, B, C, D) => Any): ActorRef =
+      eventCallback: (A, B, C, D) => Any)(implicit op: HKernelAux[A :: B :: C :: D :: HNil]): ActorRef =
     createImpl(
       actorSystem,
       query.asInstanceOf[Query],
@@ -169,12 +171,12 @@ object GraphFactory {
 
   def create[A, B, C, D, E](
       actorSystem: ActorSystem,
-      query: Query5[A, B, C, D, E],
+      query: HListQuery[A :: B :: C :: D :: E :: HNil],
       publishers: Map[String, ActorRef],
       frequencyMonitorFactory: MonitorFactory,
       latencyMonitorFactory: MonitorFactory,
       createdCallback: () => Any)(
-      eventCallback: (A, B, C, D, E) => Any): ActorRef =
+      eventCallback: (A, B, C, D, E) => Any)(implicit op: HKernelAux[A :: B :: C :: D :: E :: HNil]): ActorRef =
     createImpl(
       actorSystem,
       query.asInstanceOf[Query],
@@ -186,12 +188,12 @@ object GraphFactory {
 
   def create[A, B, C, D, E, F](
       actorSystem: ActorSystem,
-      query: Query6[A, B, C, D, E, F],
+      query: HListQuery[A :: B :: C :: D :: E :: F :: HNil],
       publishers: Map[String, ActorRef],
       frequencyMonitorFactory: MonitorFactory,
       latencyMonitorFactory: MonitorFactory,
       createdCallback: () => Any)(
-      eventCallback: (A, B, C, D, E, F) => Any): ActorRef =
+      eventCallback: (A, B, C, D, E, F) => Any)(implicit op: HKernelAux[A :: B :: C :: D :: E :: F :: HNil]): ActorRef =
     createImpl(
       actorSystem,
       query.asInstanceOf[Query],

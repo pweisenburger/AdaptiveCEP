@@ -34,6 +34,7 @@ case class DisjunctionNode(
     }).toArray
   }
 
+  // TODO need to decide how a disjunction node is represented? Coproduct?
   def handleEvent(array: Array[Either[Any, Any]]): Unit = query match {
     case _: Query1[_] =>
       val filledArray: Array[Either[Any, Any]] = fillArray(1, array)

@@ -8,14 +8,16 @@ import adaptivecep.graph.nodes.traits._
 import adaptivecep.graph.nodes.traits.EsperEngine._
 import adaptivecep.graph.qos._
 import adaptivecep.publishers.Publisher._
+import shapeless.ops.hlist.HKernelAux
+import shapeless.{::, HList, HNil}
 
-case class SequenceNode(
-    query: SequenceQuery,
+case class SequenceNode[A <: HList, B <: HList](
+    query: SequenceQuery[A, B],
     publishers: Map[String, ActorRef],
     frequencyMonitorFactory: MonitorFactory,
     latencyMonitorFactory: MonitorFactory,
     createdCallback: Option[() => Any],
-    eventCallback: Option[(Event) => Any])
+    eventCallback: Option[(Event) => Any])(implicit opA: HKernelAux[A], opB: HKernelAux[B])
   extends LeafNode with EsperEngine {
 
   override val esperServiceProviderUri: String = name
@@ -61,8 +63,8 @@ case class SequenceNode(
     destroyServiceProvider()
   }
 
-  addEventType("sq1", SequenceNode.createArrayOfNames(query.s1), SequenceNode.createArrayOfClasses(query.s1))
-  addEventType("sq2", SequenceNode.createArrayOfNames(query.s2), SequenceNode.createArrayOfClasses(query.s2))
+  addEventType("sq1", SequenceNode.createArrayOfNames[A](query.s1), SequenceNode.createArrayOfClasses[A](query.s1))
+  addEventType("sq2", SequenceNode.createArrayOfNames[B](query.s2), SequenceNode.createArrayOfClasses[B](query.s2))
 
   val epStatement: EPStatement = createEpStatement("select * from pattern [every (sq1=sq1 -> sq2=sq2)]")
 
@@ -86,23 +88,12 @@ case class SequenceNode(
 
 object SequenceNode {
 
-  def createArrayOfNames(noReqStream: NStream): Array[String] = noReqStream match {
-    case _: NStream1[_] => Array("e1")
-    case _: NStream2[_, _] => Array("e1", "e2")
-    case _: NStream3[_, _, _] => Array("e1", "e2", "e3")
-    case _: NStream4[_, _, _, _] => Array("e1", "e2", "e3", "e4")
-    case _: NStream5[_, _, _, _, _] => Array("e1", "e2", "e3", "e4", "e5")
-  }
+  def createArrayOfNames[T <: HList](noReqStream: HListNStream[T])(implicit op:HKernelAux[T]): Array[String] =
+    (for (i <- 1 to noReqStream.length(op)) yield "e"+i).toArray
 
-  def createArrayOfClasses(noReqStream: NStream): Array[Class[_]] = {
+  def createArrayOfClasses[T <: HList](noReqStream: HListNStream[T])(implicit op: HKernelAux[T]): Array[Class[_]] = {
     val clazz: Class[_] = classOf[AnyRef]
-    noReqStream match {
-      case _: NStream1[_] => Array(clazz)
-      case _: NStream2[_, _] => Array(clazz, clazz)
-      case _: NStream3[_, _, _] => Array(clazz, clazz, clazz)
-      case _: NStream4[_, _, _, _] => Array(clazz, clazz, clazz, clazz)
-      case _: NStream5[_, _, _, _, _] => Array(clazz, clazz, clazz, clazz, clazz)
-    }
+    (for (i <- 1 to noReqStream.length(op)) yield clazz).toArray
   }
 
 }
