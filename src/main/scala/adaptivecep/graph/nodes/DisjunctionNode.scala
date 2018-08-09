@@ -6,7 +6,7 @@ import adaptivecep.data.Queries._
 import adaptivecep.graph.nodes.traits._
 import adaptivecep.graph.qos._
 
-case class DisjunctionNode(
+/* case class DisjunctionNode(
     query: DisjunctionQuery,
     publishers: Map[String, ActorRef],
     frequencyMonitorFactory: MonitorFactory,
@@ -86,4 +86,4 @@ case class DisjunctionNode(
       latencyMonitor.onMessageReceive(unhandledMessage, nodeData)
   }
 
-}
+}*/

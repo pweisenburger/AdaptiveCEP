@@ -87,7 +87,7 @@ object GraphFactory {
           Some(createdCallback),
           Some(eventCallback))(opA)),
         "conjunction")
-    case disjunctionQuery: DisjunctionQuery =>
+    /*case disjunctionQuery: DisjunctionQuery =>
       actorSystem.actorOf(Props(
         DisjunctionNode(
           disjunctionQuery,
@@ -96,7 +96,7 @@ object GraphFactory {
           latencyMonitorFactory,
           Some(createdCallback),
           Some(eventCallback))),
-        "disjunction")
+        "disjunction")*/
   }
 
   // This is why `eventCallback` is listed separately:

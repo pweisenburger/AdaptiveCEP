@@ -4,8 +4,8 @@ import java.time.Duration
 
 import akka.actor.ActorContext
 import adaptivecep.data.Events._
-import shapeless.ops.hlist.HKernelAux
-import shapeless.HList
+import shapeless.ops.hlist.{HKernelAux, Prepend}
+import shapeless.{HList,::, HNil}
 
 object Queries {
 
@@ -59,15 +59,15 @@ object Queries {
   case class Stream[Types <: HList](publisherName: String, requirements: Set[Requirement]) extends HListQuery[Types] with StreamQuery
 
   // TODO: Type Level Concatenation of HList. Is it possible?
-  case class Sequence[ATypes <: HList, BTypes <: HList, RTypes <: HList](s1: HListNStream[ATypes], s2: HListNStream[BTypes], requirements: Set[Requirement]) extends HListQuery[RTypes] with SequenceQuery[ATypes, BTypes]
+  case class Sequence[ATypes <: HList, BTypes <: HList](s1: HListNStream[ATypes], s2: HListNStream[BTypes], requirements: Set[Requirement]) extends HListQuery[(ATypes, BTypes)::HNil] with SequenceQuery[ATypes, BTypes]
 
   case class Filter1[Types <: HList](sq: HListQuery[Types], cond: Event => Boolean, requirements: Set[Requirement]) extends HListQuery[Types] with FilterQuery
 
   case class DropElem[Types <: HList, RTypes <: HList](sq: HListQuery[Types], position: Int, requirements: Set[Requirement]) extends HListQuery[RTypes] with DropElemQuery
 
-  case class SelfJoin[Types <: HList, RTypes <: HList](sq: HListQuery[Types], w1: Window, w2: Window, requirements: Set[Requirement]) extends HListQuery[RTypes] with SelfJoinQuery
+  case class SelfJoin[Types <: HList, RTypes <: HList](sq: HListQuery[Types], w1: Window, w2: Window, requirements: Set[Requirement])(implicit p: Prepend.Aux[Types, Types, RTypes]) extends HListQuery[RTypes] with SelfJoinQuery
 
-  case class Join[ATypes <: HList, BTypes <: HList, RTypes <: HList]             (sq1: HListQuery[ATypes], sq2: HListQuery[BTypes], w1: Window, w2: Window, requirements: Set[Requirement]) extends HListQuery[RTypes] with JoinQuery
+  case class Join[ATypes <: HList, BTypes <: HList, RTypes <: HList](sq1: HListQuery[ATypes], sq2: HListQuery[BTypes], w1: Window, w2: Window, requirements: Set[Requirement])(implicit p: Prepend.Aux[ATypes, BTypes, RTypes]) extends HListQuery[RTypes] with JoinQuery
 
   case class Conjunction[ATypes <: HList, BTypes <: HList, RTypes <: HList](sq1: HListQuery[ATypes], sq2: HListQuery[BTypes], requirements: Set[Requirement]) extends HListQuery[RTypes] with ConjunctionQuery
 
