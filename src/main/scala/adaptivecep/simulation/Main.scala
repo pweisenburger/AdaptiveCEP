@@ -37,7 +37,7 @@ object Main extends App {
       tumblingWindow(1.instances),
       frequency > ratio( 3.instances,  5.seconds) otherwise { (nodeData) => println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!") },
       frequency < ratio(12.instances, 15.seconds) otherwise { (nodeData) => println(s"PROBLEM:\tNode `${nodeData.name}` emits too many events!") })
-    // .and(stream[Float::HNil]("C"))
+    .and(stream[Float::HNil]("C"))
     //.or(stream[String]("D"))
 
   val query2 = //: Query4[Int, Int, Float, String] =

@@ -17,7 +17,7 @@ case class SequenceNode[A <: HList, B <: HList](
     frequencyMonitorFactory: MonitorFactory,
     latencyMonitorFactory: MonitorFactory,
     createdCallback: Option[() => Any],
-    eventCallback: Option[(Event) => Any])(implicit opA: HKernelAux[A], opB: HKernelAux[B])
+    eventCallback: Option[(Event) => Any])
   extends LeafNode with EsperEngine {
 
   override val esperServiceProviderUri: String = name
@@ -88,12 +88,12 @@ case class SequenceNode[A <: HList, B <: HList](
 
 object SequenceNode {
 
-  def createArrayOfNames[T <: HList](noReqStream: HListNStream[T])(implicit op:HKernelAux[T]): Array[String] =
-    (for (i <- 1 to noReqStream.length(op)) yield "e"+i).toArray
+  def createArrayOfNames[T <: HList](noReqStream: HListNStream[T]): Array[String] =
+    (for (i <- 1 to noReqStream.length) yield "e"+i).toArray
 
-  def createArrayOfClasses[T <: HList](noReqStream: HListNStream[T])(implicit op: HKernelAux[T]): Array[Class[_]] = {
+  def createArrayOfClasses[T <: HList](noReqStream: HListNStream[T]): Array[Class[_]] = {
     val clazz: Class[_] = classOf[AnyRef]
-    (for (i <- 1 to noReqStream.length(op)) yield clazz).toArray
+    (for (i <- 1 to noReqStream.length) yield clazz).toArray
   }
 
 }

@@ -12,8 +12,8 @@ object Queries {
   trait NStream {
     def publisherName: String
   }
-  case class HListNStream[Types <: HList](publisherName: String) extends NStream {
-    def length(implicit op: HKernelAux[Types]): Int = op().length
+  case class HListNStream[Types <: HList](publisherName: String)(implicit op: HKernelAux[Types]) extends NStream {
+    val length: Int = op().length
   }
 
   sealed trait Window
@@ -52,28 +52,27 @@ object Queries {
   sealed trait DisjunctionQuery extends BinaryQuery
 
 
-  trait HListQuery[Types <: HList] extends Query {
-    def length(implicit op: HKernelAux[Types]): Int = op().length
+  abstract class HListQuery[Types <: HList](implicit op: HKernelAux[Types]) extends Query {
+    val length: Int = op().length
   }
 
-  case class Stream[Types <: HList](publisherName: String, requirements: Set[Requirement]) extends HListQuery[Types] with StreamQuery
+  case class Stream[Types <: HList](publisherName: String, requirements: Set[Requirement])(implicit op: HKernelAux[Types]) extends HListQuery[Types] with StreamQuery
 
-  // TODO: Type Level Concatenation of HList. Is it possible?
-  case class Sequence[ATypes <: HList, BTypes <: HList](s1: HListNStream[ATypes], s2: HListNStream[BTypes], requirements: Set[Requirement]) extends HListQuery[(ATypes, BTypes)::HNil] with SequenceQuery[ATypes, BTypes]
+  case class Sequence[ATypes <: HList, BTypes <: HList, RTypes <: HList](s1: HListNStream[ATypes], s2: HListNStream[BTypes], requirements: Set[Requirement])(implicit p: Prepend.Aux[ATypes, BTypes, RTypes], op: HKernelAux[RTypes]) extends HListQuery[RTypes] with SequenceQuery[ATypes, BTypes]
 
-  case class Filter1[Types <: HList](sq: HListQuery[Types], cond: Event => Boolean, requirements: Set[Requirement]) extends HListQuery[Types] with FilterQuery
+  case class Filter[Types <: HList](sq: HListQuery[Types], cond: Event => Boolean, requirements: Set[Requirement])(implicit op: HKernelAux[Types]) extends HListQuery[Types] with FilterQuery
 
-  case class DropElem[Types <: HList, RTypes <: HList](sq: HListQuery[Types], position: Int, requirements: Set[Requirement]) extends HListQuery[RTypes] with DropElemQuery
+  case class DropElem[Types <: HList, RTypes <: HList](sq: HListQuery[Types], position: Int, requirements: Set[Requirement])(implicit op: HKernelAux[RTypes]) extends HListQuery[RTypes] with DropElemQuery
 
-  case class SelfJoin[Types <: HList, RTypes <: HList](sq: HListQuery[Types], w1: Window, w2: Window, requirements: Set[Requirement])(implicit p: Prepend.Aux[Types, Types, RTypes]) extends HListQuery[RTypes] with SelfJoinQuery
+  case class SelfJoin[Types <: HList, RTypes <: HList](sq: HListQuery[Types], w1: Window, w2: Window, requirements: Set[Requirement])(implicit p: Prepend.Aux[Types, Types, RTypes], op: HKernelAux[RTypes]) extends HListQuery[RTypes] with SelfJoinQuery
 
-  case class Join[ATypes <: HList, BTypes <: HList, RTypes <: HList](sq1: HListQuery[ATypes], sq2: HListQuery[BTypes], w1: Window, w2: Window, requirements: Set[Requirement])(implicit p: Prepend.Aux[ATypes, BTypes, RTypes]) extends HListQuery[RTypes] with JoinQuery
+  case class Join[ATypes <: HList, BTypes <: HList, RTypes <: HList](sq1: HListQuery[ATypes], sq2: HListQuery[BTypes], w1: Window, w2: Window, requirements: Set[Requirement])(implicit p: Prepend.Aux[ATypes, BTypes, RTypes], op: HKernelAux[RTypes]) extends HListQuery[RTypes] with JoinQuery
 
-  case class Conjunction[ATypes <: HList, BTypes <: HList, RTypes <: HList](sq1: HListQuery[ATypes], sq2: HListQuery[BTypes], requirements: Set[Requirement]) extends HListQuery[RTypes] with ConjunctionQuery
+  case class Conjunction[ATypes <: HList, BTypes <: HList, RTypes <: HList](sq1: HListQuery[ATypes], sq2: HListQuery[BTypes], requirements: Set[Requirement])(implicit p: Prepend.Aux[ATypes, BTypes, RTypes], op: HKernelAux[RTypes]) extends HListQuery[RTypes] with ConjunctionQuery
 
   type X = Unit
   // TODO
-  // case class Disjunction[ATypes <: HList, BTypes <: HList](sq1: HListQuery[ATypes], sq2: HListQuery[BTypes], requirements: Set[Requirement]) extends HListQuery[Either[ATypes, BTypes]] with DisjunctionQuery
+  // case class Disjunction[ATypes <: HList, BTypes <: HList](sq1: HListQuery[ATypes], sq2: HListQuery[BTypes], requirements: Set[Requirement]) extends HListQuery[] with DisjunctionQuery
   // case class Disjunction12[A, B, C]                            (sq1: Query1[A],                sq2: Query2[B, C],             requirements: Set[Requirement]) extends Query2[Either[A, B], Either[X, C]]                                                         with DisjunctionQuery
   // case class Disjunction13[A, B, C, D]                         (sq1: Query1[A],                sq2: Query3[B, C, D],          requirements: Set[Requirement]) extends Query3[Either[A, B], Either[X, C], Either[X, D]]                                           with DisjunctionQuery
   // case class Disjunction14[A, B, C, D, E]                      (sq1: Query1[A],                sq2: Query4[B, C, D, E],       requirements: Set[Requirement]) extends Query4[Either[A, B], Either[X, C], Either[X, D], Either[X, E]]                             with DisjunctionQuery

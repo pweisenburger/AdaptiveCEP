@@ -4,7 +4,7 @@ import java.time.Duration
 
 import adaptivecep.data.Events._
 import adaptivecep.data.Queries._
-import shapeless.ops.hlist.Prepend
+import shapeless.ops.hlist.{HKernelAux, Prepend}
 import shapeless.{HList, HNil}
 
 object Dsl {
@@ -36,7 +36,7 @@ object Dsl {
   def tumblingWindow (instances: Instances): Window = TumblingInstances (instances.i)
   def tumblingWindow (seconds: Seconds):     Window = TumblingTime      (seconds.i)
 
-  def nStream[Types <: HList](publisherName: String): HListNStream[Types] = HListNStream[Types](publisherName)
+  def nStream[Types <: HList](publisherName: String)(implicit op: HKernelAux[Types]): HListNStream[Types] = HListNStream[Types](publisherName)(op)
 
   case class Ratio(instances: Instances, seconds: Seconds)
 
@@ -80,7 +80,7 @@ object Dsl {
       LatencyRequirement(operator, duration, callback)
   }
 
-  def stream[Types <: HList](publisherName: String, requirements: Requirement*): HListQuery[Types] = Stream(publisherName, requirements.toSet)
+  def stream[Types <: HList](publisherName: String, requirements: Requirement*)(implicit op: HKernelAux[Types]): HListQuery[Types] = Stream(publisherName, requirements.toSet)(op)
 
   case class SequenceHelper[ATypes <: HList](s: HListNStream[ATypes]) {
     def ->[BTypes <: HList](s2: HListNStream[BTypes]): (HListNStream[ATypes], HListNStream[BTypes]) = (s, s2)
@@ -88,17 +88,16 @@ object Dsl {
 
   implicit def nStreamToSequenceHelper[Types <: HList](s: HListNStream[Types]): SequenceHelper[Types] = SequenceHelper(s)
 
-  // TODO type level concatenation of HList
-  def sequence[ATypes <: HList, BTypes <: HList, RTypes <: HList](tuple: (HListNStream[ATypes], HListNStream[BTypes]), requirements: Requirement*):
-    Sequence[ATypes, BTypes] = Sequence(tuple._1, tuple._2, requirements.toSet)
+  def sequence[ATypes <: HList, BTypes <: HList, RTypes <: HList](tuple: (HListNStream[ATypes], HListNStream[BTypes]), requirements: Requirement*)(implicit p: Prepend.Aux[ATypes, BTypes, RTypes], op: HKernelAux[RTypes]):
+    Sequence[ATypes, BTypes, RTypes] = Sequence(tuple._1, tuple._2, requirements.toSet)(p, op)
 
   implicit def queryToQueryHelper[ATypes <: HList](q: HListQuery[ATypes]): QueryHelper[ATypes] = QueryHelper(q)
 
   case class QueryHelper[ATypes <: HList](q: HListQuery[ATypes]) {
-    def where(cond: ATypes => Boolean, requirements: Requirement*): HListQuery[ATypes] = Filter1(q, toFunEventBoolean(cond), requirements.toSet)
-    def selfJoin(w1: Window, w2: Window, requirements: Requirement*)(implicit p: Prepend[ATypes, ATypes]): HListQuery[p.Out] = SelfJoin[ATypes, p.Out](q, w1, w2,requirements.toSet)(p)
-    def join[BTypes <: HList](q2: HListQuery[BTypes], w1: Window, w2: Window, requirements: Requirement*)(implicit p: Prepend[ATypes, BTypes]): HListQuery[p.Out] = Join[ATypes, BTypes, p.Out](q, q2, w1, w2, requirements.toSet)(p)
-    def and[BTypes <: HList, RTypes <: HList](q2: HListQuery[BTypes], requirements: Requirement*): HListQuery[RTypes] = Conjunction (q, q2, requirements.toSet)
+    def where(cond: ATypes => Boolean, requirements: Requirement*)(implicit op: HKernelAux[ATypes]): HListQuery[ATypes] = Filter(q, toFunEventBoolean(cond), requirements.toSet)(op)
+    def selfJoin[RTypes <: HList](w1: Window, w2: Window, requirements: Requirement*)(implicit p: Prepend.Aux[ATypes, ATypes, RTypes], op: HKernelAux[RTypes]): HListQuery[p.Out] = SelfJoin[ATypes, p.Out](q, w1, w2,requirements.toSet)(p, op)
+    def join[BTypes <: HList, RTypes <: HList](q2: HListQuery[BTypes], w1: Window, w2: Window, requirements: Requirement*)(implicit p: Prepend.Aux[ATypes, BTypes, RTypes], op: HKernelAux[RTypes]): HListQuery[p.Out] = Join[ATypes, BTypes, p.Out](q, q2, w1, w2, requirements.toSet)(p, op)
+    def and[BTypes <: HList, RTypes <: HList](q2: HListQuery[BTypes], requirements: Requirement*)(implicit p: Prepend.Aux[ATypes, BTypes, RTypes], op: HKernelAux[RTypes]): HListQuery[RTypes] = Conjunction (q, q2, requirements.toSet)(p, op)
     // TODO i think i need another Query a CoproductQuery?
     // def or[BTypes <: HList](q2: HListQuery[BTypes], requirements: Requirement*): HListQuery[Either[ATypes, BTypes]] = Disjunction(q, q2, requirements.toSet)
   }

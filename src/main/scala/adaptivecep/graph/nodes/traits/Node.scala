@@ -4,6 +4,8 @@ import akka.actor.{Actor, ActorRef, Props}
 import adaptivecep.data.Queries._
 import adaptivecep.graph.nodes._
 import adaptivecep.graph.qos._
+import shapeless.HList
+import shapeless.ops.hlist.HKernelAux
 
 trait Node extends Actor {
 
@@ -14,7 +16,7 @@ trait Node extends Actor {
   val frequencyMonitorFactory: MonitorFactory
   val latencyMonitorFactory: MonitorFactory
 
-  def createChildNode(
+  def createChildNode[A <: HList, B <: HList](
       id: Int,
       query: Query
     ): ActorRef = query match {
@@ -28,7 +30,7 @@ trait Node extends Actor {
           None,
           None)),
         s"$name-$id-stream")
-    case sequenceQuery: SequenceQuery =>
+    case sequenceQuery: SequenceQuery[A, B] =>
       context.actorOf(Props(
         SequenceNode(
           sequenceQuery,
@@ -48,7 +50,7 @@ trait Node extends Actor {
           None,
           None)),
         s"$name-$id-filter")
-    case dropElemQuery: DropElemQuery =>
+    /*case dropElemQuery: DropElemQuery =>
       context.actorOf(Props(
         DropElemNode(
           dropElemQuery,
@@ -57,7 +59,7 @@ trait Node extends Actor {
           latencyMonitorFactory,
           None,
           None)),
-        s"$name-$id-dropelem")
+        s"$name-$id-dropelem")*/
     case selfJoinQuery: SelfJoinQuery =>
       context.actorOf(Props(
         SelfJoinNode(
@@ -78,7 +80,7 @@ trait Node extends Actor {
           None,
           None)),
         s"$name-$id-join")
-    case conjunctionQuery: ConjunctionQuery =>
+    /*case conjunctionQuery: ConjunctionQuery =>
       context.actorOf(Props(
         ConjunctionNode(
           conjunctionQuery,
@@ -87,8 +89,8 @@ trait Node extends Actor {
           latencyMonitorFactory,
           None,
           None)),
-        s"$name-$id-conjunction")
-    case disjunctionQuery: DisjunctionQuery =>
+        s"$name-$id-conjunction")*/
+    /*case disjunctionQuery: DisjunctionQuery =>
       context.actorOf(Props(
         DisjunctionNode(
           disjunctionQuery,
@@ -97,8 +99,7 @@ trait Node extends Actor {
           latencyMonitorFactory,
           None,
           None)),
-        s"$name-$id-disjunction")
-
+        s"$name-$id-disjunction")*/
   }
 
 }

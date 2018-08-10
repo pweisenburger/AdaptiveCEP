@@ -31,7 +31,7 @@ class System(implicit actorSystem: ActorSystem) {
     roots += actorSystem.actorOf(Props(query match {
       case streamQuery: StreamQuery =>
         StreamNode(streamQuery, publishers, frequencyMonitorFactory, latencyMonitorFactory, createdCallback, eventCallback)
-      case sequenceQuery: SequenceQuery =>
+      case sequenceQuery: SequenceQuery[_, _] =>
         SequenceNode(sequenceQuery, publishers, frequencyMonitorFactory, latencyMonitorFactory, createdCallback, eventCallback)
       case filterQuery: FilterQuery =>
         FilterNode(filterQuery, publishers, frequencyMonitorFactory, latencyMonitorFactory, createdCallback, eventCallback)
@@ -43,8 +43,8 @@ class System(implicit actorSystem: ActorSystem) {
         JoinNode(joinQuery, publishers, frequencyMonitorFactory, latencyMonitorFactory, createdCallback, eventCallback)
       case conjunctionQuery: ConjunctionQuery =>
         ConjunctionNode(conjunctionQuery, publishers, frequencyMonitorFactory, latencyMonitorFactory, createdCallback, eventCallback)
-      case disjunctionQuery: DisjunctionQuery =>
-        DisjunctionNode(disjunctionQuery, publishers, frequencyMonitorFactory, latencyMonitorFactory, createdCallback, eventCallback)
+      /*case disjunctionQuery: DisjunctionQuery =>
+        DisjunctionNode(disjunctionQuery, publishers, frequencyMonitorFactory, latencyMonitorFactory, createdCallback, eventCallback)*/
     }), s"root-${System.index.getAndIncrement()}")
 
   def consumers: Seq[Operator] = {

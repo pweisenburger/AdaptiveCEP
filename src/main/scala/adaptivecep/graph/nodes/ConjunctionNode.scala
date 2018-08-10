@@ -16,7 +16,7 @@ case class ConjunctionNode[A <: HList](
     frequencyMonitorFactory: MonitorFactory,
     latencyMonitorFactory: MonitorFactory,
     createdCallback: Option[() => Any],
-    eventCallback: Option[(Event) => Any])(implicit op: HKernelAux[A])
+    eventCallback: Option[(Event) => Any])
   extends BinaryNode with EsperEngine {
 
   override val esperServiceProviderUri: String = name

@@ -41,15 +41,15 @@ object EsperEngine {
   def createArrayOfNames(query: Query): Array[String] =
     throw new IllegalArgumentException("Argument has to be of type HListQuery")
 
-  def createArrayOfNames[T <: HList](query: HListQuery[T])(implicit op: HKernelAux[T]): Array[String] =
-    (for (i <- 1 to query.length(op)) yield "e"+i).toArray
+  def createArrayOfNames[T <: HList](query: HListQuery[T])/*(implicit op: HKernelAux[T])*/: Array[String] =
+    (for (i <- 1 to query.length) yield "e"+i).toArray
 
   def createArrayOfClasses(query: Query): Array[Class[_]] =
     throw new IllegalArgumentException("Argument has to be of type HListQuery")
 
-  def createArrayOfClasses[T <: HList](query: HListQuery[T])(implicit op: HKernelAux[T]): Array[Class[_]] = {
+  def createArrayOfClasses[T <: HList](query: HListQuery[T])/*(implicit op: HKernelAux[T])*/: Array[Class[_]] = {
     val clazz: Class[_] = classOf[AnyRef]
-    (for (i <- 1 to query.length(op)) yield clazz).toArray
+    (for (i <- 1 to query.length) yield clazz).toArray
   }
 
   def toAnyRef(any: Any): AnyRef = {
