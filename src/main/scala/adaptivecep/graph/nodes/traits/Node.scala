@@ -5,7 +5,6 @@ import adaptivecep.data.Queries._
 import adaptivecep.graph.nodes._
 import adaptivecep.graph.qos._
 import shapeless.HList
-import shapeless.ops.hlist.HKernelAux
 
 trait Node extends Actor {
 
@@ -80,7 +79,7 @@ trait Node extends Actor {
           None,
           None)),
         s"$name-$id-join")
-    /*case conjunctionQuery: ConjunctionQuery =>
+    case conjunctionQuery: ConjunctionQuery =>
       context.actorOf(Props(
         ConjunctionNode(
           conjunctionQuery,
@@ -89,7 +88,7 @@ trait Node extends Actor {
           latencyMonitorFactory,
           None,
           None)),
-        s"$name-$id-conjunction")*/
+        s"$name-$id-conjunction")
     /*case disjunctionQuery: DisjunctionQuery =>
       context.actorOf(Props(
         DisjunctionNode(
