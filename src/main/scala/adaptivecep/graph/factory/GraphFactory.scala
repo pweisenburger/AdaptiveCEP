@@ -17,7 +17,7 @@ object GraphFactory {
       frequencyMonitorFactory: MonitorFactory,
       latencyMonitorFactory: MonitorFactory,
       createdCallback: () => Any,
-      eventCallback: (Event) => Any)(implicit opA: HKernelAux[A], opB: HKernelAux[B]): ActorRef = query match {
+      eventCallback: (Event) => Any): ActorRef = query match {
     case streamQuery: StreamQuery =>
       actorSystem.actorOf(Props(
         StreamNode(
@@ -85,7 +85,7 @@ object GraphFactory {
           frequencyMonitorFactory,
           latencyMonitorFactory,
           Some(createdCallback),
-          Some(eventCallback))(opA)),
+          Some(eventCallback))),
         "conjunction")
     /*case disjunctionQuery: DisjunctionQuery =>
       actorSystem.actorOf(Props(
@@ -108,7 +108,7 @@ object GraphFactory {
       frequencyMonitorFactory: MonitorFactory,
       latencyMonitorFactory: MonitorFactory,
       createdCallback: () => Any)(
-      eventCallback: (A) => Any)(implicit op: HKernelAux[A :: HNil]): ActorRef =
+      eventCallback: (A) => Any): ActorRef =
     createImpl(
       actorSystem,
       query.asInstanceOf[Query],
@@ -125,7 +125,7 @@ object GraphFactory {
       frequencyMonitorFactory: MonitorFactory,
       latencyMonitorFactory: MonitorFactory,
       createdCallback: () => Any)(
-      eventCallback: (A, B) => Any)(implicit op: HKernelAux[A :: B :: HNil]): ActorRef =
+      eventCallback: (A, B) => Any): ActorRef =
     createImpl(
       actorSystem,
       query.asInstanceOf[Query],
@@ -142,7 +142,7 @@ object GraphFactory {
       frequencyMonitorFactory: MonitorFactory,
       latencyMonitorFactory: MonitorFactory,
       createdCallback: () => Any)(
-      eventCallback: (A, B, C) => Any)(implicit op: HKernelAux[A :: B :: C :: HNil]): ActorRef =
+      eventCallback: (A, B, C) => Any): ActorRef =
     createImpl(
       actorSystem,
       query.asInstanceOf[Query],
@@ -159,7 +159,7 @@ object GraphFactory {
       frequencyMonitorFactory: MonitorFactory,
       latencyMonitorFactory: MonitorFactory,
       createdCallback: () => Any)(
-      eventCallback: (A, B, C, D) => Any)(implicit op: HKernelAux[A :: B :: C :: D :: HNil]): ActorRef =
+      eventCallback: (A, B, C, D) => Any): ActorRef =
     createImpl(
       actorSystem,
       query.asInstanceOf[Query],
@@ -176,7 +176,7 @@ object GraphFactory {
       frequencyMonitorFactory: MonitorFactory,
       latencyMonitorFactory: MonitorFactory,
       createdCallback: () => Any)(
-      eventCallback: (A, B, C, D, E) => Any)(implicit op: HKernelAux[A :: B :: C :: D :: E :: HNil]): ActorRef =
+      eventCallback: (A, B, C, D, E) => Any): ActorRef =
     createImpl(
       actorSystem,
       query.asInstanceOf[Query],
@@ -193,7 +193,7 @@ object GraphFactory {
       frequencyMonitorFactory: MonitorFactory,
       latencyMonitorFactory: MonitorFactory,
       createdCallback: () => Any)(
-      eventCallback: (A, B, C, D, E, F) => Any)(implicit op: HKernelAux[A :: B :: C :: D :: E :: F :: HNil]): ActorRef =
+      eventCallback: (A, B, C, D, E, F) => Any): ActorRef =
     createImpl(
       actorSystem,
       query.asInstanceOf[Query],
