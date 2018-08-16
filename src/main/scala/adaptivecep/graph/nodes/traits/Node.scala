@@ -1,10 +1,9 @@
 package adaptivecep.graph.nodes.traits
 
-import akka.actor.{Actor, ActorRef, Props}
 import adaptivecep.data.Queries._
 import adaptivecep.graph.nodes._
 import adaptivecep.graph.qos._
-import shapeless.HList
+import akka.actor.{Actor, ActorRef, Props}
 
 trait Node extends Actor {
 
@@ -15,7 +14,7 @@ trait Node extends Actor {
   val frequencyMonitorFactory: MonitorFactory
   val latencyMonitorFactory: MonitorFactory
 
-  def createChildNode[A <: HList, B <: HList](
+  def createChildNode(
       id: Int,
       query: Query
     ): ActorRef = query match {
@@ -29,7 +28,7 @@ trait Node extends Actor {
           None,
           None)),
         s"$name-$id-stream")
-    case sequenceQuery: SequenceQuery[A, B] =>
+    case sequenceQuery: SequenceQuery[_, _] =>
       context.actorOf(Props(
         SequenceNode(
           sequenceQuery,

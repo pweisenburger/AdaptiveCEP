@@ -1,9 +1,7 @@
 package adaptivecep.graph.nodes.traits
 
-import com.espertech.esper.client._
 import adaptivecep.data.Queries._
-import shapeless.HList
-import shapeless.ops.hlist.HKernelAux
+import com.espertech.esper.client._
 
 
 trait EsperEngine {

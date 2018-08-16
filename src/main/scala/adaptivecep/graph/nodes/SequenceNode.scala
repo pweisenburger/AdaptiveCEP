@@ -1,15 +1,14 @@
 package adaptivecep.graph.nodes
 
-import akka.actor.ActorRef
-import com.espertech.esper.client._
 import adaptivecep.data.Events._
 import adaptivecep.data.Queries._
-import adaptivecep.graph.nodes.traits._
 import adaptivecep.graph.nodes.traits.EsperEngine._
+import adaptivecep.graph.nodes.traits._
 import adaptivecep.graph.qos._
 import adaptivecep.publishers.Publisher._
-import shapeless.ops.hlist.HKernelAux
-import shapeless.{::, HList, HNil}
+import akka.actor.ActorRef
+import com.espertech.esper.client._
+import shapeless.HList
 
 case class SequenceNode[A <: HList, B <: HList](
     query: SequenceQuery[A, B],

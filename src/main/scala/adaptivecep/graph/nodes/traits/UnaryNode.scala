@@ -1,9 +1,9 @@
 package adaptivecep.graph.nodes.traits
 
-import akka.actor.ActorRef
 import adaptivecep.data.Events._
 import adaptivecep.data.Queries._
 import adaptivecep.graph.qos._
+import akka.actor.ActorRef
 
 trait UnaryNode extends Node {
 

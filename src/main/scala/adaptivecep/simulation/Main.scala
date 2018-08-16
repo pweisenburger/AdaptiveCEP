@@ -1,12 +1,11 @@
 package adaptivecep.simulation
 
-import akka.actor.{ActorRef, ActorSystem, Props}
 import adaptivecep.data.Events._
-import adaptivecep.data.Queries._
 import adaptivecep.dsl.Dsl._
 import adaptivecep.graph.factory._
 import adaptivecep.graph.qos._
 import adaptivecep.publishers._
+import akka.actor.{ActorRef, ActorSystem, Props}
 import shapeless.{::, HNil}
 
 object Main extends App {

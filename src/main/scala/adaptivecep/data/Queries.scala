@@ -2,10 +2,10 @@ package adaptivecep.data
 
 import java.time.Duration
 
-import akka.actor.ActorContext
 import adaptivecep.data.Events._
+import akka.actor.ActorContext
+import shapeless.HList
 import shapeless.ops.hlist.{HKernelAux, Prepend}
-import shapeless.{HList,::, HNil}
 
 object Queries {
 

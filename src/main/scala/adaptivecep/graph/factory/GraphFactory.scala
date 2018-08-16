@@ -1,11 +1,11 @@
 package adaptivecep.graph.factory
 
-import akka.actor.{ActorRef, ActorSystem, Props}
 import adaptivecep.data.Events._
 import adaptivecep.data.Queries._
 import adaptivecep.graph.nodes._
 import adaptivecep.graph.qos._
-import shapeless.{::, HList, HNil}
+import akka.actor.{ActorRef, ActorSystem, Props}
+import shapeless.HList
 
 object GraphFactory {
 

@@ -1,11 +1,11 @@
 package adaptivecep.graph.nodes
 
-import akka.actor.ActorRef
 import adaptivecep.data.Events._
 import adaptivecep.data.Queries._
 import adaptivecep.graph.nodes.traits._
 import adaptivecep.graph.qos._
 import adaptivecep.publishers.Publisher._
+import akka.actor.ActorRef
 
 case class StreamNode(
     query: StreamQuery,

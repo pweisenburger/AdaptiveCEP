@@ -1,15 +1,15 @@
 package adaptivecep
 
-import akka.actor.{ActorRef, ActorSystem, PoisonPill, Props}
-import akka.testkit.{TestKit, TestProbe}
-import org.scalatest.{BeforeAndAfterAll, FunSuiteLike}
 import adaptivecep.data.Events._
 import adaptivecep.data.Queries._
 import adaptivecep.dsl.Dsl._
 import adaptivecep.graph.factory._
-import adaptivecep.publishers._
 import adaptivecep.graph.qos._
-import shapeless.{HList, ::, HNil}
+import adaptivecep.publishers._
+import akka.actor.{ActorRef, ActorSystem, PoisonPill, Props}
+import akka.testkit.{TestKit, TestProbe}
+import org.scalatest.{BeforeAndAfterAll, FunSuiteLike}
+import shapeless.{::, HNil}
 
 class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAndAfterAll {
 

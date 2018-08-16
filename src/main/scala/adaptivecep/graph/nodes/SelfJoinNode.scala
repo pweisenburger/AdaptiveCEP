@@ -1,13 +1,13 @@
 package adaptivecep.graph.nodes
 
-import akka.actor.ActorRef
-import com.espertech.esper.client._
 import adaptivecep.data.Events._
 import adaptivecep.data.Queries._
-import adaptivecep.graph.nodes.traits._
+import adaptivecep.graph.nodes.JoinNode._
 import adaptivecep.graph.nodes.traits.EsperEngine._
+import adaptivecep.graph.nodes.traits._
 import adaptivecep.graph.qos._
-import JoinNode._
+import akka.actor.ActorRef
+import com.espertech.esper.client._
 
 case class SelfJoinNode(
     query: SelfJoinQuery,
