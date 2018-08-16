@@ -1,6 +1,7 @@
 package adaptivecep.simulation
 
 import adaptivecep.data.Events._
+import adaptivecep.data.Queries.HListQuery
 import adaptivecep.dsl.Dsl._
 import adaptivecep.graph.factory._
 import adaptivecep.graph.qos._
@@ -39,7 +40,7 @@ object Main extends App {
   //   .and(stream[Float::HNil]("C"))
   //   //.or(stream[String]("D"))
 
-  val query2 = //: Query4[Int, Int, Float, String] =
+  val query2 = // : HListQuery[Int::Int::Float::String::HNil] =
     stream[Int::HNil]("A")
     .and(stream[Int::HNil]("B"))
     .join(
@@ -51,9 +52,11 @@ object Main extends App {
       latency < timespan(1.milliseconds) otherwise { (nodeData) => println(s"PROBLEM:\tEvents reach node `${nodeData.name}` too slowly!") })
 
 
-  val graph: ActorRef = GraphFactory.create(
+  val graph: ActorRef = GraphFactory.create[Int, Int, Float, String](
     actorSystem =             actorSystem,
-    query =                   query2, // Alternatively: `query2`
+    // need to typecast because otherwise the scala compiler cannot infer the correct type
+    // TODO is there a fix?
+    query =                   query2.asInstanceOf[HListQuery[Int::Int::Float::String::HNil]], // Alternatively: `query2`
     publishers =              publishers,
     frequencyMonitorFactory = AverageFrequencyMonitorFactory  (interval = 15, logging = true),
     latencyMonitorFactory =   PathLatencyMonitorFactory       (interval =  5, logging = true),
@@ -65,7 +68,7 @@ object Main extends App {
       // Callback for `query2`:
       // case (i1, i2, f, s)             => println(s"COMPLEX EVENT:\tEvent4($i1, $i2, $f,$s)")
       // This is necessary to avoid warnings about non-exhaustive `match`:
-      case i1::i2::f::s::HNil => println(s"COMPLEX EVENT:\tEvent4($i1, $i2, $f, $s)")
+      case (i1, i2, f, s) => println(s"COMPLEX EVENT:\tEvent4($i1, $i2, $f, $s)")
       case _ => println("FIRED")
     })
 

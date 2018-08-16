@@ -5,7 +5,7 @@ import adaptivecep.data.Queries._
 import adaptivecep.graph.nodes._
 import adaptivecep.graph.qos._
 import akka.actor.{ActorRef, ActorSystem, Props}
-import shapeless.HList
+import shapeless.{::, HNil}
 
 object GraphFactory {
 
@@ -98,7 +98,7 @@ object GraphFactory {
         "disjunction")*/
   }
 
-  def create[T <: HList](
+  /*def create[T <: HList](
       actorSystem: ActorSystem,
       query: HListQuery[T],
       publishers: Map[String, ActorRef],
@@ -114,12 +114,12 @@ object GraphFactory {
       latencyMonitorFactory,
       createdCallback,
       toFunEventAny(eventCallback))
-  }
+  }*/
   // This is why `eventCallback` is listed separately:
   // https://stackoverflow.com/questions/21147001/why-scala-doesnt-infer-type-from-generic-type-parameters
-  /*def create[A](
+  def create[A](
       actorSystem: ActorSystem,
-      query: HListQuery[A :: HNil],
+      query: HListQuery[A::HNil],
       publishers: Map[String, ActorRef],
       frequencyMonitorFactory: MonitorFactory,
       latencyMonitorFactory: MonitorFactory,
@@ -136,7 +136,7 @@ object GraphFactory {
 
   def create[A, B](
       actorSystem: ActorSystem,
-      query: HListQuery[A :: B :: HNil],
+      query: HListQuery[A::B::HNil],
       publishers: Map[String, ActorRef],
       frequencyMonitorFactory: MonitorFactory,
       latencyMonitorFactory: MonitorFactory,
@@ -153,7 +153,7 @@ object GraphFactory {
 
   def create[A, B, C](
       actorSystem: ActorSystem,
-      query: HListQuery[A :: B :: C :: HNil],
+      query: HListQuery[A::B::C::HNil],
       publishers: Map[String, ActorRef],
       frequencyMonitorFactory: MonitorFactory,
       latencyMonitorFactory: MonitorFactory,
@@ -170,7 +170,7 @@ object GraphFactory {
 
   def create[A, B, C, D](
       actorSystem: ActorSystem,
-      query: HListQuery[A :: B :: C :: D :: HNil],
+      query: HListQuery[A::B::C::D::HNil],
       publishers: Map[String, ActorRef],
       frequencyMonitorFactory: MonitorFactory,
       latencyMonitorFactory: MonitorFactory,
@@ -187,7 +187,7 @@ object GraphFactory {
 
   def create[A, B, C, D, E](
       actorSystem: ActorSystem,
-      query: HListQuery[A :: B :: C :: D :: E :: HNil],
+      query: HListQuery[A::B::C::D::E::HNil],
       publishers: Map[String, ActorRef],
       frequencyMonitorFactory: MonitorFactory,
       latencyMonitorFactory: MonitorFactory,
@@ -204,7 +204,7 @@ object GraphFactory {
 
   def create[A, B, C, D, E, F](
       actorSystem: ActorSystem,
-      query: HListQuery[A :: B :: C :: D :: E :: F :: HNil],
+      query: HListQuery[A::B::C::D::E::F::HNil],
       publishers: Map[String, ActorRef],
       frequencyMonitorFactory: MonitorFactory,
       latencyMonitorFactory: MonitorFactory,
@@ -218,5 +218,4 @@ object GraphFactory {
       latencyMonitorFactory,
       createdCallback,
       toFunEventAny(eventCallback))
-*/
 }
