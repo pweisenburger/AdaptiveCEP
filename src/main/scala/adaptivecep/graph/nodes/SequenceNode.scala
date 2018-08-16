@@ -63,8 +63,8 @@ case class SequenceNode[A <: HList, B <: HList](
     destroyServiceProvider()
   }
 
-  addEventType("sq1", SequenceNode.createArrayOfNames[A](query.s1), SequenceNode.createArrayOfClasses[A](query.s1))
-  addEventType("sq2", SequenceNode.createArrayOfNames[B](query.s2), SequenceNode.createArrayOfClasses[B](query.s2))
+  addEventType("sq1", SequenceNode.createArrayOfNames(query.s1), SequenceNode.createArrayOfClasses(query.s1))
+  addEventType("sq2", SequenceNode.createArrayOfNames(query.s2), SequenceNode.createArrayOfClasses(query.s2))
 
   val epStatement: EPStatement = createEpStatement("select * from pattern [every (sq1=sq1 -> sq2=sq2)]")
 
@@ -88,12 +88,17 @@ case class SequenceNode[A <: HList, B <: HList](
 
 object SequenceNode {
 
-  def createArrayOfNames[T <: HList](noReqStream: HListNStream[T]): Array[String] =
-    (for (i <- 1 to noReqStream.length) yield "e"+i).toArray
+  def createArrayOfNames(noReqStream: NStream): Array[String] = noReqStream match {
+    case hnstream: HListNStream[_] =>
+      (for (i <- 1 to hnstream.length) yield "e" + i).toArray
+    case _ => throw new IllegalArgumentException("NO NAME")
+  }
 
-  def createArrayOfClasses[T <: HList](noReqStream: HListNStream[T]): Array[Class[_]] = {
-    val clazz: Class[_] = classOf[AnyRef]
-    (for (i <- 1 to noReqStream.length) yield clazz).toArray
+  def createArrayOfClasses(noReqStream: NStream): Array[Class[_]] = noReqStream match {
+    case hnstream: HListNStream[_] =>
+      val clazz: Class[_] = classOf[AnyRef]
+      (for (i <- 1 to hnstream.length) yield clazz).toArray
+    case _ => throw new IllegalArgumentException("NO CLASS")
   }
 
 }

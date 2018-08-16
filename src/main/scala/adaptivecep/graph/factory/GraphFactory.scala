@@ -5,12 +5,11 @@ import adaptivecep.data.Events._
 import adaptivecep.data.Queries._
 import adaptivecep.graph.nodes._
 import adaptivecep.graph.qos._
-import shapeless.ops.hlist.HKernelAux
 import shapeless.{::, HList, HNil}
 
 object GraphFactory {
 
-  def createImpl[A <: HList, B <: HList](
+  def createImpl(
       actorSystem: ActorSystem,
       query: Query,
       publishers: Map[String, ActorRef],
@@ -27,7 +26,7 @@ object GraphFactory {
           Some(createdCallback),
           Some(eventCallback))),
         "stream")
-    case sequenceQuery: SequenceQuery[A, B] =>
+    case sequenceQuery: SequenceQuery[_, _] =>
       actorSystem.actorOf(Props(
         SequenceNode(
           sequenceQuery,
@@ -99,9 +98,26 @@ object GraphFactory {
         "disjunction")*/
   }
 
+  def create[T <: HList](
+      actorSystem: ActorSystem,
+      query: HListQuery[T],
+      publishers: Map[String, ActorRef],
+      frequencyMonitorFactory: MonitorFactory,
+      latencyMonitorFactory: MonitorFactory,
+      createdCallback: () => Any)(
+      eventCallback: T => Any): ActorRef = {
+    createImpl(
+      actorSystem,
+      query.asInstanceOf[Query],
+      publishers,
+      frequencyMonitorFactory,
+      latencyMonitorFactory,
+      createdCallback,
+      toFunEventAny(eventCallback))
+  }
   // This is why `eventCallback` is listed separately:
   // https://stackoverflow.com/questions/21147001/why-scala-doesnt-infer-type-from-generic-type-parameters
-  def create[A](
+  /*def create[A](
       actorSystem: ActorSystem,
       query: HListQuery[A :: HNil],
       publishers: Map[String, ActorRef],
@@ -202,5 +218,5 @@ object GraphFactory {
       latencyMonitorFactory,
       createdCallback,
       toFunEventAny(eventCallback))
-
+*/
 }

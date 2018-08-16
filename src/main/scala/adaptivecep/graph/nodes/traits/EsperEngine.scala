@@ -37,19 +37,16 @@ trait EsperEngine {
 }
 
 object EsperEngine {
-  // hack to only let this method be invokable for arg hlistquery
-  def createArrayOfNames(query: Query): Array[String] =
-    throw new IllegalArgumentException("Argument has to be of type HListQuery")
+  def createArrayOfNames(query: Query): Array[String] = query match {
+    case hquery:HListQuery[_] => (for (i <- 1 to hquery.length) yield "e"+i).toArray
+    case _ => throw new IllegalArgumentException("Argument has to be of type HListQuery")
+  }
 
-  def createArrayOfNames[T <: HList](query: HListQuery[T])/*(implicit op: HKernelAux[T])*/: Array[String] =
-    (for (i <- 1 to query.length) yield "e"+i).toArray
-
-  def createArrayOfClasses(query: Query): Array[Class[_]] =
-    throw new IllegalArgumentException("Argument has to be of type HListQuery")
-
-  def createArrayOfClasses[T <: HList](query: HListQuery[T])/*(implicit op: HKernelAux[T])*/: Array[Class[_]] = {
-    val clazz: Class[_] = classOf[AnyRef]
-    (for (i <- 1 to query.length) yield clazz).toArray
+  def createArrayOfClasses(query: Query): Array[Class[_]] = query match {
+    case hquery:HListQuery[_] =>
+      val clazz: Class[_] = classOf[AnyRef]
+      (for (i <- 1 to hquery.length) yield clazz).toArray
+    case _ => throw new IllegalArgumentException("Argument has to be of type HListQuery")
   }
 
   def toAnyRef(any: Any): AnyRef = {

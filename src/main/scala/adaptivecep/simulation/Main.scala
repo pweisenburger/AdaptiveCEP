@@ -24,21 +24,21 @@ object Main extends App {
     "C" -> publisherC,
     "D" -> publisherD)
 
-  val query1 = //: Query3[Either[Int, String], Either[Int, X], Either[Float, X]] =
-    stream[Int::HNil]("A")
-    .join(
-      stream[Int::HNil]("B"),
-      slidingWindow(2.seconds),
-      slidingWindow(2.seconds))
-    .where(x => x.head < x.last)
-    // .dropElem1( latency < timespan(1.milliseconds) otherwise { (nodeData) => println(s"PROBLEM:\tEvents reach node `${nodeData.name}` too slowly!") })
-    .selfJoin(
-      tumblingWindow(1.instances),
-      tumblingWindow(1.instances),
-      frequency > ratio( 3.instances,  5.seconds) otherwise { (nodeData) => println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!") },
-      frequency < ratio(12.instances, 15.seconds) otherwise { (nodeData) => println(s"PROBLEM:\tNode `${nodeData.name}` emits too many events!") })
-    .and(stream[Float::HNil]("C"))
-    //.or(stream[String]("D"))
+  // val query1 = //: Query3[Either[Int, String], Either[Int, X], Either[Float, X]] =
+  //   stream[Int::HNil]("A")
+  //   .join(
+  //     stream[Int::HNil]("B"),
+  //     slidingWindow(2.seconds),
+  //     slidingWindow(2.seconds))
+  //   .where(x => x.head < x.last)
+  //   // .dropElem1( latency < timespan(1.milliseconds) otherwise { (nodeData) => println(s"PROBLEM:\tEvents reach node `${nodeData.name}` too slowly!") })
+  //   .selfJoin(
+  //     tumblingWindow(1.instances),
+  //     tumblingWindow(1.instances),
+  //     frequency > ratio( 3.instances,  5.seconds) otherwise { (nodeData) => println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!") },
+  //     frequency < ratio(12.instances, 15.seconds) otherwise { (nodeData) => println(s"PROBLEM:\tNode `${nodeData.name}` emits too many events!") })
+  //   .and(stream[Float::HNil]("C"))
+  //   //.or(stream[String]("D"))
 
   val query2 = //: Query4[Int, Int, Float, String] =
     stream[Int::HNil]("A")
@@ -54,7 +54,7 @@ object Main extends App {
 
   val graph: ActorRef = GraphFactory.create(
     actorSystem =             actorSystem,
-    query =                   query1, // Alternatively: `query2`
+    query =                   query2, // Alternatively: `query2`
     publishers =              publishers,
     frequencyMonitorFactory = AverageFrequencyMonitorFactory  (interval = 15, logging = true),
     latencyMonitorFactory =   PathLatencyMonitorFactory       (interval =  5, logging = true),
@@ -66,7 +66,8 @@ object Main extends App {
       // Callback for `query2`:
       // case (i1, i2, f, s)             => println(s"COMPLEX EVENT:\tEvent4($i1, $i2, $f,$s)")
       // This is necessary to avoid warnings about non-exhaustive `match`:
-      case _                             =>
+      case i1::i2::f::s::HNil => println(s"COMPLEX EVENT:\tEvent4($i1, $i2, $f, $s)")
+      case _ => println("FIRED")
     })
 
 }
