@@ -91,14 +91,14 @@ object SequenceNode {
   def createArrayOfNames(noReqStream: NStream): Array[String] = noReqStream match {
     case hnstream: HListNStream[_] =>
       (for (i <- 1 to hnstream.length) yield "e" + i).toArray
-    case _ => throw new IllegalArgumentException("NO NAME")
+    case _ => throw new IllegalArgumentException("NStream has only one subclass")
   }
 
   def createArrayOfClasses(noReqStream: NStream): Array[Class[_]] = noReqStream match {
     case hnstream: HListNStream[_] =>
       val clazz: Class[_] = classOf[AnyRef]
       (for (i <- 1 to hnstream.length) yield clazz).toArray
-    case _ => throw new IllegalArgumentException("NO CLASS")
+    case _ => throw new IllegalArgumentException("NStream has only one subclass")
   }
 
 }
