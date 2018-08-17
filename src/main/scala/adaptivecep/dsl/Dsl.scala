@@ -4,7 +4,7 @@ import java.time.Duration
 
 import adaptivecep.data.Events._
 import adaptivecep.data.Queries._
-import shapeless.HList
+import shapeless.{HList, ::, HNil}
 import shapeless.ops.hlist.{HKernelAux, Prepend}
 
 object Dsl {
