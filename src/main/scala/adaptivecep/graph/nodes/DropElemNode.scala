@@ -16,7 +16,7 @@ case class DropElemNode(
   extends UnaryNode {
 
   val elemToBeDropped: Int = query match {
-    case DropElem(_, pos, _) => pos
+    case de@DropElem(_, _, _) => de.pos
   }
 
   def handleEvent2(e1: Any, e2: Any): Unit = elemToBeDropped match {

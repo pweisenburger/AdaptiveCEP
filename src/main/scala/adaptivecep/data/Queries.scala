@@ -4,8 +4,9 @@ import java.time.Duration
 
 import adaptivecep.data.Events._
 import akka.actor.ActorContext
-import shapeless.HList
-import shapeless.ops.hlist.{HKernelAux, Prepend}
+import shapeless.{HList, Nat}
+import shapeless.ops.hlist.{Drop, HKernelAux, Prepend, Split}
+import shapeless.ops.nat.ToInt
 
 object Queries {
 
@@ -68,9 +69,11 @@ object Queries {
     (sq: HListQuery[T], cond: Event => Boolean, requirements: Set[Requirement])
     (implicit op: HKernelAux[T]) extends HListQuery[T] with FilterQuery
 
-  case class DropElem[T<: HList, R <: HList]
-    (sq: HListQuery[T], position: Int, requirements: Set[Requirement])
-    (implicit op: HKernelAux[R]) extends HListQuery[R] with DropElemQuery
+  case class DropElem[T <: HList, R <: HList, Pos <: Nat]
+    (sq: HListQuery[T], position: Nat, requirements: Set[Requirement])
+    (implicit dropAt: DropAt.Aux[T, Pos, R], op: HKernelAux[R], toInt: ToInt[Pos]) extends HListQuery[R] with DropElemQuery {
+    val pos = toInt()
+  }
 
   case class SelfJoin[T <: HList, R <: HList]
     (sq: HListQuery[T], w1: Window, w2: Window, requirements: Set[Requirement])

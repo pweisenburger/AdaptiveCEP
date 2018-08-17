@@ -9,7 +9,8 @@ import adaptivecep.publishers._
 import akka.actor.{ActorRef, ActorSystem, PoisonPill, Props}
 import akka.testkit.{TestKit, TestProbe}
 import org.scalatest.{BeforeAndAfterAll, FunSuiteLike}
-import shapeless.{::, HNil}
+import shapeless.ops.nat
+import shapeless.{::, HNil, Nat}
 
 class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAndAfterAll {
 
@@ -224,11 +225,10 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
   }
 
   // TODO dropelement implementation needed
-  /*test("UnaryNode - DropElemNode - 1") {
+  test("UnaryNode - DropElemNode - 1") {
     val a: ActorRef = createTestPublisher("A")
-    val query: HListQuery[Int::HNil] =
-      stream[Int::Int::HNil]("A")
-      .dropElem2()
+    val query = // : HListQuery[Int::HNil] =
+      stream[Int::Int::HNil]("A").drop(Nat._2)
     val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
     expectMsg(Created)
     a ! Event2(21, 42)
@@ -240,10 +240,10 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
 
   test("UnaryNode - DropElemNode - 2") {
     val a: ActorRef = createTestPublisher("A")
-    val query: Query2[String, String] =
-      stream[String, String, String, String]("A")
-      .dropElem1()
-      .dropElem2()
+    val query = // HListQuery[String::String::HNil] =
+      stream[String::String::String::String::HNil]("A")
+      .drop(Nat._1)
+      .drop(Nat._2)
     val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
     expectMsg(Created)
     a ! Event4("a", "b", "c", "d")
@@ -252,7 +252,6 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     expectMsg(Event2("f", "h"))
     stopActors(a, graph)
   }
-  */
 
   test("UnaryNode - SelfJoinNode - 1") {
     val a: ActorRef = createTestPublisher("A")

@@ -48,7 +48,7 @@ trait Node extends Actor {
           None,
           None)),
         s"$name-$id-filter")
-    /*case dropElemQuery: DropElemQuery =>
+    case dropElemQuery: DropElemQuery =>
       context.actorOf(Props(
         DropElemNode(
           dropElemQuery,
@@ -57,7 +57,7 @@ trait Node extends Actor {
           latencyMonitorFactory,
           None,
           None)),
-        s"$name-$id-dropelem")*/
+        s"$name-$id-dropelem")
     case selfJoinQuery: SelfJoinQuery =>
       context.actorOf(Props(
         SelfJoinNode(
