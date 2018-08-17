@@ -24,7 +24,7 @@ object SimulationSetup {
         stream[Int::HNil]("B"),
         slidingWindow(30.seconds),
         slidingWindow(30.seconds))
-      .where(x => x.head <= x.tail.head)
+      .where(_ <= _)
       //.dropElem1()
 
   val query1: Query =
@@ -33,10 +33,10 @@ object SimulationSetup {
         stream[Int::HNil]("B"),
         slidingWindow(30.seconds),
         slidingWindow(30.seconds))
-      .where(x => x.head <= x.tail.head)
+      .where(_ <= _)
       .join(
         stream[Int::HNil]("C")
-          .where(0 <= _.head),
+          .where(0 <= _),
         slidingWindow(30.seconds),
         slidingWindow(30.seconds))
       //.dropElem1()
