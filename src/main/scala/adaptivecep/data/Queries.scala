@@ -5,7 +5,7 @@ import java.time.Duration
 import adaptivecep.data.Events._
 import akka.actor.ActorContext
 import shapeless.{HList, Nat}
-import shapeless.ops.hlist.{Drop, HKernelAux, Prepend, Split}
+import shapeless.ops.hlist.{HKernelAux, Prepend}
 import shapeless.ops.nat.ToInt
 
 object Queries {
@@ -89,7 +89,7 @@ object Queries {
 
   type X = Unit
   // TODO
-  // case class Disjunction[A <: HList, B <: HList](sq1: HListQuery[A], sq2: HListQuery[B], requirements: Set[Requirement]) extends HListQuery[] with DisjunctionQuery
+  case class Disjunction[A <: HList, B <: HList, R <: HList] (sq1: HListQuery[A], sq2: HListQuery[B], requirements: Set[Requirement])(implicit disjunct: Disjunct.Aux[A, B, R], op: HKernelAux[R]) extends HListQuery[R] with DisjunctionQuery
   // case class Disjunction12[A, B, C]                            (sq1: Query1[A],                sq2: Query2[B, C],             requirements: Set[Requirement]) extends Query2[Either[A, B], Either[X, C]]                                                         with DisjunctionQuery
   // case class Disjunction13[A, B, C, D]                         (sq1: Query1[A],                sq2: Query3[B, C, D],          requirements: Set[Requirement]) extends Query3[Either[A, B], Either[X, C], Either[X, D]]                                           with DisjunctionQuery
   // case class Disjunction14[A, B, C, D, E]                      (sq1: Query1[A],                sq2: Query4[B, C, D, E],       requirements: Set[Requirement]) extends Query4[Either[A, B], Either[X, C], Either[X, D], Either[X, E]]                             with DisjunctionQuery
