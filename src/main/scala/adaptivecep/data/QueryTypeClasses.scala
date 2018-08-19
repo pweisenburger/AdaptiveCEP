@@ -33,7 +33,7 @@ object DropAt {
 }
 
 /**
-  * Type class supporting the disjunction of this hlist and another. It results in a HList that creates each pair of (L,T) an Either[L, R].
+  * Type class supporting the disjunction of this hlist and another. It results in a HList that creates for each pair of (L,T) an Either[L, R].
   * If one list is shorter than the other the type that is used is Unit.
   * This type class was inspired by ZipWith
   * @author André Pacak
@@ -42,15 +42,15 @@ trait Disjunct[L <: HList, R <: HList] extends DepFn2[L, R] with Serializable { 
 
 object Disjunct {
   def apply[L <: HList, R <: HList]
-  (implicit disjunction: Disjunct[L, R]): Aux[L, R, disjunction.Out] = disjunction
+  (implicit disjunct: Disjunct[L, R]): Aux[L, R, disjunct.Out] = disjunct
 
   type Aux[L <: HList, R <: HList, Out0 <: HList] = Disjunct[L, R] { type Out = Out0 }
 
-  implicit def hnilDisjunctionWithHNil: Aux[HNil, HNil, HNil] = constDisjunction[HNil, HNil]
-  implicit def hnilDisjunctionWithHList[RH, RT <: HList, ResultRest <: HList](implicit dis: Disjunct.Aux[HNil, RT, ResultRest]): Aux[HNil, RH :: RT, Either[Unit, RH] :: ResultRest] = leftHNilRightHead[RH, RT, ResultRest]
-  implicit def hlistDisjunctionWithHNil[LH, LT <: HList, ResultRest <: HList](implicit dis: Disjunct.Aux[LT, HNil, ResultRest]): Aux[LH :: LT, HNil, Either[LH, Unit] :: ResultRest]= leftHeadRightHNil[LH, LT, ResultRest]
+  implicit def hnilDisjunctHNil: Aux[HNil, HNil, HNil] = constDisjunct[HNil, HNil]
+  implicit def hnilDisjunctList[RH, RT <: HList, ResultRest <: HList](implicit dis: Disjunct.Aux[HNil, RT, ResultRest]): Aux[HNil, RH :: RT, Either[Unit, RH] :: ResultRest] = leftHNilRightHead[RH, RT, ResultRest]
+  implicit def hlistDisjunctNil[LH, LT <: HList, ResultRest <: HList](implicit dis: Disjunct.Aux[LT, HNil, ResultRest]): Aux[LH :: LT, HNil, Either[LH, Unit] :: ResultRest]= leftHeadRightHNil[LH, LT, ResultRest]
 
-  implicit def hlistDisjunctionWithHList[LH, RH, LT <: HList, RT <: HList, Rest <: HList]
+  implicit def hlistDisjunctList[LH, RH, LT <: HList, RT <: HList, Rest <: HList]
   (implicit disjunction: Disjunct.Aux[LT, RT, Rest]): Aux[LH :: LT, RH :: RT, Either[LH, RH] :: Rest] =
     new Disjunct[LH :: LT, RH :: RT] {
       type Out = Either[LH, RH] :: Rest
@@ -59,7 +59,7 @@ object Disjunct {
       def apply(l: LH :: LT, r: RH :: RT): Out = Left(l.head) :: disjunction(l.tail, r.tail)
     }
 
-  private def constDisjunction[L <: HList, R <: HList]: Aux[L, R, HNil] =
+  private def constDisjunct[L <: HList, R <: HList]: Aux[L, R, HNil] =
     new Disjunct[L, R] {
       type Out = HNil
       def apply(l: L, r: R): HNil = HNil
