@@ -494,7 +494,7 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     stopActors(a, b, c, graph)
   }
 
-  /*test("Nested - SP operators") {
+  test("Nested - SP operators") {
     val a: ActorRef = createTestPublisher("A")
     val b: ActorRef = createTestPublisher("B")
     val c: ActorRef = createTestPublisher("C")
@@ -539,7 +539,7 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     expectMsg(Event2("e", "a"))
     expectMsg(Event2("e", "b"))
     stopActors(a, b, c, graph)
-  }*/
+  }
 
   test("Nested - CEP operators") {
     val a: ActorRef = createTestPublisher("A")
