@@ -104,7 +104,7 @@ object Dsl {
     def selfJoin[R <: HList](w1: Window, w2: Window, requirements: Requirement*)(implicit p: Prepend.Aux[A, A, R], op: HKernelAux[R]): HListQuery[p.Out] = SelfJoin[A, p.Out](q, w1, w2, requirements.toSet)(p, op)
     def join[B <: HList, R <: HList](q2: HListQuery[B], w1: Window, w2: Window, requirements: Requirement*)(implicit p: Prepend.Aux[A, B, R], op: HKernelAux[R]): HListQuery[p.Out] = Join[A, B, p.Out](q, q2, w1, w2, requirements.toSet)(p, op)
     def and[B <: HList, R <: HList](q2: HListQuery[B], requirements: Requirement*)(implicit p: Prepend.Aux[A, B, R], op: HKernelAux[R]): HListQuery[R] = Conjunction(q, q2, requirements.toSet)(p, op)
-    def drop[R <: HList, Pos <: Nat](pos: Pos)(implicit dropAt: DropAt.Aux[A, Pos, R], op: HKernelAux[R], toInt: ToInt[Pos]): HListQuery[R] = DropElem(q, pos, q.requirements)(dropAt, op, toInt)
+    def drop[R <: HList, Pos <: Nat](pos: Pos, requirements: Requirement*)(implicit dropAt: DropAt.Aux[A, Pos, R], op: HKernelAux[R], toInt: ToInt[Pos]): HListQuery[R] = DropElem(q, pos, requirements.toSet)(dropAt, op, toInt)
     def or[B <: HList, R <: HList](q2: HListQuery[B], requirements: Requirement*)(implicit disjunct: Disjunct.Aux[A, B, R], op: HKernelAux[R]) = Disjunction(q, q2, requirements.toSet)(disjunct, op)
   }
 

@@ -1,6 +1,12 @@
 package adaptivecep.graph.nodes
 
-/* case class DisjunctionNode(
+import adaptivecep.data.Events._
+import adaptivecep.data.Queries.{Disjunction, DisjunctionQuery, HListQuery}
+import adaptivecep.graph.nodes.traits.BinaryNode
+import adaptivecep.graph.qos.MonitorFactory
+import akka.actor.ActorRef
+
+case class DisjunctionNode(
     query: DisjunctionQuery,
     publishers: Map[String, ActorRef],
     frequencyMonitorFactory: MonitorFactory,
@@ -28,26 +34,17 @@ package adaptivecep.graph.nodes
     }).toArray
   }
 
-  // TODO need to decide how a disjunction node is represented? Coproduct?
-  def handleEvent(array: Array[Either[Any, Any]]): Unit = query match {
-    case _: Query1[_] =>
-      val filledArray: Array[Either[Any, Any]] = fillArray(1, array)
-      emitEvent(Event1(filledArray(0)))
-    case _: Query2[_, _] =>
-      val filledArray: Array[Either[Any, Any]] = fillArray(2, array)
-      emitEvent(Event2(filledArray(0), filledArray(1)))
-    case _: Query3[_, _, _] =>
-      val filledArray: Array[Either[Any, Any]] = fillArray(3, array)
-      emitEvent(Event3(filledArray(0), filledArray(1), filledArray(2)))
-    case _: Query4[_, _, _, _] =>
-      val filledArray: Array[Either[Any, Any]] = fillArray(4, array)
-      emitEvent(Event4(filledArray(0), filledArray(1), filledArray(2), filledArray(3)))
-    case _: Query5[_, _, _, _, _] =>
-      val filledArray: Array[Either[Any, Any]] = fillArray(5, array)
-      emitEvent(Event5(filledArray(0), filledArray(1), filledArray(2), filledArray(3), filledArray(4)))
-    case _: Query6[_, _, _, _, _, _] =>
-      val filledArray: Array[Either[Any, Any]] = fillArray(6, array)
-      emitEvent(Event6(filledArray(0), filledArray(1), filledArray(2), filledArray(3), filledArray(4), filledArray(5)))
+  def handleEvent(array: Array[Either[Any, Any]]): Unit = {
+    val disjunction = query.asInstanceOf[Disjunction[_, _, _]]
+    val filledArray: Array[Either[Any, Any]] = fillArray(disjunction.length, array)
+    disjunction.length match {
+      case 1 => emitEvent(Event1(filledArray(0)))
+      case 2 => emitEvent(Event2(filledArray(0), filledArray(1)))
+      case 3 => emitEvent(Event3(filledArray(0), filledArray(1), filledArray(2)))
+      case 4 => emitEvent(Event4(filledArray(0), filledArray(1), filledArray(2), filledArray(3)))
+      case 5 => emitEvent(Event5(filledArray(0), filledArray(1), filledArray(2), filledArray(3), filledArray(4)))
+      case 6 => emitEvent(Event6(filledArray(0), filledArray(1), filledArray(2), filledArray(3), filledArray(4), filledArray(5)))
+    }
   }
 
   override def receive: Receive = {
@@ -80,4 +77,4 @@ package adaptivecep.graph.nodes
       latencyMonitor.onMessageReceive(unhandledMessage, nodeData)
   }
 
-}*/
+}

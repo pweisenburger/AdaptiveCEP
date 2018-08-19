@@ -8,7 +8,7 @@ import adaptivecep.dsl.Dsl._
 import adaptivecep.publishers.EmptyPublisher
 import adaptivecep.simulation.SimulationSetup._
 import adaptivecep.system.System
-import shapeless.{::, HNil}
+import shapeless.{::, HNil, Nat}
 
 object SimulationSetup {
   implicit val actorSystem = ActorSystem()
@@ -18,16 +18,16 @@ object SimulationSetup {
     "B" -> actorSystem.actorOf(Props(new EmptyPublisher), "B"),
     "C" -> actorSystem.actorOf(Props(new EmptyPublisher), "C"))
 
-  val query0: Query =
+  val query0 = // : Query =
     stream[Int::HNil]("A")
       .join(
         stream[Int::HNil]("B"),
         slidingWindow(30.seconds),
         slidingWindow(30.seconds))
       .where(_ <= _)
-      //.dropElem1()
+      .drop(Nat._1)
 
-  val query1: Query =
+  val query1 = // : Query =
     stream[Int::HNil]("A")
       .join(
         stream[Int::HNil]("B"),
@@ -39,7 +39,7 @@ object SimulationSetup {
           .where(0 <= _),
         slidingWindow(30.seconds),
         slidingWindow(30.seconds))
-      //.dropElem1()
+      .drop(Nat._1)
 
   val queries = Seq("query0" -> query0, "query1" -> query1)
 }

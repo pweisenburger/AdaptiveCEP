@@ -86,7 +86,7 @@ object GraphFactory {
           Some(createdCallback),
           Some(eventCallback))),
         "conjunction")
-    /*case disjunctionQuery: DisjunctionQuery =>
+    case disjunctionQuery: DisjunctionQuery =>
       actorSystem.actorOf(Props(
         DisjunctionNode(
           disjunctionQuery,
@@ -95,26 +95,9 @@ object GraphFactory {
           latencyMonitorFactory,
           Some(createdCallback),
           Some(eventCallback))),
-        "disjunction")*/
+        "disjunction")
   }
 
-  /*def create[T <: HList](
-      actorSystem: ActorSystem,
-      query: HListQuery[T],
-      publishers: Map[String, ActorRef],
-      frequencyMonitorFactory: MonitorFactory,
-      latencyMonitorFactory: MonitorFactory,
-      createdCallback: () => Any)(
-      eventCallback: T => Any): ActorRef = {
-    createImpl(
-      actorSystem,
-      query.asInstanceOf[Query],
-      publishers,
-      frequencyMonitorFactory,
-      latencyMonitorFactory,
-      createdCallback,
-      toFunEventAny(eventCallback))
-  }*/
   // This is why `eventCallback` is listed separately:
   // https://stackoverflow.com/questions/21147001/why-scala-doesnt-infer-type-from-generic-type-parameters
   def create[A](

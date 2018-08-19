@@ -71,5 +71,4 @@ case class DropElemNode(
       frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
       latencyMonitor.onMessageReceive(unhandledMessage, nodeData)
   }
-
 }

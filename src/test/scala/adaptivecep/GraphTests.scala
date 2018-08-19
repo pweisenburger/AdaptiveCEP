@@ -9,7 +9,6 @@ import adaptivecep.publishers._
 import akka.actor.{ActorRef, ActorSystem, PoisonPill, Props}
 import akka.testkit.{TestKit, TestProbe}
 import org.scalatest.{BeforeAndAfterAll, FunSuiteLike}
-import shapeless.ops.nat
 import shapeless.{::, HNil, Nat}
 
 class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAndAfterAll {
@@ -456,13 +455,12 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     stopActors(a, b, graph)
   }
 
-  // TODO need disjunction and dropElem implementation
-  /*test("Binary Node - DisjunctionNode - 1") {
+  test("Binary Node - DisjunctionNode - 1") {
     val a: ActorRef = createTestPublisher("A")
     val b: ActorRef = createTestPublisher("B")
-    val query: Query2[Either[Int, String], Either[Int, String]] =
-      stream[Int, Int]("A")
-      .or(stream[String, String]("B"))
+    val query = // : HListQuery[Either[Int, String]::Either[Int, String]::HNil] =
+      stream[Int::Int::HNil]("A")
+      .or(stream[String::String::HNil]("B"))
     val graph: ActorRef = createTestGraph(query, Map("A" -> a, "B" -> b), testActor)
     expectMsg(Created)
     a ! Event2(21, 42)
@@ -477,13 +475,12 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     val a: ActorRef = createTestPublisher("A")
     val b: ActorRef = createTestPublisher("B")
     val c: ActorRef = createTestPublisher("C")
-    val query:
-      Query3[Either[Either[Int, String], Boolean],
-             Either[Either[Int, String], Boolean],
-             Either[Unit,                Boolean]] =
-      stream[Int, Int]("A")
-        .or(stream[String, String]("B"))
-        .or(stream[Boolean, Boolean, Boolean]("C"))
+    val query =
+//     :
+//      HListQuery[Either[Either[Int, String], Boolean]:: Either[Either[Int, String], Boolean]:: Either[Unit,                Boolean]::HNil] =
+      stream[Int::Int::HNil]("A")
+        .or(stream[String::String::HNil]("B"))
+        .or(stream[Boolean::Boolean::Boolean::HNil]("C"))
     val graph: ActorRef = createTestGraph(query, Map("A" -> a, "B" -> b, "C" -> c), testActor)
     expectMsg(Created)
     a ! Event2(21, 42)
@@ -497,27 +494,30 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     stopActors(a, b, c, graph)
   }
 
-  test("Nested - SP operators") {
+  /*test("Nested - SP operators") {
     val a: ActorRef = createTestPublisher("A")
     val b: ActorRef = createTestPublisher("B")
     val c: ActorRef = createTestPublisher("C")
-    val sq1: Query2[String, String] = stream[String, String]("A")
-    val sq2: Query2[Int, Int] = stream[Int, Int]("B")
-    val sq3: Query1[String] = stream[String]("C")
-    val sq4: Query4[String, String, Int, Int] =
+    val sq1 = // : HListQuery[String::String::HNil] =
+      stream[String::String::HNil]("A")
+    val sq2 = // : HListQuery[Int::Int::HNil] =
+      stream[Int::Int::HNil]("B")
+    val sq3 = // : HListQuery[String::HNil] =
+      stream[String::HNil]("C")
+    val sq4 = // : HListQuery[String::String::Int::Int::HNil] =
       sq1.join(sq2, tumblingWindow(3.instances), tumblingWindow(2.instances))
-    val sq5: Query2[String, String] =
+    val sq5 = // : HListQuery[String::String::HNil] =
       sq3.selfJoin(tumblingWindow(3.instances), tumblingWindow(2.instances))
-    val sq6: Query6[String, String, Int, Int, String, String] =
+    val sq6 = // : HListQuery[String::String::Int::Int::String::String::HNil] =
       sq4.join(sq5, tumblingWindow(1.instances), tumblingWindow(4.instances))
-    val sq7: Query6[String, String, Int, Int, String, String] =
+    val sq7 = // : HListQuery[String::String::Int::Int::String::String::HNil] =
       sq6.where((_, _, e3, e4, _, _) => e3 < e4)
-    val query: Query2[String, String] =
+    val query = // : HListQuery[String::String::HNil] =
       sq7
-      .dropElem2()
-      .dropElem2()
-      .dropElem2()
-      .dropElem2()
+        .drop(Nat._2)
+        .drop(Nat._2)
+        .drop(Nat._2)
+        .drop(Nat._2)
     val graph: ActorRef = createTestGraph(query, Map("A" -> a, "B" -> b, "C" -> c), testActor)
     expectMsg(Created)
     b ! Event2(1, 2)
@@ -539,16 +539,16 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     expectMsg(Event2("e", "a"))
     expectMsg(Event2("e", "b"))
     stopActors(a, b, c, graph)
-  }
+  }*/
 
   test("Nested - CEP operators") {
     val a: ActorRef = createTestPublisher("A")
     val b: ActorRef = createTestPublisher("B")
     val c: ActorRef = createTestPublisher("C")
-    val query: Query2[Either[Int, Float], Either[Float, Boolean]] =
-      stream[Int]("A")
-      .and(stream[Float]("B"))
-      .or(sequence(nStream[Float]("B") -> nStream[Boolean]("C")))
+    val query: HListQuery[Either[Int, Float]::Either[Float, Boolean]::HNil] =
+      stream[Int::HNil]("A")
+      .and(stream[Float::HNil]("B"))
+      .or(sequence(nStream[Float::HNil]("B") -> nStream[Boolean::HNil]("C")))
     val graph: ActorRef = createTestGraph(query, Map("A" -> a, "B" -> b, "C" -> c), testActor)
     expectMsg(Created)
     a ! Event1(21)
@@ -562,5 +562,4 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     expectMsg(Event2(Right(21.0f), Right(true)))
     stopActors(a, b, graph)
   }
-  */
 }

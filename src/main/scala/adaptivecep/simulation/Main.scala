@@ -7,7 +7,7 @@ import adaptivecep.graph.factory._
 import adaptivecep.graph.qos._
 import adaptivecep.publishers._
 import akka.actor.{ActorRef, ActorSystem, Props}
-import shapeless.{::, HNil}
+import shapeless.{::, HNil, Nat}
 
 object Main extends App {
 
@@ -24,21 +24,21 @@ object Main extends App {
     "C" -> publisherC,
     "D" -> publisherD)
 
-  // val query1 = //: Query3[Either[Int, String], Either[Int, X], Either[Float, X]] =
-  //   stream[Int::HNil]("A")
-  //   .join(
-  //     stream[Int::HNil]("B"),
-  //     slidingWindow(2.seconds),
-  //     slidingWindow(2.seconds))
-  //   .where(x => x.head < x.last)
-  //   // .dropElem1( latency < timespan(1.milliseconds) otherwise { (nodeData) => println(s"PROBLEM:\tEvents reach node `${nodeData.name}` too slowly!") })
-  //   .selfJoin(
-  //     tumblingWindow(1.instances),
-  //     tumblingWindow(1.instances),
-  //     frequency > ratio( 3.instances,  5.seconds) otherwise { (nodeData) => println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!") },
-  //     frequency < ratio(12.instances, 15.seconds) otherwise { (nodeData) => println(s"PROBLEM:\tNode `${nodeData.name}` emits too many events!") })
-  //   .and(stream[Float::HNil]("C"))
-  //   //.or(stream[String]("D"))
+  val query1 = //: Query3[Either[Int, String], Either[Int, X], Either[Float, X]] =
+    stream[Int::HNil]("A")
+    .join(
+      stream[Int::HNil]("B"),
+      slidingWindow(2.seconds),
+      slidingWindow(2.seconds))
+    .where(_ < _)
+    .drop(Nat._1, latency < timespan(1.milliseconds) otherwise { (nodeData) => println(s"PROBLEM:\tEvents reach node `${nodeData.name}` too slowly!") })
+    .selfJoin(
+      tumblingWindow(1.instances),
+      tumblingWindow(1.instances),
+      frequency > ratio( 3.instances,  5.seconds) otherwise { (nodeData) => println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!") },
+      frequency < ratio(12.instances, 15.seconds) otherwise { (nodeData) => println(s"PROBLEM:\tNode `${nodeData.name}` emits too many events!") })
+    .and(stream[Float::HNil]("C"))
+    .or(stream[String::HNil]("D"))
 
   val query2 = // : HListQuery[Int::Int::Float::String::HNil] =
     stream[Int::HNil]("A")
@@ -66,10 +66,9 @@ object Main extends App {
       // case (Left(i1), Left(i2), Left(f)) => println(s"COMPLEX EVENT:\tEvent3($i1,$i2,$f)")
       // case (Right(s), _, _)              => println(s"COMPLEX EVENT:\tEvent1($s)")
       // Callback for `query2`:
-      // case (i1, i2, f, s)             => println(s"COMPLEX EVENT:\tEvent4($i1, $i2, $f,$s)")
-      // This is necessary to avoid warnings about non-exhaustive `match`:
       case (i1, i2, f, s) => println(s"COMPLEX EVENT:\tEvent4($i1, $i2, $f, $s)")
-      case _ => println("FIRED")
+      // This is necessary to avoid warnings about non-exhaustive `match`:
+      case _ =>
     })
 
 }
