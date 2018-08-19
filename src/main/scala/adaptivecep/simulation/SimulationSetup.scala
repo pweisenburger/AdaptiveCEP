@@ -18,7 +18,7 @@ object SimulationSetup {
     "B" -> actorSystem.actorOf(Props(new EmptyPublisher), "B"),
     "C" -> actorSystem.actorOf(Props(new EmptyPublisher), "C"))
 
-  val query0 = // : Query =
+  val query0: Query =
     stream[Int::HNil]("A")
       .join(
         stream[Int::HNil]("B"),
@@ -27,7 +27,7 @@ object SimulationSetup {
       .where(_ <= _)
       .drop(Nat._1)
 
-  val query1 = // : Query =
+  val query1: Query =
     stream[Int::HNil]("A")
       .join(
         stream[Int::HNil]("B"),

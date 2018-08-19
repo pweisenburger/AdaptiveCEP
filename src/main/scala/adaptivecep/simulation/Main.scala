@@ -1,7 +1,7 @@
 package adaptivecep.simulation
 
 import adaptivecep.data.Events._
-import adaptivecep.data.Queries.HListQuery
+import adaptivecep.data.Queries.{HListQuery, X}
 import adaptivecep.dsl.Dsl._
 import adaptivecep.graph.factory._
 import adaptivecep.graph.qos._
@@ -24,7 +24,7 @@ object Main extends App {
     "C" -> publisherC,
     "D" -> publisherD)
 
-  val query1 = //: Query3[Either[Int, String], Either[Int, X], Either[Float, X]] =
+  val query1: HListQuery[Either[Int, String]::Either[Int, X]::Either[Float, X]::HNil] =
     stream[Int::HNil]("A")
     .join(
       stream[Int::HNil]("B"),
@@ -40,7 +40,7 @@ object Main extends App {
     .and(stream[Float::HNil]("C"))
     .or(stream[String::HNil]("D"))
 
-  val query2 = // : HListQuery[Int::Int::Float::String::HNil] =
+  val query2: HListQuery[Int::Int::Float::String::HNil] =
     stream[Int::HNil]("A")
     .and(stream[Int::HNil]("B"))
     .join(
@@ -52,21 +52,19 @@ object Main extends App {
       latency < timespan(1.milliseconds) otherwise { (nodeData) => println(s"PROBLEM:\tEvents reach node `${nodeData.name}` too slowly!") })
 
 
-  val graph: ActorRef = GraphFactory.create[Int, Int, Float, String](
+  val graph: ActorRef = GraphFactory.create(
     actorSystem =             actorSystem,
-    // need to typecast because otherwise the scala compiler cannot infer the correct type
-    // TODO is there a fix?
-    query =                   query2.asInstanceOf[HListQuery[Int::Int::Float::String::HNil]], // Alternatively: `query2`
+    query =                   query1, // Alternatively: `query2`
     publishers =              publishers,
     frequencyMonitorFactory = AverageFrequencyMonitorFactory  (interval = 15, logging = true),
     latencyMonitorFactory =   PathLatencyMonitorFactory       (interval =  5, logging = true),
     createdCallback =         () => println("STATUS:\t\tGraph has been created."))(
     eventCallback =           {
       // Callback for `query1`:
-      // case (Left(i1), Left(i2), Left(f)) => println(s"COMPLEX EVENT:\tEvent3($i1,$i2,$f)")
-      // case (Right(s), _, _)              => println(s"COMPLEX EVENT:\tEvent1($s)")
+      case (Left(i1), Left(i2), Left(f)) => println(s"COMPLEX EVENT:\tEvent3($i1,$i2,$f)")
+      case (Right(s), _, _)              => println(s"COMPLEX EVENT:\tEvent1($s)")
       // Callback for `query2`:
-      case (i1, i2, f, s) => println(s"COMPLEX EVENT:\tEvent4($i1, $i2, $f, $s)")
+      // case (i1, i2, f, s) => println(s"COMPLEX EVENT:\tEvent4($i1, $i2, $f, $s)")
       // This is necessary to avoid warnings about non-exhaustive `match`:
       case _ =>
     })
