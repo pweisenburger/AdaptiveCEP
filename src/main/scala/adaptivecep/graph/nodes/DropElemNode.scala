@@ -19,39 +19,9 @@ case class DropElemNode(
     case de@DropElem(_, _, _) => de.pos
   }
 
-  def handleEvent2(e1: Any, e2: Any): Unit = elemToBeDropped match {
-    case 1 => emitEvent(Event1(e2))
-    case 2 => emitEvent(Event1(e1))
-  }
-
-  def handleEvent3(e1: Any, e2: Any, e3: Any): Unit = elemToBeDropped match {
-    case 1 => emitEvent(Event2(e2, e3))
-    case 2 => emitEvent(Event2(e1, e3))
-    case 3 => emitEvent(Event2(e1, e2))
-  }
-
-  def handleEvent4(e1: Any, e2: Any, e3: Any, e4: Any): Unit = elemToBeDropped match {
-    case 1 => emitEvent(Event3(e2, e3, e4))
-    case 2 => emitEvent(Event3(e1, e3, e4))
-    case 3 => emitEvent(Event3(e1, e2, e4))
-    case 4 => emitEvent(Event3(e1, e2, e3))
-  }
-
-  def handleEvent5(e1: Any, e2: Any, e3: Any, e4: Any, e5: Any): Unit = elemToBeDropped match {
-    case 1 => emitEvent(Event4(e2, e3, e4, e5))
-    case 2 => emitEvent(Event4(e1, e3, e4, e5))
-    case 3 => emitEvent(Event4(e1, e2, e4, e5))
-    case 4 => emitEvent(Event4(e1, e2, e3, e5))
-    case 5 => emitEvent(Event4(e1, e2, e3, e4))
-  }
-
-  def handleEvent6(e1: Any, e2: Any, e3: Any, e4: Any, e5: Any, e6: Any): Unit = elemToBeDropped match {
-    case 1 => emitEvent(Event5(e2, e3, e4, e5, e6))
-    case 2 => emitEvent(Event5(e1, e3, e4, e5, e6))
-    case 3 => emitEvent(Event5(e1, e2, e4, e5, e6))
-    case 4 => emitEvent(Event5(e1, e2, e3, e5, e6))
-    case 5 => emitEvent(Event5(e1, e2, e3, e4, e6))
-    case 6 => emitEvent(Event5(e1, e2, e3, e4, e5))
+  def handleEvent(es: Seq[Any]): Unit = {
+    val dropped = es.patch(elemToBeDropped - 1 , Nil, 1)
+    emitEvent(EventList(dropped: _*))
   }
 
   override def receive: Receive = {
@@ -60,12 +30,10 @@ case class DropElemNode(
     case Created if sender() == childNode =>
       emitCreated()
     case event: Event if sender() == childNode => event match {
-      case Event1(_) => sys.error("Panic! Control flow should never reach this point!")
-      case Event2(e1, e2) => handleEvent2(e1, e2)
-      case Event3(e1, e2, e3) => handleEvent3(e1, e2, e3)
-      case Event4(e1, e2, e3, e4) => handleEvent4(e1, e2, e3, e4)
-      case Event5(e1, e2, e3, e4, e5) => handleEvent5(e1, e2, e3, e4, e5)
-      case Event6(e1, e2, e3, e4, e5, e6) => handleEvent6(e1, e2, e3, e4, e5, e6)
+      case EventList(es@_*) =>
+        if (es.length < 2)
+          sys.error("Panic! Control flow should never reach this point!")
+        else handleEvent(es)
     }
     case unhandledMessage =>
       frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)

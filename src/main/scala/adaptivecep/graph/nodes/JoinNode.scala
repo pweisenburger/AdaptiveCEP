@@ -33,20 +33,10 @@ case class JoinNode(
       childNode2Created = true
       if (childNode1Created) emitCreated()
     case event: Event if sender() == childNode1 => event match {
-      case Event1(e1) => sendEvent("sq1", Array(toAnyRef(e1)))
-      case Event2(e1, e2) => sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2)))
-      case Event3(e1, e2, e3) => sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3)))
-      case Event4(e1, e2, e3, e4) => sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4)))
-      case Event5(e1, e2, e3, e4, e5) => sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5)))
-      case Event6(e1, e2, e3, e4, e5, e6) => sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5), toAnyRef(e6)))
+      case EventList(es @ _*) => sendEvent("sq1", es.map(toAnyRef).toArray)
     }
     case event: Event if sender() == childNode2 => event match {
-      case Event1(e1) => sendEvent("sq2", Array(toAnyRef(e1)))
-      case Event2(e1, e2) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2)))
-      case Event3(e1, e2, e3) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3)))
-      case Event4(e1, e2, e3, e4) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4)))
-      case Event5(e1, e2, e3, e4, e5) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5)))
-      case Event6(e1, e2, e3, e4, e5, e6) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5), toAnyRef(e6)))
+      case EventList(es @ _*) => sendEvent("sq2", es.map(toAnyRef).toArray)
     }
     case unhandledMessage =>
       frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
@@ -69,13 +59,9 @@ case class JoinNode(
     val values: Array[Any] =
       eventBean.get("sq1").asInstanceOf[Array[Any]] ++
       eventBean.get("sq2").asInstanceOf[Array[Any]]
-    val event: Event = values.length match {
-      case 2 => Event2(values(0), values(1))
-      case 3 => Event3(values(0), values(1), values(2))
-      case 4 => Event4(values(0), values(1), values(2), values(3))
-      case 5 => Event5(values(0), values(1), values(2), values(3), values(4))
-      case 6 => Event6(values(0), values(1), values(2), values(3), values(4), values(5))
-    }
+    if (values.length < 2)
+      sys.error(s"values should have a length of at least 2")
+    val event: Event = EventList(values: _*)
     emitEvent(event)
   })
 

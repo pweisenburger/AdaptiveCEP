@@ -13,10 +13,10 @@ object Main extends App {
 
   val actorSystem: ActorSystem = ActorSystem()
 
-  val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id))),             "A")
-  val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id * 2))),         "B")
-  val publisherC: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id.toFloat))),     "C")
-  val publisherD: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(s"String($id)"))), "D")
+  val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => EventList(id))),             "A")
+  val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => EventList(id * 2))),         "B")
+  val publisherC: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => EventList(id.toFloat))),     "C")
+  val publisherD: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => EventList(s"String($id)"))), "D")
 
   val publishers: Map[String, ActorRef] = Map(
     "A" -> publisherA,
