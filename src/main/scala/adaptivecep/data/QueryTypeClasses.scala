@@ -1,8 +1,8 @@
 package adaptivecep.data
 
-import shapeless.ops.hlist.{Drop, Prepend, Split}
+import shapeless.ops.hlist.Patcher
 import shapeless.ops.nat.Pred
-import shapeless.{::, DepFn1, DepFn2, HList, HNil, Nat, Succ, _0}
+import shapeless.{::, DepFn1, DepFn2, HList, HNil, Nat}
 
 import scala.annotation.implicitNotFound
 
@@ -19,19 +19,12 @@ object DropAt {
 
   type Aux[L <: HList, N <: Nat, Out0 <: HList] = DropAt[L, N] { type Out = Out0 }
 
-  implicit def defaultDropAt
-    [L <: HList, N <: Nat, Pred <: Nat, Pre <: HList, Suf <: HList, SufDrop <: HList, R <: HList]
-  (implicit pred: Pred.Aux[N, Pred],
-   split: Split.Aux[L, Pred, Pre, Suf],
-   drop: Drop.Aux[Suf, Nat._1, SufDrop],
-   prepend: Prepend.Aux[Pre, SufDrop, R]): Aux[L, N, R] = new DropAt[L, N] {
-    type Out = prepend.Out
-    override def apply(l: L): R = {
-      val (pre, suf)  = split(l)
-      val dropSuf = drop(suf)
-      prepend(pre, dropSuf)
-    }
-  }
+  implicit def defaultDropAt[L <: HList, N <: Nat, Pred <: Nat, R <: HList]
+    (implicit pred: Pred.Aux[N, Pred], patch: Patcher.Aux[Pred, Nat._1, L, HNil, R] ): Aux[L, N, R] =
+      new DropAt[L, N] {
+        type Out = patch.Out
+        override def apply(l: L): R = { patch(l, HNil) }
+      }
 }
 
 /**
