@@ -17,7 +17,8 @@ object Events {
 
   val errorMsg: String = "Panic! Control flow should never reach this point!"
 
-  def toFunEventAny[T <: HList](f: (T) => Any)(implicit op: HKernelAux[T], fl: FromTraversable[T]): Event => Any = {
+  def toFunEventAny[T <: HList](f: (T) => Any)
+                               (implicit op: HKernelAux[T], fl: FromTraversable[T]): Event => Any = {
     case Event(es @ _*) if es.length == op().length => es.toHList[T]  match {
       case Some(hlist) => f(hlist)
       case None => sys.error(errorMsg)
@@ -25,7 +26,8 @@ object Events {
     case _ => sys.error(errorMsg)
   }
 
-  def toFunEventBoolean[T <: HList](f: (T) => Boolean)(implicit op: HKernelAux[T], fl: FromTraversable[T]): Event => Boolean = {
+  def toFunEventBoolean[T <: HList](f: (T) => Boolean)
+                                   (implicit op: HKernelAux[T], fl: FromTraversable[T]): Event => Boolean = {
     case Event(es @ _*) if es.length == op().length => es.toHList[T]  match {
       case Some(hlist) => f(hlist)
       case None => sys.error(errorMsg)

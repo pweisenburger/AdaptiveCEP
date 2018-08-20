@@ -90,7 +90,6 @@ object Queries {
     (sq1: HListQuery[A], sq2: HListQuery[B], requirements: Set[Requirement])
     (implicit p: Prepend.Aux[A, B, R], op: HKernelAux[R]) extends HListQuery[R] with ConjunctionQuery
 
-  type X = Unit
   case class Disjunction[A <: HList, B <: HList, R <: HList]
     (sq1: HListQuery[A], sq2: HListQuery[B], requirements: Set[Requirement])
     (implicit disjunct: Disjunct.Aux[A, B, R], op: HKernelAux[R]) extends HListQuery[R] with DisjunctionQuery

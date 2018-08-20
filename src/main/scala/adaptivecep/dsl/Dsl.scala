@@ -5,7 +5,7 @@ import java.time.Duration
 import adaptivecep.data.{Disjunct, DropAt}
 import adaptivecep.data.Events._
 import adaptivecep.data.Queries._
-import shapeless.{::, HList, HNil, Nat}
+import shapeless.{HList, Nat}
 import shapeless.ops.hlist.{HKernelAux, Prepend}
 import shapeless.ops.nat.ToInt
 import shapeless.ops.traversable.FromTraversable
@@ -95,8 +95,9 @@ object Dsl {
 
   implicit def nStreamToSequenceHelper[T <: HList](s: HListNStream[T]): SequenceHelper[T] = SequenceHelper(s)
 
-  def sequence[A <: HList, B <: HList, R <: HList](tuple: (HListNStream[A], HListNStream[B]), requirements: Requirement*)
-                                                  (implicit p: Prepend.Aux[A, B, R], op: HKernelAux[R]): Sequence[A, B, R] =
+  def sequence[A <: HList, B <: HList, R <: HList]
+    (tuple: (HListNStream[A], HListNStream[B]), requirements: Requirement*)
+    (implicit p: Prepend.Aux[A, B, R], op: HKernelAux[R]): Sequence[A, B, R] =
       Sequence(tuple._1, tuple._2, requirements.toSet)(p, op)
 
   implicit def queryToQueryHelper[A <: HList](q: HListQuery[A]): QueryHelper[A] = QueryHelper(q)
@@ -110,15 +111,15 @@ object Dsl {
       DropElem(q, pos, requirements.toSet)(dropAt, op, toInt)
     def selfJoin[R <: HList](w1: Window, w2: Window, requirements: Requirement*)
                             (implicit p: Prepend.Aux[A, A, R], op: HKernelAux[R]): HListQuery[R] =
-        SelfJoin[A, R](q, w1, w2, requirements.toSet)(p, op)
+      SelfJoin[A, R](q, w1, w2, requirements.toSet)(p, op)
     def join[B <: HList, R <: HList](q2: HListQuery[B], w1: Window, w2: Window, requirements: Requirement*)
                                     (implicit p: Prepend.Aux[A, B, R], op: HKernelAux[R]): HListQuery[R] =
-        Join[A, B, R](q, q2, w1, w2, requirements.toSet)(p, op)
+      Join[A, B, R](q, q2, w1, w2, requirements.toSet)(p, op)
     def and[B <: HList, R <: HList](q2: HListQuery[B], requirements: Requirement*)
                                    (implicit p: Prepend.Aux[A, B, R], op: HKernelAux[R]): HListQuery[R] =
-        Conjunction(q, q2, requirements.toSet)(p, op)
+      Conjunction(q, q2, requirements.toSet)(p, op)
     def or[B <: HList, R <: HList](q2: HListQuery[B], requirements: Requirement*)
                                   (implicit disjunct: Disjunct.Aux[A, B, R], op: HKernelAux[R]): HListQuery[R] =
-        Disjunction(q, q2, requirements.toSet)(disjunct, op)
+      Disjunction(q, q2, requirements.toSet)(disjunct, op)
   }
 }
