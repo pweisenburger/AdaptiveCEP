@@ -5,7 +5,9 @@ import adaptivecep.data.Queries._
 import adaptivecep.graph.nodes._
 import adaptivecep.graph.qos._
 import akka.actor.{ActorRef, ActorSystem, Props}
-import shapeless.{::, HNil}
+import shapeless.ops.hlist.HKernelAux
+import shapeless.ops.traversable.FromTraversable
+import shapeless.HList
 
 object GraphFactory {
 
@@ -100,14 +102,14 @@ object GraphFactory {
 
   // This is why `eventCallback` is listed separately:
   // https://stackoverflow.com/questions/21147001/why-scala-doesnt-infer-type-from-generic-type-parameters
-  def create[A](
+  def create[T <: HList](
       actorSystem: ActorSystem,
-      query: HListQuery[A::HNil],
+      query: HListQuery[T],
       publishers: Map[String, ActorRef],
       frequencyMonitorFactory: MonitorFactory,
       latencyMonitorFactory: MonitorFactory,
       createdCallback: () => Any)(
-      eventCallback: (A) => Any): ActorRef =
+      eventCallback: (T) => Any)(implicit op: HKernelAux[T], fl: FromTraversable[T]): ActorRef =
     createImpl(
       actorSystem,
       query.asInstanceOf[Query],
@@ -115,90 +117,5 @@ object GraphFactory {
       frequencyMonitorFactory,
       latencyMonitorFactory,
       createdCallback,
-      toFunEventAny(eventCallback))
-
-  def create[A, B](
-      actorSystem: ActorSystem,
-      query: HListQuery[A::B::HNil],
-      publishers: Map[String, ActorRef],
-      frequencyMonitorFactory: MonitorFactory,
-      latencyMonitorFactory: MonitorFactory,
-      createdCallback: () => Any)(
-      eventCallback: (A, B) => Any): ActorRef =
-    createImpl(
-      actorSystem,
-      query.asInstanceOf[Query],
-      publishers,
-      frequencyMonitorFactory,
-      latencyMonitorFactory,
-      createdCallback,
-      toFunEventAny(eventCallback))
-
-  def create[A, B, C](
-      actorSystem: ActorSystem,
-      query: HListQuery[A::B::C::HNil],
-      publishers: Map[String, ActorRef],
-      frequencyMonitorFactory: MonitorFactory,
-      latencyMonitorFactory: MonitorFactory,
-      createdCallback: () => Any)(
-      eventCallback: (A, B, C) => Any): ActorRef =
-    createImpl(
-      actorSystem,
-      query.asInstanceOf[Query],
-      publishers,
-      frequencyMonitorFactory,
-      latencyMonitorFactory,
-      createdCallback,
-      toFunEventAny(eventCallback))
-
-  def create[A, B, C, D](
-      actorSystem: ActorSystem,
-      query: HListQuery[A::B::C::D::HNil],
-      publishers: Map[String, ActorRef],
-      frequencyMonitorFactory: MonitorFactory,
-      latencyMonitorFactory: MonitorFactory,
-      createdCallback: () => Any)(
-      eventCallback: (A, B, C, D) => Any): ActorRef =
-    createImpl(
-      actorSystem,
-      query.asInstanceOf[Query],
-      publishers,
-      frequencyMonitorFactory,
-      latencyMonitorFactory,
-      createdCallback,
-      toFunEventAny(eventCallback))
-
-  def create[A, B, C, D, E](
-      actorSystem: ActorSystem,
-      query: HListQuery[A::B::C::D::E::HNil],
-      publishers: Map[String, ActorRef],
-      frequencyMonitorFactory: MonitorFactory,
-      latencyMonitorFactory: MonitorFactory,
-      createdCallback: () => Any)(
-      eventCallback: (A, B, C, D, E) => Any): ActorRef =
-    createImpl(
-      actorSystem,
-      query.asInstanceOf[Query],
-      publishers,
-      frequencyMonitorFactory,
-      latencyMonitorFactory,
-      createdCallback,
-      toFunEventAny(eventCallback))
-
-  def create[A, B, C, D, E, F](
-      actorSystem: ActorSystem,
-      query: HListQuery[A::B::C::D::E::F::HNil],
-      publishers: Map[String, ActorRef],
-      frequencyMonitorFactory: MonitorFactory,
-      latencyMonitorFactory: MonitorFactory,
-      createdCallback: () => Any)(
-      eventCallback: (A, B, C, D, E, F) => Any): ActorRef =
-    createImpl(
-      actorSystem,
-      query.asInstanceOf[Query],
-      publishers,
-      frequencyMonitorFactory,
-      latencyMonitorFactory,
-      createdCallback,
-      toFunEventAny(eventCallback))
+      toFunEventAny[T](eventCallback))
 }

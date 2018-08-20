@@ -8,6 +8,7 @@ import adaptivecep.data.Queries._
 import shapeless.{::, HList, HNil, Nat}
 import shapeless.ops.hlist.{HKernelAux, Prepend}
 import shapeless.ops.nat.ToInt
+import shapeless.ops.traversable.FromTraversable
 
 object Dsl {
 
@@ -101,6 +102,12 @@ object Dsl {
   implicit def queryToQueryHelper[A <: HList](q: HListQuery[A]): QueryHelper[A] = QueryHelper(q)
 
   case class QueryHelper[A <: HList](q: HListQuery[A]) {
+    def where(cond: A => Boolean, requirements: Requirement*)
+             (implicit op: HKernelAux[A], fl: FromTraversable[A]): HListQuery[A] =
+      Filter(q, toFunEventBoolean[A](cond)(op, fl), requirements.toSet)(op)
+    def drop[R <: HList, Pos <: Nat](pos: Pos, requirements: Requirement*)
+                                    (implicit dropAt: DropAt.Aux[A, Pos, R], op: HKernelAux[R], toInt: ToInt[Pos]): HListQuery[R] =
+      DropElem(q, pos, requirements.toSet)(dropAt, op, toInt)
     def selfJoin[R <: HList](w1: Window, w2: Window, requirements: Requirement*)
                             (implicit p: Prepend.Aux[A, A, R], op: HKernelAux[R]): HListQuery[R] =
         SelfJoin[A, R](q, w1, w2, requirements.toSet)(p, op)
@@ -110,56 +117,8 @@ object Dsl {
     def and[B <: HList, R <: HList](q2: HListQuery[B], requirements: Requirement*)
                                    (implicit p: Prepend.Aux[A, B, R], op: HKernelAux[R]): HListQuery[R] =
         Conjunction(q, q2, requirements.toSet)(p, op)
-    def drop[R <: HList, Pos <: Nat](pos: Pos, requirements: Requirement*)
-                                    (implicit dropAt: DropAt.Aux[A, Pos, R], op: HKernelAux[R], toInt: ToInt[Pos]): HListQuery[R] =
-        DropElem(q, pos, requirements.toSet)(dropAt, op, toInt)
     def or[B <: HList, R <: HList](q2: HListQuery[B], requirements: Requirement*)
                                   (implicit disjunct: Disjunct.Aux[A, B, R], op: HKernelAux[R]): HListQuery[R] =
         Disjunction(q, q2, requirements.toSet)(disjunct, op)
   }
-
-  // These Case classes are needed because otherwise toFunEventBoolean[A] will always be invoked which is not the wanted behavior
-  // TODO is there a better way?
-  case class Query1Helper[A](q: HListQuery[A :: HNil]) {
-    def where(cond: A => Boolean, requirements: Requirement*)
-             (implicit op: HKernelAux[A :: HNil]): HListQuery[A :: HNil] =
-      Filter(q, toFunEventBoolean[A](cond), requirements.toSet)(op)
-  }
-
-  case class Query2Helper[A, B](q: HListQuery[A :: B :: HNil]) {
-    def where(cond: (A, B) => Boolean, requirements: Requirement*)
-             (implicit op: HKernelAux[A :: B :: HNil]): HListQuery[A :: B :: HNil] =
-      Filter(q, toFunEventBoolean[A, B](cond), requirements.toSet)(op)
-  }
-
-  case class Query3Helper[A, B, C](q: HListQuery[A :: B :: C :: HNil]) {
-    def where(cond: (A, B, C) => Boolean, requirements: Requirement*)
-             (implicit op: HKernelAux[A :: B :: C :: HNil]): HListQuery[A :: B :: C :: HNil] =
-      Filter(q, toFunEventBoolean[A, B, C](cond), requirements.toSet)(op)
-  }
-
-  case class Query4Helper[A, B, C, D](q: HListQuery[A :: B :: C :: D :: HNil]) {
-    def where(cond: (A, B, C, D) => Boolean, requirements: Requirement*)
-             (implicit op: HKernelAux[A :: B :: C :: D :: HNil]): HListQuery[A :: B :: C :: D :: HNil] =
-      Filter(q, toFunEventBoolean[A, B, C, D](cond), requirements.toSet)(op)
-  }
-
-  case class Query5Helper[A, B, C, D, E](q: HListQuery[A :: B :: C :: D :: E :: HNil]) {
-    def where(cond: (A, B, C, D, E) => Boolean, requirements: Requirement*)
-             (implicit op: HKernelAux[A :: B :: C :: D :: E :: HNil]): HListQuery[A :: B :: C :: D :: E :: HNil] =
-      Filter(q, toFunEventBoolean[A, B, C, D, E](cond), requirements.toSet)(op)
-  }
-
-  case class Query6Helper[A, B, C, D, E, F](q: HListQuery[A :: B :: C :: D :: E :: F :: HNil]) {
-    def where(cond: (A, B, C, D, E, F) => Boolean, requirements: Requirement*)
-             (implicit op: HKernelAux[A :: B :: C :: D :: E :: F :: HNil]): HListQuery[A :: B :: C :: D :: E :: F :: HNil] =
-      Filter(q, toFunEventBoolean[A, B, C, D, E, F](cond), requirements.toSet)(op)
-  }
-
-  implicit def query1ToQuery1Helper[A](q: HListQuery[A::HNil]): Query1Helper[A] = Query1Helper(q)
-  implicit def query2ToQuery2Helper[A, B](q: HListQuery[A::B::HNil]): Query2Helper[A, B] = Query2Helper(q)
-  implicit def query3ToQuery3Helper[A, B, C](q: HListQuery[A::B::C::HNil]): Query3Helper[A, B, C] = Query3Helper(q)
-  implicit def query4ToQuery4Helper[A, B, C, D](q: HListQuery[A::B::C::D::HNil]): Query4Helper[A, B, C, D] = Query4Helper(q)
-  implicit def query5ToQuery5Helper[A, B, C, D, E](q: HListQuery[A::B::C::D::E::HNil]): Query5Helper[A, B, C, D, E] = Query5Helper(q)
-  implicit def query6ToQuery6Helper[A, B, C, D, E, F](q: HListQuery[A::B::C::D::E::F::HNil]): Query6Helper[A, B, C, D, E, F] = Query6Helper(q)
 }

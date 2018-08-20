@@ -146,7 +146,7 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     val a: ActorRef = createTestPublisher("A")
     val query: HListQuery[Int::Int::HNil] =
       stream[Int::Int::HNil]("A")
-      .where(_ >= _)
+      .where(x => x.head >= x.last)
     val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
     expectMsg(Created)
     a ! Event(41, 42)
@@ -161,7 +161,7 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     val a: ActorRef = createTestPublisher("A")
     val query: HListQuery[Int::Int::HNil] =
       stream[Int::Int::HNil]("A")
-      .where(_ <= _)
+      .where(x => x.head <= x.last)
     val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
     expectMsg(Created)
     a ! Event(41, 42)
@@ -176,7 +176,7 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     val a: ActorRef = createTestPublisher("A")
     val query: HListQuery[Long::HNil] =
       stream[Long::HNil]("A")
-      .where(_ == 42l)
+      .where(_.head == 42l)
     val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
     expectMsg(Created)
     a ! Event(41l)
@@ -188,7 +188,7 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     val a: ActorRef = createTestPublisher("A")
     val query: HListQuery[Float::HNil] =
       stream[Float::HNil]("A")
-      .where(_ > 41f)
+      .where(_.head > 41f)
     val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
     expectMsg(Created)
     a ! Event(41f)
@@ -201,7 +201,7 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     val a: ActorRef = createTestPublisher("A")
     val query: HListQuery[Double::HNil] =
       stream[Double::HNil]("A")
-      .where(_ < 42.0)
+      .where(_.head < 42.0)
     val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
     expectMsg(Created)
     a ! Event(41.0)
@@ -214,7 +214,7 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     val a: ActorRef = createTestPublisher("A")
     val query: Query =
       stream[Boolean::HNil]("A")
-      .where(_ != true)
+      .where(_.head != true)
     val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
     expectMsg(Created)
     a ! Event(true)
@@ -509,7 +509,7 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     val sq6: HListQuery[String::String::Int::Int::String::String::HNil] =
       sq4.join(sq5, tumblingWindow(1.instances), tumblingWindow(4.instances))
     val sq7: HListQuery[String::String::Int::Int::String::String::HNil] =
-      sq6.where((_, _, e3, e4, _, _) => e3 < e4)
+      sq6.where(x => x(Nat._2) < x(Nat._3))
     val query: HListQuery[String::String::HNil] =
       sq7
         .drop(Nat._2)

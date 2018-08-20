@@ -30,7 +30,7 @@ object Main extends App {
       stream[Int::HNil]("B"),
       slidingWindow(2.seconds),
       slidingWindow(2.seconds))
-    .where(_ < _)
+    .where(x => x.head < x.last)
     .drop(Nat._1, latency < timespan(1.milliseconds) otherwise { (nodeData) => println(s"PROBLEM:\tEvents reach node `${nodeData.name}` too slowly!") })
     .selfJoin(
       tumblingWindow(1.instances),
@@ -61,12 +61,11 @@ object Main extends App {
     createdCallback =         () => println("STATUS:\t\tGraph has been created."))(
     eventCallback =           {
       // Callback for `query1`:
-      case (Left(i1), Left(i2), Left(f)) => println(s"COMPLEX EVENT:\tEvent3($i1,$i2,$f)")
-      case (Right(s), _, _)              => println(s"COMPLEX EVENT:\tEvent1($s)")
+      case Left(i1)::Left(i2)::Left(f)::HNil => println(s"COMPLEX EVENT:\tEvent3($i1,$i2,$f)")
+      case Right(s)::_::_::HNil              => println(s"COMPLEX EVENT:\tEvent1($s)")
       // Callback for `query2`:
       // case (i1, i2, f, s) => println(s"COMPLEX EVENT:\tEvent4($i1, $i2, $f, $s)")
       // This is necessary to avoid warnings about non-exhaustive `match`:
       case _ =>
     })
-
 }
