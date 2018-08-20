@@ -44,7 +44,10 @@ object Queries {
   sealed trait BinaryQuery extends Query { val sq1: Query; val sq2: Query }
 
   sealed trait StreamQuery      extends LeafQuery   { val publisherName: String }
-  sealed trait SequenceQuery[A <: HList, B <: HList] extends LeafQuery   { val s1: HListNStream[A]; val s2: HListNStream[B] }
+  sealed trait SequenceQuery[A <: HList, B <: HList] extends LeafQuery   {
+    val s1: HListNStream[A]
+    val s2: HListNStream[B]
+  }
   sealed trait FilterQuery      extends UnaryQuery  { val cond: Event => Boolean }
   sealed trait DropElemQuery    extends UnaryQuery
   sealed trait SelfJoinQuery    extends UnaryQuery  { val w1: Window; val w2: Window }
@@ -88,5 +91,7 @@ object Queries {
     (implicit p: Prepend.Aux[A, B, R], op: HKernelAux[R]) extends HListQuery[R] with ConjunctionQuery
 
   type X = Unit
-  case class Disjunction[A <: HList, B <: HList, R <: HList] (sq1: HListQuery[A], sq2: HListQuery[B], requirements: Set[Requirement])(implicit disjunct: Disjunct.Aux[A, B, R], op: HKernelAux[R]) extends HListQuery[R] with DisjunctionQuery
+  case class Disjunction[A <: HList, B <: HList, R <: HList]
+    (sq1: HListQuery[A], sq2: HListQuery[B], requirements: Set[Requirement])
+    (implicit disjunct: Disjunct.Aux[A, B, R], op: HKernelAux[R]) extends HListQuery[R] with DisjunctionQuery
 }

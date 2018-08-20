@@ -68,16 +68,14 @@ object Disjunct {
     }
 
   private def leftHNilRightHead[RH, RT <: HList, Rest <: HList]
-  (implicit disjunct: Disjunct.Aux[HNil, RT, Rest])
-  : Aux[HNil, RH :: RT , Either[Unit, RH] :: Rest] =
+  (implicit disjunct: Disjunct.Aux[HNil, RT, Rest]): Aux[HNil, RH :: RT , Either[Unit, RH] :: Rest] =
     new Disjunct[HNil, RH :: RT] {
       override type Out = Either[Unit, RH] :: Rest
       override def apply(t: HNil, u: RH :: RT): Out = Right(u.head) :: disjunct(HNil, u.tail)
     }
 
   private def leftHeadRightHNil[LH, LT <: HList, Rest <: HList]
-  (implicit disjunct: Disjunct.Aux[LT, HNil, Rest])
-  : Aux[LH :: LT, HNil, Either[LH, Unit] :: Rest] =
+  (implicit disjunct: Disjunct.Aux[LT, HNil, Rest]): Aux[LH :: LT, HNil, Either[LH, Unit] :: Rest] =
     new Disjunct[LH :: LT, HNil] {
       override type Out = Either[LH, Unit] :: Rest
       override def apply(t: LH :: LT, u: HNil): Out = Left(t.head) :: disjunct(t.tail, HNil)
