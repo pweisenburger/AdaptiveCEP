@@ -43,8 +43,8 @@ class System(implicit actorSystem: ActorSystem) {
         JoinNode(joinQuery, publishers, frequencyMonitorFactory, latencyMonitorFactory, createdCallback, eventCallback)
       case conjunctionQuery: ConjunctionQuery =>
         ConjunctionNode(conjunctionQuery, publishers, frequencyMonitorFactory, latencyMonitorFactory, createdCallback, eventCallback)
-      /*case disjunctionQuery: DisjunctionQuery =>
-        DisjunctionNode(disjunctionQuery, publishers, frequencyMonitorFactory, latencyMonitorFactory, createdCallback, eventCallback)*/
+      case disjunctionQuery: DisjunctionQuery =>
+        DisjunctionNode(disjunctionQuery, publishers, frequencyMonitorFactory, latencyMonitorFactory, createdCallback, eventCallback)
     }), s"root-${System.index.getAndIncrement()}")
 
   def consumers: Seq[Operator] = {
