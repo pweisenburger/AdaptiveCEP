@@ -37,12 +37,10 @@ case class SequenceNode[A <: HList, B <: HList](
     case AcknowledgeSubscription if sender() == queryPublishers(1) =>
       subscription2Acknowledged = true
       if (subscription1Acknowledged) emitCreated()
-    case event: Event if sender() == queryPublishers(0) => event match {
-      case EventList(es @ _*) => sendEvent("sq1", es.map(toAnyRef).toArray)
-    }
-    case event: Event if sender() == queryPublishers(1) => event match {
-      case EventList(es @ _*) => sendEvent("sq2", es.map(toAnyRef).toArray)
-    }
+    case event: Event if sender() == queryPublishers(0) =>
+      sendEvent("sq1", event.es.map(toAnyRef).toArray)
+    case event: Event if sender() == queryPublishers(1) =>
+      sendEvent("sq2", event.es.map(toAnyRef).toArray)
     case unhandledMessage =>
       frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
       latencyMonitor.onMessageReceive(unhandledMessage, nodeData)
@@ -63,7 +61,7 @@ case class SequenceNode[A <: HList, B <: HList](
       eventBean.get("sq2").asInstanceOf[Array[Any]]
     if (values.length < 2)
       sys.error(s"values should have a length of at least 2")
-    val event: Event = EventList(values: _*)
+    val event = Event(values: _*)
     emitEvent(event)
   })
 

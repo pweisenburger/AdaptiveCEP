@@ -25,9 +25,8 @@ case class SelfJoinNode(
       sender ! DependenciesResponse(Seq(childNode))
     case Created if sender() == childNode =>
       emitCreated()
-    case event: Event if sender() == childNode => event match {
-      case EventList(es @ _*) => sendEvent("sq", es.map(toAnyRef).toArray)
-    }
+    case event: Event if sender() == childNode =>
+      sendEvent("sq", event.es.map(toAnyRef).toArray)
     case unhandledMessage =>
       frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
       latencyMonitor.onMessageReceive(unhandledMessage, nodeData)
@@ -50,7 +49,7 @@ case class SelfJoinNode(
       eventBean.get("rhs").asInstanceOf[Array[Any]]
     if (values.length < 2)
       sys.error(s"values should have a length of at least 2")
-    val event: Event = EventList(values: _*)
+    val event = Event(values: _*)
     emitEvent(event)
   })
 

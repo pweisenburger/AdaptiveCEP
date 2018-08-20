@@ -32,12 +32,10 @@ case class ConjunctionNode[A <: HList](
     case Created if sender() == childNode2 =>
       childNode2Created = true
       if (childNode1Created) emitCreated()
-    case event: Event if sender() == childNode1 => event match {
-      case EventList(es @ _*) => sendEvent("sq1", es.map(toAnyRef).toArray)
-    }
-    case event: Event if sender() == childNode2 => event match {
-      case EventList(es @ _*) => sendEvent("sq2", es.map(toAnyRef).toArray)
-    }
+    case event: Event if sender() == childNode1 =>
+      sendEvent("sq1", event.es.map(toAnyRef).toArray)
+    case event: Event if sender() == childNode2 =>
+      sendEvent("sq2", event.es.map(toAnyRef).toArray)
     case unhandledMessage =>
       frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
       latencyMonitor.onMessageReceive(unhandledMessage, nodeData)
@@ -58,7 +56,7 @@ case class ConjunctionNode[A <: HList](
       eventBean.get("sq2").asInstanceOf[Array[Any]]
     if (values.length < 2)
       sys.error(s"values should have a length of at least 2")
-    val event: Event = EventList(values: _*)
+    val event = Event(values: _*)
     emitEvent(event)
   })
 

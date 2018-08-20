@@ -21,7 +21,7 @@ case class DropElemNode(
 
   def handleEvent(es: Seq[Any]): Unit = {
     val dropped = es.patch(elemToBeDropped - 1 , Nil, 1)
-    emitEvent(EventList(dropped: _*))
+    emitEvent(Event(dropped: _*))
   }
 
   override def receive: Receive = {
@@ -29,12 +29,10 @@ case class DropElemNode(
       sender ! DependenciesResponse(Seq(childNode))
     case Created if sender() == childNode =>
       emitCreated()
-    case event: Event if sender() == childNode => event match {
-      case EventList(es@_*) =>
-        if (es.length < 2)
-          sys.error("Panic! Control flow should never reach this point!")
-        else handleEvent(es)
-    }
+    case event: Event if sender() == childNode =>
+      if (event.es.length < 2)
+        sys.error("Panic! Control flow should never reach this point!")
+      else handleEvent(event.es)
     case unhandledMessage =>
       frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
       latencyMonitor.onMessageReceive(unhandledMessage, nodeData)

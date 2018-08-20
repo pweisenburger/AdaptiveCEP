@@ -37,7 +37,7 @@ case class DisjunctionNode(
   def handleEvent(array: Array[Either[Any, Any]]): Unit = {
     val disjunction = query.asInstanceOf[Disjunction[_, _, _]]
     val filledArray: Array[Either[Any, Any]] = fillArray(disjunction.length, array)
-    emitEvent(EventList(filledArray: _*))
+    emitEvent(Event(filledArray: _*))
   }
 
   override def receive: Receive = {
@@ -49,16 +49,12 @@ case class DisjunctionNode(
     case Created if sender() == childNode2 =>
       childNode2Created = true
       if (childNode1Created) emitCreated()
-    case event: Event if sender() == childNode1 => event match {
-      case EventList(es @ _*) =>
-        val array: Array[Either[Any, Any]] = es.map { e => Left(e) }.toArray
-        handleEvent(array)
-    }
-    case event: Event if sender() == childNode2 => event match {
-      case EventList(es @ _*) =>
-        val array: Array[Either[Any, Any]] = es.map { e => Right(e) }.toArray
-        handleEvent(array)
-    }
+    case event: Event if sender() == childNode1 =>
+      val array: Array[Either[Any, Any]] = event.es.map { e => Left(e) }.toArray
+      handleEvent(array)
+    case event: Event if sender() == childNode2 =>
+      val array: Array[Either[Any, Any]] = event.es.map { e => Right(e) }.toArray
+      handleEvent(array)
     case unhandledMessage =>
       frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
       latencyMonitor.onMessageReceive(unhandledMessage, nodeData)
