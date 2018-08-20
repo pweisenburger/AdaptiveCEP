@@ -103,6 +103,9 @@ object Dsl {
   implicit def queryToQueryHelper[A <: HList](q: HListQuery[A]): QueryHelper[A] = QueryHelper(q)
 
   case class QueryHelper[A <: HList](q: HListQuery[A]) {
+    // Sadly we cannot use FnToProduct in order to make the usage better.
+    // If we would use FnToProduct, it would be necessary to attach the
+    // complete type information for the arguments so that the compiler can find the implicit parameter.
     def where(cond: A => Boolean, requirements: Requirement*)
              (implicit op: HKernelAux[A], fl: FromTraversable[A]): HListQuery[A] =
       Filter(q, toFunEventBoolean[A](cond)(op, fl), requirements.toSet)(op)
