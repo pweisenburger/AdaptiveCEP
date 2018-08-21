@@ -47,8 +47,6 @@ case class SelfJoinNode(
     val values: Array[Any] =
       eventBean.get("lhs").asInstanceOf[Array[Any]] ++
       eventBean.get("rhs").asInstanceOf[Array[Any]]
-    if (values.length < 2)
-      sys.error(s"values should have a length of at least 2")
     val event = Event(values: _*)
     emitEvent(event)
   })
