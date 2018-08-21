@@ -45,6 +45,8 @@ class System(implicit actorSystem: ActorSystem) {
         ConjunctionNode(conjunctionQuery, publishers, frequencyMonitorFactory, latencyMonitorFactory, createdCallback, eventCallback)
       case disjunctionQuery: DisjunctionQuery =>
         DisjunctionNode(disjunctionQuery, publishers, frequencyMonitorFactory, latencyMonitorFactory, createdCallback, eventCallback)
+      // only to avoid warning that match is not exhaustive
+      case _: HListQuery[_] => throw new IllegalArgumentException("HListQuery should not be passed as an argument")
     }), s"root-${System.index.getAndIncrement()}")
 
   def consumers: Seq[Operator] = {

@@ -98,6 +98,8 @@ trait Node extends Actor {
           None,
           None)),
         s"$name-$id-disjunction")
+    // only to avoid warning that match is not exhaustive
+    case _: HListQuery[_] => throw new IllegalArgumentException("HListQuery should not be passed as an argument")
   }
 
 }
