@@ -20,7 +20,7 @@ case class DisjunctionNode(
 
   def fillArray(desiredLength: Int, array: Array[Either[Any, Any]]): Array[Either[Any, Any]] = {
     require(array.length <= desiredLength)
-    // need this check because otherwise the matching array(0) fails
+    // need this check because otherwise matching array(0) fails
     if (array.length == 0)
       return Array()
 
