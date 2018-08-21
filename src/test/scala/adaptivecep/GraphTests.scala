@@ -105,6 +105,27 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     stopActors(a, graph)
   }
 
+  test("LeafNode - StreamNode - 7") {
+    val a: ActorRef = createTestPublisher("A")
+    val query: HListQuery[Boolean::Boolean::Boolean::Boolean::Boolean::Boolean::Int::HNil] =
+      stream[Boolean::Boolean::Boolean::Boolean::Boolean::Boolean::Int::HNil]("A")
+    val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(Created)
+    a ! Event(true, true, true, true, true, true, 12)
+    expectMsg(Event(true, true, true, true, true, true, 12))
+    stopActors(a, graph)
+  }
+
+  test("LeafNode - StreamNode - 8") {
+    val a: ActorRef = createTestPublisher("A")
+    val query: HListQuery[Boolean::String::Boolean::Boolean::Boolean::Boolean::Boolean::Int::HNil] =
+      stream[Boolean::String::Boolean::Boolean::Boolean::Boolean::Boolean::Int::HNil]("A")
+    val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(Created)
+    a ! Event(true, "test", true, true, true, true, true, 12)
+    expectMsg(Event(true, "test", true, true, true, true, true, 12))
+    stopActors(a, graph)
+  }
 
   test("LeafNode - SequenceNode - 1") {
     val a: ActorRef = createTestPublisher("A")
@@ -184,6 +205,7 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     expectMsg(Event(42l))
     stopActors(a, graph)
   }
+
   test("UnaryNode - FilterNode - 4") {
     val a: ActorRef = createTestPublisher("A")
     val query: HListQuery[Float::HNil] =
@@ -249,6 +271,21 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     a ! Event("e", "f", "g", "h")
     expectMsg(Event("b", "d"))
     expectMsg(Event("f", "h"))
+    stopActors(a, graph)
+  }
+
+  test("UnaryNode - DropElemNode - 3") {
+    val a: ActorRef = createTestPublisher("A")
+    val query: HListQuery[String::String::String::String::String::String::HNil] =
+      stream[String::String::String::String::String::String::String::String::HNil]("A")
+        .drop(Nat._8)
+        .drop(Nat._1)
+    val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(Created)
+    a ! Event("a", "b", "c", "d", "e", "f", "g", "h")
+    a ! Event("i", "j", "k", "l", "m", "n", "o", "p")
+    expectMsg(Event("b", "c", "d", "e", "f", "g"))
+    expectMsg(Event("j", "k", "l", "m", "n", "o"))
     stopActors(a, graph)
   }
 
