@@ -7,7 +7,7 @@ import akka.actor.ActorContext
 import shapeless.{HList, Nat}
 import shapeless.ops.hlist.{HKernelAux, Prepend}
 import shapeless.ops.nat.ToInt
-import shapeless.ops.record.{UnzipFields, Values}
+import shapeless.ops.record.UnzipFields
 
 object Queries {
 

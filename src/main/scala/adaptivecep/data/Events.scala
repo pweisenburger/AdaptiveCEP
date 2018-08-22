@@ -3,7 +3,6 @@ package adaptivecep.data
 import akka.actor.ActorRef
 import shapeless.HList
 import shapeless.ops.hlist.{HKernelAux, ZipWithKeys}
-import shapeless.ops.record.{Keys, UnzipFields, Values}
 import shapeless.ops.traversable.FromTraversable
 import shapeless.syntax.std.traversable._
 
@@ -42,9 +41,8 @@ object Events {
   // Otherwise the value for the implicit parameter ft cannot be found.
   // The reason is that Typable cannot be found for FieldType[Witness.`'key`.T, ValueType]
   def toFunEventBoolean[Labeled <: HList, K <: HList, V <: HList](f: (Labeled) => Boolean)(implicit
-      unzip: UnzipFields.Aux[Labeled, K, V],
       zipWithKeys: ZipWithKeys.Aux[K, V, Labeled],
-      op: HKernelAux[V],
+      op: HKernelAux[Labeled],
       ft: FromTraversable[V]): Event => Boolean = {
     case Event(es@_*) if es.length == op().length =>
       es.toHList[V](ft) match {

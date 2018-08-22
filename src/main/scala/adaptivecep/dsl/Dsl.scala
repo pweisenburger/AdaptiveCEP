@@ -8,7 +8,7 @@ import adaptivecep.data.Queries._
 import shapeless.{HList, Nat}
 import shapeless.ops.hlist.{HKernelAux, Prepend, ZipWithKeys}
 import shapeless.ops.nat.ToInt
-import shapeless.ops.record.{UnzipFields, Values}
+import shapeless.ops.record.UnzipFields
 import shapeless.ops.traversable.FromTraversable
 
 object Dsl {
@@ -116,9 +116,9 @@ object Dsl {
     def whereLabeled[K <: HList, V <: HList](cond: A => Boolean, requirements: Requirement*)(implicit
         unzip: UnzipFields.Aux[A, K, V],
         zipWithKeys: ZipWithKeys.Aux[K, V, A],
-        opV: HKernelAux[V], opA: HKernelAux[A],
+        op: HKernelAux[A],
         fl: FromTraversable[V]): HListQuery[A] =
-      FilterRecord[A, K, V](q, toFunEventBoolean[A, K, V](cond)(unzip, zipWithKeys, opV, fl), requirements.toSet)(unzip, opA)
+      FilterRecord[A, K, V](q, toFunEventBoolean[A, K, V](cond)(zipWithKeys, op, fl), requirements.toSet)(unzip, op)
 
     def drop[R <: HList, Pos <: Nat](pos: Pos, requirements: Requirement*)(implicit
         dropAt: DropAt.Aux[A, Pos, R],

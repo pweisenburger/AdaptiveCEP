@@ -9,7 +9,7 @@ import adaptivecep.publishers._
 import akka.actor.{ActorRef, ActorSystem, PoisonPill, Props}
 import akka.testkit.{TestKit, TestProbe}
 import org.scalatest.{BeforeAndAfterAll, FunSuiteLike}
-import shapeless.labelled.{FieldType, KeyTag}
+import shapeless.labelled.KeyTag
 import shapeless.{::, HNil, Nat, Witness}
 import shapeless.syntax.singleton._
 
