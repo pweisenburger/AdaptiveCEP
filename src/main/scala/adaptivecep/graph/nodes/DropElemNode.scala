@@ -30,9 +30,7 @@ case class DropElemNode(
     case Created if sender() == childNode =>
       emitCreated()
     case event: Event if sender() == childNode =>
-      if (event.es.length < 2)
-        sys.error("Panic! Control flow should never reach this point!")
-      else handleEvent(event.es)
+      handleEvent(event.es)
     case unhandledMessage =>
       frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
       latencyMonitor.onMessageReceive(unhandledMessage, nodeData)

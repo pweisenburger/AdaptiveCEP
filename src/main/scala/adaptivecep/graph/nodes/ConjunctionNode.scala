@@ -54,8 +54,6 @@ case class ConjunctionNode[A <: HList](
     val values: Array[Any] =
       eventBean.get("sq1").asInstanceOf[Array[Any]] ++
       eventBean.get("sq2").asInstanceOf[Array[Any]]
-    if (values.length < 2)
-      sys.error(s"values should have a length of at least 2")
     val event = Event(values: _*)
     emitEvent(event)
   })
