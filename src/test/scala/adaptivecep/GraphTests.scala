@@ -663,7 +663,7 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     val a: ActorRef = createTestPublisher("A")
     val query: HListQuery[Record.`"name" -> Boolean`.T] =
       stream[Record.`"name" -> Boolean`.T]("A")
-        .whereLabeled(x => x("name") == true)
+        .where(x => x("name") == true)
     val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
     expectMsg(Created)
     a ! Event("name" ->> true)

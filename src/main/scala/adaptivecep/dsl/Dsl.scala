@@ -103,22 +103,33 @@ object Dsl {
 
   implicit def queryToQueryHelper[A <: HList](q: HListQuery[A]): QueryHelper[A] = QueryHelper(q)
 
+  // implict functions to enable the usage of a single where function for HLists and Records
+  implicit def toUnlabeledWhere[A <: HList](implicit
+      op: HKernelAux[A],
+      fl: FromTraversable[A]
+  ): (HListQuery[A], A => Boolean, Seq[Requirement]) => HListQuery[A] = {
+    case (q, cond, reqs) => Filter[A](q, toFunEventBoolean[A](cond)(op, fl), reqs.toSet)(op)
+  }
+
+  // See toFunEventBoolean[Labeled, K, V] why an extra version is needed
+  implicit def toLabeledWhere[A <: HList, K <: HList, V <: HList](implicit
+      unzip: UnzipFields.Aux[A, K, V],
+      zipWithKeys: ZipWithKeys.Aux[K, V, A],
+      op: HKernelAux[A],
+      fl: FromTraversable[V]
+  ): (HListQuery[A], A => Boolean, Seq[Requirement]) => HListQuery[A] = {
+    case (q, cond, reqs) =>
+      FilterRecord[A, K, V](q, toFunEventBoolean[A, K, V](cond)(zipWithKeys, op, fl), reqs.toSet)(unzip, op)
+  }
+
   case class QueryHelper[A <: HList](q: HListQuery[A]) {
     // Sadly we cannot use FnToProduct in order to make the usage better.
     // If we would use FnToProduct, it would be necessary to attach the
     // complete type information for the arguments so that the compiler can find the implicit parameter.
-    def where(cond: A => Boolean, requirements: Requirement*)(implicit
-        op: HKernelAux[A],
-        fl: FromTraversable[A]): HListQuery[A] =
-      Filter[A](q, toFunEventBoolean[A](cond)(op, fl), requirements.toSet)(op)
-
-    // See toFunEventBoolean[Labeled, K, V] why an extra version is needed
-    def whereLabeled[K <: HList, V <: HList](cond: A => Boolean, requirements: Requirement*)(implicit
-        unzip: UnzipFields.Aux[A, K, V],
-        zipWithKeys: ZipWithKeys.Aux[K, V, A],
-        op: HKernelAux[A],
-        fl: FromTraversable[V]): HListQuery[A] =
-      FilterRecord[A, K, V](q, toFunEventBoolean[A, K, V](cond)(zipWithKeys, op, fl), requirements.toSet)(unzip, op)
+    def where(cond: A => Boolean, requirements: Requirement*)
+             (implicit trans: (HListQuery[A], A => Boolean, Seq[Requirement]) => HListQuery[A]): HListQuery[A] = {
+      trans(q, cond, requirements)
+    }
 
     def drop[R <: HList, Pos <: Nat](pos: Pos, requirements: Requirement*)(implicit
         dropAt: DropAt.Aux[A, Pos, R],
