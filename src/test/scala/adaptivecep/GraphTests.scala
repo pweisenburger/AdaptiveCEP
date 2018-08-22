@@ -10,6 +10,7 @@ import akka.actor.{ActorRef, ActorSystem, PoisonPill, Props}
 import akka.testkit.{TestKit, TestProbe}
 import org.scalatest.{BeforeAndAfterAll, FunSuiteLike}
 import shapeless.labelled.KeyTag
+import shapeless.record.Record
 import shapeless.{::, HNil, Nat, Witness}
 import shapeless.syntax.singleton._
 
@@ -607,9 +608,9 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
   test("Record - JoinNode") {
     val a: ActorRef = createTestPublisher("A")
     val b: ActorRef = createTestPublisher("B")
-    val sq: HListQuery[Int with KeyTag[wName.T, Int]::HNil] = stream[Int with KeyTag[wName.T, Int]::HNil]("B")
-    val query: HListQuery[Boolean with KeyTag[wOther.T, Boolean]::Int with KeyTag[wName.T, Int]::HNil] =
-      stream[Boolean with KeyTag[wOther.T, Boolean]::HNil]("A")
+    val sq: HListQuery[Record.`"name" -> Int`.T] = stream[Record.`"name" -> Int`.T]("B")
+    val query: HListQuery[Record.`"other" -> Boolean, "name" -> Int`.T] =
+      stream[Record.`"other" -> Boolean`.T]("A")
         .join(sq, tumblingWindow(3.instances), tumblingWindow(2.instances))
     val graph: ActorRef = createTestGraph(query, Map("A" -> a, "B" -> b), testActor)
     expectMsg(Created)
@@ -641,7 +642,7 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
   test("Record - SelfJoinNode") {
     val a: ActorRef = createTestPublisher("A")
     val query =
-      stream[String with KeyTag[wName.T, String]::String with KeyTag[wOther.T, String]::HNil]("A")
+      stream[Record.`"name" -> String, "other" -> String`.T]("A")
         .selfJoin(tumblingWindow(3.instances), tumblingWindow(2.instances))
     val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
     expectMsg(Created)
@@ -660,13 +661,12 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
   test("Record - FilterNode") {
     import shapeless.record._
     val a: ActorRef = createTestPublisher("A")
-    val query: HListQuery[Boolean with KeyTag[wName.T,  Boolean] :: HNil] =
-      stream[Boolean with KeyTag[wName.T,  Boolean] :: HNil]("A")
+    val query: HListQuery[Record.`"name" -> Boolean`.T] =
+      stream[Record.`"name" -> Boolean`.T]("A")
         .whereLabeled(x => x("name") == true)
     val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
     expectMsg(Created)
     a ! Event("name" ->> true)
-    // TODO adapt when the implementation complete
     a ! Event("name" ->> false)
     a ! Event("name" ->> true)
     expectMsg(Event("name" ->> true))
@@ -676,8 +676,8 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
 
   test("Record - DropElemNode") {
     val a: ActorRef = createTestPublisher("A")
-    val query: HListQuery[Int with KeyTag[wOther.T,  Int] :: HNil] =
-      stream[Boolean with KeyTag[wName.T,  Boolean] :: Int with KeyTag[wOther.T, Int] :: HNil]("A")
+    val query: HListQuery[Record.`"other" -> Int`.T] =
+      stream[Record.`"name" -> Boolean, "other" -> Int`.T]("A")
         .drop(Nat._1)
     val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
     expectMsg(Created)
@@ -690,7 +690,7 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     val a: ActorRef = createTestPublisher("A")
     val b: ActorRef = createTestPublisher("B")
     val query = // : HListQuery[Boolean with KeyTag[wName.T,  Boolean] :: HNil] =
-      stream[Boolean with KeyTag[wName.T,  Boolean] :: HNil]("A")
+      stream[Record.`"name" -> Boolean`.T]("A")
         .and(stream[Int::HNil]("B"))
     val graph: ActorRef = createTestGraph(query, Map("A" -> a, "B" -> b), testActor)
     expectMsg(Created)
@@ -706,8 +706,8 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
   test("Record - DisjunctionNode") {
     val a: ActorRef = createTestPublisher("A")
     val b: ActorRef = createTestPublisher("B")
-    val query: HListQuery[Either[Boolean with KeyTag[wName.T,  Boolean], Int]:: HNil] =
-      stream[Boolean with KeyTag[wName.T,  Boolean] :: HNil]("A")
+    val query: HListQuery[Either[Boolean with KeyTag[wName.T, Boolean], Int] :: HNil] =
+      stream[Record.`"name" -> Boolean`.T]("A")
       .or(stream[Int::HNil]("B"))
     val graph: ActorRef = createTestGraph(query, Map("A" -> a, "B" -> b), testActor)
     expectMsg(Created)
