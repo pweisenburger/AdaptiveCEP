@@ -6,8 +6,9 @@ import adaptivecep.data.{Disjunct, DropAt}
 import adaptivecep.data.Events._
 import adaptivecep.data.Queries._
 import shapeless.{HList, Nat}
-import shapeless.ops.hlist.{HKernelAux, Prepend}
+import shapeless.ops.hlist.{HKernelAux, Prepend, ZipWithKeys}
 import shapeless.ops.nat.ToInt
+import shapeless.ops.record.{UnzipFields, Values}
 import shapeless.ops.traversable.FromTraversable
 
 object Dsl {
@@ -106,23 +107,43 @@ object Dsl {
     // Sadly we cannot use FnToProduct in order to make the usage better.
     // If we would use FnToProduct, it would be necessary to attach the
     // complete type information for the arguments so that the compiler can find the implicit parameter.
-    def where(cond: A => Boolean, requirements: Requirement*)
-             (implicit op: HKernelAux[A], fl: FromTraversable[A]): HListQuery[A] =
-      Filter(q, toFunEventBoolean[A](cond)(op, fl), requirements.toSet)(op)
-    def drop[R <: HList, Pos <: Nat](pos: Pos, requirements: Requirement*)
-                                    (implicit dropAt: DropAt.Aux[A, Pos, R], op: HKernelAux[R], toInt: ToInt[Pos]): HListQuery[R] =
+    def where(cond: A => Boolean, requirements: Requirement*)(implicit
+        op: HKernelAux[A],
+        fl: FromTraversable[A]): HListQuery[A] =
+      Filter[A](q, toFunEventBoolean[A](cond)(op, fl), requirements.toSet)(op)
+
+    // See toFunEventBoolean[Labeled, K, V] why an extra version is needed
+    def whereLabeled[K <: HList, V <: HList](cond: A => Boolean, requirements: Requirement*)(implicit
+        unzip: UnzipFields.Aux[A, K, V],
+        zipWithKeys: ZipWithKeys.Aux[K, V, A],
+        opV: HKernelAux[V], opA: HKernelAux[A],
+        fl: FromTraversable[V]): HListQuery[A] =
+      FilterRecord[A, K, V](q, toFunEventBoolean[A, K, V](cond)(unzip, zipWithKeys, opV, fl), requirements.toSet)(unzip, opA)
+
+    def drop[R <: HList, Pos <: Nat](pos: Pos, requirements: Requirement*)(implicit
+        dropAt: DropAt.Aux[A, Pos, R],
+        op: HKernelAux[R],
+        toInt: ToInt[Pos]): HListQuery[R] =
       DropElem(q, pos, requirements.toSet)(dropAt, op, toInt)
-    def selfJoin[R <: HList](w1: Window, w2: Window, requirements: Requirement*)
-                            (implicit p: Prepend.Aux[A, A, R], op: HKernelAux[R]): HListQuery[R] =
+
+    def selfJoin[R <: HList](w1: Window, w2: Window, requirements: Requirement*)(implicit
+        p: Prepend.Aux[A, A, R],
+        op: HKernelAux[R]): HListQuery[R] =
       SelfJoin[A, R](q, w1, w2, requirements.toSet)(p, op)
-    def join[B <: HList, R <: HList](q2: HListQuery[B], w1: Window, w2: Window, requirements: Requirement*)
-                                    (implicit p: Prepend.Aux[A, B, R], op: HKernelAux[R]): HListQuery[R] =
+
+    def join[B <: HList, R <: HList](q2: HListQuery[B], w1: Window, w2: Window, requirements: Requirement*)(implicit
+        p: Prepend.Aux[A, B, R],
+        op: HKernelAux[R]): HListQuery[R] =
       Join[A, B, R](q, q2, w1, w2, requirements.toSet)(p, op)
-    def and[B <: HList, R <: HList](q2: HListQuery[B], requirements: Requirement*)
-                                   (implicit p: Prepend.Aux[A, B, R], op: HKernelAux[R]): HListQuery[R] =
+
+    def and[B <: HList, R <: HList](q2: HListQuery[B], requirements: Requirement*)(implicit
+        p: Prepend.Aux[A, B, R],
+        op: HKernelAux[R]): HListQuery[R] =
       Conjunction(q, q2, requirements.toSet)(p, op)
-    def or[B <: HList, R <: HList](q2: HListQuery[B], requirements: Requirement*)
-                                  (implicit disjunct: Disjunct.Aux[A, B, R], op: HKernelAux[R]): HListQuery[R] =
+
+    def or[B <: HList, R <: HList](q2: HListQuery[B], requirements: Requirement*)(implicit
+        disjunct: Disjunct.Aux[A, B, R],
+        op: HKernelAux[R]): HListQuery[R] =
       Disjunction(q, q2, requirements.toSet)(disjunct, op)
   }
 }

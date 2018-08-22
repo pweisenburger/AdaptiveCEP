@@ -9,7 +9,9 @@ import adaptivecep.publishers._
 import akka.actor.{ActorRef, ActorSystem, PoisonPill, Props}
 import akka.testkit.{TestKit, TestProbe}
 import org.scalatest.{BeforeAndAfterAll, FunSuiteLike}
-import shapeless.{::, HNil, Nat}
+import shapeless.labelled.{FieldType, KeyTag}
+import shapeless.{::, HNil, Nat, Witness}
+import shapeless.syntax.singleton._
 
 class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAndAfterAll {
 
@@ -595,6 +597,124 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     c ! Event(true)
     expectMsg(Event(Left(21), Left(21.0f)))
     expectMsg(Event(Right(21.0f), Right(true)))
+    stopActors(a, b, graph)
+  }
+
+  // Tests that cover the usage of extensible records
+  val wName = Witness("name")
+  val wOther = Witness("other")
+
+  test("Record - JoinNode") {
+    val a: ActorRef = createTestPublisher("A")
+    val b: ActorRef = createTestPublisher("B")
+    val sq: HListQuery[Int with KeyTag[wName.T, Int]::HNil] = stream[Int with KeyTag[wName.T, Int]::HNil]("B")
+    val query: HListQuery[Boolean with KeyTag[wOther.T, Boolean]::Int with KeyTag[wName.T, Int]::HNil] =
+      stream[Boolean with KeyTag[wOther.T, Boolean]::HNil]("A")
+        .join(sq, tumblingWindow(3.instances), tumblingWindow(2.instances))
+    val graph: ActorRef = createTestGraph(query, Map("A" -> a, "B" -> b), testActor)
+    expectMsg(Created)
+    a ! Event("other" ->> true)
+    a ! Event("other" ->> false)
+    a ! Event("other" ->> true)
+    a ! Event("other" ->> false)
+    a ! Event("other" ->> true)
+    Thread.sleep(2000)
+    b ! Event("name" ->> 1)
+    b ! Event("name" ->> 2)
+    b ! Event("name" ->> 3)
+    b ! Event("name" ->> 4)
+    expectMsg(Event("other" ->> true,  1))
+    expectMsg(Event("other" ->> false, 1))
+    expectMsg(Event("other" ->> true,  1))
+    expectMsg(Event("other" ->> true,  2))
+    expectMsg(Event("other" ->> false, 2))
+    expectMsg(Event("other" ->> true,  2))
+    expectMsg(Event("other" ->> true,  3))
+    expectMsg(Event("other" ->> false, 3))
+    expectMsg(Event("other" ->> true,  3))
+    expectMsg(Event("other" ->> true,  4))
+    expectMsg(Event("other" ->> false, 4))
+    expectMsg(Event("other" ->> true,  4))
+    stopActors(a, b, graph)
+  }
+
+  test("Record - SelfJoinNode") {
+    val a: ActorRef = createTestPublisher("A")
+    val query =
+      stream[String with KeyTag[wName.T, String]::String with KeyTag[wOther.T, String]::HNil]("A")
+        .selfJoin(tumblingWindow(3.instances), tumblingWindow(2.instances))
+    val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(Created)
+    a ! Event("name" ->> "a", "other" ->> "b")
+    a ! Event("name" ->> "c", "other" ->> "d")
+    a ! Event("name" ->> "e", "other" ->> "f")
+    expectMsg(Event("name" ->> "a", "other" ->> "b", "name"  ->> "a", "other" ->> "b"))
+    expectMsg(Event("name" ->> "a", "other" ->> "b", "name"  ->> "c", "other" ->> "d"))
+    expectMsg(Event("name" ->> "c", "other" ->> "d", "name"  ->> "a", "other" ->> "b"))
+    expectMsg(Event("name" ->> "c", "other" ->> "d", "name"  ->> "c", "other" ->> "d"))
+    expectMsg(Event("name" ->> "e", "other" ->> "f", "name"  ->> "a", "other" ->> "b"))
+    expectMsg(Event("name" ->> "e", "other" ->> "f", "name"  ->> "c", "other" ->> "d"))
+    stopActors(a, graph)
+  }
+
+  test("Record - FilterNode") {
+    import shapeless.record._
+    val a: ActorRef = createTestPublisher("A")
+    val query: HListQuery[Boolean with KeyTag[wName.T,  Boolean] :: HNil] =
+      stream[Boolean with KeyTag[wName.T,  Boolean] :: HNil]("A")
+        .whereLabeled(x => x("name") == true)
+    val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(Created)
+    a ! Event("name" ->> true)
+    // TODO adapt when the implementation complete
+    a ! Event("name" ->> false)
+    a ! Event("name" ->> true)
+    expectMsg(Event("name" ->> true))
+    expectMsg(Event("name" ->> true))
+    stopActors(a, graph)
+  }
+
+  test("Record - DropElemNode") {
+    val a: ActorRef = createTestPublisher("A")
+    val query: HListQuery[Int with KeyTag[wOther.T,  Int] :: HNil] =
+      stream[Boolean with KeyTag[wName.T,  Boolean] :: Int with KeyTag[wOther.T, Int] :: HNil]("A")
+        .drop(Nat._1)
+    val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(Created)
+    a ! Event("name" ->> true, "other" ->> 3)
+    expectMsg(Event("other" ->> 3))
+    stopActors(a, graph)
+  }
+
+  test("Record - ConjunctionNode") {
+    val a: ActorRef = createTestPublisher("A")
+    val b: ActorRef = createTestPublisher("B")
+    val query = // : HListQuery[Boolean with KeyTag[wName.T,  Boolean] :: HNil] =
+      stream[Boolean with KeyTag[wName.T,  Boolean] :: HNil]("A")
+        .and(stream[Int::HNil]("B"))
+    val graph: ActorRef = createTestGraph(query, Map("A" -> a, "B" -> b), testActor)
+    expectMsg(Created)
+    a ! Event("name" ->> true)
+    b ! Event(1)
+    expectMsg(Event("name" ->> true, 1))
+    a ! Event("name" ->> false)
+    b ! Event(4)
+    expectMsg(Event("name" ->> false, 4))
+    stopActors(a, b, graph)
+  }
+
+  test("Record - DisjunctionNode") {
+    val a: ActorRef = createTestPublisher("A")
+    val b: ActorRef = createTestPublisher("B")
+    val query: HListQuery[Either[Boolean with KeyTag[wName.T,  Boolean], Int]:: HNil] =
+      stream[Boolean with KeyTag[wName.T,  Boolean] :: HNil]("A")
+      .or(stream[Int::HNil]("B"))
+    val graph: ActorRef = createTestGraph(query, Map("A" -> a, "B" -> b), testActor)
+    expectMsg(Created)
+    a ! Event("name" ->> true)
+    expectMsg(Event(Left("name" ->> true)))
+    b ! Event(1)
+    expectMsg(Event(Right(1)))
     stopActors(a, b, graph)
   }
 }

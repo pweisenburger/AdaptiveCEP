@@ -7,6 +7,7 @@ import akka.actor.ActorContext
 import shapeless.{HList, Nat}
 import shapeless.ops.hlist.{HKernelAux, Prepend}
 import shapeless.ops.nat.ToInt
+import shapeless.ops.record.{UnzipFields, Values}
 
 object Queries {
 
@@ -67,6 +68,10 @@ object Queries {
   case class Sequence[A <: HList, B <: HList, R <: HList]
     (s1: HListNStream[A], s2: HListNStream[B], requirements: Set[Requirement])
     (implicit p: Prepend.Aux[A, B, R], op: HKernelAux[R]) extends HListQuery[R] with SequenceQuery[A, B]
+
+  case class FilterRecord[Labeled <: HList, K <: HList, V <: HList]
+    (sq: HListQuery[Labeled], cond: Event => Boolean, requirements: Set[Requirement])
+    (implicit unzip: UnzipFields.Aux[Labeled, K, V], op: HKernelAux[Labeled]) extends HListQuery[Labeled] with FilterQuery
 
   case class Filter[T <: HList]
     (sq: HListQuery[T], cond: Event => Boolean, requirements: Set[Requirement])
