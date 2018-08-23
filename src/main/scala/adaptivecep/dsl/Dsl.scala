@@ -105,8 +105,8 @@ object Dsl {
 
   // implict functions to enable the usage of a single where function for HLists and Records
   implicit def toUnlabeledWhere[A <: HList](implicit
-      op: HKernelAux[A],
-      fl: FromTraversable[A]
+      fl: FromTraversable[A],
+      op: HKernelAux[A]
   ): (HListQuery[A], A => Boolean, Seq[Requirement]) => HListQuery[A] = {
     case (q, cond, reqs) => Filter[A](q, toFunEventBoolean[A](cond)(op, fl), reqs.toSet)(op)
   }
@@ -125,15 +125,17 @@ object Dsl {
   // implict functions to enable the usage of a single drop function based on nats and witnesses
   implicit def toNatDrop[A <: HList, Pos <: Nat, R <: HList](implicit
        dropAt: DropAt.Aux[A, Pos, R],
-       op: HKernelAux[R],
-       toInt: ToInt[Pos]): (HListQuery[A], Pos, Seq[Requirement]) => HListQuery[R] = {
+       toInt: ToInt[Pos],
+       op: HKernelAux[R]
+  ): (HListQuery[A], Pos, Seq[Requirement]) => HListQuery[R] = {
     case (q, pos, reqs) => DropElem(q, pos, reqs.toSet)(dropAt, op, toInt)
   }
 
   implicit def toWitnessDrop[A <: HList, K, V, R <: HList](implicit
        dropKey: DropKey[A, K],
        remover: Remover.Aux[A, K, (V, R)],
-       op: HKernelAux[R]): (HListQuery[A], Witness.Aux[K], Seq[Requirement]) => HListQuery[R] = {
+       op: HKernelAux[R]
+  ): (HListQuery[A], Witness.Aux[K], Seq[Requirement]) => HListQuery[R] = {
     case (q, pos, reqs) => DropElemRecord(q, pos, reqs.toSet)(dropKey, remover, op)
   }
 
@@ -141,34 +143,32 @@ object Dsl {
     // Sadly we cannot use FnToProduct in order to make the usage better.
     // If we would use FnToProduct, it would be necessary to attach the
     // complete type information for the arguments so that the compiler can find the implicit parameter.
-    def where(cond: A => Boolean, requirements: Requirement*)
-             (implicit trans: (HListQuery[A], A => Boolean, Seq[Requirement]) => HListQuery[A]): HListQuery[A] = {
-      trans(q, cond, requirements)
-    }
+    def where(cond: A => Boolean, requirements: Requirement*)(implicit
+        trans: (HListQuery[A], A => Boolean, Seq[Requirement]) => HListQuery[A]
+    ): HListQuery[A] = trans(q, cond, requirements)
 
-    def drop[Pos, R <: HList](toDrop: Pos, requirements: Requirement*)
-                           (implicit trans: (HListQuery[A], Pos, Seq[Requirement]) => HListQuery[R]): HListQuery[R] = {
-      trans(q, toDrop, requirements)
-    }
+    def drop[Pos, R <: HList](toDrop: Pos, requirements: Requirement*)(implicit
+         trans: (HListQuery[A], Pos, Seq[Requirement]) => HListQuery[R]
+    ): HListQuery[R] = trans(q, toDrop, requirements)
 
     def selfJoin[R <: HList](w1: Window, w2: Window, requirements: Requirement*)(implicit
         p: Prepend.Aux[A, A, R],
-        op: HKernelAux[R]): HListQuery[R] =
-      SelfJoin[A, R](q, w1, w2, requirements.toSet)(p, op)
+        op: HKernelAux[R]
+    ): HListQuery[R] = SelfJoin[A, R](q, w1, w2, requirements.toSet)(p, op)
 
     def join[B <: HList, R <: HList](q2: HListQuery[B], w1: Window, w2: Window, requirements: Requirement*)(implicit
         p: Prepend.Aux[A, B, R],
-        op: HKernelAux[R]): HListQuery[R] =
-      Join[A, B, R](q, q2, w1, w2, requirements.toSet)(p, op)
+        op: HKernelAux[R]
+    ): HListQuery[R] = Join[A, B, R](q, q2, w1, w2, requirements.toSet)(p, op)
 
     def and[B <: HList, R <: HList](q2: HListQuery[B], requirements: Requirement*)(implicit
         p: Prepend.Aux[A, B, R],
-        op: HKernelAux[R]): HListQuery[R] =
-      Conjunction(q, q2, requirements.toSet)(p, op)
+        op: HKernelAux[R]
+    ): HListQuery[R] = Conjunction(q, q2, requirements.toSet)(p, op)
 
     def or[B <: HList, R <: HList](q2: HListQuery[B], requirements: Requirement*)(implicit
         disjunct: Disjunct.Aux[A, B, R],
-        op: HKernelAux[R]): HListQuery[R] =
-      Disjunction(q, q2, requirements.toSet)(disjunct, op)
+        op: HKernelAux[R]
+    ): HListQuery[R] = Disjunction(q, q2, requirements.toSet)(disjunct, op)
   }
 }

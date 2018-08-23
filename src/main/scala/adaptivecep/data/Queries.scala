@@ -61,53 +61,91 @@ object Queries {
     val length: Int = op().length
   }
 
-  case class Stream[T <: HList]
-    (publisherName: String, requirements: Set[Requirement])
+  case class Stream[T <: HList](
+      publisherName: String,
+      requirements: Set[Requirement])
     (implicit op: HKernelAux[T]) extends HListQuery[T] with StreamQuery
 
-  case class Sequence[A <: HList, B <: HList, R <: HList]
-    (s1: HListNStream[A], s2: HListNStream[B], requirements: Set[Requirement])
-    (implicit p: Prepend.Aux[A, B, R], op: HKernelAux[R]) extends HListQuery[R] with SequenceQuery[A, B]
+  case class Sequence[A <: HList, B <: HList, R <: HList](
+      s1: HListNStream[A],
+      s2: HListNStream[B],
+      requirements: Set[Requirement])
+    (implicit
+      p: Prepend.Aux[A, B, R],
+      op: HKernelAux[R]
+  ) extends HListQuery[R] with SequenceQuery[A, B]
 
-  case class FilterRecord[Labeled <: HList, K <: HList, V <: HList]
-    (sq: HListQuery[Labeled], cond: Event => Boolean, requirements: Set[Requirement])
-    (implicit unzip: UnzipFields.Aux[Labeled, K, V], op: HKernelAux[Labeled]) extends HListQuery[Labeled] with FilterQuery
+  case class FilterRecord[Labeled <: HList, K <: HList, V <: HList](
+      sq: HListQuery[Labeled],
+      cond: Event => Boolean,
+      requirements: Set[Requirement])
+    (implicit
+      unzip: UnzipFields.Aux[Labeled, K, V],
+      op: HKernelAux[Labeled]
+  ) extends HListQuery[Labeled] with FilterQuery
 
   case class Filter[T <: HList]
     (sq: HListQuery[T], cond: Event => Boolean, requirements: Set[Requirement])
     (implicit op: HKernelAux[T]) extends HListQuery[T] with FilterQuery
 
-  case class DropElem[T <: HList, R <: HList, Pos <: Nat]
-    (sq: HListQuery[T], position: Nat, requirements: Set[Requirement])
-    (implicit dropAt: DropAt.Aux[T, Pos, R], op: HKernelAux[R], toInt: ToInt[Pos]) extends HListQuery[R] with DropElemQuery {
-    val pos = toInt()
-  }
+  case class DropElem[T <: HList, R <: HList, Pos <: Nat](
+      sq: HListQuery[T],
+      position: Nat,
+      requirements: Set[Requirement])
+    (implicit
+      dropAt: DropAt.Aux[T, Pos, R],
+      op: HKernelAux[R],
+      toInt: ToInt[Pos]
+  ) extends HListQuery[R] with DropElemQuery { val pos = toInt() }
 
   // Sadly I could not get a type class working that does the dropping at the value and the type level at the same time.
   // Thus, we need the Remover (Type-Level) in addition to DropKey(Value-Level).
-  case class DropElemRecord[T <: HList, R <: HList, K, V]
-    (sq: HListQuery[T], k: Witness.Aux[K], requirements: Set[Requirement])
+  case class DropElemRecord[T <: HList, R <: HList, K, V](
+      sq: HListQuery[T],
+      k: Witness.Aux[K],
+      requirements: Set[Requirement])
     (implicit
-        drop: DropKey[T, K],
-        remove: Remover.Aux[T, K, (V, R)],
-        op: HKernelAux[R]
-    ) extends HListQuery[R] with DropElemQuery {
-      val dropKey: DropKey[T, K] = drop
-    }
+      drop: DropKey[T, K],
+      remove: Remover.Aux[T, K, (V, R)],
+      op: HKernelAux[R]
+  ) extends HListQuery[R] with DropElemQuery { val dropKey: DropKey[T, K] = drop }
 
-  case class SelfJoin[T <: HList, R <: HList]
-    (sq: HListQuery[T], w1: Window, w2: Window, requirements: Set[Requirement])
-    (implicit p: Prepend.Aux[T, T, R], op: HKernelAux[R]) extends HListQuery[R] with SelfJoinQuery
+  case class SelfJoin[T <: HList, R <: HList](
+      sq: HListQuery[T],
+      w1: Window,
+      w2: Window,
+      requirements: Set[Requirement])
+   (implicit
+      p: Prepend.Aux[T, T, R],
+      op: HKernelAux[R]
+  ) extends HListQuery[R] with SelfJoinQuery
 
-  case class Join[A <: HList, B <: HList, R <: HList]
-    (sq1: HListQuery[A], sq2: HListQuery[B], w1: Window, w2: Window, requirements: Set[Requirement])
-    (implicit p: Prepend.Aux[A, B, R], op: HKernelAux[R]) extends HListQuery[R] with JoinQuery
+  case class Join[A <: HList, B <: HList, R <: HList](
+      sq1: HListQuery[A],
+      sq2: HListQuery[B],
+      w1: Window,
+      w2: Window,
+      requirements: Set[Requirement])
+    (implicit
+      p: Prepend.Aux[A, B, R],
+      op: HKernelAux[R]
+  ) extends HListQuery[R] with JoinQuery
 
-  case class Conjunction[A <: HList, B <: HList, R <: HList]
-    (sq1: HListQuery[A], sq2: HListQuery[B], requirements: Set[Requirement])
-    (implicit p: Prepend.Aux[A, B, R], op: HKernelAux[R]) extends HListQuery[R] with ConjunctionQuery
+  case class Conjunction[A <: HList, B <: HList, R <: HList](
+      sq1: HListQuery[A],
+      sq2: HListQuery[B],
+      requirements: Set[Requirement])
+    (implicit
+      p: Prepend.Aux[A, B, R],
+      op: HKernelAux[R]
+  ) extends HListQuery[R] with ConjunctionQuery
 
-  case class Disjunction[A <: HList, B <: HList, R <: HList]
-    (sq1: HListQuery[A], sq2: HListQuery[B], requirements: Set[Requirement])
-    (implicit disjunct: Disjunct.Aux[A, B, R], op: HKernelAux[R]) extends HListQuery[R] with DisjunctionQuery
+  case class Disjunction[A <: HList, B <: HList, R <: HList](
+      sq1: HListQuery[A],
+      sq2: HListQuery[B],
+      requirements: Set[Requirement])
+    (implicit
+      disjunct: Disjunct.Aux[A, B, R],
+      op: HKernelAux[R]
+  ) extends HListQuery[R] with DisjunctionQuery
 }
