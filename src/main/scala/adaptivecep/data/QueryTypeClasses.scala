@@ -1,10 +1,13 @@
 package adaptivecep.data
 
-import shapeless.ops.hlist.Patcher
+import shapeless.ops.hlist.{Patcher, ToTraversable, ZipWithKeys}
 import shapeless.ops.nat.Pred
+import shapeless.ops.record.{Remover, UnzipFields, Values}
+import shapeless.ops.traversable.FromTraversable
 import shapeless.{::, DepFn1, DepFn2, HList, HNil, Nat}
 
 import scala.annotation.implicitNotFound
+import scala.collection.GenTraversable
 
 /**
   * Type class supporting removal of the element at position ''n'' of this `HList`. Available only if this `HList` has at
@@ -20,11 +23,44 @@ object DropAt {
   type Aux[L <: HList, N <: Nat, Out0 <: HList] = DropAt[L, N] { type Out = Out0 }
 
   implicit def defaultDropAt[L <: HList, N <: Nat, Pred <: Nat, R <: HList]
-    (implicit pred: Pred.Aux[N, Pred], patch: Patcher.Aux[Pred, Nat._1, L, HNil, R] ): Aux[L, N, R] =
+    (implicit pred: Pred.Aux[N, Pred], patch: Patcher.Aux[Pred, Nat._1, L, HNil, R]): Aux[L, N, R] =
       new DropAt[L, N] {
         type Out = patch.Out
-        override def apply(l: L): R = { patch(l, HNil) }
+        override def apply(l: L): Out = { patch(l, HNil) }
       }
+}
+
+/**
+  * Type class supporting dropping the key ''K'' of an extensible record.
+  * Available only if this `HList` contains an element of shape FieldType[K, _].
+  * This type class is used to transform a `GenTraversable[_]` and drops the value of the key for the extensible record.
+  * It returns the altered extensible record as a Seq[Any] object if successful.
+  * @author André Pacak
+  */
+@implicitNotFound("Implicit not found: adaptivecep.data.DropKey[${L}, ${K}]. You requested to drop an element for the key ${K}, but the HList ${L} does not contain the key ${K}.")
+trait DropKey[L <: HList, K] extends Serializable {
+  def apply(l: GenTraversable[_]): Option[Seq[Any]]
+}
+
+object DropKey {
+  def apply[L <: HList, K](implicit dropKey: DropKey[L, K]) = dropKey
+
+  implicit def defaultDropKey[L <: HList, K, V, R <: HList, Keys <: HList, Vals <: HList, AfterRemove <: HList]
+    (implicit
+      remover: Remover.Aux[L, K, (V, R)],
+      unzip: UnzipFields.Aux[L, Keys, Vals],
+      fromVals: FromTraversable[Vals],
+      zipWithKey: ZipWithKeys.Aux[Keys, Vals, L],
+      valuesAfterRemove: Values.Aux[R, AfterRemove],
+      toTraversable: ToTraversable[AfterRemove, Seq]
+    ): DropKey[L, K] = new DropKey[L, K] {
+      override def apply(l: GenTraversable[_]): Option[Seq[Any]] = fromVals(l).map { vals =>
+        val record = zipWithKey(vals)
+        val removed = remover(record)
+        val values = valuesAfterRemove(removed._2)
+        toTraversable(values)
+      }
+    }
 }
 
 /**

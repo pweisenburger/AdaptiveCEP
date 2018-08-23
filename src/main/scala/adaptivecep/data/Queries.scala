@@ -5,10 +5,9 @@ import java.time.Duration
 import adaptivecep.data.Events._
 import akka.actor.ActorContext
 import shapeless.{HList, Nat, Witness}
-import shapeless.ops.hlist.{HKernelAux, Prepend, ToTraversable, ZipWithKeys}
+import shapeless.ops.hlist.{HKernelAux, Prepend}
 import shapeless.ops.nat.ToInt
-import shapeless.ops.record.{Remover, UnzipFields, Values}
-import shapeless.ops.traversable.FromTraversable
+import shapeless.ops.record.{Remover, UnzipFields}
 
 object Queries {
 
@@ -84,22 +83,16 @@ object Queries {
     val pos = toInt()
   }
 
-  case class DropElemRecord[T <: HList, R <: HList, V, K, Vals <: HList, Keys <: HList, AfterVals <: HList]
+  // Sadly I could not get a type class working that does the dropping at the value and the type level at the same time
+  // Thus, we need the Remover (Type-Level) in addition to DropKey(Value-Level).
+  case class DropElemRecord[T <: HList, R <: HList, K, V]
   (k: Witness.Aux[K], sq: HListQuery[T], requirements: Set[Requirement])
   (implicit
-      r: Remover.Aux[T, K, (V, R)],
-      op: HKernelAux[R],
-      u: UnzipFields.Aux[T, Keys, Vals],
-      ftVals: FromTraversable[Vals],
-      zip: ZipWithKeys.Aux[Keys, Vals, T],
-      v: Values.Aux[R, AfterVals],
-      tt: ToTraversable[AfterVals, Seq]
+      drop: DropKey[T, K],
+      remove: Remover.Aux[T, K, (V, R)],
+      op: HKernelAux[R]
   ) extends HListQuery[R] with DropElemQuery {
-    val remover = r
-    val fromTraversable = ftVals
-    val zipWithKeys = zip
-    val toTraversable = tt
-    val valuesAfterRemove = v
+    val dropKey: DropKey[T, K] = drop
   }
 
   case class SelfJoin[T <: HList, R <: HList]

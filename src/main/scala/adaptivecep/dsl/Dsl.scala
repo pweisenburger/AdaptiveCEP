@@ -2,13 +2,13 @@ package adaptivecep.dsl
 
 import java.time.Duration
 
-import adaptivecep.data.{Disjunct, DropAt}
+import adaptivecep.data.{Disjunct, DropAt, DropKey}
 import adaptivecep.data.Events._
 import adaptivecep.data.Queries._
 import shapeless.{HList, Nat, Witness}
-import shapeless.ops.hlist.{HKernelAux, Prepend, ToTraversable, ZipWithKeys}
+import shapeless.ops.hlist.{HKernelAux, Prepend, ZipWithKeys}
 import shapeless.ops.nat.ToInt
-import shapeless.ops.record.{Remover, UnzipFields, Values}
+import shapeless.ops.record.{Remover, UnzipFields}
 import shapeless.ops.traversable.FromTraversable
 
 object Dsl {
@@ -137,16 +137,12 @@ object Dsl {
         toInt: ToInt[Pos]): HListQuery[R] =
       DropElem(q, pos, requirements.toSet)(dropAt, op, toInt)
 
-    def dropLabeled[R <: HList, Pos <: Nat, V, K, Keys <: HList, Vals <: HList, AfterVals <: HList](w: Witness.Aux[K], requirements: Requirement*)(implicit
-        r: Remover.Aux[A, K, (V, R)],
-        op: HKernelAux[R],
-        u: UnzipFields.Aux[A, Keys, Vals],
-        ftVals: FromTraversable[Vals],
-        zip: ZipWithKeys.Aux[Keys, Vals, A],
-        v: Values.Aux[R, AfterVals],
-        tt: ToTraversable[AfterVals, Seq]
+    def dropLabeled[R <: HList, K, V](w: Witness.Aux[K], requirements: Requirement*)(implicit
+        dropKey: DropKey[A, K],
+        remover: Remover.Aux[A, K, (V, R)],
+        op: HKernelAux[R]
     ): HListQuery[R] =
-      DropElemRecord(w, q, requirements.toSet)
+      DropElemRecord(w, q, requirements.toSet)(dropKey, remover, op)
 
     def selfJoin[R <: HList](w1: Window, w2: Window, requirements: Requirement*)(implicit
         p: Prepend.Aux[A, A, R],
