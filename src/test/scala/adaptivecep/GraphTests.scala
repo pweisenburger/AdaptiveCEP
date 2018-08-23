@@ -735,6 +735,32 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     stopActors(a, graph)
   }
 
+  test("Record - DropElemNode - 6") {
+    val a: ActorRef = createTestPublisher("A")
+    val query: HListQuery[Record.`"name" -> Boolean`.T] =
+      stream[Record.`"name" -> Boolean, "other" -> Int, "other" -> String`.T]("A")
+        .drop(wOther)
+        .drop(wOther)
+    val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(Created)
+    a ! Event("name" ->> true, "other" ->> 3, "other" ->> "Test")
+    expectMsg(Event("name" ->> true))
+    stopActors(a, graph)
+  }
+
+  test("Mixed - DropElemNode") {
+    val a: ActorRef = createTestPublisher("A")
+    val query: HListQuery[Record.`"other" -> String`.T] =
+      stream[Record.`"name" -> Boolean, "other" -> Int, "other" -> String`.T]("A")
+        .drop(wOther)
+        .drop(Nat._1)
+    val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(Created)
+    a ! Event("name" ->> true, "other" ->> 3, "other" ->> "Test")
+    expectMsg(Event("other" ->> "Test"))
+    stopActors(a, graph)
+  }
+
   test("Record - ConjunctionNode") {
     val a: ActorRef = createTestPublisher("A")
     val b: ActorRef = createTestPublisher("B")
@@ -765,6 +791,56 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     b ! Event(1)
     expectMsg(Event(Right(1)))
     stopActors(a, b, graph)
+  }
+
+  test("Record - Mixed - 1") {
+    import shapeless.record._
+    val a: ActorRef = createTestPublisher("A")
+    val query = //: HListQuery[Record.`"name" -> Boolean, "other" -> String`.T] =
+      stream[Record.`"name" -> Boolean, "other" -> Int, "other" -> String`.T]("A")
+        .where(x => x("name") == false)
+        .drop(wOther)
+    val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(Created)
+    a ! Event("name" ->> true, "other" ->> 1, "last" ->> "no")
+    a ! Event("name" ->> false, "other" ->> 2, "last" ->> "yes")
+    a ! Event("name" ->> false, "other" ->> 3, "last" ->> "maybe")
+    expectMsg(Event("name" ->> false, "last" ->> "yes"))
+    expectMsg(Event("name" ->> false, "last" ->> "maybe"))
+    stopActors(a, graph)
+  }
+
+  test("Record - Mixed - 2") {
+    import shapeless.record._
+    val a: ActorRef = createTestPublisher("A")
+    val query = //: HListQuery[Record.`"name" -> Boolean, "other" -> String`.T] =
+      stream[Record.`"name" -> Boolean, "other" -> Int, "last" -> String`.T]("A")
+        .drop(Witness("last"))
+        .where(x => x("other") != 2)
+    val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(Created)
+    a ! Event("name" ->> true, "other" ->> 1, "last" ->> "no")
+    a ! Event("name" ->> false, "other" ->> 2, "last" ->> "yes")
+    a ! Event("name" ->> false, "other" ->> 3, "last" ->> "maybe")
+    expectMsg(Event("name" ->> true, "other" ->> 1))
+    expectMsg(Event("name" ->> false, "other" ->> 3))
+    stopActors(a, graph)
+  }
+
+  test("Record - Mixed - 3") {
+    import shapeless.record._
+    val a: ActorRef = createTestPublisher("A")
+    val query = //: HListQuery[Record.`"name" -> Boolean, "other" -> String`.T] =
+      stream[Record.`"name" -> Boolean, "other" -> Int, "other" -> String`.T]("A")
+        .where(x => x("other") != 2)
+        .where(x => x.head == false)
+    val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(Created)
+    a ! Event("name" ->> true, "other" ->> 1, "last" ->> "no")
+    a ! Event("name" ->> false, "other" ->> 2, "last" ->> "yes")
+    a ! Event("name" ->> false, "other" ->> 3, "last" ->> "maybe")
+    expectMsg(Event("name" ->> false, "other" ->> 3, "last" ->> "maybe"))
+    stopActors(a, graph)
   }
 
   // Tests that cover the corner cases when we use HListQuery[HNil]
