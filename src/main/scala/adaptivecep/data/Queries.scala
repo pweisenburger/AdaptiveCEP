@@ -83,17 +83,17 @@ object Queries {
     val pos = toInt()
   }
 
-  // Sadly I could not get a type class working that does the dropping at the value and the type level at the same time
+  // Sadly I could not get a type class working that does the dropping at the value and the type level at the same time.
   // Thus, we need the Remover (Type-Level) in addition to DropKey(Value-Level).
   case class DropElemRecord[T <: HList, R <: HList, K, V]
-  (k: Witness.Aux[K], sq: HListQuery[T], requirements: Set[Requirement])
-  (implicit
-      drop: DropKey[T, K],
-      remove: Remover.Aux[T, K, (V, R)],
-      op: HKernelAux[R]
-  ) extends HListQuery[R] with DropElemQuery {
-    val dropKey: DropKey[T, K] = drop
-  }
+    (sq: HListQuery[T], k: Witness.Aux[K], requirements: Set[Requirement])
+    (implicit
+        drop: DropKey[T, K],
+        remove: Remover.Aux[T, K, (V, R)],
+        op: HKernelAux[R]
+    ) extends HListQuery[R] with DropElemQuery {
+      val dropKey: DropKey[T, K] = drop
+    }
 
   case class SelfJoin[T <: HList, R <: HList]
     (sq: HListQuery[T], w1: Window, w2: Window, requirements: Set[Requirement])

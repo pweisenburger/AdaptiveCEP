@@ -122,6 +122,21 @@ object Dsl {
       FilterRecord[A, K, V](q, toFunEventBoolean[A, K, V](cond)(zipWithKeys, op, fl), reqs.toSet)(unzip, op)
   }
 
+  // implict functions to enable the usage of a single drop function based on nats and witnesses
+  implicit def toNatDrop[A <: HList, Pos <: Nat, R <: HList](implicit
+       dropAt: DropAt.Aux[A, Pos, R],
+       op: HKernelAux[R],
+       toInt: ToInt[Pos]): (HListQuery[A], Pos, Seq[Requirement]) => HListQuery[R] = {
+    case (q, pos, reqs) => DropElem(q, pos, reqs.toSet)(dropAt, op, toInt)
+  }
+
+  implicit def toWitnessDrop[A <: HList, K, V, R <: HList](implicit
+       dropKey: DropKey[A, K],
+       remover: Remover.Aux[A, K, (V, R)],
+       op: HKernelAux[R]): (HListQuery[A], Witness.Aux[K], Seq[Requirement]) => HListQuery[R] = {
+    case (q, pos, reqs) => DropElemRecord(q, pos, reqs.toSet)(dropKey, remover, op)
+  }
+
   case class QueryHelper[A <: HList](q: HListQuery[A]) {
     // Sadly we cannot use FnToProduct in order to make the usage better.
     // If we would use FnToProduct, it would be necessary to attach the
@@ -131,18 +146,10 @@ object Dsl {
       trans(q, cond, requirements)
     }
 
-    def drop[R <: HList, Pos <: Nat](pos: Pos, requirements: Requirement*)(implicit
-        dropAt: DropAt.Aux[A, Pos, R],
-        op: HKernelAux[R],
-        toInt: ToInt[Pos]): HListQuery[R] =
-      DropElem(q, pos, requirements.toSet)(dropAt, op, toInt)
-
-    def dropLabeled[R <: HList, K, V](w: Witness.Aux[K], requirements: Requirement*)(implicit
-        dropKey: DropKey[A, K],
-        remover: Remover.Aux[A, K, (V, R)],
-        op: HKernelAux[R]
-    ): HListQuery[R] =
-      DropElemRecord(w, q, requirements.toSet)(dropKey, remover, op)
+    def drop[Pos, R <: HList](toDrop: Pos, requirements: Requirement*)
+                           (implicit trans: (HListQuery[A], Pos, Seq[Requirement]) => HListQuery[R]): HListQuery[R] = {
+      trans(q, toDrop, requirements)
+    }
 
     def selfJoin[R <: HList](w1: Window, w2: Window, requirements: Requirement*)(implicit
         p: Prepend.Aux[A, A, R],
