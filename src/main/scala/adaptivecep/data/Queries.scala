@@ -4,10 +4,11 @@ import java.time.Duration
 
 import adaptivecep.data.Events._
 import akka.actor.ActorContext
-import shapeless.{HList, Nat}
-import shapeless.ops.hlist.{HKernelAux, Prepend}
+import shapeless.{HList, Nat, Witness}
+import shapeless.ops.hlist.{HKernelAux, Prepend, ToTraversable, ZipWithKeys}
 import shapeless.ops.nat.ToInt
-import shapeless.ops.record.UnzipFields
+import shapeless.ops.record.{Remover, UnzipFields, Values}
+import shapeless.ops.traversable.FromTraversable
 
 object Queries {
 
@@ -81,6 +82,24 @@ object Queries {
     (sq: HListQuery[T], position: Nat, requirements: Set[Requirement])
     (implicit dropAt: DropAt.Aux[T, Pos, R], op: HKernelAux[R], toInt: ToInt[Pos]) extends HListQuery[R] with DropElemQuery {
     val pos = toInt()
+  }
+
+  case class DropElemRecord[T <: HList, R <: HList, V, K, Vals <: HList, Keys <: HList, AfterVals <: HList]
+  (k: Witness.Aux[K], sq: HListQuery[T], requirements: Set[Requirement])
+  (implicit
+      r: Remover.Aux[T, K, (V, R)],
+      op: HKernelAux[R],
+      u: UnzipFields.Aux[T, Keys, Vals],
+      ftVals: FromTraversable[Vals],
+      zip: ZipWithKeys.Aux[Keys, Vals, T],
+      v: Values.Aux[R, AfterVals],
+      tt: ToTraversable[AfterVals, Seq]
+  ) extends HListQuery[R] with DropElemQuery {
+    val remover = r
+    val fromTraversable = ftVals
+    val zipWithKeys = zip
+    val toTraversable = tt
+    val valuesAfterRemove = v
   }
 
   case class SelfJoin[T <: HList, R <: HList]

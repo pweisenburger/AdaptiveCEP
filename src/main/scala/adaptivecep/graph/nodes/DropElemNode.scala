@@ -15,12 +15,20 @@ case class DropElemNode(
     eventCallback: Option[(Event) => Any])
   extends UnaryNode {
 
-  val elemToBeDropped: Int = query match {
-    case de@DropElem(_, _, _) => de.pos
-  }
-
   def handleEvent(es: Seq[Any]): Unit = {
-    val dropped = es.patch(elemToBeDropped - 1 , Nil, 1)
+    val dropped = query match {
+        case de@DropElem(_, _, _) =>
+          es.patch(de.pos - 1 , Nil, 1)
+        case de@DropElemRecord(w, sq, requirements) =>
+          de.fromTraversable.apply(es) match {
+            case Some(vals) =>
+              val record = de.zipWithKeys(vals)
+              val removed = de.remover(record)
+              val values = de.valuesAfterRemove(removed._2)
+              de.toTraversable(removed._2)
+            case None => sys.error(errorMsg)
+          }
+    }
     emitEvent(Event(dropped: _*))
   }
 

@@ -674,15 +674,64 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     stopActors(a, graph)
   }
 
-  test("Record - DropElemNode") {
+   test("Record - DropElemNode - 1") {
+     val a: ActorRef = createTestPublisher("A")
+     val query: HListQuery[Int with KeyTag[wOther.T, Int]::HNil] =
+       stream[Boolean with KeyTag[wName.T, Boolean]::Int with KeyTag[wOther.T, Int]::HNil]("A")
+         .dropLabeled(wName)
+     val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
+     expectMsg(Created)
+     a ! Event("name" ->> true, "other" ->> 3)
+     expectMsg(Event("other" ->> 3))
+     stopActors(a, graph)
+   }
+
+  test("Record - DropElemNode - 2") {
     val a: ActorRef = createTestPublisher("A")
-    val query: HListQuery[Record.`"other" -> Int`.T] =
-      stream[Record.`"name" -> Boolean, "other" -> Int`.T]("A")
-        .drop(Nat._1)
+    val query: HListQuery[Boolean with KeyTag[wName.T, Boolean]::HNil] =
+      stream[Boolean with KeyTag[wName.T, Boolean]::Int with KeyTag[wOther.T, Int]::HNil]("A")
+        .dropLabeled(wOther)
     val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
     expectMsg(Created)
     a ! Event("name" ->> true, "other" ->> 3)
-    expectMsg(Event("other" ->> 3))
+    expectMsg(Event("name" ->> true))
+    stopActors(a, graph)
+  }
+
+  val wAge = Witness("age")
+  test("Record - DropElemNode - 3") {
+    val a: ActorRef = createTestPublisher("A")
+    val query: HListQuery[Record.`"name" -> Boolean, "other" -> Int`.T] =
+      stream[Record.`"name" -> Boolean, "other" -> Int, "age" -> Int`.T]("A")
+        .dropLabeled(wAge)
+    val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(Created)
+    a ! Event("name" ->> true, "other" ->> 3, "age" ->> 27)
+    expectMsg(Event("name" ->> true, "other" ->> 3))
+    stopActors(a, graph)
+  }
+
+  test("Record - DropElemNode - 4") {
+    val a: ActorRef = createTestPublisher("A")
+    val query: HListQuery[Record.`"name" -> Boolean, "age" -> Int`.T] =
+      stream[Record.`"name" -> Boolean, "other" -> Int, "age" -> Int`.T]("A")
+        .dropLabeled(wOther)
+    val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(Created)
+    a ! Event("name" ->> true, "other" ->> 3, "age" ->> 27)
+    expectMsg(Event("name" ->> true, "age" ->> 27))
+    stopActors(a, graph)
+  }
+
+  test("Record - DropElemNode - 5") {
+    val a: ActorRef = createTestPublisher("A")
+    val query: HListQuery[Record.`"name" -> Boolean, "other" -> String`.T] =
+      stream[Record.`"name" -> Boolean, "other" -> Int, "other" -> String`.T]("A")
+        .dropLabeled(wOther)
+    val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(Created)
+    a ! Event("name" ->> true, "other" ->> 3, "other" ->> "Test")
+    expectMsg(Event("name" ->> true, "other" ->> "Test"))
     stopActors(a, graph)
   }
 
