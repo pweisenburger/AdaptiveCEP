@@ -64,7 +64,7 @@ object DropKey {
 }
 
 /**
-  * Type class supporting the disjunction of this `HList and another. It results in a `HList` that creates for each pair of (L,T) an Either[L, R].
+  * Type class supporting the disjunction of this `HList` and another. It results in a `HList` that creates for each pair of (L,T) an Either[L, R].
   * If one list is shorter than the other the type that is used is Unit.
   * This type class was inspired by ZipWith.
   * @author André Pacak
