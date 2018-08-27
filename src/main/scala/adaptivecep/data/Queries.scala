@@ -142,12 +142,18 @@ object Queries {
     (implicit
       predPos1: Pred.Aux[Pos1, PredPos1],
       atSq1: At.Aux[A, PredPos1, On],
+      opA: HKernelAux[A],
       predPos2: Pred.Aux[Pos2, PredPos2],
       atSq2: At.Aux[B, PredPos2, On],
       dropAt: DropAt.Aux[B, Pos2, Dropped],
       prepend: Prepend.Aux[A, Dropped, R],
+      toInt1: ToInt[Pos1],
+      toInt2: ToInt[Pos2],
       op: HKernelAux[R]
-  ) extends HListQuery[R] with JoinOnQuery
+  ) extends HListQuery[R] with JoinOnQuery {
+    val positionOn1: Int = toInt1() - 1
+    val positionOn2: Int = opA().length + toInt2() - 1
+  }
 
   case class JoinOnRecord[A <: HList, B <: HList, Dropped <: HList, R <: HList, Key1, Key2, V, On](
       sq1: HListQuery[A],

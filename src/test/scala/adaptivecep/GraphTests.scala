@@ -460,6 +460,29 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     stopActors(a, b, graph)
   }
 
+  test("BinaryNode - JoinOnNode") {
+    val a: ActorRef = createTestPublisher("A")
+    val b: ActorRef = createTestPublisher("B")
+    val sq: HListQuery[String::Int::HNil] = stream[String::Int::HNil]("B")
+    val query: HListQuery[Int::Boolean::String::HNil] =
+      stream[Int::Boolean::HNil]("A")
+        .joinOn(sq, Nat._1, Nat._2, slidingWindow(1.instances), slidingWindow(1.instances))
+    val graph: ActorRef = createTestGraph(query, Map("A" -> a, "B" -> b), testActor)
+    expectMsg(Created)
+    a ! Event(2, true)
+    b ! Event("1", 1)
+    a ! Event(1, true)
+    b ! Event("1", 1)
+    expectMsg(Event(1, true, "1"))
+    a ! Event(3, true)
+    b ! Event("1", 1)
+    a ! Event(12, false)
+    b ! Event("Yes", 12)
+    Thread.sleep(2000)
+    expectMsg(Event(12, false, "Yes"))
+    stopActors(a, b, graph)
+  }
+
   test("Binary Node - ConjunctionNode - 1") {
     val a: ActorRef = createTestPublisher("A")
     val b: ActorRef = createTestPublisher("B")

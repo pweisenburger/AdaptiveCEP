@@ -194,12 +194,15 @@ object Dsl {
       (implicit
         predPos1: Pred.Aux[Pos1, PredPos1],
         atSq1: At.Aux[A, PredPos1, On],
+        opA: HKernelAux[A],
         predPos2: Pred.Aux[Pos2, PredPos2],
         atSq2: At.Aux[B, PredPos2, On],
         dropAt: DropAt.Aux[B, Pos2, Dropped],
         prepend: Prepend.Aux[A, Dropped, R],
+        toInt1: ToInt[Pos1],
+        toInt2: ToInt[Pos2],
         op: HKernelAux[R]
-    ): HListQuery[R] = JoinOn(q, q2, pos1, pos2, w1, w2, requirements.toSet)(predPos1, atSq1, predPos2, atSq2, dropAt, prepend, op)
+    ): HListQuery[R] = JoinOn(q, q2, pos1, pos2, w1, w2, requirements.toSet)(predPos1, atSq1, opA, predPos2, atSq2, dropAt, prepend, toInt1, toInt2, op)
 
     def joinOnLabeled[B <: HList, Dropped <: HList, R <: HList, Key1, Key2, V, On](
         q2: HListQuery[B],

@@ -1,6 +1,6 @@
 package adaptivecep.data
 
-import shapeless.ops.hlist.{Patcher, ToTraversable, ZipWithKeys}
+import shapeless.ops.hlist.{At, Patcher, Prepend, ToTraversable, ZipWithKeys}
 import shapeless.ops.nat.Pred
 import shapeless.ops.record.{Remover, UnzipFields, Values}
 import shapeless.ops.traversable.FromTraversable
