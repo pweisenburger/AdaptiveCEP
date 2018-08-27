@@ -689,6 +689,31 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
     stopActors(a, b, graph)
   }
 
+  test("Record - JoinOnNode - 1") {
+    val a: ActorRef = createTestPublisher("A")
+    val b: ActorRef = createTestPublisher("B")
+    val sq: HListQuery[Record.`"name" -> Int`.T] = stream[Record.`"name" -> Int`.T]("B")
+    val query: HListQuery[Record.`"other" -> Boolean, "age" -> Int`.T] =
+      stream[Record.`"other" -> Boolean, "age" -> Int`.T]("A")
+        .joinOnLabeled(sq, wAge, wName, tumblingWindow(3.instances), tumblingWindow(2.instances))
+    val graph: ActorRef = createTestGraph(query, Map("A" -> a, "B" -> b), testActor)
+    expectMsg(Created)
+    a ! Event("other" ->> true,  "age" ->> 1)
+    a ! Event("other" ->> false, "age" ->> 2)
+    a ! Event("other" ->> true,  "age" ->> 3)
+    a ! Event("other" ->> false, "age" ->> 4)
+    a ! Event("other" ->> true,  "age" ->> 5)
+    Thread.sleep(2000)
+    b ! Event("name" ->> 1)
+    b ! Event("name" ->> 2)
+    b ! Event("name" ->> 3)
+    b ! Event("name" ->> 4)
+    expectMsg(Event("other" ->> true,  "age" ->> 1))
+    expectMsg(Event("other" ->> false, "age" ->> 2))
+    expectMsg(Event("other" ->> true,  "age" ->> 3))
+    stopActors(a, b, graph)
+  }
+
   test("Record - SelfJoinNode") {
     val a: ActorRef = createTestPublisher("A")
     val query =

@@ -141,16 +141,15 @@ object Queries {
       requirements: Set[Requirement])
     (implicit
       joinOn: JoinOnNat.Aux[A, B, Pos1, Pos2, R],
-      opA: HKernelAux[A],
       toInt1: ToInt[Pos1],
       toInt2: ToInt[Pos2],
       op: HKernelAux[R]
   ) extends HListQuery[R] with JoinOnQuery {
     val positionOn1: Int = toInt1() - 1
-    val positionOn2: Int = opA().length + toInt2() - 1
+    val positionOn2: Int = toInt2() - 1
   }
 
-  case class JoinOnRecord[A <: HList, B <: HList, Dropped <: HList, R <: HList, Key1, Key2, V, On](
+  case class JoinOnRecord[A <: HList, B <: HList, R <: HList, Key1, Key2](
       sq1: HListQuery[A],
       sq2: HListQuery[B],
       key1: Witness.Aux[Key1],
@@ -159,13 +158,16 @@ object Queries {
       w2: Window,
       requirements: Set[Requirement])
     (implicit
-      atSq1: Selector.Aux[A, Key1, On],
-      atSq2: Selector.Aux[B, Key2, On],
+      joinOn: JoinOnKey.Aux[A, B, Key1, Key2, R],
       dropKey: DropKey[B, Key2],
-      remove: Remover.Aux[B, Key2, (V, Dropped)],
-      prepend: Prepend.Aux[A, Dropped, R],
+      select1: SelectFromTraversable[A, Key1],
+      select2: SelectFromTraversable[B, Key2],
       op: HKernelAux[R]
-  ) extends HListQuery[R] with JoinOnQuery
+  ) extends HListQuery[R] with JoinOnQuery {
+      val drop: DropKey[B, Key2] = dropKey
+      val selectFrom1: SelectFromTraversable[A, Key1] = select1
+      val selectFrom2: SelectFromTraversable[B, Key2] = select2
+  }
 
   case class Conjunction[A <: HList, B <: HList, R <: HList](
       sq1: HListQuery[A],

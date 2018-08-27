@@ -2,7 +2,7 @@ package adaptivecep.dsl
 
 import java.time.Duration
 
-import adaptivecep.data.{Disjunct, DropAt, DropKey, JoinOnNat}
+import adaptivecep.data._
 import adaptivecep.data.Events._
 import adaptivecep.data.Queries._
 import shapeless.{HList, Nat, Witness}
@@ -193,13 +193,12 @@ object Dsl {
         requirements: Requirement*)
       (implicit
         joinOn: JoinOnNat.Aux[A, B, Pos1, Pos2, R],
-        opA: HKernelAux[A],
         toInt1: ToInt[Pos1],
         toInt2: ToInt[Pos2],
         op: HKernelAux[R]
-    ): HListQuery[R] = JoinOn(q, q2, pos1, pos2, w1, w2, requirements.toSet)(joinOn, opA, toInt1, toInt2, op)
+    ): HListQuery[R] = JoinOn(q, q2, pos1, pos2, w1, w2, requirements.toSet)(joinOn, toInt1, toInt2, op)
 
-    def joinOnLabeled[B <: HList, Dropped <: HList, R <: HList, Key1, Key2, V, On](
+    def joinOnLabeled[B <: HList, R <: HList, Key1, Key2](
         q2: HListQuery[B],
         key1: Witness.Aux[Key1],
         key2: Witness.Aux[Key2],
@@ -207,13 +206,12 @@ object Dsl {
         w2: Window,
         requirements: Requirement*)
       (implicit
-        atSq1: Selector.Aux[A, Key1, On],
-        atSq2: Selector.Aux[B, Key2, On],
+        joinOn: JoinOnKey.Aux[A, B, Key1, Key2, R],
         dropKey: DropKey[B, Key2],
-        remove: Remover.Aux[B, Key2, (V, Dropped)],
-        prepend: Prepend.Aux[A, Dropped, R],
+        select1: SelectFromTraversable[A, Key1],
+        select2: SelectFromTraversable[B, Key2],
         op: HKernelAux[R]
-    ): HListQuery[R] = JoinOnRecord(q, q2, key1, key2, w1, w2, requirements.toSet)(atSq1, atSq2, dropKey, remove, prepend, op)
+    ): HListQuery[R] = JoinOnRecord(q, q2, key1, key2, w1, w2, requirements.toSet)(joinOn, dropKey, select1, select2, op)
 
     def and[B <: HList, R <: HList](
         q2: HListQuery[B],
