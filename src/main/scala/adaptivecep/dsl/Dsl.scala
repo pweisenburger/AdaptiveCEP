@@ -147,6 +147,26 @@ object Dsl {
     case (q, pos, reqs) => DropElemRecord(q, pos, reqs.toSet)(dropKey, remover, op)
   }
 
+  // implict functions to enable the usage of a single joinOn function based on nats and witnesses
+  implicit def toJoinOnNat[A <: HList, B <: HList, Pos1 <: Nat, Pos2 <: Nat, R <: HList](implicit
+       joinOn: JoinOnNat.Aux[A, B, Pos1, Pos2, R],
+       toInt1: ToInt[Pos1],
+       toInt2: ToInt[Pos2],
+       op: HKernelAux[R]
+  ): (HListQuery[A], HListQuery[B], Pos1, Pos2, Window, Window, Seq[Requirement]) => HListQuery[R] = {
+    case (q1, q2, pos1, pos2, w1, w2, reqs) => JoinOn(q1, q2, pos1, pos2, w1, w2, reqs.toSet)
+  }
+
+  implicit def toJoinOnKey[A <: HList, B <: HList, Key1, Key2, R <: HList](implicit
+       joinOn: JoinOnKey.Aux[A, B, Key1, Key2, R],
+       dropKey: DropKey[B, Key2],
+       select1: SelectFromTraversable[A, Key1],
+       select2: SelectFromTraversable[B, Key2],
+       op: HKernelAux[R]
+   ): (HListQuery[A], HListQuery[B], Witness.Aux[Key1], Witness.Aux[Key2], Window, Window, Seq[Requirement]) => HListQuery[R] = {
+    case (q1, q2, pos1, pos2, w1, w2, reqs) => JoinOnRecord(q1, q2, pos1, pos2, w1, w2, reqs.toSet)
+  }
+
   case class QueryHelper[A <: HList](q: HListQuery[A]) {
     // Sadly we cannot use FnToProduct in order to make the usage better.
     // If we would use FnToProduct, it would be necessary to attach the
@@ -164,6 +184,17 @@ object Dsl {
       (implicit
         trans: (HListQuery[A], Pos, Seq[Requirement]) => HListQuery[R]
     ): HListQuery[R] = trans(q, toDrop, requirements)
+
+    def joinOn[B <: HList, Pos1, Pos2, R <: HList](
+        q2: HListQuery[B],
+        pos1: Pos1,
+        pos2: Pos2,
+        w1: Window,
+        w2: Window,
+        requirements: Requirement*)
+      (implicit
+        trans: (HListQuery[A], HListQuery[B], Pos1, Pos2, Window, Window, Seq[Requirement]) => HListQuery[R]
+      ): HListQuery[R] = trans(q, q2, pos1, pos2, w1, w2, requirements)
 
     def selfJoin[R <: HList](
         w1: Window,
@@ -183,35 +214,6 @@ object Dsl {
         p: Prepend.Aux[A, B, R],
         op: HKernelAux[R]
     ): HListQuery[R] = Join[A, B, R](q, q2, w1, w2, requirements.toSet)(p, op)
-
-    def joinOn[B <: HList, R <: HList, Pos1 <: Nat, Pos2 <: Nat](
-        q2: HListQuery[B],
-        pos1: Pos1,
-        pos2: Pos2,
-        w1: Window,
-        w2: Window,
-        requirements: Requirement*)
-      (implicit
-        joinOn: JoinOnNat.Aux[A, B, Pos1, Pos2, R],
-        toInt1: ToInt[Pos1],
-        toInt2: ToInt[Pos2],
-        op: HKernelAux[R]
-    ): HListQuery[R] = JoinOn(q, q2, pos1, pos2, w1, w2, requirements.toSet)(joinOn, toInt1, toInt2, op)
-
-    def joinOnLabeled[B <: HList, R <: HList, Key1, Key2](
-        q2: HListQuery[B],
-        key1: Witness.Aux[Key1],
-        key2: Witness.Aux[Key2],
-        w1: Window,
-        w2: Window,
-        requirements: Requirement*)
-      (implicit
-        joinOn: JoinOnKey.Aux[A, B, Key1, Key2, R],
-        dropKey: DropKey[B, Key2],
-        select1: SelectFromTraversable[A, Key1],
-        select2: SelectFromTraversable[B, Key2],
-        op: HKernelAux[R]
-    ): HListQuery[R] = JoinOnRecord(q, q2, key1, key2, w1, w2, requirements.toSet)(joinOn, dropKey, select1, select2, op)
 
     def and[B <: HList, R <: HList](
         q2: HListQuery[B],
