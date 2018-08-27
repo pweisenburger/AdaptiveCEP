@@ -2,7 +2,7 @@ package adaptivecep.dsl
 
 import java.time.Duration
 
-import adaptivecep.data.{Disjunct, DropAt, DropKey}
+import adaptivecep.data.{Disjunct, DropAt, DropKey, JoinOnNat}
 import adaptivecep.data.Events._
 import adaptivecep.data.Queries._
 import shapeless.{HList, Nat, Witness}
@@ -184,7 +184,7 @@ object Dsl {
         op: HKernelAux[R]
     ): HListQuery[R] = Join[A, B, R](q, q2, w1, w2, requirements.toSet)(p, op)
 
-    def joinOn[B <: HList, R <: HList, Pos1 <: Nat, Pos2 <: Nat, PredPos1 <: Nat, PredPos2 <: Nat, Dropped <: HList, On](
+    def joinOn[B <: HList, R <: HList, Pos1 <: Nat, Pos2 <: Nat](
         q2: HListQuery[B],
         pos1: Pos1,
         pos2: Pos2,
@@ -192,17 +192,12 @@ object Dsl {
         w2: Window,
         requirements: Requirement*)
       (implicit
-        predPos1: Pred.Aux[Pos1, PredPos1],
-        atSq1: At.Aux[A, PredPos1, On],
+        joinOn: JoinOnNat.Aux[A, B, Pos1, Pos2, R],
         opA: HKernelAux[A],
-        predPos2: Pred.Aux[Pos2, PredPos2],
-        atSq2: At.Aux[B, PredPos2, On],
-        dropAt: DropAt.Aux[B, Pos2, Dropped],
-        prepend: Prepend.Aux[A, Dropped, R],
         toInt1: ToInt[Pos1],
         toInt2: ToInt[Pos2],
         op: HKernelAux[R]
-    ): HListQuery[R] = JoinOn(q, q2, pos1, pos2, w1, w2, requirements.toSet)(predPos1, atSq1, opA, predPos2, atSq2, dropAt, prepend, toInt1, toInt2, op)
+    ): HListQuery[R] = JoinOn(q, q2, pos1, pos2, w1, w2, requirements.toSet)(joinOn, opA, toInt1, toInt2, op)
 
     def joinOnLabeled[B <: HList, Dropped <: HList, R <: HList, Key1, Key2, V, On](
         q2: HListQuery[B],

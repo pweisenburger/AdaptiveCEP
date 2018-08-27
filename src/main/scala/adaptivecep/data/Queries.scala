@@ -131,7 +131,7 @@ object Queries {
       op: HKernelAux[R]
   ) extends HListQuery[R] with JoinQuery
 
-  case class JoinOn[A <: HList, B <: HList, Dropped <: HList, R <: HList, Pos1 <: Nat, Pos2 <: Nat, PredPos1 <: Nat, PredPos2 <: Nat, On](
+  case class JoinOn[A <: HList, B <: HList, R <: HList, Pos1 <: Nat, Pos2 <: Nat](
       sq1: HListQuery[A],
       sq2: HListQuery[B],
       pos1: Nat,
@@ -140,13 +140,8 @@ object Queries {
       w2: Window,
       requirements: Set[Requirement])
     (implicit
-      predPos1: Pred.Aux[Pos1, PredPos1],
-      atSq1: At.Aux[A, PredPos1, On],
+      joinOn: JoinOnNat.Aux[A, B, Pos1, Pos2, R],
       opA: HKernelAux[A],
-      predPos2: Pred.Aux[Pos2, PredPos2],
-      atSq2: At.Aux[B, PredPos2, On],
-      dropAt: DropAt.Aux[B, Pos2, Dropped],
-      prepend: Prepend.Aux[A, Dropped, R],
       toInt1: ToInt[Pos1],
       toInt2: ToInt[Pos2],
       op: HKernelAux[R]
