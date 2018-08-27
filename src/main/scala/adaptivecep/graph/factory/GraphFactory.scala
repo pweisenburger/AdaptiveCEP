@@ -78,6 +78,16 @@ object GraphFactory {
           Some(createdCallback),
           Some(eventCallback))),
         "join")
+    case joinOnQuery: JoinOnQuery =>
+      actorSystem.actorOf(Props(
+        JoinOnNode(
+          joinOnQuery,
+          publishers,
+          frequencyMonitorFactory,
+          latencyMonitorFactory,
+          Some(createdCallback),
+          Some(eventCallback))),
+        "joinOn")
     case conjunctionQuery: ConjunctionQuery =>
       actorSystem.actorOf(Props(
         ConjunctionNode(

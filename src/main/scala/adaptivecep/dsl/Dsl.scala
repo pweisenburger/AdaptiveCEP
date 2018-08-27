@@ -6,9 +6,9 @@ import adaptivecep.data.{Disjunct, DropAt, DropKey}
 import adaptivecep.data.Events._
 import adaptivecep.data.Queries._
 import shapeless.{HList, Nat, Witness}
-import shapeless.ops.hlist.{HKernelAux, Prepend, ZipWithKeys}
-import shapeless.ops.nat.ToInt
-import shapeless.ops.record.{Remover, UnzipFields}
+import shapeless.ops.hlist.{At, HKernelAux, Prepend, ZipWithKeys}
+import shapeless.ops.nat.{Pred, ToInt}
+import shapeless.ops.record.{Remover, Selector, UnzipFields}
 import shapeless.ops.traversable.FromTraversable
 
 object Dsl {
@@ -183,6 +183,39 @@ object Dsl {
         p: Prepend.Aux[A, B, R],
         op: HKernelAux[R]
     ): HListQuery[R] = Join[A, B, R](q, q2, w1, w2, requirements.toSet)(p, op)
+
+    def joinOn[B <: HList, R <: HList, Pos1 <: Nat, Pos2 <: Nat, PredPos1 <: Nat, PredPos2 <: Nat, Dropped <: HList, On](
+        q2: HListQuery[B],
+        pos1: Pos1,
+        pos2: Pos2,
+        w1: Window,
+        w2: Window,
+        requirements: Requirement*)
+      (implicit
+        predPos1: Pred.Aux[Pos1, PredPos1],
+        atSq1: At.Aux[A, PredPos1, On],
+        predPos2: Pred.Aux[Pos2, PredPos2],
+        atSq2: At.Aux[B, PredPos2, On],
+        dropAt: DropAt.Aux[B, Pos2, Dropped],
+        prepend: Prepend.Aux[A, Dropped, R],
+        op: HKernelAux[R]
+    ): HListQuery[R] = JoinOn(q, q2, pos1, pos2, w1, w2, requirements.toSet)(predPos1, atSq1, predPos2, atSq2, dropAt, prepend, op)
+
+    def joinOnLabeled[B <: HList, Dropped <: HList, R <: HList, Key1, Key2, V, On](
+        q2: HListQuery[B],
+        key1: Witness.Aux[Key1],
+        key2: Witness.Aux[Key2],
+        w1: Window,
+        w2: Window,
+        requirements: Requirement*)
+      (implicit
+        atSq1: Selector.Aux[A, Key1, On],
+        atSq2: Selector.Aux[B, Key2, On],
+        dropKey: DropKey[B, Key2],
+        remove: Remover.Aux[B, Key2, (V, Dropped)],
+        prepend: Prepend.Aux[A, Dropped, R],
+        op: HKernelAux[R]
+    ): HListQuery[R] = JoinOnRecord(q, q2, key1, key2, w1, w2, requirements.toSet)(atSq1, atSq2, dropKey, remove, prepend, op)
 
     def and[B <: HList, R <: HList](
         q2: HListQuery[B],
