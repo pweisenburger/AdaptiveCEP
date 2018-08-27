@@ -26,5 +26,4 @@ case class FilterNode(
       frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
       latencyMonitor.onMessageReceive(unhandledMessage, nodeData)
   }
-
 }

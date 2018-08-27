@@ -18,8 +18,8 @@ case class DropElemNode(
   def handleEvent(es: Seq[Any]): Unit = {
     val dropped = query match {
         case de@DropElem(_, _, _) =>
-          es.patch(de.pos - 1 , Nil, 1)
-        case de@DropElemRecord(_, _, _) => de.dropKey.apply(es) match {
+          es.patch(de.pos, Nil, 1)
+        case de@DropElemRecord(_, _, _) => de.dropKey(es) match {
           case Some(vals) => vals
           case None => sys.error(errorMsg)
         }

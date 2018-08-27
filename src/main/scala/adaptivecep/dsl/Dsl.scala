@@ -6,9 +6,9 @@ import adaptivecep.data._
 import adaptivecep.data.Events._
 import adaptivecep.data.Queries._
 import shapeless.{HList, Nat, Witness}
-import shapeless.ops.hlist.{At, HKernelAux, Prepend, ZipWithKeys}
-import shapeless.ops.nat.{Pred, ToInt}
-import shapeless.ops.record.{Remover, Selector, UnzipFields}
+import shapeless.ops.hlist.{HKernelAux, Prepend, ZipWithKeys}
+import shapeless.ops.nat.ToInt
+import shapeless.ops.record.{Remover, UnzipFields}
 import shapeless.ops.traversable.FromTraversable
 
 object Dsl {

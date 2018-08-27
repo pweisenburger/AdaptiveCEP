@@ -5,9 +5,9 @@ import java.time.Duration
 import adaptivecep.data.Events._
 import akka.actor.ActorContext
 import shapeless.{HList, Nat, Witness}
-import shapeless.ops.hlist.{At, HKernelAux, Prepend}
-import shapeless.ops.nat.{Pred, ToInt}
-import shapeless.ops.record.{Remover, Selector, UnzipFields}
+import shapeless.ops.hlist.{HKernelAux, Prepend}
+import shapeless.ops.nat.ToInt
+import shapeless.ops.record.{Remover, UnzipFields}
 
 object Queries {
 
@@ -75,6 +75,14 @@ object Queries {
       op: HKernelAux[R]
   ) extends HListQuery[R] with SequenceQuery[A, B]
 
+  case class Filter[T <: HList](
+      sq: HListQuery[T],
+      cond: Event => Boolean,
+      requirements: Set[Requirement])
+    (implicit
+      op: HKernelAux[T]
+  ) extends HListQuery[T] with FilterQuery
+
   case class FilterRecord[Labeled <: HList, K <: HList, V <: HList](
       sq: HListQuery[Labeled],
       cond: Event => Boolean,
@@ -84,10 +92,6 @@ object Queries {
       op: HKernelAux[Labeled]
   ) extends HListQuery[Labeled] with FilterQuery
 
-  case class Filter[T <: HList]
-    (sq: HListQuery[T], cond: Event => Boolean, requirements: Set[Requirement])
-    (implicit op: HKernelAux[T]) extends HListQuery[T] with FilterQuery
-
   case class DropElem[T <: HList, R <: HList, Pos <: Nat](
       sq: HListQuery[T],
       position: Nat,
@@ -96,7 +100,7 @@ object Queries {
       dropAt: DropAt.Aux[T, Pos, R],
       op: HKernelAux[R],
       toInt: ToInt[Pos]
-  ) extends HListQuery[R] with DropElemQuery { val pos = toInt() }
+  ) extends HListQuery[R] with DropElemQuery { val pos = toInt() - 1 }
 
   // Sadly I could not get a type class working that does the dropping at the value and the type level at the same time.
   // Thus, we need the Remover (Type-Level) in addition to DropKey(Value-Level).

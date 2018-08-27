@@ -78,12 +78,3 @@ case class JoinOnNode(
   epStatement.addListener(updateListener)
 
 }
-
-// object JoinOnNode {
-//   def createWindowEplString(window: Window): String = window match {
-//     case SlidingInstances(instances) => s"win:length($instances)"
-//     case TumblingInstances(instances) => s"win:length_batch($instances)"
-//     case SlidingTime(seconds) => s"win:time($seconds)"
-//     case TumblingTime(seconds) => s"win:time_batch($seconds)"
-//   }
-// }
