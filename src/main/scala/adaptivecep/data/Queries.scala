@@ -14,9 +14,13 @@ object Queries {
   trait NStream {
     def publisherName: String
   }
+
   case class HListNStream[T <: HList](publisherName: String)(implicit op: HKernelAux[T]) extends NStream {
     val length: Int = op().length
   }
+
+  // for ease of use
+  case class TupleNStream[P <: Product](publisherName: String) extends NStream
 
   sealed trait Window
   case class SlidingInstances  (instances: Int) extends Window
@@ -56,6 +60,14 @@ object Queries {
   sealed trait JoinOnQuery      extends BinaryQuery { val w1: Window; val w2: Window }
   sealed trait ConjunctionQuery extends BinaryQuery
   sealed trait DisjunctionQuery extends BinaryQuery
+
+  // for ease of use
+  trait TupleQuery[P <: Product] extends Query
+
+  case class TupleStream[P <: Product](
+     publisherName: String,
+     requirements: Set[Requirement]
+  ) extends TupleQuery[P] with StreamQuery
 
   abstract class HListQuery[T <: HList](implicit op: HKernelAux[T]) extends Query {
     val length: Int = op().length

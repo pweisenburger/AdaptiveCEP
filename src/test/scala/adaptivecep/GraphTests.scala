@@ -58,7 +58,7 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
 
   test("LeafNode - StreamNode - 2") {
     val a: ActorRef = createTestPublisher("A")
-    val query: HListQuery[Int::Int::HNil] = stream[Int::Int::HNil]("A")
+    val query: HListQuery[Int::Int::HNil] = tstream[(Int, Int)]("A")
     val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
     expectMsg(Created)
     a ! Event(42, 42)
@@ -68,7 +68,7 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
 
   test("LeafNode - StreamNode - 3") {
     val a: ActorRef = createTestPublisher("A")
-    val query: HListQuery[Long::Long::Long::HNil] = stream[Long::Long::Long::HNil]("A")
+    val query: HListQuery[Long::Long::Long::HNil] = tstream[(Long, Long, Long)]("A")
     val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
     expectMsg(Created)
     a ! Event(42l, 42l, 42l)
@@ -78,7 +78,7 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
 
   test("LeafNode - StreamNode - 4") {
     val a: ActorRef = createTestPublisher("A")
-    val query: HListQuery[Float::Float::Float::Float::HNil] = stream[Float::Float::Float::Float::HNil]("A")
+    val query: HListQuery[Float::Float::Float::Float::HNil] = tstream[(Float, Float, Float, Float)]("A")
     val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
     expectMsg(Created)
     a ! Event(42f, 42f, 42f, 42f)
@@ -89,7 +89,7 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
   test("LeafNode - StreamNode - 5") {
     val a: ActorRef = createTestPublisher("A")
     val query: HListQuery[Double::Double::Double::Double::Double::HNil] =
-      stream[Double::Double::Double::Double::Double::HNil]("A")
+      tstream[(Double, Double, Double, Double, Double)]("A")
     val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
     expectMsg(Created)
     a ! Event(42.0, 42.0, 42.0, 42.0, 42.0)
@@ -99,8 +99,8 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
 
   test("LeafNode - StreamNode - 6") {
     val a: ActorRef = createTestPublisher("A")
-    val query: HListQuery[Boolean::Boolean::Boolean::Boolean::Boolean::Boolean::HNil] =
-      stream[Boolean::Boolean::Boolean::Boolean::Boolean::Boolean::HNil]("A")
+    val query: TupleQuery[(Boolean, Boolean, Boolean, Boolean, Boolean, Boolean)] =
+      tstream[(Boolean, Boolean, Boolean, Boolean, Boolean, Boolean)]("A")
     val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
     expectMsg(Created)
     a ! Event(true, true, true, true, true, true)
@@ -110,8 +110,8 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
 
   test("LeafNode - StreamNode - 7") {
     val a: ActorRef = createTestPublisher("A")
-    val query: HListQuery[Boolean::Boolean::Boolean::Boolean::Boolean::Boolean::Int::HNil] =
-      stream[Boolean::Boolean::Boolean::Boolean::Boolean::Boolean::Int::HNil]("A")
+    val query: TupleQuery[(Boolean, Boolean, Boolean, Boolean, Boolean, Boolean, Int)] =
+      tstream[(Boolean, Boolean, Boolean, Boolean, Boolean, Boolean, Int)]("A")
     val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
     expectMsg(Created)
     a ! Event(true, true, true, true, true, true, 12)
@@ -121,8 +121,8 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
 
   test("LeafNode - StreamNode - 8") {
     val a: ActorRef = createTestPublisher("A")
-    val query: HListQuery[Boolean::String::Boolean::Boolean::Boolean::Boolean::Boolean::Int::HNil] =
-      stream[Boolean::String::Boolean::Boolean::Boolean::Boolean::Boolean::Int::HNil]("A")
+    val query: TupleQuery[(Boolean, String, Boolean, Boolean, Boolean, Boolean, Boolean, Int)] =
+      tstream[(Boolean, String, Boolean, Boolean, Boolean, Boolean, Boolean, Int)]("A")
     val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
     expectMsg(Created)
     a ! Event(true, "test", true, true, true, true, true, 12)
