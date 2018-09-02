@@ -46,20 +46,6 @@ object Dsl {
       op: HKernelAux[T]
   ): HListNStream[T] = HListNStream[T](publisherName)(op)
 
-  def tnStream[P <: Product](publisherName: String): TupleNStream[P] = TupleNStream[P](publisherName)
-
-  implicit def hlistNStream2TupleNStream[H <: HList, P <: Product](
-      nStream: HListNStream[H])
-    (implicit tupler: Tupler.Aux[H, P]
-  ): TupleNStream[P] = TupleNStream(nStream.publisherName)
-
-  implicit def tupleNStream2HListNStream[P <: Product, H <: HList](
-      nStream: TupleNStream[P])
-    (implicit
-      gen: Generic.Aux[P, H],
-      op: HKernelAux[H]
-  ): HListNStream[H] = HListNStream(nStream.publisherName)(op)
-
   case class Ratio(instances: Instances, seconds: Seconds)
 
   def ratio(instances: Instances, seconds: Seconds): Ratio = Ratio(instances, seconds)
@@ -109,20 +95,6 @@ object Dsl {
       op: HKernelAux[T]
   ): HListQuery[T] = Stream(publisherName, requirements.toSet)(op)
 
-  def tstream[P <: Product](publisherName: String, requirements: Requirement*): TupleStream[P] =
-    TupleStream[P](publisherName, requirements.toSet)
-
-  implicit def hlistStream2TupleStream[H <: HList, P <: Product](
-      stream: Stream[H])
-    (implicit tupler: Tupler.Aux[H, P]
-  ): TupleQuery[P] = TupleStream(stream.publisherName, stream.requirements)
-
-  implicit def tupleStream2HListStream[P <: Product, H <: HList](
-      tuple: TupleStream[P])
-    (implicit
-      gen: Generic.Aux[P, H],
-      op: HKernelAux[H]
-  ): HListQuery[H] = Stream(tuple.publisherName, tuple.requirements)(op)
 
   case class SequenceHelper[A <: HList](s: HListNStream[A]) {
     def ->[B <: HList](s2: HListNStream[B]): (HListNStream[A], HListNStream[B]) = (s, s2)
@@ -260,4 +232,37 @@ object Dsl {
         op: HKernelAux[R]
     ): HListQuery[R] = Disjunction(q, q2, requirements.toSet)(disjunct, op)
   }
+}
+
+object TupleDsl {
+  import adaptivecep.data.TupleQueries._
+
+  def tnStream[P <: Product](publisherName: String): TupleNStream[P] = TupleNStream[P](publisherName)
+
+  implicit def hlistNStream2TupleNStream[H <: HList, P <: Product](
+      nStream: HListNStream[H])
+    (implicit tupler: Tupler.Aux[H, P]
+  ): TupleNStream[P] = TupleNStream(nStream.publisherName)
+
+  implicit def tupleNStream2HListNStream[P <: Product, H <: HList](
+      nStream: TupleNStream[P])
+    (implicit
+      gen: Generic.Aux[P, H],
+      op: HKernelAux[H]
+  ): HListNStream[H] = HListNStream(nStream.publisherName)(op)
+
+  def tstream[P <: Product](publisherName: String, requirements: Requirement*): TupleStream[P] =
+    TupleStream[P](publisherName, requirements.toSet)
+
+  implicit def hlistStream2TupleStream[H <: HList, P <: Product](
+      stream: Stream[H])
+    (implicit tupler: Tupler.Aux[H, P]
+  ): TupleQuery[P] = TupleStream(stream.publisherName, stream.requirements)
+
+  implicit def tupleStream2HListStream[P <: Product, H <: HList](
+      tuple: TupleStream[P])
+    (implicit
+      gen: Generic.Aux[P, H],
+      op: HKernelAux[H]
+  ): HListQuery[H] = Stream(tuple.publisherName, tuple.requirements)(op)
 }

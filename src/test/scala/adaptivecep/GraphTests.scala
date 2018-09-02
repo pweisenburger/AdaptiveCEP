@@ -2,7 +2,9 @@ package adaptivecep
 
 import adaptivecep.data.Events._
 import adaptivecep.data.Queries._
+import adaptivecep.data.TupleQueries._
 import adaptivecep.dsl.Dsl._
+import adaptivecep.dsl.TupleDsl._
 import adaptivecep.graph.factory._
 import adaptivecep.graph.qos._
 import adaptivecep.publishers._
@@ -99,8 +101,7 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
 
   test("LeafNode - StreamNode - 6") {
     val a: ActorRef = createTestPublisher("A")
-    val query: TupleQuery[(Boolean, Boolean, Boolean, Boolean, Boolean, Boolean)] =
-      tstream[(Boolean, Boolean, Boolean, Boolean, Boolean, Boolean)]("A")
+    val query = tstream[(Boolean, Boolean, Boolean, Boolean, Boolean, Boolean)]("A")
     val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
     expectMsg(Created)
     a ! Event(true, true, true, true, true, true)
@@ -110,8 +111,7 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
 
   test("LeafNode - StreamNode - 7") {
     val a: ActorRef = createTestPublisher("A")
-    val query: TupleQuery[(Boolean, Boolean, Boolean, Boolean, Boolean, Boolean, Int)] =
-      tstream[(Boolean, Boolean, Boolean, Boolean, Boolean, Boolean, Int)]("A")
+    val query = tstream[(Boolean, Boolean, Boolean, Boolean, Boolean, Boolean, Int)]("A")
     val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
     expectMsg(Created)
     a ! Event(true, true, true, true, true, true, 12)
@@ -121,8 +121,7 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
 
   test("LeafNode - StreamNode - 8") {
     val a: ActorRef = createTestPublisher("A")
-    val query: TupleQuery[(Boolean, String, Boolean, Boolean, Boolean, Boolean, Boolean, Int)] =
-      tstream[(Boolean, String, Boolean, Boolean, Boolean, Boolean, Boolean, Int)]("A")
+    val query = tstream[(Boolean, String, Boolean, Boolean, Boolean, Boolean, Boolean, Int)]("A")
     val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
     expectMsg(Created)
     a ! Event(true, "test", true, true, true, true, true, 12)
