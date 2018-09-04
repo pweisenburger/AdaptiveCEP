@@ -3,11 +3,14 @@ package adaptivecep.data
 import java.time.Duration
 
 import adaptivecep.data.Events._
+import util.tuplehlistsupport._
+import util.records._
 import akka.actor.ActorContext
 import shapeless.{HList, Nat, Witness}
-import shapeless.ops.hlist.{HKernelAux, Prepend}
+import shapeless.ops.hlist.HKernelAux
 import shapeless.ops.nat.ToInt
 import shapeless.ops.record.{Remover, UnzipFields}
+import util.hlists.JoinOnNat
 
 object Queries {
 
@@ -15,7 +18,7 @@ object Queries {
     def publisherName: String
   }
 
-  case class NStream[T](publisherName: String)(implicit lengthImplicit: LengthImplicit[T]) extends NStreamTrait {
+  case class NStream[T](publisherName: String)(implicit lengthImplicit: Length[T]) extends NStreamTrait {
     val length: Int = lengthImplicit()
   }
 
@@ -58,22 +61,22 @@ object Queries {
   sealed trait ConjunctionQuery extends BinaryQuery
   sealed trait DisjunctionQuery extends BinaryQuery
 
-  abstract class HListQuery[T](implicit lengthImplicit: LengthImplicit[T]) extends Query {
+  abstract class HListQuery[T](implicit lengthImplicit: Length[T]) extends Query {
     val length: Int = lengthImplicit()
   }
 
   case class Stream[T](
       publisherName: String,
       requirements: Set[Requirement])
-    (implicit lengthImplicit: LengthImplicit[T]) extends HListQuery[T] with StreamQuery
+    (implicit lengthImplicit: Length[T]) extends HListQuery[T] with StreamQuery
 
   case class Sequence[A, B, R](
       s1: NStream[A],
       s2: NStream[B],
       requirements: Set[Requirement])
     (implicit
-      p: PrependImplicit.Aux[A, B, R],
-      length: LengthImplicit[R]
+     p: Prepend.Aux[A, B, R],
+     length: Length[R]
   ) extends HListQuery[R] with SequenceQuery[A, B]
 
   case class Filter[T](
@@ -81,7 +84,7 @@ object Queries {
       cond: Event => Boolean,
       requirements: Set[Requirement])
     (implicit
-      length: LengthImplicit[T]
+      length: Length[T]
   ) extends HListQuery[T] with FilterQuery
 
   case class FilterRecord[Labeled <: HList, K <: HList, V <: HList](
@@ -98,9 +101,9 @@ object Queries {
       position: Nat,
       requirements: Set[Requirement])
     (implicit
-      dropAt: DropAtImplicit.Aux[T, Pos, R],
-      lengthImplicit: LengthImplicit[R],
-      toInt: ToInt[Pos]
+     dropAt: DropAt.Aux[T, Pos, R],
+     lengthImplicit: Length[R],
+     toInt: ToInt[Pos]
   ) extends HListQuery[R] with DropElemQuery { val pos = toInt() - 1 }
 
   // Sadly I could not get a type class working that does the dropping at the value and the type level at the same time.
@@ -121,8 +124,8 @@ object Queries {
       w2: Window,
       requirements: Set[Requirement])
    (implicit
-      prepend: PrependImplicit.Aux[T, T, R],
-      length: LengthImplicit[R]
+    prepend: Prepend.Aux[T, T, R],
+    length: Length[R]
   ) extends HListQuery[R] with SelfJoinQuery
 
   case class Join[A, B, R](
@@ -132,8 +135,8 @@ object Queries {
       w2: Window,
       requirements: Set[Requirement])
     (implicit
-      prepend: PrependImplicit.Aux[A, B, R],
-      length: LengthImplicit[R]
+     prepend: Prepend.Aux[A, B, R],
+     length: Length[R]
   ) extends HListQuery[R] with JoinQuery
 
   case class JoinOn[A <: HList, B <: HList, R <: HList, Pos1 <: Nat, Pos2 <: Nat](
@@ -179,8 +182,8 @@ object Queries {
       sq2: HListQuery[B],
       requirements: Set[Requirement])
     (implicit
-      prepend: PrependImplicit.Aux[A, B, R],
-      length: LengthImplicit[R]
+     prepend: Prepend.Aux[A, B, R],
+     length: Length[R]
   ) extends HListQuery[R] with ConjunctionQuery
 
   case class Disjunction[A, B, R](
@@ -188,7 +191,7 @@ object Queries {
       sq2: HListQuery[B],
       requirements: Set[Requirement])
     (implicit
-      disjunct: DisjunctImplicit.Aux[A, B, R],
-      length: LengthImplicit[R]
+     disjunct: Disjunct.Aux[A, B, R],
+     length: Length[R]
   ) extends HListQuery[R] with DisjunctionQuery
 }

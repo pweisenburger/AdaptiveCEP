@@ -1,10 +1,10 @@
 package adaptivecep.data
 
+import util.tuplehlistsupport.{FromTraversable, Length}
 import akka.actor.ActorRef
 import shapeless.HList
 import shapeless.ops.hlist.{HKernelAux, ZipWithKeys}
-import shapeless.ops.traversable.FromTraversable
-import shapeless.syntax.std.traversable._
+import shapeless.ops.traversable.{FromTraversable => TFromTraversbale}
 
 object Events {
 
@@ -18,8 +18,8 @@ object Events {
   val errorMsg: String = "Panic! Control flow should never reach this point!"
 
   def toFunEventAny[T](f: (T) => Any)(implicit
-      length: LengthImplicit[T],
-      ft: FromTraversableImplicit[T]): Event => Any = {
+      length: Length[T],
+      ft: FromTraversable[T]): Event => Any = {
     case Event(es@_*) if es.length == length() => ft(es) match {
       case Some(hlist) => f(hlist)
       case None => sys.error(errorMsg)
@@ -28,8 +28,8 @@ object Events {
   }
 
   def toFunEventBoolean[T](f: (T) => Boolean)(implicit
-      length: LengthImplicit[T],
-      ft: FromTraversableImplicit[T]): Event => Boolean = {
+      length: Length[T],
+      ft: FromTraversable[T]): Event => Boolean = {
     case Event(es@_*) if es.length == length() => ft(es) match {
       case Some(hlist) => f(hlist)
       case None => sys.error(errorMsg)
@@ -43,10 +43,10 @@ object Events {
   def toFunEventBoolean[Labeled <: HList, K <: HList, V <: HList](f: (Labeled) => Boolean)(implicit
       zipWithKeys: ZipWithKeys.Aux[K, V, Labeled],
       op: HKernelAux[Labeled],
-      ft: FromTraversable[V]): Event => Boolean = {
+      ft: TFromTraversbale[V]): Event => Boolean = {
     case Event(es@_*) if es.length == op().length =>
-      es.toHList[V](ft) match {
-        case Some(hlist) => f(zipWithKeys.apply(hlist))
+      ft(es) match {
+        case Some(hlist) => f(zipWithKeys(hlist))
         case None => sys.error(errorMsg)
       }
     case _ => sys.error(errorMsg)

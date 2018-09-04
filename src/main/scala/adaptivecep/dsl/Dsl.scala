@@ -2,14 +2,16 @@ package adaptivecep.dsl
 
 import java.time.Duration
 
-import adaptivecep.data._
 import adaptivecep.data.Events._
 import adaptivecep.data.Queries._
-import shapeless.{Generic, HList, Nat, Witness}
-import shapeless.ops.hlist.{HKernelAux, Prepend, Tupler, ZipWithKeys}
+import util.tuplehlistsupport._
+import shapeless.{HList, Nat, Witness}
+import shapeless.ops.hlist.{HKernelAux, ZipWithKeys}
 import shapeless.ops.nat.ToInt
 import shapeless.ops.record.{Remover, UnzipFields}
-import shapeless.ops.traversable.FromTraversable
+import shapeless.ops.traversable.{ FromTraversable => TFromTraversable}
+import util.hlists.JoinOnNat
+import util.records.{DropKey, JoinOnKey, SelectFromTraversable}
 
 object Dsl {
 
@@ -43,7 +45,7 @@ object Dsl {
   def nStream[T](
       publisherName: String)
     (implicit
-      implicitLength: LengthImplicit[T]
+      implicitLength: Length[T]
   ): NStream[T] = NStream[T](publisherName)(implicitLength)
 
   case class Ratio(instances: Instances, seconds: Seconds)
@@ -92,7 +94,7 @@ object Dsl {
       publisherName: String,
       requirements: Requirement*)
     (implicit
-      length: LengthImplicit[T]
+      length: Length[T]
   ): HListQuery[T] = Stream(publisherName, requirements.toSet)(length)
 
 
@@ -106,16 +108,16 @@ object Dsl {
       tuple: (NStream[A], NStream[B]),
       requirements: Requirement*)
     (implicit
-      p: PrependImplicit.Aux[A, B, R],
-      length: LengthImplicit[R]
+      p: Prepend.Aux[A, B, R],
+      length: Length[R]
   ): Sequence[A, B, R] = Sequence(tuple._1, tuple._2, requirements.toSet)(p, length)
 
   implicit def queryToQueryHelper[A](q: HListQuery[A]): QueryHelper[A] = QueryHelper(q)
 
   // implict functions to enable the usage of a single where function for HLists/Tuples and Records
   implicit def toUnlabeledWhere[A](implicit
-      fl: FromTraversableImplicit[A],
-      length: LengthImplicit[A]
+      fl: FromTraversable[A],
+      length: Length[A]
   ): (HListQuery[A], A => Boolean, Seq[Requirement]) => HListQuery[A] = {
     case (q, cond, reqs) => Filter[A](q, toFunEventBoolean[A](cond)(length, fl), reqs.toSet)(length)
   }
@@ -125,7 +127,7 @@ object Dsl {
       unzip: UnzipFields.Aux[A, K, V],
       zipWithKeys: ZipWithKeys.Aux[K, V, A],
       op: HKernelAux[A],
-      fl: FromTraversable[V]
+      fl: TFromTraversable[V]
   ): (HListQuery[A], A => Boolean, Seq[Requirement]) => HListQuery[A] = {
     case (q, cond, reqs) =>
       FilterRecord[A, K, V](q, toFunEventBoolean[A, K, V](cond)(zipWithKeys, op, fl), reqs.toSet)(unzip, op)
@@ -133,9 +135,9 @@ object Dsl {
 
   // implict functions to enable the usage of a single drop function based on nats and witnesses
   implicit def toNatDrop[A, Pos <: Nat, R](implicit
-       dropAt: DropAtImplicit.Aux[A, Pos, R],
-       toInt: ToInt[Pos],
-       length: LengthImplicit[R]
+      dropAt: DropAt.Aux[A, Pos, R],
+      toInt: ToInt[Pos],
+      length: Length[R]
   ): (HListQuery[A], Pos, Seq[Requirement]) => HListQuery[R] = {
     case (q, pos, reqs) => DropElem(q, pos, reqs.toSet)(dropAt, length, toInt)
   }
@@ -202,8 +204,8 @@ object Dsl {
         w2: Window,
         requirements: Requirement*)
       (implicit
-        prepend: PrependImplicit.Aux[A, A, R],
-        length: LengthImplicit[R]
+        prepend: Prepend.Aux[A, A, R],
+        length: Length[R]
     ): HListQuery[R] = SelfJoin[A, R](q, w1, w2, requirements.toSet)(prepend, length)
 
     def join[B, R](
@@ -212,24 +214,24 @@ object Dsl {
         w2: Window,
         requirements: Requirement*)
       (implicit
-        prepend: PrependImplicit.Aux[A, B, R],
-        length: LengthImplicit[R]
+        prepend: Prepend.Aux[A, B, R],
+        length: Length[R]
     ): HListQuery[R] = Join[A, B, R](q, q2, w1, w2, requirements.toSet)(prepend, length)
 
     def and[B, R](
         q2: HListQuery[B],
         requirements: Requirement*)
       (implicit
-        prepend: PrependImplicit.Aux[A, B, R],
-        length: LengthImplicit[R]
+        prepend: Prepend.Aux[A, B, R],
+        length: Length[R]
     ): HListQuery[R] = Conjunction(q, q2, requirements.toSet)(prepend, length)
 
     def or[B, R](
         q2: HListQuery[B],
         requirements: Requirement*)
       (implicit
-        disjunct: DisjunctImplicit.Aux[A, B, R],
-        length: LengthImplicit[R]
+        disjunct: Disjunct.Aux[A, B, R],
+        length: Length[R]
     ): HListQuery[R] = Disjunction(q, q2, requirements.toSet)(disjunct, length)
   }
 }
