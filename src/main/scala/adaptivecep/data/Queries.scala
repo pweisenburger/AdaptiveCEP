@@ -31,17 +31,17 @@ object Queries {
   case object Smaller      extends Operator
   case object SmallerEqual extends Operator
 
-  case class NodeData(name: String, query: Query, context: ActorContext)
+  case class NodeData(name: String, query: IQuery, context: ActorContext)
 
   sealed trait Requirement
   case class LatencyRequirement   (operator: Operator, duration: Duration,           callback: NodeData => Any) extends Requirement
   case class FrequencyRequirement (operator: Operator, instances: Int, seconds: Int, callback: NodeData => Any) extends Requirement
 
-  sealed trait Query { val requirements: Set[Requirement] }
+  sealed trait IQuery { val requirements: Set[Requirement] }
 
-  sealed trait LeafQuery   extends Query
-  sealed trait UnaryQuery  extends Query { val sq: Query }
-  sealed trait BinaryQuery extends Query { val sq1: Query; val sq2: Query }
+  sealed trait LeafQuery   extends IQuery
+  sealed trait UnaryQuery  extends IQuery { val sq: IQuery }
+  sealed trait BinaryQuery extends IQuery { val sq1: IQuery; val sq2: IQuery }
 
   sealed trait StreamQuery extends LeafQuery { val publisherName: String }
   sealed trait SequenceQuery[A, B] extends LeafQuery {
@@ -56,14 +56,14 @@ object Queries {
   sealed trait ConjunctionQuery extends BinaryQuery
   sealed trait DisjunctionQuery extends BinaryQuery
 
-  abstract class HListQuery[T](implicit lengthImplicit: Length[T]) extends Query {
+  abstract class Query[T](implicit lengthImplicit: Length[T]) extends IQuery {
     val length: Int = lengthImplicit()
   }
 
   case class Stream[T](
       publisherName: String,
       requirements: Set[Requirement])
-    (implicit lengthImplicit: Length[T]) extends HListQuery[T] with StreamQuery
+    (implicit lengthImplicit: Length[T]) extends Query[T] with StreamQuery
 
   case class Sequence[A, B, R](
       s1: NStream[A],
@@ -72,71 +72,71 @@ object Queries {
     (implicit
       prepend: Prepend.Aux[A, B, R],
       length: Length[R]
-  ) extends HListQuery[R] with SequenceQuery[A, B]
+  ) extends Query[R] with SequenceQuery[A, B]
 
   case class Filter[T](
-      sq: HListQuery[T],
+      sq: Query[T],
       cond: Event => Boolean,
       requirements: Set[Requirement])
     (implicit
       length: Length[T]
-  ) extends HListQuery[T] with FilterQuery
+  ) extends Query[T] with FilterQuery
 
   case class FilterRecord[Labeled <: HList, K <: HList, V <: HList](
-      sq: HListQuery[Labeled],
+      sq: Query[Labeled],
       cond: Event => Boolean,
       requirements: Set[Requirement])
     (implicit
       unzip: UnzipFields.Aux[Labeled, K, V],
       op: HKernelAux[Labeled]
-  ) extends HListQuery[Labeled] with FilterQuery
+  ) extends Query[Labeled] with FilterQuery
 
   case class DropElem[T, R, Pos <: Nat](
-      sq: HListQuery[T],
+      sq: Query[T],
       position: Nat,
       requirements: Set[Requirement])
     (implicit
       dropAt: DropAt.Aux[T, Pos, R],
       length: Length[R],
       toInt: ToInt[Pos]
-  ) extends HListQuery[R] with DropElemQuery { val pos = toInt() - 1 }
+  ) extends Query[R] with DropElemQuery { val pos = toInt() - 1 }
 
   // Sadly I could not get a type class working that does the dropping at the value and the type level at the same time.
   // Thus, we need the Remover (Type-Level) in addition to DropKey(Value-Level).
   case class DropElemRecord[T <: HList, R <: HList, K, V](
-      sq: HListQuery[T],
+      sq: Query[T],
       k: Witness.Aux[K],
       requirements: Set[Requirement])
     (implicit
       drop: DropKey[T, K],
       remove: Remover.Aux[T, K, (V, R)],
       op: HKernelAux[R]
-  ) extends HListQuery[R] with DropElemQuery { val dropKey: DropKey[T, K] = drop }
+  ) extends Query[R] with DropElemQuery { val dropKey: DropKey[T, K] = drop }
 
   case class SelfJoin[T, R](
-      sq: HListQuery[T],
+      sq: Query[T],
       w1: Window,
       w2: Window,
       requirements: Set[Requirement])
     (implicit
       prepend: Prepend.Aux[T, T, R],
       length: Length[R]
-  ) extends HListQuery[R] with SelfJoinQuery
+  ) extends Query[R] with SelfJoinQuery
 
   case class Join[A, B, R](
-      sq1: HListQuery[A],
-      sq2: HListQuery[B],
+      sq1: Query[A],
+      sq2: Query[B],
       w1: Window,
       w2: Window,
       requirements: Set[Requirement])
     (implicit
       prepend: Prepend.Aux[A, B, R],
       length: Length[R]
-  ) extends HListQuery[R] with JoinQuery
+  ) extends Query[R] with JoinQuery
 
   case class JoinOn[A, B, R, Pos1 <: Nat, Pos2 <: Nat](
-      sq1: HListQuery[A],
-      sq2: HListQuery[B],
+      sq1: Query[A],
+      sq2: Query[B],
       pos1: Nat,
       pos2: Nat,
       w1: Window,
@@ -147,14 +147,14 @@ object Queries {
       toInt1: ToInt[Pos1],
       toInt2: ToInt[Pos2],
       length: Length[R]
-  ) extends HListQuery[R] with JoinOnQuery {
+  ) extends Query[R] with JoinOnQuery {
     val positionOn1: Int = toInt1() - 1
     val positionOn2: Int = toInt2() - 1
   }
 
   case class JoinOnRecord[A <: HList, B <: HList, R <: HList, Key1, Key2](
-      sq1: HListQuery[A],
-      sq2: HListQuery[B],
+      sq1: Query[A],
+      sq2: Query[B],
       key1: Witness.Aux[Key1],
       key2: Witness.Aux[Key2],
       w1: Window,
@@ -166,27 +166,27 @@ object Queries {
       select1: SelectFromTraversable[A, Key1],
       select2: SelectFromTraversable[B, Key2],
       op: HKernelAux[R]
-  ) extends HListQuery[R] with JoinOnQuery {
+  ) extends Query[R] with JoinOnQuery {
       val drop: DropKey[B, Key2] = dropKey
       val selectFrom1: SelectFromTraversable[A, Key1] = select1
       val selectFrom2: SelectFromTraversable[B, Key2] = select2
   }
 
   case class Conjunction[A, B, R](
-      sq1: HListQuery[A],
-      sq2: HListQuery[B],
+      sq1: Query[A],
+      sq2: Query[B],
       requirements: Set[Requirement])
     (implicit
       prepend: Prepend.Aux[A, B, R],
       length: Length[R]
-  ) extends HListQuery[R] with ConjunctionQuery
+  ) extends Query[R] with ConjunctionQuery
 
   case class Disjunction[A, B, R](
-      sq1: HListQuery[A],
-      sq2: HListQuery[B],
+      sq1: Query[A],
+      sq2: Query[B],
       requirements: Set[Requirement])
     (implicit
       disjunct: Disjunct.Aux[A, B, R],
       length: Length[R]
-  ) extends HListQuery[R] with DisjunctionQuery
+  ) extends Query[R] with DisjunctionQuery
 }

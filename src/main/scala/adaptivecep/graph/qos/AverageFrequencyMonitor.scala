@@ -14,7 +14,7 @@ trait AverageFrequencyMonitor {
 
   var currentOutput: Option[Int] = None
 
-  def onCreated(name: String, query: Query, context: ActorContext): Unit = {
+  def onCreated(name: String, query: IQuery, context: ActorContext): Unit = {
     val requirements: Set[FrequencyRequirement] = query.requirements.collect{ case fr: FrequencyRequirement => fr }
     val callbackNodeData: NodeData = NodeData(name, query, context)
     currentOutput = Some(0)

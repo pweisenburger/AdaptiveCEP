@@ -5,15 +5,13 @@ import adaptivecep.data.Queries._
 import adaptivecep.graph.nodes._
 import adaptivecep.graph.qos._
 import akka.actor.{ActorRef, ActorSystem, Props}
-import shapeless.ops.hlist.HKernelAux
-import shapeless.ops.traversable.FromTraversable
-import shapeless.HList
+import util.tuplehlistsupport.{Length, FromTraversable}
 
 object GraphFactory {
 
   def createImpl(
       actorSystem: ActorSystem,
-      query: Query,
+      query: IQuery,
       publishers: Map[String, ActorRef],
       frequencyMonitorFactory: MonitorFactory,
       latencyMonitorFactory: MonitorFactory,
@@ -109,22 +107,22 @@ object GraphFactory {
           Some(eventCallback))),
         "disjunction")
     // only to avoid warning that match is not exhaustive
-    case _: HListQuery[_] => throw new IllegalArgumentException("HListQuery should not be passed as an argument")
+    case _: Query[_] => throw new IllegalArgumentException("HListQuery should not be passed as an argument")
   }
 
   // This is why `eventCallback` is listed separately:
   // https://stackoverflow.com/questions/21147001/why-scala-doesnt-infer-type-from-generic-type-parameters
-  def create[T <: HList](
+  def create[T](
       actorSystem: ActorSystem,
-      query: HListQuery[T],
+      query: Query[T],
       publishers: Map[String, ActorRef],
       frequencyMonitorFactory: MonitorFactory,
       latencyMonitorFactory: MonitorFactory,
       createdCallback: () => Any)(
-      eventCallback: (T) => Any)(implicit op: HKernelAux[T], fl: FromTraversable[T]): ActorRef =
+      eventCallback: (T) => Any)(implicit length: Length[T], fl: FromTraversable[T]): ActorRef =
     createImpl(
       actorSystem,
-      query.asInstanceOf[Query],
+      query.asInstanceOf[IQuery],
       publishers,
       frequencyMonitorFactory,
       latencyMonitorFactory,

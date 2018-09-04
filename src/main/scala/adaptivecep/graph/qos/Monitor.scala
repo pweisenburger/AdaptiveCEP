@@ -4,9 +4,9 @@ import akka.actor.{ActorContext, ActorRef}
 import adaptivecep.data.Events._
 import adaptivecep.data.Queries._
 
-case class LeafNodeData(name: String, query: Query, context: ActorContext)
-case class UnaryNodeData(name: String, query: Query, context: ActorContext, childNode: ActorRef)
-case class BinaryNodeData(name: String, query: Query, context: ActorContext, childNode1: ActorRef, childNode2: ActorRef)
+case class LeafNodeData(name: String, query: IQuery, context: ActorContext)
+case class UnaryNodeData(name: String, query: IQuery, context: ActorContext, childNode: ActorRef)
+case class BinaryNodeData(name: String, query: IQuery, context: ActorContext, childNode1: ActorRef, childNode2: ActorRef)
 
 trait LeafNodeMonitor {
 

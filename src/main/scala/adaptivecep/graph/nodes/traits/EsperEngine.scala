@@ -35,13 +35,13 @@ trait EsperEngine {
 }
 
 object EsperEngine {
-  def createArrayOfNames(query: Query): Array[String] = query match {
-    case hquery:HListQuery[_] => (for (i <- 1 to hquery.length) yield "e"+i).toArray
+  def createArrayOfNames(query: IQuery): Array[String] = query match {
+    case hquery: Query[_] => (for (i <- 1 to hquery.length) yield "e"+i).toArray
     case _ => throw new IllegalArgumentException("Argument has to be of type HListQuery")
   }
 
-  def createArrayOfClasses(query: Query): Array[Class[_]] = query match {
-    case hquery:HListQuery[_] =>
+  def createArrayOfClasses(query: IQuery): Array[Class[_]] = query match {
+    case hquery: Query[_] =>
       val clazz: Class[_] = classOf[AnyRef]
       (for (i <- 1 to hquery.length) yield clazz).toArray
     case _ => throw new IllegalArgumentException("Argument has to be of type HListQuery")

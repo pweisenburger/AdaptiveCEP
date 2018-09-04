@@ -1,7 +1,7 @@
 package adaptivecep.graph.nodes
 
 import adaptivecep.data.Events._
-import adaptivecep.data.Queries.{Disjunction, DisjunctionQuery, HListQuery}
+import adaptivecep.data.Queries.{Disjunction, DisjunctionQuery, Query}
 import adaptivecep.graph.nodes.traits.BinaryNode
 import adaptivecep.graph.qos.MonitorFactory
 import akka.actor.ActorRef

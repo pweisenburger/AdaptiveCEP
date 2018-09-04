@@ -94,7 +94,7 @@ object Dsl {
       requirements: Requirement*)
     (implicit
       length: Length[T]
-  ): HListQuery[T] = Stream(publisherName, requirements.toSet)(length)
+  ): Query[T] = Stream(publisherName, requirements.toSet)(length)
 
 
   case class SequenceHelper[A](s: NStream[A]) {
@@ -111,13 +111,13 @@ object Dsl {
       length: Length[R]
   ): Sequence[A, B, R] = Sequence(tuple._1, tuple._2, requirements.toSet)(p, length)
 
-  implicit def queryToQueryHelper[A](q: HListQuery[A]): QueryHelper[A] = QueryHelper(q)
+  implicit def queryToQueryHelper[A](q: Query[A]): QueryHelper[A] = QueryHelper(q)
 
   // implict functions to enable the usage of a single where function for HLists/Tuples and Records
   implicit def toUnlabeledWhere[A](implicit
       fl: FromTraversable[A],
       length: Length[A]
-  ): (HListQuery[A], A => Boolean, Seq[Requirement]) => HListQuery[A] = {
+  ): (Query[A], A => Boolean, Seq[Requirement]) => Query[A] = {
     case (q, cond, reqs) => Filter[A](q, toFunEventBoolean[A](cond)(length, fl), reqs.toSet)(length)
   }
 
@@ -127,7 +127,7 @@ object Dsl {
       zipWithKeys: ZipWithKeys.Aux[K, V, A],
       op: HKernelAux[A],
       fl: TFromTraversable[V]
-  ): (HListQuery[A], A => Boolean, Seq[Requirement]) => HListQuery[A] = {
+  ): (Query[A], A => Boolean, Seq[Requirement]) => Query[A] = {
     case (q, cond, reqs) =>
       FilterRecord[A, K, V](q, toFunEventBoolean[A, K, V](cond)(zipWithKeys, op, fl), reqs.toSet)(unzip, op)
   }
@@ -137,7 +137,7 @@ object Dsl {
       dropAt: DropAt.Aux[A, Pos, R],
       toInt: ToInt[Pos],
       length: Length[R]
-  ): (HListQuery[A], Pos, Seq[Requirement]) => HListQuery[R] = {
+  ): (Query[A], Pos, Seq[Requirement]) => Query[R] = {
     case (q, pos, reqs) => DropElem(q, pos, reqs.toSet)(dropAt, length, toInt)
   }
 
@@ -145,7 +145,7 @@ object Dsl {
        dropKey: DropKey[A, K],
        remover: Remover.Aux[A, K, (V, R)],
        op: HKernelAux[R]
-  ): (HListQuery[A], Witness.Aux[K], Seq[Requirement]) => HListQuery[R] = {
+  ): (Query[A], Witness.Aux[K], Seq[Requirement]) => Query[R] = {
     case (q, pos, reqs) => DropElemRecord(q, pos, reqs.toSet)(dropKey, remover, op)
   }
 
@@ -155,7 +155,7 @@ object Dsl {
        toInt1: ToInt[Pos1],
        toInt2: ToInt[Pos2],
        length: Length[R]
-  ): (HListQuery[A], HListQuery[B], Pos1, Pos2, Window, Window, Seq[Requirement]) => HListQuery[R] = {
+  ): (Query[A], Query[B], Pos1, Pos2, Window, Window, Seq[Requirement]) => Query[R] = {
     case (q1, q2, pos1, pos2, w1, w2, reqs) => JoinOn(q1, q2, pos1, pos2, w1, w2, reqs.toSet)
   }
 
@@ -165,11 +165,11 @@ object Dsl {
        select1: SelectFromTraversable[A, Key1],
        select2: SelectFromTraversable[B, Key2],
        op: HKernelAux[R]
-   ): (HListQuery[A], HListQuery[B], Witness.Aux[Key1], Witness.Aux[Key2], Window, Window, Seq[Requirement]) => HListQuery[R] = {
+   ): (Query[A], Query[B], Witness.Aux[Key1], Witness.Aux[Key2], Window, Window, Seq[Requirement]) => Query[R] = {
     case (q1, q2, pos1, pos2, w1, w2, reqs) => JoinOnRecord(q1, q2, pos1, pos2, w1, w2, reqs.toSet)
   }
 
-  case class QueryHelper[A](q: HListQuery[A]) {
+  case class QueryHelper[A](q: Query[A]) {
     // Sadly we cannot use FnToProduct in order to make the usage better.
     // If we would use FnToProduct, it would be necessary to attach the
     // complete type information for the arguments so that the compiler can find the implicit parameter.
@@ -177,26 +177,26 @@ object Dsl {
         cond: A => Boolean,
         requirements: Requirement*)
       (implicit
-        trans: (HListQuery[A], A => Boolean, Seq[Requirement]) => HListQuery[A]
-    ): HListQuery[A] = trans(q, cond, requirements)
+        trans: (Query[A], A => Boolean, Seq[Requirement]) => Query[A]
+    ): Query[A] = trans(q, cond, requirements)
 
     def drop[Pos, R](
         toDrop: Pos,
         requirements: Requirement*)
       (implicit
-        trans: (HListQuery[A], Pos, Seq[Requirement]) => HListQuery[R]
-    ): HListQuery[R] = trans(q, toDrop, requirements)
+        trans: (Query[A], Pos, Seq[Requirement]) => Query[R]
+    ): Query[R] = trans(q, toDrop, requirements)
 
     def joinOn[B, Pos1, Pos2, R](
-        q2: HListQuery[B],
+        q2: Query[B],
         pos1: Pos1,
         pos2: Pos2,
         w1: Window,
         w2: Window,
         requirements: Requirement*)
       (implicit
-        trans: (HListQuery[A], HListQuery[B], Pos1, Pos2, Window, Window, Seq[Requirement]) => HListQuery[R]
-      ): HListQuery[R] = trans(q, q2, pos1, pos2, w1, w2, requirements)
+        trans: (Query[A], Query[B], Pos1, Pos2, Window, Window, Seq[Requirement]) => Query[R]
+      ): Query[R] = trans(q, q2, pos1, pos2, w1, w2, requirements)
 
     def selfJoin[R](
         w1: Window,
@@ -205,32 +205,32 @@ object Dsl {
       (implicit
         prepend: Prepend.Aux[A, A, R],
         length: Length[R]
-    ): HListQuery[R] = SelfJoin[A, R](q, w1, w2, requirements.toSet)(prepend, length)
+    ): Query[R] = SelfJoin[A, R](q, w1, w2, requirements.toSet)(prepend, length)
 
     def join[B, R](
-        q2: HListQuery[B],
+        q2: Query[B],
         w1: Window,
         w2: Window,
         requirements: Requirement*)
       (implicit
         prepend: Prepend.Aux[A, B, R],
         length: Length[R]
-    ): HListQuery[R] = Join[A, B, R](q, q2, w1, w2, requirements.toSet)(prepend, length)
+    ): Query[R] = Join[A, B, R](q, q2, w1, w2, requirements.toSet)(prepend, length)
 
     def and[B, R](
-        q2: HListQuery[B],
+        q2: Query[B],
         requirements: Requirement*)
       (implicit
         prepend: Prepend.Aux[A, B, R],
         length: Length[R]
-    ): HListQuery[R] = Conjunction(q, q2, requirements.toSet)(prepend, length)
+    ): Query[R] = Conjunction(q, q2, requirements.toSet)(prepend, length)
 
     def or[B, R](
-        q2: HListQuery[B],
+        q2: Query[B],
         requirements: Requirement*)
       (implicit
         disjunct: Disjunct.Aux[A, B, R],
         length: Length[R]
-    ): HListQuery[R] = Disjunction(q, q2, requirements.toSet)(disjunct, length)
+    ): Query[R] = Disjunction(q, q2, requirements.toSet)(disjunct, length)
   }
 }

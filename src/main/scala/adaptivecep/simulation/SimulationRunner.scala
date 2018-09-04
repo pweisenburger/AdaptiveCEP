@@ -2,7 +2,7 @@ package adaptivecep.simulation
 
 import java.io.{File, PrintStream}
 
-import adaptivecep.data.Queries.Query
+import adaptivecep.data.Queries.IQuery
 
 object SimulationRunner extends App {
   val directory =
@@ -53,7 +53,7 @@ object SimulationRunner extends App {
 }
 
 object runSimulation {
-  def apply(queries: Query*)(directory: Option[File], name: String)(optimize: (Simulation, Long, Long, Long) => Unit) = {
+  def apply(queries: IQuery*)(directory: Option[File], name: String)(optimize: (Simulation, Long, Long, Long) => Unit) = {
     println(s"Simulating $name")
 
     val out = directory map { directory => new PrintStream(new File(directory, s"$name.csv")) } getOrElse System.out

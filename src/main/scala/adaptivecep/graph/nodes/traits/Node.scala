@@ -9,14 +9,14 @@ trait Node extends Actor {
 
   val name: String = self.path.name
 
-  val query: Query
+  val query: IQuery
   val publishers: Map[String, ActorRef]
   val frequencyMonitorFactory: MonitorFactory
   val latencyMonitorFactory: MonitorFactory
 
   def createChildNode(
       id: Int,
-      query: Query
+      query: IQuery
     ): ActorRef = query match {
     case streamQuery: StreamQuery =>
       context.actorOf(Props(
@@ -109,7 +109,7 @@ trait Node extends Actor {
           None)),
         s"$name-$id-disjunction")
     // only to avoid warning that match is not exhaustive
-    case _: HListQuery[_] => throw new IllegalArgumentException("HListQuery should not be passed as an argument")
+    case _: Query[_] => throw new IllegalArgumentException("HListQuery should not be passed as an argument")
   }
 
 }

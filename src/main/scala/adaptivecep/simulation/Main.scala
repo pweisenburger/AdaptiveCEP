@@ -1,7 +1,7 @@
 package adaptivecep.simulation
 
 import adaptivecep.data.Events._
-import adaptivecep.data.Queries.HListQuery
+import adaptivecep.data.Queries.Query
 import adaptivecep.dsl.Dsl._
 import adaptivecep.graph.factory._
 import adaptivecep.graph.qos._
@@ -24,7 +24,7 @@ object Main extends App {
     "C" -> publisherC,
     "D" -> publisherD)
 
-  val query1: HListQuery[Either[Int, String]::Either[Int, Unit]::Either[Float, Unit]::HNil] =
+  val query1: Query[Either[Int, String]::Either[Int, Unit]::Either[Float, Unit]::HNil] =
     stream[Int::HNil]("A")
     .join(
       stream[Int::HNil]("B"),
@@ -40,7 +40,7 @@ object Main extends App {
     .and(stream[Float::HNil]("C"))
     .or(stream[String::HNil]("D"))
 
-  val query2: HListQuery[Int::Int::Float::String::HNil] =
+  val query2: Query[Int::Int::Float::String::HNil] =
     stream[Int::HNil]("A")
     .and(stream[Int::HNil]("B"))
     .join(

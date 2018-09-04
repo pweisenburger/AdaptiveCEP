@@ -27,7 +27,7 @@ class System(implicit actorSystem: ActorSystem) {
   private val frequencyMonitorFactory = AverageFrequencyMonitorFactory(interval = 15, logging = true)
   private val latencyMonitorFactory = PathLatencyMonitorFactory(interval = 10, logging = true)
 
-  def runQuery(query: Query, publishers: Map[String, ActorRef], createdCallback: Option[() => Any], eventCallback: Option[(Event) => Any]) =
+  def runQuery(query: IQuery, publishers: Map[String, ActorRef], createdCallback: Option[() => Any], eventCallback: Option[(Event) => Any]) =
     roots += actorSystem.actorOf(Props(query match {
       case streamQuery: StreamQuery =>
         StreamNode(streamQuery, publishers, frequencyMonitorFactory, latencyMonitorFactory, createdCallback, eventCallback)
@@ -46,7 +46,7 @@ class System(implicit actorSystem: ActorSystem) {
       case disjunctionQuery: DisjunctionQuery =>
         DisjunctionNode(disjunctionQuery, publishers, frequencyMonitorFactory, latencyMonitorFactory, createdCallback, eventCallback)
       // only to avoid warning that match is not exhaustive
-      case _: HListQuery[_] => throw new IllegalArgumentException("HListQuery should not be passed as an argument")
+      case _: Query[_] => throw new IllegalArgumentException("HListQuery should not be passed as an argument")
     }), s"root-${System.index.getAndIncrement()}")
 
   def consumers: Seq[Operator] = {

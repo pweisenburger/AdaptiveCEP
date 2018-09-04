@@ -3,7 +3,7 @@ package adaptivecep.simulation
 import java.io.PrintStream
 
 import akka.actor.{ActorSystem, Props}
-import adaptivecep.data.Queries.Query
+import adaptivecep.data.Queries.IQuery
 import adaptivecep.dsl.Dsl._
 import adaptivecep.publishers.EmptyPublisher
 import adaptivecep.simulation.SimulationSetup._
@@ -18,7 +18,7 @@ object SimulationSetup {
     "B" -> actorSystem.actorOf(Props(new EmptyPublisher), "B"),
     "C" -> actorSystem.actorOf(Props(new EmptyPublisher), "C"))
 
-  val query0: Query =
+  val query0: IQuery =
     stream[Int::HNil]("A")
       .join(
         stream[Int::HNil]("B"),
@@ -27,7 +27,7 @@ object SimulationSetup {
       .where(x => x.head <= x.last)
       .drop(Nat._1)
 
-  val query1: Query =
+  val query1: IQuery =
     stream[Int::HNil]("A")
       .join(
         stream[Int::HNil]("B"),
@@ -44,7 +44,7 @@ object SimulationSetup {
   val queries = Seq("query0" -> query0, "query1" -> query1)
 }
 
-class SimulationSetup(queries: Query*)(out: PrintStream)(optimize: (Simulation, Long, Long, Long) => Unit) {
+class SimulationSetup(queries: IQuery*)(out: PrintStream)(optimize: (Simulation, Long, Long, Long) => Unit) {
   def run() = {
     val steps = 3000
     val outputSampleSeconds = 10
