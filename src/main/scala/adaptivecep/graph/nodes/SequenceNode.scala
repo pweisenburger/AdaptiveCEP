@@ -69,17 +69,12 @@ case class SequenceNode[A, B](
 
 object SequenceNode {
 
-  def createArrayOfNames(noReqStream: NStreamTrait): Array[String] = noReqStream match {
-    case hnstream: NStream[_] =>
-      (for (i <- 1 to hnstream.length) yield "e" + i).toArray
-    case _ => throw new IllegalArgumentException("NStream has only one subclass")
-  }
+  def createArrayOfNames(noReqStream: NStream[_]): Array[String] =
+    (for (i <- 1 to noReqStream.length) yield "e" + i).toArray
 
-  def createArrayOfClasses(noReqStream: NStreamTrait): Array[Class[_]] = noReqStream match {
-    case hnstream: NStream[_] =>
-      val clazz: Class[_] = classOf[AnyRef]
-      (for (i <- 1 to hnstream.length) yield clazz).toArray
-    case _ => throw new IllegalArgumentException("NStream has only one subclass")
-  }
+  def createArrayOfClasses(noReqStream: NStream[_]): Array[Class[_]] = {
+    val clazz: Class[_] = classOf[AnyRef]
+    (for (i <- 1 to noReqStream.length) yield clazz).toArray
 
+  }
 }

@@ -13,11 +13,7 @@ import shapeless.ops.record.{Remover, UnzipFields}
 
 object Queries {
 
-  trait NStreamTrait {
-    def publisherName: String
-  }
-
-  case class NStream[T](publisherName: String)(implicit lengthImplicit: Length[T]) extends NStreamTrait {
+  case class NStream[T](publisherName: String)(implicit lengthImplicit: Length[T]) {
     val length: Int = lengthImplicit()
   }
 
@@ -74,8 +70,8 @@ object Queries {
       s2: NStream[B],
       requirements: Set[Requirement])
     (implicit
-     p: Prepend.Aux[A, B, R],
-     length: Length[R]
+      prepend: Prepend.Aux[A, B, R],
+      length: Length[R]
   ) extends HListQuery[R] with SequenceQuery[A, B]
 
   case class Filter[T](
@@ -100,9 +96,9 @@ object Queries {
       position: Nat,
       requirements: Set[Requirement])
     (implicit
-     dropAt: DropAt.Aux[T, Pos, R],
-     lengthImplicit: Length[R],
-     toInt: ToInt[Pos]
+      dropAt: DropAt.Aux[T, Pos, R],
+      length: Length[R],
+      toInt: ToInt[Pos]
   ) extends HListQuery[R] with DropElemQuery { val pos = toInt() - 1 }
 
   // Sadly I could not get a type class working that does the dropping at the value and the type level at the same time.
@@ -123,8 +119,8 @@ object Queries {
       w2: Window,
       requirements: Set[Requirement])
    (implicit
-    prepend: Prepend.Aux[T, T, R],
-    length: Length[R]
+     prepend: Prepend.Aux[T, T, R],
+     length: Length[R]
   ) extends HListQuery[R] with SelfJoinQuery
 
   case class Join[A, B, R](
@@ -134,8 +130,8 @@ object Queries {
       w2: Window,
       requirements: Set[Requirement])
     (implicit
-     prepend: Prepend.Aux[A, B, R],
-     length: Length[R]
+      prepend: Prepend.Aux[A, B, R],
+      length: Length[R]
   ) extends HListQuery[R] with JoinQuery
 
   case class JoinOn[A, B, R, Pos1 <: Nat, Pos2 <: Nat](
@@ -190,7 +186,7 @@ object Queries {
       sq2: HListQuery[B],
       requirements: Set[Requirement])
     (implicit
-     disjunct: Disjunct.Aux[A, B, R],
-     length: Length[R]
+      disjunct: Disjunct.Aux[A, B, R],
+      length: Length[R]
   ) extends HListQuery[R] with DisjunctionQuery
 }
