@@ -10,7 +10,7 @@ import akka.actor.ActorRef
 import com.espertech.esper.client._
 import shapeless.HList
 
-case class SequenceNode[A <: HList, B <: HList](
+case class SequenceNode[A, B](
     query: SequenceQuery[A, B],
     publishers: Map[String, ActorRef],
     frequencyMonitorFactory: MonitorFactory,

@@ -40,11 +40,11 @@ object Dsl {
   def tumblingWindow (instances: Instances): Window = TumblingInstances (instances.i)
   def tumblingWindow (seconds: Seconds):     Window = TumblingTime      (seconds.i)
 
-  def nStream[T <: HList](
+  def nStream[T](
       publisherName: String)
     (implicit
-      op: HKernelAux[T]
-  ): HListNStream[T] = HListNStream[T](publisherName)(op)
+      implicitLength: LengthImplicit[T]
+  ): HListNStream[T] = HListNStream[T](publisherName)(implicitLength)
 
   case class Ratio(instances: Instances, seconds: Seconds)
 
@@ -88,12 +88,12 @@ object Dsl {
       LatencyRequirement(operator, duration, callback)
   }
 
-  def stream[T <: HList](
+  def stream[T](
       publisherName: String,
       requirements: Requirement*)
     (implicit
-      op: HKernelAux[T]
-  ): HListQuery[T] = Stream(publisherName, requirements.toSet)(op)
+      length: LengthImplicit[T]
+  ): HListQuery[T] = Stream(publisherName, requirements.toSet)(length)
 
 
   case class SequenceHelper[A <: HList](s: HListNStream[A]) {
@@ -106,18 +106,18 @@ object Dsl {
       tuple: (HListNStream[A], HListNStream[B]),
       requirements: Requirement*)
     (implicit
-      p: Prepend.Aux[A, B, R],
-      op: HKernelAux[R]
-  ): Sequence[A, B, R] = Sequence(tuple._1, tuple._2, requirements.toSet)(p, op)
+      p: PrependImplicit.Aux[A, B, R],
+      length: LengthImplicit[R]
+  ): Sequence[A, B, R] = Sequence(tuple._1, tuple._2, requirements.toSet)(p, length)
 
   implicit def queryToQueryHelper[A <: HList](q: HListQuery[A]): QueryHelper[A] = QueryHelper(q)
 
   // implict functions to enable the usage of a single where function for HLists and Records
   implicit def toUnlabeledWhere[A <: HList](implicit
       fl: FromTraversable[A],
-      op: HKernelAux[A]
+      length: LengthImplicit[A]
   ): (HListQuery[A], A => Boolean, Seq[Requirement]) => HListQuery[A] = {
-    case (q, cond, reqs) => Filter[A](q, toFunEventBoolean[A](cond)(op, fl), reqs.toSet)(op)
+    case (q, cond, reqs) => Filter[A](q, toFunEventBoolean[A](cond)(length, fl), reqs.toSet)(length)
   }
 
   // See toFunEventBoolean[Labeled, K, V] why an extra version is needed
@@ -133,11 +133,11 @@ object Dsl {
 
   // implict functions to enable the usage of a single drop function based on nats and witnesses
   implicit def toNatDrop[A <: HList, Pos <: Nat, R <: HList](implicit
-       dropAt: DropAt.Aux[A, Pos, R],
+       dropAt: DropAtImplicit.Aux[A, Pos, R],
        toInt: ToInt[Pos],
-       op: HKernelAux[R]
+       length: LengthImplicit[R]
   ): (HListQuery[A], Pos, Seq[Requirement]) => HListQuery[R] = {
-    case (q, pos, reqs) => DropElem(q, pos, reqs.toSet)(dropAt, op, toInt)
+    case (q, pos, reqs) => DropElem(q, pos, reqs.toSet)(dropAt, length, toInt)
   }
 
   implicit def toWitnessDrop[A <: HList, K, V, R <: HList](implicit
@@ -179,7 +179,7 @@ object Dsl {
         trans: (HListQuery[A], A => Boolean, Seq[Requirement]) => HListQuery[A]
     ): HListQuery[A] = trans(q, cond, requirements)
 
-    def drop[Pos, R <: HList](
+    def drop[Pos, R](
         toDrop: Pos,
         requirements: Requirement*)
       (implicit
@@ -197,72 +197,39 @@ object Dsl {
         trans: (HListQuery[A], HListQuery[B], Pos1, Pos2, Window, Window, Seq[Requirement]) => HListQuery[R]
       ): HListQuery[R] = trans(q, q2, pos1, pos2, w1, w2, requirements)
 
-    def selfJoin[R <: HList](
+    def selfJoin[R](
         w1: Window,
         w2: Window,
         requirements: Requirement*)
       (implicit
-        p: Prepend.Aux[A, A, R],
-        op: HKernelAux[R]
-    ): HListQuery[R] = SelfJoin[A, R](q, w1, w2, requirements.toSet)(p, op)
+        prepend: PrependImplicit.Aux[A, A, R],
+        length: LengthImplicit[R]
+    ): HListQuery[R] = SelfJoin[A, R](q, w1, w2, requirements.toSet)(prepend, length)
 
-    def join[B <: HList, R <: HList](
+    def join[B, R](
         q2: HListQuery[B],
         w1: Window,
         w2: Window,
         requirements: Requirement*)
       (implicit
-        p: Prepend.Aux[A, B, R],
-        op: HKernelAux[R]
-    ): HListQuery[R] = Join[A, B, R](q, q2, w1, w2, requirements.toSet)(p, op)
+        prepend: PrependImplicit.Aux[A, B, R],
+        length: LengthImplicit[R]
+    ): HListQuery[R] = Join[A, B, R](q, q2, w1, w2, requirements.toSet)(prepend, length)
 
-    def and[B <: HList, R <: HList](
+    def and[B, R](
         q2: HListQuery[B],
         requirements: Requirement*)
       (implicit
-        p: Prepend.Aux[A, B, R],
-        op: HKernelAux[R]
-    ): HListQuery[R] = Conjunction(q, q2, requirements.toSet)(p, op)
+        prepend: PrependImplicit.Aux[A, B, R],
+        length: LengthImplicit[R]
+    ): HListQuery[R] = Conjunction(q, q2, requirements.toSet)(prepend, length)
 
-    def or[B <: HList, R <: HList](
+    def or[B, R](
         q2: HListQuery[B],
         requirements: Requirement*)
       (implicit
-        disjunct: Disjunct.Aux[A, B, R],
-        op: HKernelAux[R]
-    ): HListQuery[R] = Disjunction(q, q2, requirements.toSet)(disjunct, op)
+        disjunct: DisjunctImplicit.Aux[A, B, R],
+        length: LengthImplicit[R]
+    ): HListQuery[R] = Disjunction(q, q2, requirements.toSet)(disjunct, length)
   }
-}
-
-object TupleDsl {
-  import adaptivecep.data.TupleQueries._
-
-  def tnStream[P <: Product](publisherName: String): TupleNStream[P] = TupleNStream[P](publisherName)
-
-  implicit def hlistNStream2TupleNStream[H <: HList, P <: Product](
-      nStream: HListNStream[H])
-    (implicit tupler: Tupler.Aux[H, P]
-  ): TupleNStream[P] = TupleNStream(nStream.publisherName)
-
-  implicit def tupleNStream2HListNStream[P <: Product, H <: HList](
-      nStream: TupleNStream[P])
-    (implicit
-      gen: Generic.Aux[P, H],
-      op: HKernelAux[H]
-  ): HListNStream[H] = HListNStream(nStream.publisherName)(op)
-
-  def tstream[P <: Product](publisherName: String, requirements: Requirement*): TupleStream[P] =
-    TupleStream[P](publisherName, requirements.toSet)
-
-  implicit def hlistStream2TupleStream[H <: HList, P <: Product](
-      stream: Stream[H])
-    (implicit tupler: Tupler.Aux[H, P]
-  ): TupleQuery[P] = TupleStream(stream.publisherName, stream.requirements)
-
-  implicit def tupleStream2HListStream[P <: Product, H <: HList](
-      tuple: TupleStream[P])
-    (implicit
-      gen: Generic.Aux[P, H],
-      op: HKernelAux[H]
-  ): HListQuery[H] = Stream(tuple.publisherName, tuple.requirements)(op)
 }

@@ -28,9 +28,9 @@ object Events {
   }
 
   def toFunEventBoolean[T <: HList](f: (T) => Boolean)(implicit
-      op: HKernelAux[T],
+      length: LengthImplicit[T],
       ft: FromTraversable[T]): Event => Boolean = {
-    case Event(es@_*) if es.length == op().length => es.toHList[T](ft) match {
+    case Event(es@_*) if es.length == length.length => es.toHList[T](ft) match {
       case Some(hlist) => f(hlist)
       case None => sys.error(errorMsg)
     }
