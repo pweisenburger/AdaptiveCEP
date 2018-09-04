@@ -11,12 +11,12 @@ import shapeless.ops.record.{Remover, UnzipFields}
 
 object Queries {
 
-  trait NStream {
+  trait NStreamTrait {
     def publisherName: String
   }
 
-  case class HListNStream[T](publisherName: String)(implicit lengthImplicit: LengthImplicit[T]) extends NStream {
-    val length: Int = lengthImplicit.length
+  case class NStream[T](publisherName: String)(implicit lengthImplicit: LengthImplicit[T]) extends NStreamTrait {
+    val length: Int = lengthImplicit()
   }
 
   sealed trait Window
@@ -47,8 +47,8 @@ object Queries {
 
   sealed trait StreamQuery      extends LeafQuery   { val publisherName: String }
   sealed trait SequenceQuery[A, B] extends LeafQuery   {
-    val s1: HListNStream[A]
-    val s2: HListNStream[B]
+    val s1: NStream[A]
+    val s2: NStream[B]
   }
   sealed trait FilterQuery      extends UnaryQuery  { val cond: Event => Boolean }
   sealed trait DropElemQuery    extends UnaryQuery
@@ -59,7 +59,7 @@ object Queries {
   sealed trait DisjunctionQuery extends BinaryQuery
 
   abstract class HListQuery[T](implicit lengthImplicit: LengthImplicit[T]) extends Query {
-    val length: Int = lengthImplicit.length
+    val length: Int = lengthImplicit()
   }
 
   case class Stream[T](
@@ -68,9 +68,9 @@ object Queries {
     (implicit lengthImplicit: LengthImplicit[T]) extends HListQuery[T] with StreamQuery
 
   case class Sequence[A, B, R](
-                                s1: HListNStream[A],
-                                s2: HListNStream[B],
-                                requirements: Set[Requirement])
+      s1: NStream[A],
+      s2: NStream[B],
+      requirements: Set[Requirement])
     (implicit
       p: PrependImplicit.Aux[A, B, R],
       length: LengthImplicit[R]

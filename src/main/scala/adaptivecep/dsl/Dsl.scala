@@ -44,7 +44,7 @@ object Dsl {
       publisherName: String)
     (implicit
       implicitLength: LengthImplicit[T]
-  ): HListNStream[T] = HListNStream[T](publisherName)(implicitLength)
+  ): NStream[T] = NStream[T](publisherName)(implicitLength)
 
   case class Ratio(instances: Instances, seconds: Seconds)
 
@@ -96,25 +96,25 @@ object Dsl {
   ): HListQuery[T] = Stream(publisherName, requirements.toSet)(length)
 
 
-  case class SequenceHelper[A <: HList](s: HListNStream[A]) {
-    def ->[B <: HList](s2: HListNStream[B]): (HListNStream[A], HListNStream[B]) = (s, s2)
+  case class SequenceHelper[A <: HList](s: NStream[A]) {
+    def ->[B <: HList](s2: NStream[B]): (NStream[A], NStream[B]) = (s, s2)
   }
 
-  implicit def nStreamToSequenceHelper[T <: HList](s: HListNStream[T]): SequenceHelper[T] = SequenceHelper(s)
+  implicit def nStreamToSequenceHelper[T <: HList](s: NStream[T]): SequenceHelper[T] = SequenceHelper(s)
 
   def sequence[A <: HList, B <: HList, R <: HList](
-      tuple: (HListNStream[A], HListNStream[B]),
+      tuple: (NStream[A], NStream[B]),
       requirements: Requirement*)
     (implicit
       p: PrependImplicit.Aux[A, B, R],
       length: LengthImplicit[R]
   ): Sequence[A, B, R] = Sequence(tuple._1, tuple._2, requirements.toSet)(p, length)
 
-  implicit def queryToQueryHelper[A <: HList](q: HListQuery[A]): QueryHelper[A] = QueryHelper(q)
+  implicit def queryToQueryHelper[A](q: HListQuery[A]): QueryHelper[A] = QueryHelper(q)
 
   // implict functions to enable the usage of a single where function for HLists and Records
-  implicit def toUnlabeledWhere[A <: HList](implicit
-      fl: FromTraversable[A],
+  implicit def toUnlabeledWhere[A](implicit
+      fl: FromTraversableImplicit[A],
       length: LengthImplicit[A]
   ): (HListQuery[A], A => Boolean, Seq[Requirement]) => HListQuery[A] = {
     case (q, cond, reqs) => Filter[A](q, toFunEventBoolean[A](cond)(length, fl), reqs.toSet)(length)
@@ -168,7 +168,7 @@ object Dsl {
     case (q1, q2, pos1, pos2, w1, w2, reqs) => JoinOnRecord(q1, q2, pos1, pos2, w1, w2, reqs.toSet)
   }
 
-  case class QueryHelper[A <: HList](q: HListQuery[A]) {
+  case class QueryHelper[A](q: HListQuery[A]) {
     // Sadly we cannot use FnToProduct in order to make the usage better.
     // If we would use FnToProduct, it would be necessary to attach the
     // complete type information for the arguments so that the compiler can find the implicit parameter.

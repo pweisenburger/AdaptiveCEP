@@ -3,20 +3,23 @@ package adaptivecep.data
 import shapeless.{Generic, HList, Nat}
 import shapeless.ops._
 import shapeless.ops.hlist.HKernelAux
+import shapeless.ops.traversable.FromTraversable
+
+import scala.collection.GenTraversable
 
 // These type classes are need in order to support the usage of tuples and hlists within the dsl
 trait LengthImplicit[T] {
-  def length: Int
+  def apply(): Int
 }
 
 object LengthImplicit {
 
   implicit def hlistLength[T <: HList](implicit op: hlist.HKernelAux[T]): LengthImplicit[T] = new LengthImplicit[T] {
-    override def length: Int = op().length
+    override def apply(): Int = op().length
   }
 
   implicit def tupleLength[T <: Product, R <: HList](implicit gen: Generic.Aux[T, R], op: HKernelAux[R]): LengthImplicit[T] = new LengthImplicit[T] {
-    val length: Int = op().length
+    override def apply(): Int = op().length
   }
 }
 
@@ -65,3 +68,22 @@ object DisjunctImplicit {
     }
 }
 
+
+trait FromTraversableImplicit[Out] {
+  def apply(l : GenTraversable[_]) : Option[Out]
+}
+
+object FromTraversableImplicit {
+  implicit def hlistFromTraversable[R <: HList](implicit fromTraversable: FromTraversable[R]): FromTraversableImplicit[R] =
+    new FromTraversableImplicit[R] {
+      override def apply(l: GenTraversable[_]): Option[R] = {
+        fromTraversable(l)
+      }
+    }
+
+  implicit def tupleFromTraversable[P <: Product, R <: HList](implicit gen: Generic.Aux[P, R], fromTraversable: FromTraversable[R]): FromTraversableImplicit[P] =
+    new FromTraversableImplicit[P] {
+      override def apply(l: GenTraversable[_]): Option[P] = fromTraversable(l).map { hlist => gen.from(hlist) }
+    }
+
+}

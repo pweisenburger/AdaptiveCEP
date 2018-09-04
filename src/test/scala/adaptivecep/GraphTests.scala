@@ -165,9 +165,9 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
 
   test("UnaryNode - FilterNode - 1") {
     val a: ActorRef = createTestPublisher("A")
-    val query: HListQuery[Int::Int::HNil] =
-      stream[Int::Int::HNil]("A")
-      .where(x => x.head >= x.last)
+    val query: HListQuery[(Int, Int)] =
+      stream[(Int, Int)]("A")
+      .where{ case (x, y) => x >= y }
     val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
     expectMsg(Created)
     a ! Event(41, 42)
