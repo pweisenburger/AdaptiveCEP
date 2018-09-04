@@ -96,13 +96,13 @@ object Dsl {
   ): HListQuery[T] = Stream(publisherName, requirements.toSet)(length)
 
 
-  case class SequenceHelper[A <: HList](s: NStream[A]) {
-    def ->[B <: HList](s2: NStream[B]): (NStream[A], NStream[B]) = (s, s2)
+  case class SequenceHelper[A](s: NStream[A]) {
+    def ->[B](s2: NStream[B]): (NStream[A], NStream[B]) = (s, s2)
   }
 
-  implicit def nStreamToSequenceHelper[T <: HList](s: NStream[T]): SequenceHelper[T] = SequenceHelper(s)
+  implicit def nStreamToSequenceHelper[T](s: NStream[T]): SequenceHelper[T] = SequenceHelper(s)
 
-  def sequence[A <: HList, B <: HList, R <: HList](
+  def sequence[A, B, R](
       tuple: (NStream[A], NStream[B]),
       requirements: Requirement*)
     (implicit
@@ -112,7 +112,7 @@ object Dsl {
 
   implicit def queryToQueryHelper[A](q: HListQuery[A]): QueryHelper[A] = QueryHelper(q)
 
-  // implict functions to enable the usage of a single where function for HLists and Records
+  // implict functions to enable the usage of a single where function for HLists/Tuples and Records
   implicit def toUnlabeledWhere[A](implicit
       fl: FromTraversableImplicit[A],
       length: LengthImplicit[A]

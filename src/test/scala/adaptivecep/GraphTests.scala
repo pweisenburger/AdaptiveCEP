@@ -144,8 +144,8 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
   test("LeafNode - SequenceNode - 2") {
     val a: ActorRef = createTestPublisher("A")
     val b: ActorRef = createTestPublisher("B")
-    val query: HListQuery[Int::Int::String::String::HNil] =
-      sequence(nStream[Int::Int::HNil]("A") -> nStream[String::String::HNil]("B"))
+    val query: HListQuery[(Int, Int, String, String)] =
+      sequence(nStream[(Int, Int)]("A") -> nStream[(String, String)]("B"))
     val graph: ActorRef = createTestGraph(query, Map("A" -> a, "B" -> b), testActor)
     expectMsg(Created)
     a ! Event(1, 1)

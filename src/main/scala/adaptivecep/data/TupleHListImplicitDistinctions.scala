@@ -31,12 +31,12 @@ object PrependImplicit {
 
   type Aux[A, B, Out0] = PrependImplicit[A, B] { type Out = Out0 }
 
-  implicit def hlistPreprend[A <: HList, B <: HList, R <: HList](implicit prepend: hlist.Prepend.Aux[A, B, R]): Aux[A, B, R] =
+  implicit def hlistPrepend[A <: HList, B <: HList, R <: HList](implicit prepend: hlist.Prepend.Aux[A, B, R]): Aux[A, B, R] =
     new PrependImplicit[A, B] {
       type Out = R
     }
 
-  implicit def hlistPreprend[A <: Product, B <: Product, R <: Product](implicit prepend: tuple.Prepend.Aux[A, B, R]): Aux[A, B, R] =
+  implicit def tuplePrepend[A <: Product, B <: Product, R <: Product](implicit prepend: tuple.Prepend.Aux[A, B, R]): Aux[A, B, R] =
     new PrependImplicit[A, B] {
       type Out = R
     }
