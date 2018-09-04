@@ -10,7 +10,6 @@ import shapeless.{HList, Nat, Witness}
 import shapeless.ops.hlist.HKernelAux
 import shapeless.ops.nat.ToInt
 import shapeless.ops.record.{Remover, UnzipFields}
-import util.hlists.JoinOnNat
 
 object Queries {
 
@@ -139,7 +138,7 @@ object Queries {
      length: Length[R]
   ) extends HListQuery[R] with JoinQuery
 
-  case class JoinOn[A <: HList, B <: HList, R <: HList, Pos1 <: Nat, Pos2 <: Nat](
+  case class JoinOn[A, B, R, Pos1 <: Nat, Pos2 <: Nat](
       sq1: HListQuery[A],
       sq2: HListQuery[B],
       pos1: Nat,
@@ -151,7 +150,7 @@ object Queries {
       joinOn: JoinOnNat.Aux[A, B, Pos1, Pos2, R],
       toInt1: ToInt[Pos1],
       toInt2: ToInt[Pos2],
-      op: HKernelAux[R]
+      length: Length[R]
   ) extends HListQuery[R] with JoinOnQuery {
     val positionOn1: Int = toInt1() - 1
     val positionOn2: Int = toInt2() - 1

@@ -10,7 +10,6 @@ import shapeless.ops.hlist.{HKernelAux, ZipWithKeys}
 import shapeless.ops.nat.ToInt
 import shapeless.ops.record.{Remover, UnzipFields}
 import shapeless.ops.traversable.{ FromTraversable => TFromTraversable}
-import util.hlists.JoinOnNat
 import util.records.{DropKey, JoinOnKey, SelectFromTraversable}
 
 object Dsl {
@@ -151,11 +150,11 @@ object Dsl {
   }
 
   // implict functions to enable the usage of a single joinOn function based on nats and witnesses
-  implicit def toJoinOnNat[A <: HList, B <: HList, Pos1 <: Nat, Pos2 <: Nat, R <: HList](implicit
+  implicit def toJoinOnNat[A, B, Pos1 <: Nat, Pos2 <: Nat, R](implicit
        joinOn: JoinOnNat.Aux[A, B, Pos1, Pos2, R],
        toInt1: ToInt[Pos1],
        toInt2: ToInt[Pos2],
-       op: HKernelAux[R]
+       length: Length[R]
   ): (HListQuery[A], HListQuery[B], Pos1, Pos2, Window, Window, Seq[Requirement]) => HListQuery[R] = {
     case (q1, q2, pos1, pos2, w1, w2, reqs) => JoinOn(q1, q2, pos1, pos2, w1, w2, reqs.toSet)
   }
@@ -188,7 +187,7 @@ object Dsl {
         trans: (HListQuery[A], Pos, Seq[Requirement]) => HListQuery[R]
     ): HListQuery[R] = trans(q, toDrop, requirements)
 
-    def joinOn[B <: HList, Pos1, Pos2, R <: HList](
+    def joinOn[B, Pos1, Pos2, R](
         q2: HListQuery[B],
         pos1: Pos1,
         pos2: Pos2,

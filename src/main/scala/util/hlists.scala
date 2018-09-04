@@ -90,14 +90,13 @@ object hlists {
 
     type Aux[L <: HList, R <: HList, PosL <: Nat, PosR <: Nat, Out0 <: HList] = JoinOnNat[L, R, PosL, PosR] {type Out = Out0}
 
-    implicit def defaultJoinOn[L <: HList, R <: HList, PosL <: Nat, PosR <: Nat, PredL <: Nat, PredR <: Nat, On, Dropped <: HList, Out0 <: HList]
-    (implicit
-     predPos1: Pred.Aux[PosL, PredL],
-     atSq1: At.Aux[L, PredL, On],
-     predPos2: Pred.Aux[PosR, PredR],
-     atSq2: At.Aux[R, PredR, On],
-     dropAt: DropAt.Aux[R, PosR, Dropped],
-     prepend: Prepend.Aux[L, Dropped, Out0]
+    implicit def defaultJoinOn[L <: HList, R <: HList, PosL <: Nat, PosR <: Nat, PredL <: Nat, PredR <: Nat, On, Dropped <: HList, Out0 <: HList](implicit
+        predPos1: Pred.Aux[PosL, PredL],
+        atSq1: At.Aux[L, PredL, On],
+        predPos2: Pred.Aux[PosR, PredR],
+        atSq2: At.Aux[R, PredR, On],
+        dropAt: DropAt.Aux[R, PosR, Dropped],
+        prepend: Prepend.Aux[L, Dropped, Out0]
     ): Aux[L, R, PosL, PosR, Out0] = new JoinOnNat[L, R, PosL, PosR] {
       type Out = Out0
       def apply(t: L, u: R): Out = {

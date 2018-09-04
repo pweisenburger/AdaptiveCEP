@@ -29,8 +29,7 @@ object tuplehlistsupport {
   }
 
   object Prepend {
-
-    type Aux[A, B, Out0] = Prepend[A, B] {type Out = Out0}
+    type Aux[A, B, Out0] = Prepend[A, B] { type Out = Out0 }
 
     implicit def hlistPrepend[A <: HList, B <: HList, R <: HList](implicit prepend: hlist.Prepend.Aux[A, B, R]): Aux[A, B, R] =
       new Prepend[A, B] {
@@ -48,7 +47,7 @@ object tuplehlistsupport {
   }
 
   object DropAt {
-    type Aux[A, Pos <: Nat, Out0] = DropAt[A, Pos] {type Out = Out0}
+    type Aux[A, Pos <: Nat, Out0] = DropAt[A, Pos] { type Out = Out0 }
 
     implicit def hlistDropAt[A <: HList, Pos <: Nat, R <: HList](implicit dropAt: hlists.DropAt.Aux[A, Pos, R]): Aux[A, Pos, R] =
       new DropAt[A, Pos] {
@@ -64,12 +63,35 @@ object tuplehlistsupport {
       }
   }
 
+  trait JoinOnNat[L, R, PosL <: Nat, PosR <: Nat] {
+    type Out
+  }
+
+  object JoinOnNat {
+    type Aux[L, R, PosL <: Nat, PosR <: Nat, Out0] = JoinOnNat[L, R, PosL, PosR] { type Out = Out0 }
+
+    implicit def hlistJoinOnNat[L <: HList, R <: HList, PosL <: Nat, PosR <: Nat, Out0 <: HList](implicit
+        joinOn: hlists.JoinOnNat.Aux[L, R, PosL, PosR, Out0]): Aux[L, R, PosL, PosR, Out0] =
+      new JoinOnNat[L, R, PosL, PosR] {
+        type Out = Out0
+      }
+
+    implicit def tupleJoinOnNat[L <: Product, LH <: HList, R <: Product, RH <: HList, PosL <: Nat, PosR <: Nat, Out0 <: Product, Out0H <: HList](implicit
+        genL: Generic.Aux[L, LH],
+        genR: Generic.Aux[R, RH],
+        genOut0: Generic.Aux[Out0, Out0H],
+        joinOn: hlists.JoinOnNat.Aux[LH, RH, PosL, PosR, Out0H]): Aux[L, R, PosL, PosR, Out0] =
+      new JoinOnNat[L, R, PosL, PosR] {
+        type Out = Out0
+      }
+  }
+
   trait Disjunct[A, B] {
     type Out
   }
 
   object Disjunct {
-    type Aux[A, B, Out0] = Disjunct[A, B] {type Out = Out0}
+    type Aux[A, B, Out0] = Disjunct[A, B] { type Out = Out0 }
 
     implicit def hlistDisjunct[A <: HList, B <: HList, R <: HList](implicit
         disjunct: hlists.Disjunct.Aux[A, B, R]): Aux[A, B, R] =
