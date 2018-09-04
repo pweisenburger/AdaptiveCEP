@@ -74,6 +74,15 @@ object DisjunctImplicit {
     new DisjunctImplicit[A, B] {
       type Out = R
     }
+
+  implicit def tupleDisjunct[A <: Product, AH <: HList, B <: Product, BH <: HList, R <: Product, RH <: HList](implicit
+      genA: Generic.Aux[A, AH],
+      genB: Generic.Aux[B, BH],
+      genR: Generic.Aux[R, RH],
+      disjunct: Disjunct.Aux[AH, BH, RH]): Aux[A, B, R] =
+    new DisjunctImplicit[A, B] {
+      type Out = R
+    }
 }
 
 

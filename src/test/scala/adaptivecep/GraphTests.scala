@@ -519,9 +519,9 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
   test("Binary Node - DisjunctionNode - 1") {
     val a: ActorRef = createTestPublisher("A")
     val b: ActorRef = createTestPublisher("B")
-    val query: HListQuery[Either[Int, String]::Either[Int, String]::HNil] =
-      stream[Int::Int::HNil]("A")
-      .or(stream[String::String::HNil]("B"))
+    val query: HListQuery[(Either[Int, String], Either[Int, String])] =
+      stream[(Int, Int)]("A")
+      .or(stream[(String, String)]("B"))
     val graph: ActorRef = createTestGraph(query, Map("A" -> a, "B" -> b), testActor)
     expectMsg(Created)
     a ! Event(21, 42)
