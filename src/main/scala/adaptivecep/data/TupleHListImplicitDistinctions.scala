@@ -53,6 +53,14 @@ object DropAtImplicit {
     new DropAtImplicit[A, Pos] {
       type Out = R
     }
+
+  implicit def tupleDropAt[A <: Product, AH <: HList, Pos <: Nat, R <: Product, RH <: HList](implicit
+      genA: Generic.Aux[A, AH],
+      genR: Generic.Aux[R, RH],
+      dropAt: DropAt.Aux[AH, Pos, RH]): Aux[A, Pos, R] =
+    new DropAtImplicit[A, Pos] {
+      type Out = R
+    }
 }
 
 trait DisjunctImplicit[A, B] {

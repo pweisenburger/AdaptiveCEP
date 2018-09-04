@@ -247,8 +247,8 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
 
   test("UnaryNode - DropElemNode - 1") {
     val a: ActorRef = createTestPublisher("A")
-    val query: HListQuery[Int::HNil] =
-      stream[Int::Int::HNil]("A")
+    val query: HListQuery[Tuple1[Int]] =
+      stream[(Int, Int)]("A")
         .drop(Nat._2)
     val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
     expectMsg(Created)

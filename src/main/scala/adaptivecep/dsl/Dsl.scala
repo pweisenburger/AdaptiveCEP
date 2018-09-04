@@ -132,7 +132,7 @@ object Dsl {
   }
 
   // implict functions to enable the usage of a single drop function based on nats and witnesses
-  implicit def toNatDrop[A <: HList, Pos <: Nat, R <: HList](implicit
+  implicit def toNatDrop[A, Pos <: Nat, R](implicit
        dropAt: DropAtImplicit.Aux[A, Pos, R],
        toInt: ToInt[Pos],
        length: LengthImplicit[R]
