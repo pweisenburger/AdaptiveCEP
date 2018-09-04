@@ -43,8 +43,8 @@ object Queries {
   sealed trait UnaryQuery  extends Query { val sq: Query }
   sealed trait BinaryQuery extends Query { val sq1: Query; val sq2: Query }
 
-  sealed trait StreamQuery      extends LeafQuery   { val publisherName: String }
-  sealed trait SequenceQuery[A, B] extends LeafQuery   {
+  sealed trait StreamQuery extends LeafQuery { val publisherName: String }
+  sealed trait SequenceQuery[A, B] extends LeafQuery {
     val s1: NStream[A]
     val s2: NStream[B]
   }
@@ -118,9 +118,9 @@ object Queries {
       w1: Window,
       w2: Window,
       requirements: Set[Requirement])
-   (implicit
-     prepend: Prepend.Aux[T, T, R],
-     length: Length[R]
+    (implicit
+      prepend: Prepend.Aux[T, T, R],
+      length: Length[R]
   ) extends HListQuery[R] with SelfJoinQuery
 
   case class Join[A, B, R](
@@ -177,8 +177,8 @@ object Queries {
       sq2: HListQuery[B],
       requirements: Set[Requirement])
     (implicit
-     prepend: Prepend.Aux[A, B, R],
-     length: Length[R]
+      prepend: Prepend.Aux[A, B, R],
+      length: Length[R]
   ) extends HListQuery[R] with ConjunctionQuery
 
   case class Disjunction[A, B, R](
