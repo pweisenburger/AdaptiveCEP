@@ -291,8 +291,8 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
 
   test("UnaryNode - SelfJoinNode - 1") {
     val a: ActorRef = createTestPublisher("A")
-    val query: HListQuery[String::String::String::String::HNil] =
-      stream[String::String::HNil]("A")
+    val query: HListQuery[(String, String, String, String)] =
+      stream[(String, String)]("A")
       .selfJoin(tumblingWindow(3.instances), tumblingWindow(2.instances))
     val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
     expectMsg(Created)
@@ -332,9 +332,9 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
   test("BinaryNode - JoinNode - 1") {
     val a: ActorRef = createTestPublisher("A")
     val b: ActorRef = createTestPublisher("B")
-    val sq: HListQuery[Int::Int::HNil] = stream[Int::Int::HNil]("B")
-    val query: HListQuery[String::Boolean::String::Int::Int::HNil] =
-      stream[String::Boolean::String::HNil]("A")
+    val sq: HListQuery[(Int, Int)] = stream[(Int, Int)]("B")
+    val query: HListQuery[(String, Boolean, String, Int, Int)] =
+      stream[(String, Boolean, String)]("A")
       .join(sq, tumblingWindow(3.instances), tumblingWindow(2.instances))
     val graph: ActorRef = createTestGraph(query, Map("A" -> a, "B" -> b), testActor)
     expectMsg(Created)
@@ -484,9 +484,9 @@ class GraphTests extends TestKit(ActorSystem()) with FunSuiteLike with BeforeAnd
   test("Binary Node - ConjunctionNode - 1") {
     val a: ActorRef = createTestPublisher("A")
     val b: ActorRef = createTestPublisher("B")
-    val query: HListQuery[Int::Float::HNil] =
-      stream[Int::HNil]("A")
-      .and(stream[Float::HNil]("B"))
+    val query: HListQuery[(Int, Float)] =
+      stream[Tuple1[Int]]("A")
+      .and(stream[Tuple1[Float]]("B"))
     val graph: ActorRef = createTestGraph(query, Map("A" -> a, "B" -> b), testActor)
     expectMsg(Created)
     a ! Event(21)
