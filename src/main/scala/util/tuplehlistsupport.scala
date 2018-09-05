@@ -6,7 +6,7 @@ import shapeless.{::, Generic, HList, HNil, Nat, Succ}
 
 import scala.collection.GenTraversable
 
-// These type classes are need in order to support the usage of tuples and hlists within the dsl
+// These type classes are need in order to support the usage of tuples, hlists and single types within the dsl
 object tuplehlistsupport {
 
   trait Length[T] {
@@ -304,7 +304,18 @@ object tuplehlistsupport {
     def apply(l: GenTraversable[_]): Option[Out]
   }
 
-  object FromTraversable {
+  trait LowPriorityFromTraversable {
+
+    implicit def singleFromTraversable[A]: FromTraversable[A] = new FromTraversable[A] {
+      override def apply(l: GenTraversable[_]): Option[A] =
+        if (l.nonEmpty && l.tail.isEmpty) {
+          Some(l.head.asInstanceOf[A])
+        } else None
+    }
+  }
+
+  object FromTraversable extends LowPriorityFromTraversable {
+
     implicit def hlistFromTraversable[R <: HList](implicit
         fromTraversable: traversable.FromTraversable[R]): FromTraversable[R] =
       (l: GenTraversable[_]) => { fromTraversable(l) }

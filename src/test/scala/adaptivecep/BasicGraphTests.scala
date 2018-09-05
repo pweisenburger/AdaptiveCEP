@@ -206,6 +206,19 @@ class BasicGraphTests extends GraphTestSuite {
     stopActors(a, graph)
   }
 
+  test("UnaryNode - FilterNode - 7") {
+    val a: ActorRef = createTestPublisher("A")
+    val query: Query[Float] =
+      stream[Float]("A")
+        .where(_ > 41f)
+    val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(Created)
+    a ! Event(41f)
+    a ! Event(42f)
+    expectMsg(Event(42f))
+    stopActors(a, graph)
+  }
+
   test("UnaryNode - DropElemNode - 1") {
     val a: ActorRef = createTestPublisher("A")
     val query: Query[Tuple1[Int]] =
