@@ -9,7 +9,7 @@ import shapeless.{HList, Nat, Witness}
 import shapeless.ops.hlist.{HKernelAux, ZipWithKeys}
 import shapeless.ops.nat.ToInt
 import shapeless.ops.record.{Remover, UnzipFields}
-import shapeless.ops.traversable.{ FromTraversable => TFromTraversable}
+import shapeless.ops.traversable.{FromTraversable => TFromTraversable}
 import util.records.{DropKey, JoinOnKey, SelectFromTraversable}
 
 object Dsl {

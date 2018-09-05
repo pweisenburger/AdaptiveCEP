@@ -107,7 +107,7 @@ object GraphFactory {
           Some(eventCallback))),
         "disjunction")
     // only to avoid warning that match is not exhaustive
-    case _: Query[_] => throw new IllegalArgumentException("HListQuery should not be passed as an argument")
+    case _: Query[_] => throw new IllegalArgumentException("Query should not be passed as an argument")
   }
 
   // This is why `eventCallback` is listed separately:

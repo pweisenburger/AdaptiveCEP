@@ -5,9 +5,8 @@ import java.util.concurrent.atomic.AtomicInteger
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
-import adaptivecep.data.Events.{DependenciesRequest, DependenciesResponse, Event, Created}
+import adaptivecep.data.Events.{DependenciesRequest, DependenciesResponse, Event}
 import adaptivecep.data.Queries._
-import adaptivecep.graph._
 import adaptivecep.graph.nodes._
 import adaptivecep.graph.qos._
 
@@ -46,7 +45,7 @@ class System(implicit actorSystem: ActorSystem) {
       case disjunctionQuery: DisjunctionQuery =>
         DisjunctionNode(disjunctionQuery, publishers, frequencyMonitorFactory, latencyMonitorFactory, createdCallback, eventCallback)
       // only to avoid warning that match is not exhaustive
-      case _: Query[_] => throw new IllegalArgumentException("HListQuery should not be passed as an argument")
+      case _: Query[_] => throw new IllegalArgumentException("Query should not be passed as an argument")
     }), s"root-${System.index.getAndIncrement()}")
 
   def consumers: Seq[Operator] = {

@@ -109,7 +109,6 @@ object tuplehlistsupport {
       }
   }
 
-
   trait FromTraversable[Out] {
     def apply(l: GenTraversable[_]): Option[Out]
   }
