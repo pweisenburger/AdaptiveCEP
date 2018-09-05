@@ -6,6 +6,9 @@ scalaVersion := "2.12.1"
 
 scalacOptions ++= Seq("-language:implicitConversions")
 
+// only run CompleteGraphTests which groups the other tests sequentially
+testOptions := Seq(Tests.Filter(_.endsWith("CompleteGraphTests")))
+
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor"   % "2.4.16",
   "com.typesafe.akka" %% "akka-testkit" % "2.4.16"  % "test",
