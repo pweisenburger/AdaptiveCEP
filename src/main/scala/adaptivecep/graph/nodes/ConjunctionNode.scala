@@ -9,7 +9,7 @@ import akka.actor.ActorRef
 import com.espertech.esper.client._
 import shapeless.HList
 
-case class ConjunctionNode[A <: HList](
+case class ConjunctionNode(
     query: ConjunctionQuery,
     publishers: Map[String, ActorRef],
     frequencyMonitorFactory: MonitorFactory,
