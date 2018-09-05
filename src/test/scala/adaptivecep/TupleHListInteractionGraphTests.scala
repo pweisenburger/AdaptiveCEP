@@ -106,7 +106,6 @@ class TupleHListInteractionGraphTests extends GraphTestSuite {
     stopActors(a, b, graph)
   }
 
-  /*
   test("Tuple/HList - JoinOnNode - 1") {
     val a: ActorRef = createTestPublisher("A")
     val b: ActorRef = createTestPublisher("B")
@@ -130,7 +129,6 @@ class TupleHListInteractionGraphTests extends GraphTestSuite {
     expectMsg(Event("e", true, 3, 4))
     stopActors(a, b, graph)
   }
-  */
 
   test("Tuple/HList - JoinOnNode - 2") {
     val a: ActorRef = createTestPublisher("A")

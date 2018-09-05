@@ -97,9 +97,8 @@ object tuplehlistsupport {
         type Out = Out0
       }
 
-    implicit def tupleHListJoinOnNat[L <: Product, LH <: HList, R <: HList, RP <: Product, PosL <: Nat, PosR <: Nat, Out0 <: Product, Out0H <: HList](implicit
+    implicit def tupleHListJoinOnNat[L <: Product, LH <: HList, R <: HList, PosL <: Nat, PosR <: Nat, Out0 <: Product, Out0H <: HList](implicit
         genL: Generic.Aux[L, LH],
-        tupler: Generic.Aux[R, RP],
         genOut0: Generic.Aux[Out0, Out0H],
         joinOn: hlists.JoinOnNat.Aux[LH, R, PosL, PosR, Out0H]): JoinOnNat.Aux[L, R, PosL, PosR, Out0] =
       new JoinOnNat[L, R, PosL, PosR] {
