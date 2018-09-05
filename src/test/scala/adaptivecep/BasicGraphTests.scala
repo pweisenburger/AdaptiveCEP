@@ -250,6 +250,20 @@ class BasicGraphTests extends GraphTestSuite {
     stopActors(a, graph)
   }
 
+  test("UnaryNode - DropElemNode - 4") {
+    val a: ActorRef = createTestPublisher("A")
+    val query: Query[HNil] =
+      stream[Int]("A")
+        .drop(Nat._1)
+    val graph: ActorRef = createTestGraph(query, Map("A" -> a), testActor)
+    expectMsg(Created)
+    a ! Event(42)
+    a ! Event(21)
+    expectMsg(Event())
+    expectMsg(Event())
+    stopActors(a, graph)
+  }
+
   test("UnaryNode - SelfJoinNode - 1") {
     val a: ActorRef = createTestPublisher("A")
     val query: Query[(String, String, String, String)] =
