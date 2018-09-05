@@ -110,6 +110,11 @@ object tuplehlistsupport {
       new DropAt[A, Succ[Nat._0]] {
         type Out = HNil
       }
+
+    implicit def tuple1DropAt[A]: DropAt.Aux[Tuple1[A], Succ[Nat._0], HNil] =
+      new DropAt[Tuple1[A], Succ[Nat._0]] {
+        type Out = HNil
+      }
   }
 
   object DropAt extends LowPriorityDropAt {
@@ -220,9 +225,9 @@ object tuplehlistsupport {
 
   trait LowPriorityDisjunct0 {
 
-    implicit def singleSingleDisjunct[A, B]: Disjunct.Aux[A, B, Tuple1[Either[A, B]]] =
+    implicit def singleSingleDisjunct[A, B]: Disjunct.Aux[A, B, Either[A, B]] =
       new Disjunct[A, B] {
-        type Out = Tuple1[Either[A, B]]
+        type Out = Either[A, B]
       }
   }
 

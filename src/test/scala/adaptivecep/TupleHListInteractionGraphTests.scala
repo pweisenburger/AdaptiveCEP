@@ -493,7 +493,7 @@ class TupleHListInteractionGraphTests extends GraphTestSuite {
   test("Tuple/HList - DisjunctionNode - 7") {
     val a: ActorRef = createTestPublisher("A")
     val b: ActorRef = createTestPublisher("B")
-    val query: Query[Tuple1[Either[Int, String]]] =
+    val query: Query[Either[Int, String]] =
       stream[Int]("A")
         .or(stream[String]("B"))
     val graph: ActorRef = createTestGraph(query, Map("A" -> a, "B" -> b), testActor)
