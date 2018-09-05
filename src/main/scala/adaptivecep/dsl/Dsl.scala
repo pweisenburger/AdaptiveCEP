@@ -19,21 +19,17 @@ object Dsl {
   case class Milliseconds(i: Int) extends Timespan
   case class Seconds(i: Int) extends Timespan
 
-  case class TimespanHelper(i: Int) {
+  implicit class TimespanHelper(i: Int) {
     def nanoseconds: Nanoseconds = Nanoseconds(i)
     def milliseconds: Milliseconds = Milliseconds(i)
     def seconds: Seconds = Seconds(i)
   }
 
-  implicit def intToTimespanHelper(i: Int): TimespanHelper = TimespanHelper(i)
-
   case class Instances(i: Int)
 
-  case class InstancesHelper(i: Int) {
+  implicit class InstancesHelper(i: Int) {
     def instances: Instances = Instances(i)
   }
-
-  implicit def intToInstancesHelper(i: Int): InstancesHelper = InstancesHelper(i)
 
 
   def slidingWindow  (instances: Instances): Window = SlidingInstances  (instances.i)
@@ -97,11 +93,9 @@ object Dsl {
   ): Query[T] = Stream(publisherName, requirements.toSet)(length)
 
 
-  case class SequenceHelper[A](s: NStream[A]) {
+  implicit class SequenceHelper[A](s: NStream[A]) {
     def ->[B](s2: NStream[B]): (NStream[A], NStream[B]) = (s, s2)
   }
-
-  implicit def nStreamToSequenceHelper[T](s: NStream[T]): SequenceHelper[T] = SequenceHelper(s)
 
   def sequence[A, B, R](
       tuple: (NStream[A], NStream[B]),
@@ -110,8 +104,6 @@ object Dsl {
       p: Prepend.Aux[A, B, R],
       length: Length[R]
   ): Sequence[A, B, R] = Sequence(tuple._1, tuple._2, requirements.toSet)(p, length)
-
-  implicit def queryToQueryHelper[A](q: Query[A]): QueryHelper[A] = QueryHelper(q)
 
   // implict functions to enable the usage of a single where function for HLists/Tuples and Records
   implicit def toUnlabeledWhere[A](implicit
@@ -169,7 +161,7 @@ object Dsl {
     case (q1, q2, pos1, pos2, w1, w2, reqs) => JoinOnRecord(q1, q2, pos1, pos2, w1, w2, reqs.toSet)
   }
 
-  case class QueryHelper[A](q: Query[A]) {
+  implicit class QueryHelper[A](q: Query[A]) {
     // Sadly we cannot use FnToProduct in order to make the usage better.
     // If we would use FnToProduct, it would be necessary to attach the
     // complete type information for the arguments so that the compiler can find the implicit parameter.
