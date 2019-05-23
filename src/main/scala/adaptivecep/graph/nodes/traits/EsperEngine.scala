@@ -57,6 +57,27 @@ object EsperEngine {
     }
   }
 
+  def createArrayOfNames(length: Int): Array[String] = length match {
+    case 1 => Array("e1")
+    case 2 => Array("e1", "e2")
+    case 3 => Array("e1", "e2", "e3")
+    case 4 => Array("e1", "e2", "e3", "e4")
+    case 5 => Array("e1", "e2", "e3", "e4", "e5")
+    case 6 => Array("e1", "e2", "e3", "e4", "e5", "e6")
+  }
+
+  def createArrayOfClasses(length: Int): Array[Class[_]] = {
+    val clazz: Class[_] = classOf[AnyRef]
+    length match {
+      case 1 => Array(clazz)
+      case 2 => Array(clazz, clazz)
+      case 3 => Array(clazz, clazz, clazz)
+      case 4 => Array(clazz, clazz, clazz, clazz)
+      case 5 => Array(clazz, clazz, clazz, clazz, clazz)
+      case 6 => Array(clazz, clazz, clazz, clazz, clazz, clazz)
+    }
+  }
+
   def toAnyRef(any: Any): AnyRef = {
     // Yep, an `AnyVal` can safely be cast to `AnyRef`:
     // https://stackoverflow.com/questions/25931611/why-anyval-can-be-converted-into-anyref-at-run-time-in-scala

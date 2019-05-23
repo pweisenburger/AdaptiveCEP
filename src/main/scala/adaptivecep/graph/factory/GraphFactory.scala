@@ -15,7 +15,7 @@ object GraphFactory {
       frequencyMonitorFactory: MonitorFactory,
       latencyMonitorFactory: MonitorFactory,
       createdCallback: () => Any,
-      eventCallback: (Event) => Any): ActorRef = query match {
+      eventCallback: (Event) => Any): ActorRef = ???/* query match {
     case streamQuery: StreamQuery =>
       actorSystem.actorOf(Props(
         StreamNode(
@@ -96,7 +96,7 @@ object GraphFactory {
           Some(eventCallback))),
         "disjunction")
   }
-
+*/
   // This is why `eventCallback` is listed separately:
   // https://stackoverflow.com/questions/21147001/why-scala-doesnt-infer-type-from-generic-type-parameters
   def create[A](

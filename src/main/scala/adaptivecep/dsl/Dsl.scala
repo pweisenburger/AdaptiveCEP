@@ -1,8 +1,9 @@
 package adaptivecep.dsl
 
 import java.time.Duration
+
 import adaptivecep.data.Events._
-import adaptivecep.data.Queries._
+import adaptivecep.data.Queries.{BandwidthRequirement, _}
 
 object Dsl {
 
@@ -79,6 +80,37 @@ object Dsl {
   case class LatencyHelper2(operator: Operator, duration: Duration) {
     def otherwise(callback: NodeData => Any): LatencyRequirement =
       LatencyRequirement(operator, duration, callback)
+  }
+
+
+  // BandwidthRequirement
+
+  trait Bandwidth
+  case class MBPerSecond(b: Double) extends Bandwidth
+
+  case class DataRateHelper(b: Double){
+    def mbPerSecond: MBPerSecond = MBPerSecond(b)
+  }
+
+  def dataRate(bandwidth: Bandwidth): Double = bandwidth match {
+    case MBPerSecond(b) => b
+  }
+
+  implicit def doubleToDataRateHelper(i: Int): DataRateHelper = DataRateHelper(i)
+
+  def bandwidth: BandwidthHelper.type = BandwidthHelper
+
+  case object BandwidthHelper {
+    def === (bandwidth: Double): BandwidthHelper2 = BandwidthHelper2 (Equal, bandwidth)
+    def =!= (bandwidth: Double): BandwidthHelper2 = BandwidthHelper2 (NotEqual, bandwidth)
+    def >   (bandwidth: Double): BandwidthHelper2 = BandwidthHelper2 (Greater, bandwidth)
+    def >=  (bandwidth: Double): BandwidthHelper2 = BandwidthHelper2 (GreaterEqual, bandwidth)
+    def <   (bandwidth: Double): BandwidthHelper2 = BandwidthHelper2 (Smaller, bandwidth)
+    def <=  (bandwidth: Double): BandwidthHelper2 = BandwidthHelper2 (SmallerEqual, bandwidth)
+  }
+
+  case class BandwidthHelper2(operator: Operator, bandwidth: Double) {
+    def otherwise(callback: NodeData => Any): BandwidthRequirement = BandwidthRequirement(operator, bandwidth, callback)
   }
 
   def stream[A]                (publisherName: String, requirements: Requirement*): Query1[A] =                Stream1 (publisherName, requirements.toSet)
