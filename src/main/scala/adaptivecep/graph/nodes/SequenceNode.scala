@@ -9,9 +9,12 @@ import adaptivecep.graph.nodes.traits._
 import adaptivecep.graph.qos._
 import adaptivecep.publishers.Publisher._
 import akka.actor.{ActorRef, PoisonPill}
+import akka.stream.OverflowStrategy
+import akka.stream.scaladsl.{Sink, Source, StreamRefs}
 import com.espertech.esper.client._
 
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.Await
+import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 case class SequenceNode(
@@ -24,7 +27,7 @@ case class SequenceNode(
     publishers: Map[String, ActorRef],
     frequencyMonitorFactory: MonitorFactory,
     latencyMonitorFactory: MonitorFactory,
-    bandwidthMonitorFactory: MonitorFactory,
+    //bandwidthMonitorFactory: MonitorFactory,
     createdCallback: Option[() => Any],
     eventCallback: Option[(Event) => Any])
   extends LeafNode with EsperEngine {
@@ -43,15 +46,61 @@ case class SequenceNode(
   override def receive: Receive = {
     case DependenciesRequest =>
       sender ! DependenciesResponse(Seq.empty)
-    case AcknowledgeSubscription if sender() == queryPublishers(0) =>
+    case AcknowledgeSubscription(ref) if sender() == queryPublishers(0) =>
       subscription1Acknowledged = true
       println("Acknowledged Subscription 1")
+      ref.getSource.to(Sink.foreach(a =>{
+        processEvent(a, queryPublishers(0))
+        //println(a)
+      })).run(materializer)
       //if (subscription2Acknowledged && parentReceived && !created) emitCreated()
-    case AcknowledgeSubscription if sender() == queryPublishers(1) =>
+    case AcknowledgeSubscription(ref) if sender() == queryPublishers(1) =>
       subscription2Acknowledged = true
       println("Acknowledged Subscription 2")
+      ref.getSource.to(Sink.foreach(a =>{
+        processEvent(a, queryPublishers(1))
+      })).run(materializer)
       //if (subscription1Acknowledged && parentReceived && !created) emitCreated()
-    case event: Event if sender() == queryPublishers(0) =>
+
+    case CentralizedCreated =>
+      if(!created){
+        created = true
+        emitCreated()
+      }
+    case Parent(p1) => {
+      //println("Parent received", p1)
+      parentNode = p1
+      parentReceived = true
+      nodeData = LeafNodeData(name, requirements, context, parentNode)
+      //if (subscription1Acknowledged && subscription2Acknowledged) emitCreated()
+    }
+    case SourceRequest =>
+      source = Source.queue[Event](20000, OverflowStrategy.dropNew).preMaterialize()(materializer)
+      future = source._2.runWith(StreamRefs.sourceRef())(materializer)
+      sourceRef = Await.result(future, Duration.Inf)
+      sender() ! SourceResponse(sourceRef)
+    case KillMe => sender() ! PoisonPill
+    case Kill =>
+      //self ! PoisonPill
+      //fMonitor.scheduledTask.cancel()
+      //println("Shutting down....")
+    case Controller(c) =>
+      controller = c
+      //println("Got Controller", c)
+    case CostReport(c) =>
+      costs = c
+      frequencyMonitor.onMessageReceive(CostReport(c), nodeData)
+      latencyMonitor.onMessageReceive(CostReport(c), nodeData)
+      //bandwidthMonitor.onMessageReceive(CostReport(c), nodeData)
+    case e: Event => processEvent(e, sender())
+    case unhandledMessage =>
+      frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
+      latencyMonitor.onMessageReceive(unhandledMessage, nodeData)
+      //bandwidthMonitor.onMessageReceive(unhandledMessage, nodeData)
+  }
+
+  def processEvent(event: Event, sender: ActorRef) = {
+    if(sender == queryPublishers(0)){
       context.system.scheduler.scheduleOnce(
         FiniteDuration(costs(parentNode).duration.toMillis, TimeUnit.MILLISECONDS),
         () => {
@@ -65,8 +114,8 @@ case class SequenceNode(
               case Event4(e1, e2, e3, e4) => sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4)))
               case Event5(e1, e2, e3, e4, e5) => sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5)))
               case Event6(e1, e2, e3, e4, e5, e6) => sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5), toAnyRef(e6)))
-    }}})
-    case event: Event if sender() == queryPublishers(1) =>
+            }}})}
+    if(sender == queryPublishers(1)){
       context.system.scheduler.scheduleOnce(
         FiniteDuration(costs(parentNode).duration.toMillis, TimeUnit.MILLISECONDS),
         () => {
@@ -80,37 +129,7 @@ case class SequenceNode(
               case Event4(e1, e2, e3, e4) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4)))
               case Event5(e1, e2, e3, e4, e5) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5)))
               case Event6(e1, e2, e3, e4, e5, e6) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5), toAnyRef(e6)))
-    }}})
-    case CentralizedCreated =>
-      if(!created){
-        created = true
-        emitCreated()
-      }
-    case Parent(p1) => {
-      //println("Parent received", p1)
-      parentNode = p1
-      parentReceived = true
-      nodeData = LeafNodeData(name, requirements, context, parentNode)
-      //if (subscription1Acknowledged && subscription2Acknowledged) emitCreated()
-    }
-    case KillMe => sender() ! PoisonPill
-    case Kill =>
-      //self ! PoisonPill
-      //fMonitor.scheduledTask.cancel()
-      //println("Shutting down....")
-    case Controller(c) =>
-      controller = c
-      //println("Got Controller", c)
-    case CostReport(c) =>
-      costs = c
-      frequencyMonitor.onMessageReceive(CostReport(c), nodeData)
-      latencyMonitor.onMessageReceive(CostReport(c), nodeData)
-      bandwidthMonitor.onMessageReceive(CostReport(c), nodeData)
-    case _: Event =>
-    case unhandledMessage =>
-      frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
-      latencyMonitor.onMessageReceive(unhandledMessage, nodeData)
-      bandwidthMonitor.onMessageReceive(unhandledMessage, nodeData)
+            }}})}
   }
 
   override def postStop(): Unit = {

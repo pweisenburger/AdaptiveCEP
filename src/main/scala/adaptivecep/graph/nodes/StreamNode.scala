@@ -20,7 +20,7 @@ case class StreamNode(
     publishers: Map[String, ActorRef],
     frequencyMonitorFactory: MonitorFactory,
     latencyMonitorFactory: MonitorFactory,
-    bandwidthMonitorFactory: MonitorFactory,
+    //bandwidthMonitorFactory: MonitorFactory,
     createdCallback: Option[() => Any],
     eventCallback: Option[(Event) => Any])
   extends LeafNode {
@@ -71,12 +71,12 @@ case class StreamNode(
       costs = c
       frequencyMonitor.onMessageReceive(CostReport(c), nodeData)
       latencyMonitor.onMessageReceive(CostReport(c), nodeData)
-      bandwidthMonitor.onMessageReceive(CostReport(c), nodeData)
-    case _: Event =>
+      //bandwidthMonitor.onMessageReceive(CostReport(c), nodeData)
+    case e: Event => emitEvent(e)
     case unhandledMessage =>
       frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
       latencyMonitor.onMessageReceive(unhandledMessage, nodeData)
-      bandwidthMonitor.onMessageReceive(unhandledMessage, nodeData)
+      //bandwidthMonitor.onMessageReceive(unhandledMessage, nodeData)
   }
 
 }

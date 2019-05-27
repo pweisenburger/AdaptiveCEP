@@ -20,11 +20,11 @@ trait Node extends Actor with RequiresMessageQueue[BoundedMessageQueueSemantics]
   val publishers: Map[String, ActorRef]
   val frequencyMonitorFactory: MonitorFactory
   val latencyMonitorFactory: MonitorFactory
-  val bandwidthMonitorFactory: MonitorFactory
+  //val bandwidthMonitorFactory: MonitorFactory
   var controller: ActorRef = self
   var created = false
   var delay: Boolean = false
-  var costs: Map[ActorRef, Cost] = Map.empty[ActorRef, Cost].withDefaultValue(Cost(Duration.Zero, 100))
+  var costs: Map[ActorRef, Cost] = Map.empty[ActorRef, Cost].withDefaultValue(Cost(Duration.Zero, 5000))
   var emittedEvents: Int = 0
   var processedEvents: Int = 0
 

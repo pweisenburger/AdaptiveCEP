@@ -141,7 +141,6 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
           //println(consumers.now)
         })
       initialize(query, publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, Some(eventCallback), consumer = true)
-    //context.system.actorSelection(self.path.address + "/user/Host-14") ! AllHosts
     case MemberUp(member) =>
       log.info("Member is Up: {}", member.address)
     case UnreachableMember(member) =>
@@ -152,8 +151,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
     case MemberExited(member) =>
       log.info("Member exiting: {}", member)
     case RequirementsNotMet(requirements) =>
-      //demandViolated.fire(requirements)
-     // println("test")
+      demandViolated.fire(requirements)
     case Start =>
       println("PLACEMENT ACTOR: starting")
       demandViolated.fire(null)
@@ -471,7 +469,6 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
         streamQuery.publisherName, publishers,
         frequencyMonitorFactory,
         latencyMonitorFactory,
-        bandwidthMonitorFactory,
         None,
         callback))
     val operator = ActiveOperator(props, Seq.empty[Operator])
@@ -497,7 +494,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
         publishers,
         frequencyMonitorFactory,
         latencyMonitorFactory,
-        bandwidthMonitorFactory,
+
         None,
         callback))
     connectBinaryNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, disjunctionQuery.sq1, disjunctionQuery.sq2, props, consumer)
@@ -521,7 +518,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
         publishers,
         frequencyMonitorFactory,
         latencyMonitorFactory,
-        bandwidthMonitorFactory,
+
         None,
         callback))
     connectBinaryNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, conjunctionQuery.sq1, conjunctionQuery.sq2, props, consumer)
@@ -548,20 +545,20 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
         publishers,
         frequencyMonitorFactory,
         latencyMonitorFactory,
-        bandwidthMonitorFactory,
+
         None,
         callback))
     connectBinaryNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, joinQuery.sq1, joinQuery.sq2, props, consumer)
     props
   }
 
-  private def initializeSelfJoinNode(publishers: Map[String, ActorRef],
+  private def initializeSelfJoinNode(publishers:              Map[String, ActorRef],
                                      frequencyMonitorFactory: MonitorFactory,
-                                     latencyMonitorFactory: MonitorFactory,
+                                     latencyMonitorFactory:   MonitorFactory,
                                      bandwidthMonitorFactory: MonitorFactory,
-                                     callback: Option[Event => Any],
-                                     selfJoinQuery: SelfJoinQuery,
-                                     consumer: Boolean) = {
+                                     callback:                Option[Event => Any],
+                                     selfJoinQuery:           SelfJoinQuery,
+                                     consumer:                Boolean) = {
     val wt1 = getWindowType(selfJoinQuery.w1)
     val ws1 = getWindowSize(selfJoinQuery.w1)
     val wt2 = getWindowType(selfJoinQuery.w2)
@@ -574,7 +571,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
         publishers,
         frequencyMonitorFactory,
         latencyMonitorFactory,
-        bandwidthMonitorFactory,
+
         None,
         callback))
     connectUnaryNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, selfJoinQuery.sq, props, consumer)
@@ -596,7 +593,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
         publishers,
         frequencyMonitorFactory,
         latencyMonitorFactory,
-        bandwidthMonitorFactory,
+
         None,
         callback))
     connectUnaryNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, dropElemQuery.sq, props, consumer)
@@ -618,7 +615,6 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
         publishers,
         frequencyMonitorFactory,
         latencyMonitorFactory,
-        bandwidthMonitorFactory,
         None,
         callback))
     connectUnaryNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, filterQuery.sq, props, consumer)
@@ -644,7 +640,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
         publishers,
         frequencyMonitorFactory,
         latencyMonitorFactory,
-        bandwidthMonitorFactory,
+
         None,
         callback))
     val operator = ActiveOperator(props, Seq.empty[Operator])

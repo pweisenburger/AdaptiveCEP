@@ -29,7 +29,7 @@ case class JoinNode(
     publishers: Map[String, ActorRef],
     frequencyMonitorFactory: MonitorFactory,
     latencyMonitorFactory: MonitorFactory,
-    bandwidthMonitorFactory: MonitorFactory,
+    //bandwidthMonitorFactory: MonitorFactory,
     createdCallback: Option[() => Any],
     eventCallback: Option[(Event) => Any])
   extends BinaryNode with EsperEngine {
@@ -100,7 +100,7 @@ case class JoinNode(
     case KillMe => sender() ! PoisonPill
     case Kill =>
       scheduledTask.cancel()
-      lmonitor.scheduledTask.cancel()
+      if(lmonitor.isDefined) lmonitor.get.scheduledTask.cancel()
       //fMonitor.scheduledTask.cancel()
       //bmonitor.scheduledTask.cancel()
       //self ! PoisonPill
@@ -112,15 +112,16 @@ case class JoinNode(
       costs = c
       frequencyMonitor.onMessageReceive(CostReport(c), nodeData)
       latencyMonitor.onMessageReceive(CostReport(c), nodeData)
-      bandwidthMonitor.onMessageReceive(CostReport(c), nodeData)
-    case _: Event =>
+      //bandwidthMonitor.onMessageReceive(CostReport(c), nodeData)
+    case e: Event => processEvent(e, sender())
     case unhandledMessage =>
       frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
       latencyMonitor.onMessageReceive(unhandledMessage, nodeData)
-      bandwidthMonitor.onMessageReceive(unhandledMessage, nodeData)
+      //bandwidthMonitor.onMessageReceive(unhandledMessage, nodeData)
   }
 
   def processEvent(event: Event, sender: ActorRef): Unit = {
+    //println(event)
     processedEvents += 1
     if (sender == childNode1) {
 
