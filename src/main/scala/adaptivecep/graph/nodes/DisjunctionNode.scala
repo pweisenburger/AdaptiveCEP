@@ -13,13 +13,11 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 case class DisjunctionNode(
-    //query: DisjunctionQuery,
     requirements: Set[Requirement],
     query1: Int,
     publishers: Map[String, ActorRef],
     frequencyMonitorFactory: MonitorFactory,
     latencyMonitorFactory: MonitorFactory,
-    //bandwidthMonitorFactory: MonitorFactory,
     createdCallback: Option[() => Any],
     eventCallback: Option[(Event) => Any])
   extends BinaryNode {
@@ -64,28 +62,7 @@ case class DisjunctionNode(
       val filledArray: Array[Either[Any, Any]] = fillArray(6, array)
       emitEvent(Event6(filledArray(0), filledArray(1), filledArray(2), filledArray(3), filledArray(4), filledArray(5)))
   }
-/*
-  def handleEvent(array: Array[Either[Any, Any]]): Unit = query match {
-    case _: Query1[_] =>
-      val filledArray: Array[Either[Any, Any]] = fillArray(1, array)
-      emitEvent(Event1(filledArray(0)))
-    case _: Query2[_, _] =>
-      val filledArray: Array[Either[Any, Any]] = fillArray(2, array)
-      emitEvent(Event2(filledArray(0), filledArray(1)))
-    case _: Query3[_, _, _] =>
-      val filledArray: Array[Either[Any, Any]] = fillArray(3, array)
-      emitEvent(Event3(filledArray(0), filledArray(1), filledArray(2)))
-    case _: Query4[_, _, _, _] =>
-      val filledArray: Array[Either[Any, Any]] = fillArray(4, array)
-      emitEvent(Event4(filledArray(0), filledArray(1), filledArray(2), filledArray(3)))
-    case _: Query5[_, _, _, _, _] =>
-      val filledArray: Array[Either[Any, Any]] = fillArray(5, array)
-      emitEvent(Event5(filledArray(0), filledArray(1), filledArray(2), filledArray(3), filledArray(4)))
-    case _: Query6[_, _, _, _, _, _] =>
-      val filledArray: Array[Either[Any, Any]] = fillArray(6, array)
-      emitEvent(Event6(filledArray(0), filledArray(1), filledArray(2), filledArray(3), filledArray(4), filledArray(5)))
-  }
-*/
+
   override def receive: Receive = {
     case DependenciesRequest =>
       sender ! DependenciesResponse(Seq(childNode1, childNode2))
@@ -101,11 +78,9 @@ case class DisjunctionNode(
         emitCreated()
     }
     case Parent(p1) => {
-      //println("Parent received", p1)
       parentNode = p1
       parentReceived = true
       nodeData = BinaryNodeData(name, requirements, context, childNode1, childNode2, parentNode)
-      //if(childNode1Created && childNode2Created && !created) emitCreated()
     }
     case SourceRequest =>
       source = Source.queue[Event](20000, OverflowStrategy.dropNew).preMaterialize()(materializer)
@@ -114,12 +89,10 @@ case class DisjunctionNode(
       sender() ! SourceResponse(sourceRef)
     case SourceResponse(ref) =>
       val s = sender()
-      //println("OR", nodeData)
       ref.getSource.to(Sink foreach(e =>{
         processEvent(e, s)
       })).run(materializer)
     case Child2(c1, c2) => {
-      //println("Children received", c1, c2)
       childNode1 = c1
       childNode2 = c2
       c1 ! SourceRequest
@@ -137,23 +110,16 @@ case class DisjunctionNode(
     case Kill =>
       scheduledTask.cancel()
       if(lmonitor.isDefined) lmonitor.get.scheduledTask.cancel()
-      //fMonitor.scheduledTask.cancel()
-      //bmonitor.scheduledTask.cancel()
-      //self ! PoisonPill
-      //println("Shutting down....")
     case Controller(c) =>
       controller = c
-      //println("Got Controller", c)
     case CostReport(c) =>
       costs = c
       frequencyMonitor.onMessageReceive(CostReport(c), nodeData)
       latencyMonitor.onMessageReceive(CostReport(c), nodeData)
-      //bandwidthMonitor.onMessageReceive(CostReport(c), nodeData)
     case e: Event => processEvent(e, sender())
     case unhandledMessage =>
       frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
       latencyMonitor.onMessageReceive(unhandledMessage, nodeData)
-     // bandwidthMonitor.onMessageReceive(unhandledMessage, nodeData)
   }
 
   def processEvent(event: Event, sender: ActorRef): Unit = {

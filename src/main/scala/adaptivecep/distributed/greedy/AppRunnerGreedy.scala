@@ -23,7 +23,6 @@ object AppRunnerGreedy extends App{
   var optimizeFor: String = "latencybandwidth"
 
   val actorSystem: ActorSystem = ActorSystem("ClusterSystem", config)
-  //val consumerHost: ActorRef = actorSystem.actorOf(Props[HostActor], "Host")
 
 
   val query1: Query3[Either[Int, String], Either[Int, X], Either[Float, X]] =

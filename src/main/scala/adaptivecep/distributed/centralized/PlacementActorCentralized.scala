@@ -31,20 +31,17 @@ case class PlacementActorCentralized(actorSystem: ActorSystem,
         val parent = parents(operator)
         if (parent.isDefined) {
           actorRef ! Parent(propsActors(parent.get.props))
-          //println("setting Parent of", actorRef, propsActors(parent.get.props))
         }
         children.length match {
           case 0 =>
           case 1 =>
             if (children.head.props != null) {
-              //map(operator).asInstanceOf[NodeHost].actorRef ! ChildHost1(map(propsOperators(children.head.props)).asInstanceOf[NodeHost].actorRef)
               actorRef ! Child1(propsActors(children.head.props))
               actorRef ! CentralizedCreated
 
             }
           case 2 =>
             if (children.head.props != null && children(1).props != null) {
-              //map(operator).asInstanceOf[NodeHost].actorRef ! ChildHost2(map(propsOperators(children.head.props)).asInstanceOf[NodeHost].actorRef, map(propsOperators(children(1).props)).asInstanceOf[NodeHost].actorRef)
               actorRef ! Child2(propsActors(children.head.props), propsActors(children(1).props))
               actorRef ! CentralizedCreated
 
@@ -57,11 +54,9 @@ case class PlacementActorCentralized(actorSystem: ActorSystem,
 
   def place(operator: Operator, host: Host): Unit = {
     if(host != NoHost && operator.props != null){
-      //operator.host = host
       val moved = placement.now.contains(operator) && placement.now.apply(operator) != host
       if(moved) {
         propsActors(operator.props) ! Kill
-        //println("killing old actor", propsActors(operator.props))
       }
       if (moved || placement.now.size < operators.now.size){
         val hostActor = host.asInstanceOf[NodeHost].actorRef
@@ -70,7 +65,6 @@ case class PlacementActorCentralized(actorSystem: ActorSystem,
         hostToNodeMap += hostMap(hostActor) -> ref
         hostActor ! Node(ref)
         ref ! Controller(self)
-        //println("placing Actor", ref)
       }
     }
   }

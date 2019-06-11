@@ -14,13 +14,11 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 case class StreamNode(
-    //query: StreamQuery,
     requirements: Set[Requirement],
     publisherName: String,
     publishers: Map[String, ActorRef],
     frequencyMonitorFactory: MonitorFactory,
     latencyMonitorFactory: MonitorFactory,
-    //bandwidthMonitorFactory: MonitorFactory,
     createdCallback: Option[() => Any],
     eventCallback: Option[(Event) => Any])
   extends LeafNode {
@@ -39,15 +37,11 @@ case class StreamNode(
       subscriptionAcknowledged = true
       ref.getSource.to(Sink.foreach(a =>{
         emitEvent(a)
-        //println(a)
       })).run(materializer)
-      //if(parentReceived && !created) emitCreated()
     case Parent(p1) => {
-      //println("Parent received", p1)
       parentNode = p1
       parentReceived = true
       nodeData = LeafNodeData(name, requirements, context, parentNode)
-      //if (subscriptionAcknowledged && !created) emitCreated()
     }
     case CentralizedCreated =>
       if(!created){
@@ -61,22 +55,16 @@ case class StreamNode(
       sender() ! SourceResponse(sourceRef)
     case KillMe => sender() ! PoisonPill
     case Kill =>
-      //self ! PoisonPill
-      //fMonitor.scheduledTask.cancel()
-      //println("Shutting down....")
     case Controller(c) =>
       controller = c
-      //println("Got Controller", c)
     case CostReport(c) =>
       costs = c
       frequencyMonitor.onMessageReceive(CostReport(c), nodeData)
       latencyMonitor.onMessageReceive(CostReport(c), nodeData)
-      //bandwidthMonitor.onMessageReceive(CostReport(c), nodeData)
     case e: Event => emitEvent(e)
     case unhandledMessage =>
       frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
       latencyMonitor.onMessageReceive(unhandledMessage, nodeData)
-      //bandwidthMonitor.onMessageReceive(unhandledMessage, nodeData)
   }
 
 }

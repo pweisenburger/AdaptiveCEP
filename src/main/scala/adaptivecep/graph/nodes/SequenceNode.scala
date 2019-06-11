@@ -18,7 +18,6 @@ import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 case class SequenceNode(
-    //query: SequenceQuery,
     requirements: Set[Requirement],
     publisherName1: String,
     publisherName2: String,
@@ -27,7 +26,6 @@ case class SequenceNode(
     publishers: Map[String, ActorRef],
     frequencyMonitorFactory: MonitorFactory,
     latencyMonitorFactory: MonitorFactory,
-    //bandwidthMonitorFactory: MonitorFactory,
     createdCallback: Option[() => Any],
     eventCallback: Option[(Event) => Any])
   extends LeafNode with EsperEngine {
@@ -35,7 +33,6 @@ case class SequenceNode(
   override val esperServiceProviderUri: String = name
 
   val queryPublishers: Array[ActorRef] = Array(publishers(publisherName1), publishers(publisherName2))
-  //val queryPublishers: Array[ActorRef] = Array(publishers(query.s1.publisherName), publishers(query.s2.publisherName))
 
   queryPublishers.foreach(_ ! Subscribe)
 
@@ -51,16 +48,13 @@ case class SequenceNode(
       println("Acknowledged Subscription 1")
       ref.getSource.to(Sink.foreach(a =>{
         processEvent(a, queryPublishers(0))
-        //println(a)
       })).run(materializer)
-      //if (subscription2Acknowledged && parentReceived && !created) emitCreated()
     case AcknowledgeSubscription(ref) if sender() == queryPublishers(1) =>
       subscription2Acknowledged = true
       println("Acknowledged Subscription 2")
       ref.getSource.to(Sink.foreach(a =>{
         processEvent(a, queryPublishers(1))
       })).run(materializer)
-      //if (subscription1Acknowledged && parentReceived && !created) emitCreated()
 
     case CentralizedCreated =>
       if(!created){
@@ -68,11 +62,9 @@ case class SequenceNode(
         emitCreated()
       }
     case Parent(p1) => {
-      //println("Parent received", p1)
       parentNode = p1
       parentReceived = true
       nodeData = LeafNodeData(name, requirements, context, parentNode)
-      //if (subscription1Acknowledged && subscription2Acknowledged) emitCreated()
     }
     case SourceRequest =>
       source = Source.queue[Event](20000, OverflowStrategy.dropNew).preMaterialize()(materializer)
@@ -81,22 +73,16 @@ case class SequenceNode(
       sender() ! SourceResponse(sourceRef)
     case KillMe => sender() ! PoisonPill
     case Kill =>
-      //self ! PoisonPill
-      //fMonitor.scheduledTask.cancel()
-      //println("Shutting down....")
     case Controller(c) =>
       controller = c
-      //println("Got Controller", c)
     case CostReport(c) =>
       costs = c
       frequencyMonitor.onMessageReceive(CostReport(c), nodeData)
       latencyMonitor.onMessageReceive(CostReport(c), nodeData)
-      //bandwidthMonitor.onMessageReceive(CostReport(c), nodeData)
     case e: Event => processEvent(e, sender())
     case unhandledMessage =>
       frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
       latencyMonitor.onMessageReceive(unhandledMessage, nodeData)
-      //bandwidthMonitor.onMessageReceive(unhandledMessage, nodeData)
   }
 
   def processEvent(event: Event, sender: ActorRef) = {

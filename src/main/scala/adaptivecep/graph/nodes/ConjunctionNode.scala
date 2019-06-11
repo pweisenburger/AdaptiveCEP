@@ -19,14 +19,12 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
 case class ConjunctionNode(
-    //query: ConjunctionQuery,
     requirements: Set[Requirement],
     queryLength1: Int,
     queryLength2: Int,
     publishers: Map[String, ActorRef],
     frequencyMonitorFactory: MonitorFactory,
     latencyMonitorFactory: MonitorFactory,
-    //bandwidthMonitorFactory: MonitorFactory,
     createdCallback: Option[() => Any],
     eventCallback: Option[(Event) => Any])
   extends BinaryNode with EsperEngine {
@@ -42,21 +40,17 @@ case class ConjunctionNode(
       sender ! DependenciesResponse(Seq(childNode1, childNode2))
     case Created if sender() == childNode1 =>
       childNode1Created = true
-      //if (childNode2Created && parentReceived && !created) emitCreated()
     case Created if sender() == childNode2 =>
       childNode2Created = true
-      //if (childNode1Created && parentReceived && !created) emitCreated()
     case CentralizedCreated =>
       if(!created){
         created = true
         emitCreated()
       }
     case Parent(p1) => {
-      //println("Parent received", p1)
       parentNode = p1
       parentReceived = true
       nodeData = BinaryNodeData(name, requirements, context, childNode1, childNode2, parentNode)
-      //if (childNode1Created && childNode2Created && !created) emitCreated()
     }
     case SourceRequest =>
       source = Source.queue[Event](20000, OverflowStrategy.dropNew).preMaterialize()(materializer)
@@ -66,14 +60,10 @@ case class ConjunctionNode(
       sender() ! SourceResponse(sourceRef)
     case SourceResponse(ref) =>
       val s = sender()
-      //println("AND", s)
       ref.getSource.to(Sink foreach(e =>{
-        //println(e)
         processEvent(e, s)
-        //println(e)
       })).run(materializer)
     case Child2(c1, c2) => {
-      //println("Children received", c1, c2)
       childNode1 = c1
       childNode2 = c2
       c1 ! SourceRequest
@@ -93,29 +83,21 @@ case class ConjunctionNode(
     }
     case Controller(c) =>
       controller = c
-      //println("Got Controller", c)
     case KillMe => sender() ! PoisonPill
     case Kill =>
       scheduledTask.cancel()
       if(lmonitor.isDefined) lmonitor.get.scheduledTask.cancel()
-      //fMonitor.scheduledTask.cancel()
-      //bmonitor.scheduledTask.cancel()
-      //self ! PoisonPill
-      ///println("Shutting down....")
     case CostReport(c) =>
       costs = c
       frequencyMonitor.onMessageReceive(CostReport(c), nodeData)
       latencyMonitor.onMessageReceive(CostReport(c), nodeData)
-      //bandwidthMonitor.onMessageReceive(CostReport(c), nodeData)
     case e: Event => processEvent(e, sender())
     case unhandledMessage =>
       frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
       latencyMonitor.onMessageReceive(unhandledMessage, nodeData)
-      //bandwidthMonitor.onMessageReceive(unhandledMessage, nodeData)
   }
 
   def processEvent(event: Event, sender: ActorRef): Unit = {
-    //println(sender, childNode1, childNode2)
     processedEvents += 1
     if(sender == childNode1){
             event match {

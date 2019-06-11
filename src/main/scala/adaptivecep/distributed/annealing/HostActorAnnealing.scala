@@ -47,7 +47,6 @@ class HostActorAnnealing extends HostActorDecentralizedBase {
       if(childHost1.isDefined){
         val worse1 = containsWorseSolutionFor(childHost1.get, worseSolution, children)
         if (worse1.isDefined){
-          //optimumChildHost1 = worse1
           result = result :+ worse1.get
         }
         else {
@@ -59,7 +58,6 @@ class HostActorAnnealing extends HostActorDecentralizedBase {
           }else{
             opt1 = minmaxBy(Maximizing, getChildAndTentatives(childHost1.get, children))(x => (qos(x).duration, qos(x).bandwidth))
           }
-          //optimumChildHost1 = Some(opt1)
           result = result :+ opt1
         }
       }
@@ -77,7 +75,6 @@ class HostActorAnnealing extends HostActorDecentralizedBase {
           }else{
             opt2 = minmaxBy(Maximizing, getChildAndTentatives(childHost2.get, children))(x => (qos(x).duration, qos(x).bandwidth))
           }
-          //optimumChildHost2 = Some(opt2)
           result = result :+ opt2
         }
       }
@@ -94,18 +91,13 @@ class HostActorAnnealing extends HostActorDecentralizedBase {
       optimum.foreach(host =>
         if(childHost1.isDefined && getPreviousChild(host, children) == childHost1.get){
           result = result :+ host
-         // println(optimumChildHost1)
-          //println(getPreviousChild(host))
         } else if(childHost2.isDefined && getPreviousChild(host, children) == childHost2.get){
           result = result :+ host
-         // println(optimumChildHost2)
-         // println(getPreviousChild(host))
         } else {
           println("ERROR: optimumHost does not belong to a child")
         }
       )
     }
-    //println(result)
     result
   }
 
@@ -115,8 +107,6 @@ class HostActorAnnealing extends HostActorDecentralizedBase {
   }
 
   def findWorseAcceptableSolution(children : Map[NodeHost, Set[NodeHost]], accumulatedCost: Map[NodeHost, Cost]): Set[NodeHost] = {
-    //println("Finding Worse Solution")
-
     var result = Set.empty[NodeHost]
     for(child <- children){
       var temp = Seq.empty[NodeHost]
@@ -140,40 +130,6 @@ class HostActorAnnealing extends HostActorDecentralizedBase {
       if(temp.nonEmpty)
         result = result + temp.head
     }
-    //println(result)
     result
   }
-
-  /*def resetAllData(deleteEverything: Boolean): Unit ={
-    if(deleteEverything){
-      if(node.isDefined){
-        node.get ! Kill
-      }
-      node = None
-      parent = None
-      activeOperator = None
-      tentativeOperator = None
-      children = Map.empty[ActorRef, Seq[ActorRef]]
-      childHost1 = None
-      childHost2 = None
-    }
-
-    childCosts = Map.empty[ActorRef, (Duration, Double)]
-
-    parentHosts = Seq.empty[ActorRef]
-
-    optimumHosts = Seq.empty[ActorRef]
-    tentativeHosts = Seq.empty[ActorRef]
-
-    finishedChildren = 0
-    completedChildren = 0
-    processedCostMessages = 0
-    receivedResponses = Set.empty[ActorRef]
-    latencyResponses = Set.empty[ActorRef]
-    bandwidthResponses = Set.empty[ActorRef]
-
-    ready = false
-
-    operators = Map.empty[ActorRef, Option[Operator]]
-  }*/
 }

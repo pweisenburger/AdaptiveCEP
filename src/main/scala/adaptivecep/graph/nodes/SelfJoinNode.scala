@@ -18,7 +18,6 @@ import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 case class SelfJoinNode(
-    //query: SelfJoinQuery,
     requirements: Set[Requirement],
     windowType1: String,
     windowSize1: Int,
@@ -28,7 +27,6 @@ case class SelfJoinNode(
     publishers: Map[String, ActorRef],
     frequencyMonitorFactory: MonitorFactory,
     latencyMonitorFactory: MonitorFactory,
-    //bandwidthMonitorFactory: MonitorFactory,
     createdCallback: Option[() => Any],
     eventCallback: Option[(Event) => Any])
   extends UnaryNode with EsperEngine {
@@ -43,18 +41,15 @@ case class SelfJoinNode(
       sender ! DependenciesResponse(Seq(childNode))
     case Created if sender() == childNode =>
       childCreated = true
-      //if (parentReceived && !created) emitCreated()
     case CentralizedCreated =>
       if(!created){
         created = true
         emitCreated()
       }
     case Parent(p1) => {
-      //println("Parent received", p1)
       parentNode = p1
       parentReceived = true
       nodeData = UnaryNodeData(name, requirements, context, childNode, parentNode)
-      //if(childCreated && !created) emitCreated()
     }
     case SourceRequest =>
       source = Source.queue[Event](20000, OverflowStrategy.dropNew).preMaterialize()(materializer)
@@ -63,13 +58,10 @@ case class SelfJoinNode(
       sender() ! SourceResponse(sourceRef)
     case SourceResponse(ref) =>
       val s = sender()
-      //println("SELFJOIN", s)
       ref.getSource.to(Sink foreach(e =>{
         processEvent(e, s)
-        //println(e)
       })).run(materializer)
     case Child1(c) => {
-      //println("Child received", c)
       childNode = c
       c ! SourceRequest
       nodeData = UnaryNodeData(name, requirements, context, childNode, parentNode)
@@ -84,24 +76,17 @@ case class SelfJoinNode(
     case Kill =>
       scheduledTask.cancel()
       lmonitor.get.scheduledTask.cancel()
-      //fMonitor.scheduledTask.cancel()
-      //bmonitor.scheduledTask.cancel()
-      //self ! PoisonPill
-      //println("Shutting down....")
     case Controller(c) =>
       controller = c
-      //println("Got Controller", c)
 
     case CostReport(c) =>
       costs = c
       frequencyMonitor.onMessageReceive(CostReport(c), nodeData)
       latencyMonitor.onMessageReceive(CostReport(c), nodeData)
-      //bandwidthMonitor.onMessageReceive(CostReport(c), nodeData)
     case e: Event => processEvent(e, sender())
     case unhandledMessage =>
       frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
       latencyMonitor.onMessageReceive(unhandledMessage, nodeData)
-      //bandwidthMonitor.onMessageReceive(unhandledMessage, nodeData)
   }
 
   def processEvent(event: Event, sender: ActorRef): Unit = {

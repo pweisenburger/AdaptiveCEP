@@ -135,10 +135,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
         runnable = () => {
           hosts.now.foreach{
             host => host.asInstanceOf[NodeHost].actorRef ! HostPropsRequest
-            //println("PLACEMENT ACTOR: sending HostPropsRequest to", host)
-            //hosts.set(hostMap.toSet.collect{case(_, host) => host})
           }
-          //println(consumers.now)
         })
       initialize(query, publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, Some(eventCallback), consumer = true)
     case MemberUp(member) =>
@@ -207,13 +204,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
       0.0
     else
       numerics.sum / numerics.size
-  /*
-  def measureLatency: Duration =
-    measure(latencySelector, Minimizing, Duration.Zero) { _ + _ } { avg } { _.host }
 
-  def measureBandwidth: Double =
-    measure(bandwidthSelector, Maximizing, Double.MaxValue) { math.min } { avg } { _.host }
-    */
 
   private def measure[T: Ordering](
                                     selector: (HostProps, Host) => T,
@@ -337,7 +328,6 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
 
     consumers foreach { placeProducersConsumers(_, consumer = true) }
     consumers foreach { placeIntermediates(_, consumer = true) }
-    //println("PLACEMENT ACTOR: HeuristicA - ", placements)
     placements
   }
 
