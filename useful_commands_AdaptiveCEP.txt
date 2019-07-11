@@ -1,0 +1,117 @@
+#Establish an ssh connection to the AWS instance(requires the public key to be saved as AdaptiveCEP.pem in the same directory)
+
+ssh -i "AdaptiveCEP.pem" -o ServerAliveInterval=30 ec2-user@<IP>
+
+#First time stup for AWS instances: (install scala, sbt, git, java)
+
+#SCALA
+
+SCALA_VERSION="2.12.1"
+
+wget http://downloads.typesafe.com/scala/${SCALA_VERSION}/scala-${SCALA_VERSION}.tgz
+tar -xzvf scala-${SCALA_VERSION}.tgz
+rm -rf scala-${SCALA_VERSION}.tgz
+echo "export SCALA_HOME=/home/ec2-user/scala-${SCALA_VERSION}" >> ~/.bashrc
+echo "export PATH=$PATH:/home/ec2-user/scala-${SCALA_VERSION}/bin" >> ~/.bashrc
+source ~/.bashrc
+
+#SBT
+curl https://bintray.com/sbt/rpm/rpm | sudo tee /etc/yum.repos.d/bintray-sbt-rpm.repo
+sudo yum -y install sbt
+
+sudo yum -y install java
+
+sudo yum -y install git
+
+#Clone the repository, switch the directory and chackout the correct branch
+
+git clone <insert repository url> #https://github.com/fweirich/AdaptiveCEP.git
+cd AdaptiveCEP
+git checkout temp
+
+#export local and global IPs for usage in the code
+
+export GLOBALIP=$(curl ipecho.net/plain)
+export LOCALIP=$(hostname -I)
+#export SBT_OPTS="-Xmx512M" only needed for weak instances (otherwise sbt might try to take more memory than is available)
+
+#start sbt and run the empty host (needed to establish the cluster)
+#make sure to start it first on the node that is the cluster root
+
+sbt
+runMain adaptivecep.distributed.HostSystem node
+
+
+
+bash setup.bash
+bash start.bash
+
+export GLOBALIP=$(curl ipecho.net/plain)
+export LOCALIP=$(hostname -I)
+
+
+export GLOBALIP=$(curl ipecho.net/plain)
+export LOCALIP=$(hostname -I)
+
+cd AdaptiveCEP
+git pull
+sbt
+runMain adaptivecep.distributed.HostSystem node
+
+cd AdaptiveCEP
+git pull
+java -jar CEP.jar
+
+git reset --hard origin/temp
+
+
+export SBT_OPTS="-Xmx512M"
+export GLOBALIP=$(curl ipecho.net/plain)
+export LOCALIP=$(hostname -I)
+
+#paste the ips of all hosts into the consumer hosts (needed to start al hosts and establish the network)
+export HOST1="18.219.222.126"
+export HOST2="18.191.239.244"
+export HOST3="18.223.195.173"
+export HOST4="18.224.43.239"
+export HOST5="3.16.206.96"
+export HOST6="18.221.95.245"
+export HOST7="52.15.108.225"
+export HOST8="18.216.144.166"
+export HOST9="52.14.111.157"
+export HOST10="3.19.57.155"
+export HOST11="18.191.128.192"
+export HOST12="3.17.130.64"
+export HOST13="3.16.55.193"
+export HOST14="3.17.130.143"
+export HOST15="18.221.14.166"
+export HOST16="3.16.36.225"
+export HOST17="18.217.119.52"
+export HOST18="3.15.37.2"
+export HOST19="18.220.229.241"
+export HOST20="3.16.193.175"
+
+
+
+
+
+export HOST1="18.219.222.126"
+export HOST2=""
+export HOST3=""
+export HOST4=""
+export HOST5=""
+export HOST6=""
+export HOST7=""
+export HOST8=""
+export HOST9=""
+export HOST10=""
+export HOST11=""
+export HOST12=""
+export HOST13=""
+export HOST14=""
+export HOST15=""
+export HOST16=""
+export HOST17=""
+export HOST18=""
+export HOST19=""
+export HOST20="3.16.193.175"

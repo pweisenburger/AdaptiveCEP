@@ -22,13 +22,10 @@ trait LeafNode extends Node {
 
   var frequencyMonitor: LeafNodeMonitor = frequencyMonitorFactory.createLeafNodeMonitor
   var latencyMonitor: LeafNodeMonitor = latencyMonitorFactory.createLeafNodeMonitor
-  //var bandwidthMonitor: LeafNodeMonitor = bandwidthMonitorFactory.createLeafNodeMonitor
+
   var nodeData: LeafNodeData = LeafNodeData(name, requirements, context, parentNode)
 
-  //var fMonitor: AverageFrequencyLeafNodeMonitor = frequencyMonitor.asInstanceOf[AverageFrequencyLeafNodeMonitor]
   var resetTask: Cancellable = null
-
-  //private val monitor: PathLatencyLeafNodeMonitor = latencyMonitor.asInstanceOf[PathLatencyLeafNodeMonitor]
 
   override def preStart(): Unit = {
     if(resetTask == null){
@@ -36,7 +33,6 @@ trait LeafNode extends Node {
         initialDelay = FiniteDuration(0, TimeUnit.SECONDS),
         interval = FiniteDuration(1000, TimeUnit.MILLISECONDS),
         runnable = () => {
-          //println("emitted " + emittedEvents)
           emittedEvents = 0
         })
     }
@@ -45,21 +41,15 @@ trait LeafNode extends Node {
 
 
   def emitCreated(): Unit = {
-    //if (createdCallback.isDefined){/*createdCallback.get.apply()*/} //else parentNode ! Created
     frequencyMonitor.onCreated(nodeData)
     latencyMonitor.onCreated(nodeData)
-    //bandwidthMonitor.onCreated(nodeData)
   }
 
   def emitEvent(event: Event): Unit = {
-    //if(parentNode == self || (parentNode != self && emittedEvents < costs(parentNode).bandwidth.toInt)) {
       emittedEvents += 1
-      //println("sending to " + parentNode)
-      //println("Hello")
-      if (eventCallback.isDefined) eventCallback.get.apply(event) else source._1.offer(event)//parentNode ! event
+      if (eventCallback.isDefined) eventCallback.get.apply(event) else source._1.offer(event)
       frequencyMonitor.onEventEmit(event, nodeData)
       latencyMonitor.onEventEmit(event, nodeData)
-      //bandwidthMonitor.onEventEmit(event, nodeData)
-    //}
+    }
   }
 }

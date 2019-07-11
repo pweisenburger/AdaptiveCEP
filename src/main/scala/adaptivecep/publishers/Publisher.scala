@@ -28,7 +28,6 @@ trait Publisher extends Actor {
       source = Source.queue[Event](20000, OverflowStrategy.dropNew).preMaterialize()(materializer)
       future = source._2.runWith(StreamRefs.sourceRef())(materializer)
       subscribers = subscribers + sender()
-      //pipe(future).to(sender())
       sender ! AcknowledgeSubscription(Await.result(future, Duration.Inf))
   }
 

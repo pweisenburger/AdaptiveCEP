@@ -29,7 +29,7 @@ trait BinaryNode extends Node {
 
   var frequencyMonitor: BinaryNodeMonitor = frequencyMonitorFactory.createBinaryNodeMonitor
   var latencyMonitor: BinaryNodeMonitor = latencyMonitorFactory.createBinaryNodeMonitor
-  //var bandwidthMonitor: BinaryNodeMonitor = bandwidthMonitorFactory.createBinaryNodeMonitor
+
   var nodeData: BinaryNodeData = BinaryNodeData(name, requirements, context, childNode1, childNode2, parentNode)
   var scheduledTask: Cancellable = _
   var resetTask: Cancellable = null
@@ -38,7 +38,7 @@ trait BinaryNode extends Node {
     case m: PathLatencyBinaryNodeMonitor => Some(m)
     case _ => None
   }
-  //val bmonitor: PathBandwidthUnaryNodeMonitor = bandwidthMonitor.asInstanceOf[PathBandwidthUnaryNodeMonitor]
+
   var fMonitor: Option[AverageFrequencyBinaryNodeMonitor] = frequencyMonitor match {
     case m :AverageFrequencyBinaryNodeMonitor => Some(m)
     case _ => None
@@ -53,8 +53,6 @@ trait BinaryNode extends Node {
         initialDelay = FiniteDuration(0, TimeUnit.SECONDS),
         interval = FiniteDuration(1000, TimeUnit.MILLISECONDS),
         runnable = () => {
-          //println("emitted " + emittedEvents)
-          //println("processed " + processedEvents)
           emittedEvents = 0
           processedEvents = 0
         })
@@ -69,7 +67,6 @@ trait BinaryNode extends Node {
             if (lmonitor.get.violatedRequirements.nonEmpty || fMonitor.get.violatedRequirements.nonEmpty) {
               controller ! RequirementsNotMet(lmonitor.get.violatedRequirements.++(fMonitor.get.violatedRequirements))
               lmonitor.get.violatedRequirements = Set.empty[Requirement]
-              //bmonitor.met = true
               fMonitor.get.violatedRequirements = Set.empty[Requirement]
             }
 
@@ -82,7 +79,6 @@ trait BinaryNode extends Node {
             previousBandwidth = fMonitor.get.averageOutput.get
             lmonitor.get.latency = None
             fMonitor.get.averageOutput = None
-            //bmonitor.bandwidthForMonitoring = None
           } else {
             println(previousLatency.toNanos/1000000.0 + ", " + previousBandwidth)
           }
@@ -94,8 +90,6 @@ trait BinaryNode extends Node {
   override def postStop(): Unit = {
     scheduledTask.cancel()
     if(lmonitor.isDefined) lmonitor.get.scheduledTask.cancel()
-    //bmonitor.scheduledTask.cancel()
-    //println("Shutting down....")
   }
 
   def emitCreated(): Unit = {
@@ -103,12 +97,8 @@ trait BinaryNode extends Node {
       lmonitor.get.childNode1 = childNode1
       lmonitor.get.childNode2 = childNode2
     }
-    //bmonitor.childNode1 = childNode1
-    //bmonitor.childNode2 = childNode2
-    //if (createdCallback.isDefined) createdCallback.get.apply() //else parentNode ! Created
     frequencyMonitor.onCreated(nodeData)
     latencyMonitor.onCreated(nodeData)
-    //bandwidthMonitor.onCreated(nodeData)
   }
 
   def emitEvent(event: Event): Unit = {
@@ -118,13 +108,9 @@ trait BinaryNode extends Node {
     }
     if(parentNode == self || (parentNode != self && emittedEvents < costs(parentNode).bandwidth.toInt)) {
       emittedEvents += 1
-      //println(event)
-      //bmonitor.childNode1 = childNode1
-      //bmonitor.childNode2 = childNode2
       if (eventCallback.isDefined) eventCallback.get.apply(event) else source._1.offer(event)//parentNode ! event
       frequencyMonitor.onEventEmit(event, nodeData)
       latencyMonitor.onEventEmit(event, nodeData)
-      //bandwidthMonitor.onEventEmit(event, nodeData)
     }
   }
 }

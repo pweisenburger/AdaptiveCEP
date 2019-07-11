@@ -13,7 +13,8 @@ import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 
-case class DropElemNode(
+case class
+DropElemNode(
     requirements: Set[Requirement],
     elemToBeDropped: Int,
     publishers: Map[String, ActorRef],
