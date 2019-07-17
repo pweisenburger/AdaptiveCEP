@@ -46,10 +46,9 @@ trait LeafNode extends Node {
   }
 
   def emitEvent(event: Event): Unit = {
-      emittedEvents += 1
-      if (eventCallback.isDefined) eventCallback.get.apply(event) else source._1.offer(event)
-      frequencyMonitor.onEventEmit(event, nodeData)
-      latencyMonitor.onEventEmit(event, nodeData)
-    }
+    emittedEvents += 1
+    if (eventCallback.isDefined) eventCallback.get.apply(event) else source._1.offer(event)
+    frequencyMonitor.onEventEmit(event, nodeData)
+    latencyMonitor.onEventEmit(event, nodeData)
   }
 }
