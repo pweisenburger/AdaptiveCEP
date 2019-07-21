@@ -92,7 +92,7 @@ object AppRunnerCentralized extends App {
 
   val simpleQuery: Query1[Int] =
     stream[Int, Int]("A")
-      .dropElem1(frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/}
+      .dropElem1(frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
 
   val address1 = Address("akka.tcp", "ClusterSystem", "40.115.4.25", 8000)
