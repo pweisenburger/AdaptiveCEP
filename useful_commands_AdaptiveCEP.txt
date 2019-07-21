@@ -1,8 +1,8 @@
-#Establish an ssh connection to the AWS instance(requires the public key to be saved as AdaptiveCEP.pem in the same directory)
+#Establish an ssh connection to the Azure instances
 
-ssh -i "AdaptiveCEP.pem" -o ServerAliveInterval=30 ec2-user@<IP>
+ssh <username>@<INSTANCE_NAME>.westeurope.cloudapp.azure.com
 
-#First time stup for AWS instances: (install scala, sbt, git, java)
+#First time setup for Azure instances: (install scala, sbt, git, java)
 
 #SCALA
 
@@ -15,24 +15,34 @@ echo "export SCALA_HOME=/home/ec2-user/scala-${SCALA_VERSION}" >> ~/.bashrc
 echo "export PATH=$PATH:/home/ec2-user/scala-${SCALA_VERSION}/bin" >> ~/.bashrc
 source ~/.bashrc
 
-#SBT
-curl https://bintray.com/sbt/rpm/rpm | sudo tee /etc/yum.repos.d/bintray-sbt-rpm.repo
-sudo yum -y install sbt
+#JAVA <Ubuntu 16.04 LTS>
+sudo apt-get install openjdk-8-jdk openjdk-8-demo openjdk-8-jre-headless
 
-sudo yum -y install java
 
-sudo yum -y install git
+#SBT <Ubuntu 16.04 LTS>
+echo "deb https://dl.bintray.com/sbt/debian /" | sudo tee -a /etc/apt/sources.list.d/sbt.list
+sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 2EE0EA64E40A89B84B2DF73499E82A75642AC823
+sudo apt-get update
+sudo apt-get install sbt
+
+
+
+
+
 
 #Clone the repository, switch the directory and chackout the correct branch
 
-git clone <insert repository url> #https://github.com/fweirich/AdaptiveCEP.git
+git clone <insert repository url> #https://github.com/pweisenburger/AdaptiveCEP.git
 cd AdaptiveCEP
-git checkout temp
+git checkout privacy-preserving
 
 #export local and global IPs for usage in the code
 
 export GLOBALIP=$(curl ipecho.net/plain)
 export LOCALIP=$(hostname -I)
+
+
+
 #export SBT_OPTS="-Xmx512M" only needed for weak instances (otherwise sbt might try to take more memory than is available)
 
 #start sbt and run the empty host (needed to establish the cluster)
@@ -40,8 +50,6 @@ export LOCALIP=$(hostname -I)
 
 sbt
 runMain adaptivecep.distributed.HostSystem node
-
-
 
 bash setup.bash
 bash start.bash
