@@ -34,7 +34,7 @@ sudo apt-get install sbt
 
 git clone <insert repository url> #https://github.com/pweisenburger/AdaptiveCEP.git
 cd AdaptiveCEP
-git checkout privacy-preserving
+git checkout privacy-preserved
 
 #export local and global IPs for usage in the code
 

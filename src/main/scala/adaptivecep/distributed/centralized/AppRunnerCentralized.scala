@@ -35,7 +35,7 @@ object AppRunnerCentralized extends App {
       .selfJoin(
         tumblingWindow(1.instances),
         tumblingWindow(1.instances),
-        frequency > ratio( 3.instances,  5.seconds) otherwise { nodeData => println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!") },
+        frequency > ratio(3.instances, 5.seconds) otherwise { nodeData => println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!") },
         frequency < ratio(12.instances, 15.seconds) otherwise { nodeData => println(s"PROBLEM:\tNode `${nodeData.name}` emits too many events!") })
       .and(stream[Float]("C"))
       .or(stream[String]("D"))
@@ -46,11 +46,11 @@ object AppRunnerCentralized extends App {
       .join(
         sequence(
           nStream[Float]("C") -> nStream[String]("D"),
-          frequency > ratio(1.instances, 5.seconds) otherwise { (nodeData) => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/ }),
+          frequency > ratio(1.instances, 5.seconds) otherwise { (nodeData) => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/}),
         slidingWindow(3.seconds),
         slidingWindow(3.seconds),
         bandwidth > dataRate(40.mbPerSecond) otherwise { nodeData => },
-        latency < timespan(100.milliseconds) otherwise { (nodeData) => /*println(s"PROBLEM:\tEvents reach node `${nodeData.name}` too slowly!")*/ })
+        latency < timespan(100.milliseconds) otherwise { (nodeData) => /*println(s"PROBLEM:\tEvents reach node `${nodeData.name}` too slowly!")*/})
 
   val query3: Query2[Either[Int, Either[Float, String]], Either[Int, X]] =
     stream[Int]("A")
@@ -67,7 +67,7 @@ object AppRunnerCentralized extends App {
       .or(stream[Float]("C").or(stream[String]("D")),
         /*bandwidth > dataRate(70.mbPerSecond) otherwise { nodeData => },*/
         /*latency < timespan(200.milliseconds) otherwise { (nodeData) => /*println(s"PROBLEM:\tEvents reach node `${nodeData.name}` too slowly!")*/ },*/
-        frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/ })
+        frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
   val query4: Query1[Either[Either[Int, Int], Either[Float, String]]] =
     stream[Int]("A")
@@ -78,17 +78,16 @@ object AppRunnerCentralized extends App {
       .or(stream[Float]("C").or(stream[String]("D")),
       /*bandwidth > dataRate(70.mbPerSecond) otherwise { nodeData => },*/
       /*latency < timespan(200.milliseconds) otherwise { (nodeData) => /*println(s"PROBLEM:\tEvents reach node `${nodeData.name}` too slowly!")*/ },*/
-      frequency > ratio(3000.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/ })
+      frequency > ratio(3000.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
   val query5: Query1[Either[Int, Int]] =
-    stream[Int,Int,Int,Int]("A")
+    stream[Int, Int, Int, Int]("A")
       .or(
-        stream[Int,Int,Int,Int]("B"))
+        stream[Int, Int, Int, Int]("B"))
       .dropElem1()
       .dropElem1()
-      .dropElem1(frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/ }
+      .dropElem1(frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/}
         /*latency < timespan(200.milliseconds) otherwise { (nodeData) => /*println(s"PROBLEM:\tEvents reach node `${nodeData.name}` too slowly!")*/ }*/)
-
 
 
   val address1 = Address("akka.tcp", "ClusterSystem", "40.115.4.25", 8000)
@@ -128,39 +127,43 @@ object AppRunnerCentralized extends App {
   */
 
   val simpleQuery: Query1[Int] =
-    stream[Int]("A").where( x => x % 2 == 0, frequency > ratio(3500.instances, 5.seconds) otherwise { nodeData => println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!") })
+    stream[Int]("A").where(x => x % 2 == 0, frequency > ratio(3500.instances, 5.seconds) otherwise { nodeData => println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!") })
 
   val host1: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address1))), "Host" + "1")
   val host2: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address2))), "Host" + "2")
   val host3: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address3))), "Host" + "3")
-//  val host4: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address4))), "Host" + "4")
-//  val host5: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address5))), "Host" + "5")
-//  val host6: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address6))), "Host" + "6")
-//  val host7: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address7))), "Host" + "7")
-//  val host8: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address8))), "Host" + "8")
-//  val host9: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address9))), "Host" + "9")
-//  val host10: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address10))), "Host" + "10")
-//  val host11: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address11))), "Host" + "11")
-//  val host12: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address12))), "Host" + "12")
-//  val host13: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address13))), "Host" + "13")
-//  val host14: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address14))), "Host" + "14")
-//  val host15: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address15))), "Host" + "15")
-//  val host16: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address16))), "Host" + "16")
-//  val host17: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address17))), "Host" + "17")
-//  val host18: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address18))), "Host" + "18")
-//  val host19: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address19))), "Host" + "19")
-//  val host20: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address20))), "Host" + "20")
+  //  val host4: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address4))), "Host" + "4")
+  //  val host5: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address5))), "Host" + "5")
+  //  val host6: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address6))), "Host" + "6")
+  //  val host7: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address7))), "Host" + "7")
+  //  val host8: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address8))), "Host" + "8")
+  //  val host9: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address9))), "Host" + "9")
+  //  val host10: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address10))), "Host" + "10")
+  //  val host11: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address11))), "Host" + "11")
+  //  val host12: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address12))), "Host" + "12")
+  //  val host13: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address13))), "Host" + "13")
+  //  val host14: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address14))), "Host" + "14")
+  //  val host15: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address15))), "Host" + "15")
+  //  val host16: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address16))), "Host" + "16")
+  //  val host17: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address17))), "Host" + "17")
+  //  val host18: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address18))), "Host" + "18")
+  //  val host19: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address19))), "Host" + "19")
+  //  val host20: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address20))), "Host" + "20")
 
-  val hosts: Set[ActorRef] = Set(host1, host2, host3, host4, host5, host6, host7, host8, host9, host10, host11,
-    host12, host13, host14, host15, host16, host17, host18, host19, host20)
+  //  val hosts: Set[ActorRef] = Set(host1, host2, host3, host4, host5, host6, host7, host8, host9, host10, host11,
+  //    host12, host13, host14, host15, host16, host17, host18, host19, host20)
+
+  val hosts: Set[ActorRef] = Set(host1, host2, host3)
+
 
   hosts.foreach(host => host ! Hosts(hosts))
 
+  val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
 
-  val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event4(id,id,id,id))).withDeploy(Deploy(scope = RemoteScope(address1))),             "A")
-  val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event4(id * 2,id * 2,id * 2,id * 2))).withDeploy(Deploy(scope = RemoteScope(address2))),         "B")
-  val publisherC: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id.toFloat))).withDeploy(Deploy(scope = RemoteScope(address3))),     "C")
-  val publisherD: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(s"String($id)"))).withDeploy(Deploy(scope = RemoteScope(address4))), "D")
+//  val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event4(id, id, id, id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+//  val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event4(id * 2, id * 2, id * 2, id * 2))).withDeploy(Deploy(scope = RemoteScope(address2))), "B")
+//  val publisherC: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id.toFloat))).withDeploy(Deploy(scope = RemoteScope(address3))), "C")
+//  val publisherD: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(s"String($id)"))).withDeploy(Deploy(scope = RemoteScope(address4))), "D")
 
   val operatorA = ActiveOperator(null, Seq.empty[Operator])
   val operatorB = ActiveOperator(null, Seq.empty[Operator])
@@ -169,16 +172,18 @@ object AppRunnerCentralized extends App {
 
 
   val publishers: Map[String, ActorRef] = Map(
-    "A" -> publisherA,
-    "B" -> publisherB,
-    "C" -> publisherC,
-    "D" -> publisherD)
+    "A" -> publisherA
+//    ,"B" -> publisherB
+//    ,"C" -> publisherC
+//    ,"D" -> publisherD
+  )
 
   val publisherHosts: Map[String, Host] = Map(
-    "A" -> NodeHost(host1),
-    "B" -> NodeHost(host2),
-    "C" -> NodeHost(host3),
-    "D" -> NodeHost(host4))
+    "A" -> NodeHost(host1)
+//    ,"B" -> NodeHost(host2)
+//    ,"C" -> NodeHost(host3)
+//    ,"D" -> NodeHost(host4)
+  )
 
   hosts.foreach(host => host ! OptimizeFor(optimizeFor))
 
@@ -188,8 +193,8 @@ object AppRunnerCentralized extends App {
     query5,
     publishers, publisherHosts,
     AverageFrequencyMonitorFactory(interval = 3000, logging = false),
-    PathLatencyMonitorFactory(interval =  1000, logging = false),
-    PathBandwidthMonitorFactory(interval = 1000, logging = false),NodeHost(host20), hosts, optimizeFor)), "Placement")
+    PathLatencyMonitorFactory(interval = 1000, logging = false),
+    PathBandwidthMonitorFactory(interval = 1000, logging = false), NodeHost(host3), hosts, optimizeFor)), "Placement")
 
   placement ! InitializeQuery
   Thread.sleep(10000)
