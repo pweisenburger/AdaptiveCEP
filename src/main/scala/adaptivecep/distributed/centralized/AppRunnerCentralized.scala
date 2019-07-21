@@ -127,7 +127,8 @@ object AppRunnerCentralized extends App {
   */
 
   val simpleQuery: Query1[Int] =
-    stream[Int]("A").where(x => x % 2 == 0, frequency > ratio(3500.instances, 5.seconds) otherwise { nodeData => println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!") })
+    stream[Int]("A")
+      //.where(x => x % 2 == 0, frequency > ratio(3500.instances, 5.seconds) otherwise { nodeData => println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!") })
 
   val host1: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address1))), "Host" + "1")
   val host2: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address2))), "Host" + "2")
