@@ -78,6 +78,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
   //val createdCallback: Option[() => Any] = () => println("STATUS:\t\tGraph has been created.")
   val eventCallback: Event => Any = {
     // Callback for `query1`:
+    case Event1(e1) => println(s"COMPLEX EVENT:\tEvent1($e1)")
     //case Event3(Left(i1), Left(i2), Left(f)) => println(s"COMPLEX EVENT:\tEvent3($i1,$i2,$f)")
     //case Event3(Right(s), _, _)              => println(s"COMPLEX EVENT:\tEvent1($s)")
     // Callback for `query2`:

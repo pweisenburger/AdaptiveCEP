@@ -78,9 +78,10 @@ export GLOBALIP=$(curl ipecho.net/plain)
 export LOCALIP=$(hostname -I)
 
 #paste the ips of all hosts into the consumer hosts (needed to start al hosts and establish the network)
-export HOST1="18.219.222.126"
-export HOST2="18.191.239.244"
-export HOST3="18.223.195.173"
+export HOST1="40.115.4.25"
+export HOST2="23.97.228.113"
+export HOST3="23.97.228.147"
+
 export HOST4="18.224.43.239"
 export HOST5="3.16.206.96"
 export HOST6="18.221.95.245"

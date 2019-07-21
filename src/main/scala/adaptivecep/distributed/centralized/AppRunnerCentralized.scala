@@ -93,23 +93,23 @@ object AppRunnerCentralized extends App {
   val address1 = Address("akka.tcp", "ClusterSystem", "40.115.4.25", 8000)
   val address2 = Address("akka.tcp", "ClusterSystem", sys.env("HOST2"), 8000)
   val address3 = Address("akka.tcp", "ClusterSystem", sys.env("HOST3"), 8000)
-  val address4 = Address("akka.tcp", "ClusterSystem", sys.env("HOST4"), 8000)
-  val address5 = Address("akka.tcp", "ClusterSystem", sys.env("HOST5"), 8000)
-  val address6 = Address("akka.tcp", "ClusterSystem", sys.env("HOST6"), 8000)
-  val address7 = Address("akka.tcp", "ClusterSystem", sys.env("HOST7"), 8000)
-  val address8 = Address("akka.tcp", "ClusterSystem", sys.env("HOST8"), 8000)
-  val address9 = Address("akka.tcp", "ClusterSystem", sys.env("HOST9"), 8000)
-  val address10 = Address("akka.tcp", "ClusterSystem", sys.env("HOST10"), 8000)
-  val address11 = Address("akka.tcp", "ClusterSystem", sys.env("HOST11"), 8000)
-  val address12 = Address("akka.tcp", "ClusterSystem", sys.env("HOST12"), 8000)
-  val address13 = Address("akka.tcp", "ClusterSystem", sys.env("HOST13"), 8000)
-  val address14 = Address("akka.tcp", "ClusterSystem", sys.env("HOST14"), 8000)
-  val address15 = Address("akka.tcp", "ClusterSystem", sys.env("HOST15"), 8000)
-  val address16 = Address("akka.tcp", "ClusterSystem", sys.env("HOST16"), 8000)
-  val address17 = Address("akka.tcp", "ClusterSystem", sys.env("HOST17"), 8000)
-  val address18 = Address("akka.tcp", "ClusterSystem", sys.env("HOST18"), 8000)
-  val address19 = Address("akka.tcp", "ClusterSystem", sys.env("HOST19"), 8000)
-  val address20 = Address("akka.tcp", "ClusterSystem", sys.env("HOST20"), 8000)
+//  val address4 = Address("akka.tcp", "ClusterSystem", sys.env("HOST4"), 8000)
+//  val address5 = Address("akka.tcp", "ClusterSystem", sys.env("HOST5"), 8000)
+//  val address6 = Address("akka.tcp", "ClusterSystem", sys.env("HOST6"), 8000)
+//  val address7 = Address("akka.tcp", "ClusterSystem", sys.env("HOST7"), 8000)
+//  val address8 = Address("akka.tcp", "ClusterSystem", sys.env("HOST8"), 8000)
+//  val address9 = Address("akka.tcp", "ClusterSystem", sys.env("HOST9"), 8000)
+//  val address10 = Address("akka.tcp", "ClusterSystem", sys.env("HOST10"), 8000)
+//  val address11 = Address("akka.tcp", "ClusterSystem", sys.env("HOST11"), 8000)
+//  val address12 = Address("akka.tcp", "ClusterSystem", sys.env("HOST12"), 8000)
+//  val address13 = Address("akka.tcp", "ClusterSystem", sys.env("HOST13"), 8000)
+//  val address14 = Address("akka.tcp", "ClusterSystem", sys.env("HOST14"), 8000)
+//  val address15 = Address("akka.tcp", "ClusterSystem", sys.env("HOST15"), 8000)
+//  val address16 = Address("akka.tcp", "ClusterSystem", sys.env("HOST16"), 8000)
+//  val address17 = Address("akka.tcp", "ClusterSystem", sys.env("HOST17"), 8000)
+//  val address18 = Address("akka.tcp", "ClusterSystem", sys.env("HOST18"), 8000)
+//  val address19 = Address("akka.tcp", "ClusterSystem", sys.env("HOST19"), 8000)
+//  val address20 = Address("akka.tcp", "ClusterSystem", sys.env("HOST20"), 8000)
 
   //LOCAL Setup
   /*
@@ -166,10 +166,10 @@ object AppRunnerCentralized extends App {
 //  val publisherD: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(s"String($id)"))).withDeploy(Deploy(scope = RemoteScope(address4))), "D")
 
   val operatorA = ActiveOperator(null, Seq.empty[Operator])
-  val operatorB = ActiveOperator(null, Seq.empty[Operator])
-  val operatorC = ActiveOperator(null, Seq.empty[Operator])
-  val operatorD = ActiveOperator(null, Seq.empty[Operator])
-
+//  val operatorB = ActiveOperator(null, Seq.empty[Operator])
+//  val operatorC = ActiveOperator(null, Seq.empty[Operator])
+//  val operatorD = ActiveOperator(null, Seq.empty[Operator])
+//
 
   val publishers: Map[String, ActorRef] = Map(
     "A" -> publisherA
@@ -190,7 +190,7 @@ object AppRunnerCentralized extends App {
   Thread.sleep(5000)
 
   val placement: ActorRef = actorSystem.actorOf(Props(PlacementActorCentralized(actorSystem,
-    query5,
+    simpleQuery,
     publishers, publisherHosts,
     AverageFrequencyMonitorFactory(interval = 3000, logging = false),
     PathLatencyMonitorFactory(interval = 1000, logging = false),
