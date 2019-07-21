@@ -7,7 +7,6 @@ ssh <username>@<INSTANCE_NAME>.westeurope.cloudapp.azure.com
 #SCALA
 
 SCALA_VERSION="2.12.1"
-
 wget http://downloads.typesafe.com/scala/${SCALA_VERSION}/scala-${SCALA_VERSION}.tgz
 tar -xzvf scala-${SCALA_VERSION}.tgz
 rm -rf scala-${SCALA_VERSION}.tgz
@@ -18,17 +17,11 @@ source ~/.bashrc
 #JAVA <Ubuntu 16.04 LTS>
 sudo apt-get install openjdk-8-jdk openjdk-8-demo openjdk-8-jre-headless
 
-
 #SBT <Ubuntu 16.04 LTS>
 echo "deb https://dl.bintray.com/sbt/debian /" | sudo tee -a /etc/apt/sources.list.d/sbt.list
 sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 2EE0EA64E40A89B84B2DF73499E82A75642AC823
 sudo apt-get update
 sudo apt-get install sbt
-
-
-
-
-
 
 #Clone the repository, switch the directory and chackout the correct branch
 
@@ -40,8 +33,6 @@ git checkout privacy-preserved
 
 export GLOBALIP=$(curl ipecho.net/plain)
 export LOCALIP=$(hostname -I)
-
-
 
 #export SBT_OPTS="-Xmx512M" only needed for weak instances (otherwise sbt might try to take more memory than is available)
 
@@ -79,10 +70,10 @@ export LOCALIP=$(hostname -I)
 
 #paste the ips of all hosts into the consumer hosts (needed to start al hosts and establish the network)
 export HOST1="40.115.4.25"
-export HOST2="23.97.228.113"
-export HOST3="23.97.228.147"
+export HOST2="13.80.255.30"
+export HOST3="137.117.227.198"
+export HOST4="13.80.245.218"
 
-export HOST4="18.224.43.239"
 export HOST5="3.16.206.96"
 export HOST6="18.221.95.245"
 export HOST7="52.15.108.225"

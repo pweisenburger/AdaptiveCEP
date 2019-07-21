@@ -130,6 +130,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
 
   override def receive: Receive = {
     case InitializeQuery =>
+      log.info("Query initializing: {}", query)
       context.system.scheduler.schedule(
         initialDelay = FiniteDuration(0, TimeUnit.SECONDS),
         interval = FiniteDuration(interval, TimeUnit.MILLISECONDS),
