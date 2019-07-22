@@ -23,6 +23,7 @@ case class PlacementActorCentralized(actorSystem: ActorSystem,
 
   def placeAll(map: Map[Operator, Host]): Unit ={
     map.foreach(pair => place(pair._1, pair._2))
+    firstTimePlacement = false
     testHosts.foreach(host => host ! HostToNodeMap(hostToNodeMap))
     map.keys.foreach(operator => {
       if (operator.props != null) {
@@ -58,7 +59,7 @@ case class PlacementActorCentralized(actorSystem: ActorSystem,
       if(moved) {
         propsActors(operator.props) ! Kill
       }
-      if (moved || placement.now.size < operators.now.size){
+      if (moved || firstTimePlacement){
         val hostActor = host.asInstanceOf[NodeHost].actorRef
         val ref = actorSystem.actorOf(operator.props.withDeploy(Deploy(scope = RemoteScope(hostActor.path.address))))
         propsActors += operator.props -> ref
