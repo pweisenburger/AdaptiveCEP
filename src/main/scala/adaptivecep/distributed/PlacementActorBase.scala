@@ -62,6 +62,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
   val interval = 500
 
   var justAdapted = false
+  var firstTimePlacement = true
 
   val costSignal: Var[Map[Host, Map[Host, Cost]]] = Var(costsMap)(ReSerializable.doNotSerialize, "cost")
   val hosts: Var[Set[NodeHost]] = Var(Set.empty[NodeHost])(ReSerializable.doNotSerialize, "hosts")
@@ -563,7 +564,6 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
         publishers,
         frequencyMonitorFactory,
         latencyMonitorFactory,
-
         None,
         callback))
     connectUnaryNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, selfJoinQuery.sq, props, consumer)
@@ -585,7 +585,6 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
         publishers,
         frequencyMonitorFactory,
         latencyMonitorFactory,
-
         None,
         callback))
     connectUnaryNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, dropElemQuery.sq, props, consumer)
