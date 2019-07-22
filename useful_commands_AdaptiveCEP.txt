@@ -52,9 +52,11 @@ export LOCALIP=$(hostname -I)
 
 export GLOBALIP=$(curl ipecho.net/plain)
 export LOCALIP=$(hostname -I)
-git pull
+
 
 cd AdaptiveCEP
+
+git pull
 sbt
 runMain adaptivecep.distributed.HostSystem node
 
