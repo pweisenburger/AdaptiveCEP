@@ -67,12 +67,10 @@ git reset --hard origin/temp
 export SBT_OPTS="-Xmx512M"
 export GLOBALIP=$(curl ipecho.net/plain)
 export LOCALIP=$(hostname -I)
-
-#paste the ips of all hosts into the consumer hosts (needed to start al hosts and establish the network)
 export HOST1="40.115.4.25"
-export HOST2="13.80.255.30"
-export HOST3="137.117.227.198"
-export HOST4="13.80.245.218"
+export HOST2="23.97.213.81"
+export HOST3="23.97.209.67"
+export HOST4="23.97.171.26"
 
 export HOST5="3.16.206.96"
 export HOST6="18.221.95.245"
@@ -91,6 +89,7 @@ export HOST18="3.15.37.2"
 export HOST19="18.220.229.241"
 export HOST20="3.16.193.175"
 
+#paste the ips of all hosts into the consumer hosts (needed to start al hosts and establish the network)
 
 
 
