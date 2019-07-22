@@ -91,8 +91,8 @@ object AppRunnerCentralized extends App {
 
 
   val simpleQuery: Query1[Int] =
-    stream[Int, Int]("A").dropElem1()
-      .where( x => x % 2 == 0, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+    stream[Int]("A").
+      where( x => x % 2 == 0, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
 
   val address1 = Address("akka.tcp", "ClusterSystem", "40.115.4.25", 8000)
@@ -159,7 +159,7 @@ object AppRunnerCentralized extends App {
 
   hosts.foreach(host => host ! Hosts(hosts))
 
-  val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event2(id, id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+  val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
 
   //  val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event4(id, id, id, id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
   //  val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event4(id * 2, id * 2, id * 2, id * 2))).withDeploy(Deploy(scope = RemoteScope(address2))), "B")
