@@ -26,7 +26,7 @@ sudo apt-get install sbt
 #Clone the repository, switch the directory and chackout the correct branch
 
 git clone <insert repository url> #https://github.com/pweisenburger/AdaptiveCEP.git
-cd AdaptiveCEP
+              cd AdaptiveCEP
 git checkout privacy-preserved
 
 #export local and global IPs for usage in the code
@@ -41,7 +41,7 @@ export LOCALIP=$(hostname -I)
 
 sbt
 runMain adaptivecep.distributed.HostSystem node
-
+runMain adaptivecep.distributed.centralized.AppRunnerCentralized
 bash setup.bash
 bash start.bash
 
@@ -69,10 +69,11 @@ git reset --hard origin/temp
 export SBT_OPTS="-Xmx512M"
 export GLOBALIP=$(curl ipecho.net/plain)
 export LOCALIP=$(hostname -I)
+
 export HOST1="40.115.4.25"
-export HOST2="104.214.234.140"
-export HOST3="104.214.237.5"
-export HOST4="40.114.226.20"
+export HOST2="40.115.2.215"
+export HOST3="52.166.191.209"
+export HOST4="13.80.151.52"
 
 export HOST5="3.16.206.96"
 export HOST6="18.221.95.245"
@@ -116,3 +117,32 @@ export HOST17=""
 export HOST18=""
 export HOST19=""
 export HOST20="3.16.193.175"
+
+
+# to build jar file use
+
+sbt "set test in assembly := {}" clean assembly #ignores tests
+
+
+
+#Deploy on SGX-LKL
+ sudo iptables -t nat -D PREROUTING 2
+
+ sudo sysctl -w net.ipv4.ip_forward=1
+
+sudo iptables -t nat -I PREROUTING -p tcp -d `hostname -i` --dport 8000 -j DNAT --to-destination 10.0.1.1:8000
+
+
+# Secure scala
+
+
+git clone https://github.com/allprojects/securescala.git
+#switch to branch libope-libssl.1.0
+git checkout libope-libssl-1.1.0
+
+make
+
+#Copy libope.so to /usr/lib and run ldconfig -n -v /usr/lib to install it and create all necessary links.
+
+sudo cp libope.so /usr/lib/
+sudo ldconfig -n -v /usr/lib

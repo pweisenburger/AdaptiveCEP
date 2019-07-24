@@ -14,6 +14,11 @@ import akka.stream._
 import com.typesafe.config.ConfigFactory
 
 
+import crypto._
+import crypto.cipher._
+import crypto.dsl._
+import crypto.dsl.Implicits._
+
 object AppRunnerCentralized extends App {
 
   val file = new File("application.conf")
@@ -95,6 +100,14 @@ object AppRunnerCentralized extends App {
       where( x => x % 2 == 0, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
 
+  lazy val keyRing = KeyRing.create
+  val interpret = new LocalInterpreter(keyRing)
+
+  val simpleQueryEnc: Query1[EncInt] =
+    stream[EncInt]("A").
+      where( x =>  interpret( isEven(x) ) , frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+
+
   val address1 = Address("akka.tcp", "ClusterSystem", "40.115.4.25", 8000)
   val address2 = Address("akka.tcp", "ClusterSystem", sys.env("HOST2"), 8000)
   val address3 = Address("akka.tcp", "ClusterSystem", sys.env("HOST3"), 8000)
@@ -159,7 +172,8 @@ object AppRunnerCentralized extends App {
 
   hosts.foreach(host => host ! Hosts(hosts))
 
-  val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+//  val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+  val publisherAEnc: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( Common.encrypt(Comparable, keyRing)( BigInt(id) ) ))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
 
   //  val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event4(id, id, id, id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
   //  val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event4(id * 2, id * 2, id * 2, id * 2))).withDeploy(Deploy(scope = RemoteScope(address2))), "B")
@@ -173,7 +187,7 @@ object AppRunnerCentralized extends App {
   //
 
   val publishers: Map[String, ActorRef] = Map(
-    "A" -> publisherA
+    "A" -> publisherAEnc
     //    , "B" -> publisherB
     //    ,"C" -> publisherC
     //    ,"D" -> publisherD

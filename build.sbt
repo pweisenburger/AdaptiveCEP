@@ -6,6 +6,9 @@ scalaVersion := "2.12.1"
 
 resolvers += Resolver.bintrayRepo("stg-tud", "maven")
 
+lazy val secureScalaProject = RootProject(uri("https://github.com/allprojects/securescala.git"))
+lazy val root = (project in file(".")).dependsOn(secureScalaProject)
+
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor"   % "2.5.22",
   "com.typesafe.akka" %% "akka-testkit" % "2.5.22"  % "test",
@@ -16,3 +19,9 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-cluster" % "2.5.22",
   "com.typesafe.akka" %% "akka-cluster-tools" % "2.5.22"
 )
+
+test in assembly := {}
+
+mainClass in assembly := Some("adaptivecep.distributed.HostSystem")
+
+assemblyJarName in assembly := "node.jar"
