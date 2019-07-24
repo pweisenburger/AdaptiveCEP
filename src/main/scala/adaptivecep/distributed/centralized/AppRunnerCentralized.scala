@@ -19,9 +19,7 @@ import crypto.cipher._
 import crypto.dsl._
 import crypto.dsl.Implicits._
 
-case class Student(id: Int) extends Serializable {
-  def ++
-}
+case class Student(id: Int) extends Serializable
 
 object AppRunnerCentralized extends App {
 
