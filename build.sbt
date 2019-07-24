@@ -20,8 +20,8 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-cluster-tools" % "2.5.22"
 )
 
-test in assembly := {}
+//test in assembly := {}
 
-mainClass in assembly := Some("adaptivecep.distributed.HostSystem")
+//mainClass in assembly := Some("adaptivecep.distributed.HostSystem")
 
-assemblyJarName in assembly := "node.jar"
+//assemblyJarName in assembly := "node.jar"
