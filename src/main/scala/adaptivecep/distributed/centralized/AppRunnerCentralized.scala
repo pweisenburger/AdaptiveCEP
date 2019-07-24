@@ -205,7 +205,7 @@ object AppRunnerCentralized extends App {
   Thread.sleep(5000)
 
   val placement: ActorRef = actorSystem.actorOf(Props(PlacementActorCentralized(actorSystem,
-    simpleQuery,
+    simpleQueryEnc,
     publishers, publisherHosts,
     AverageFrequencyMonitorFactory(interval = 3000, logging = false),
     PathLatencyMonitorFactory(interval = 1000, logging = false),
