@@ -19,7 +19,7 @@ import crypto.cipher._
 import crypto.dsl._
 import crypto.dsl.Implicits._
 
-sealed trait Student
+sealed trait Student extends Serializable
 
 case class Student1[A](id: A, name: String) extends Student {
 }
