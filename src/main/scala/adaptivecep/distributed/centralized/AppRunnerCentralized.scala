@@ -19,7 +19,7 @@ import crypto.cipher._
 import crypto.dsl._
 import crypto.dsl.Implicits._
 
-case class Student(id: Int) extends Serializable
+case class Student(id: Int)
 
 object AppRunnerCentralized extends App {
 
@@ -145,6 +145,7 @@ object AppRunnerCentralized extends App {
   val address10 = Address("akka.tcp", "ClusterSystem", "127.0.0.1", 2560)
   val address11 = Address("akka.tcp", "ClusterSystem", "127.0.0.1", 2561)
   */
+
 
   val host1: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address1))), "Host" + "1")
   val host2: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address2))), "Host" + "2")
