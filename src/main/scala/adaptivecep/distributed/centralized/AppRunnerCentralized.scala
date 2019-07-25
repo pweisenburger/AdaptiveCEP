@@ -19,22 +19,9 @@ import crypto.cipher._
 import crypto.dsl._
 import crypto.dsl.Implicits._
 
-trait SomeTrait1 {
-  def f: Int
-}
+sealed trait Student
 
-trait SomeTrait2 {
-  def f2(a: Int): Int
-}
-
-sealed trait Student {
-  def name: String
-}
-
-case class Student1[A](id: A, name: String) extends Student with SomeTrait1 with SomeTrait2 {
-  override def f2(a: Int): Int = a
-
-  def f = 3
+case class Student1[A](id: A, name: String) extends Student {
 }
 
 object AppRunnerCentralized extends App {
@@ -117,17 +104,18 @@ object AppRunnerCentralized extends App {
     stream[Int]("A").
       where(x => x % 2 == 0, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
+  def isBoolean(s: Student) = true
 
   lazy val keyRing = KeyRing.create
   val interpret = new LocalInterpreter(keyRing)
 
   val studentsQuery: Query1[Student] =
     stream[Student]("A").
-      where(x => x.name == "ahmad", frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+      where(x => isBoolean(x), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
   //
-  val encQuery: Query1[EncInt] =
-    stream[EncInt]("A").
-      where(x => interpret(isEven(x)), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+//  val encQuery: Query1[EncInt] =
+//    stream[EncInt]("A").
+//      where(x => interpret(isEven(x)), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
   //  val v = Common.encrypt(Comparable,keyRing)(BigInt(1))
 
@@ -231,7 +219,7 @@ object AppRunnerCentralized extends App {
   Thread.sleep(5000)
 
   val placement: ActorRef = actorSystem.actorOf(Props(PlacementActorCentralized(actorSystem,
-    encQuery,
+    studentsQuery,
     publishers, publisherHosts,
     AverageFrequencyMonitorFactory(interval = 3000, logging = false),
     PathLatencyMonitorFactory(interval = 1000, logging = false),
