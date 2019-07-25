@@ -11,15 +11,6 @@ import crypto.dsl.Implicits._
 class EncIntSerializer extends SerializerWithStringManifest {
   override def identifier: Int = 1034555
 
-  override def toBinary(o: AnyRef): Array[Byte] = {
-    case encInt: EncInt => encInt match {
-      case x: PaillierEnc => super.toBinary(x)
-      case x: ElGamalEnc => super.toBinary(x)
-      case x: OpeEnc => super.toBinary(x)
-      case x: AesEnc => super.toBinary(x)
-    }
-  }
-
   override def manifest(o: AnyRef): String = {
     case encInt: EncInt => encInt match {
       case x: PaillierEnc => "PAILLIER"
@@ -27,6 +18,7 @@ class EncIntSerializer extends SerializerWithStringManifest {
       case x: OpeEnc => "OPEENC"
       case x: AesEnc => "AESENC"
     }
+    case other =>  System.err.println("Error in Mainifest")
   }
 
   override def fromBinary(bytes: Array[Byte], manifest: String): AnyRef = manifest match {
@@ -36,5 +28,16 @@ class EncIntSerializer extends SerializerWithStringManifest {
     case "AESENC" => super.fromBinary(bytes,AesEnc.getClass).asInstanceOf[AesEnc]
 
   }
+
+  override def toBinary(o: AnyRef): Array[Byte] = {
+    case encInt: EncInt => encInt match {
+      case x: PaillierEnc => super.toBinary(x)
+      case x: ElGamalEnc => super.toBinary(x)
+      case x: OpeEnc => super.toBinary(x)
+      case x: AesEnc => super.toBinary(x)
+    }
+    case _ =>  System.err.println("Error in serializing object")
+  }
+
 
 }
