@@ -118,10 +118,10 @@ object AppRunnerCentralized extends App {
     stream[Student]("A").
       where( x =>  x.id % 2 == 0 , frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 //
-//  val encQuery: Query1[EncInt] =
-//    stream[EncInt]("A").
-//      where( x => interpret(isEven(x)) , frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
-//
+  val encQuery: Query1[EncInt] =
+    stream[EncInt]("A").
+      where( x => interpret(isEven(x)) , frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+
 //  val v = Common.encrypt(Comparable,keyRing)(BigInt(1))
 
 
@@ -191,8 +191,8 @@ object AppRunnerCentralized extends App {
   hosts.foreach(host => host ! Hosts(hosts))
 
 //  val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
-//  val publisherAEnc: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( Common.encrypt(Comparable, keyRing)( BigInt(id) ) ))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
-  val studentsPublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( Student(id) ))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+  val publisherAEnc: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( Common.encrypt(Comparable, keyRing)( BigInt(id) ) ))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+//  val studentsPublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( Student(id) ))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
 
   //  val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event4(id, id, id, id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
   //  val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event4(id * 2, id * 2, id * 2, id * 2))).withDeploy(Deploy(scope = RemoteScope(address2))), "B")
@@ -206,7 +206,7 @@ object AppRunnerCentralized extends App {
   //
 
   val publishers: Map[String, ActorRef] = Map(
-    "A" -> studentsPublisher
+    "A" -> publisherAEnc
     //    , "B" -> publisherB
     //    ,"C" -> publisherC
     //    ,"D" -> publisherD
@@ -224,7 +224,7 @@ object AppRunnerCentralized extends App {
   Thread.sleep(5000)
 
   val placement: ActorRef = actorSystem.actorOf(Props(PlacementActorCentralized(actorSystem,
-    studentsQuery,
+    encQuery,
     publishers, publisherHosts,
     AverageFrequencyMonitorFactory(interval = 3000, logging = false),
     PathLatencyMonitorFactory(interval = 1000, logging = false),
