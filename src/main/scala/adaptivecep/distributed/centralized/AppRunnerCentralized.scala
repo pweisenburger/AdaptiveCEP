@@ -29,6 +29,7 @@ case class Student1[A](id: A, name: String) extends Student
 
 object EncryptionContext {
     val keyRing: KeyRing = KeyRing.create
+    val interpret: LocalInterpreter = new LocalInterpreter(keyRing)
 
 }
 
@@ -137,11 +138,11 @@ object AppRunnerCentralized extends App {
 //  implicit val pc = PrivacyContext(keyRing, interpret)
 
   import EncryptionContext.keyRing
-  val interpret: LocalInterpreter = new LocalInterpreter(keyRing)
+  import EncryptionContext.interpret
 
   val encQuery: Query1[EncInt] =
     stream[EncInt]("A").
-      where(x => true , frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+      where(x => interpret(isEven(x)) , frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 //
 //  val q: Query1[Int] =
 //    stream[Int,Int]("A")
