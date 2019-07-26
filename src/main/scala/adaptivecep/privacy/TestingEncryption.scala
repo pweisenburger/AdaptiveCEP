@@ -5,11 +5,12 @@ import crypto.cipher._
 import crypto.dsl._
 import crypto.dsl.Implicits._
 import argonaut._
+import Argonaut._
 
 
 case class PrivacyContext(keyRing: KeyRing, interpreter: LocalInterpreter)
 
-class EncIntWrapper(val json: Json, val encType: String) extends Serializable {
+class EncIntWrapper(val json: String, val encType: String) extends Serializable {
 
   def +(that: EncIntWrapper)(implicit pc: PrivacyContext): EncIntWrapper = {
     //decode this and that
@@ -29,18 +30,18 @@ class EncIntWrapper(val json: Json, val encType: String) extends Serializable {
 
 object EncIntWrapper {
   def apply(encInt: EncInt): EncIntWrapper = encInt match {
-    case p: PaillierEnc => new EncIntWrapper(PaillierEnc.encode(p), "PAILLIER")
-    case e: ElGamalEnc => new EncIntWrapper(ElGamalEnc.encode(e), "ELGAMAL")
-    case a: AesEnc => new EncIntWrapper(AesEnc.aesCodec.Encoder(a), "AES")
-    case o: OpeEnc => new EncIntWrapper(OpeEnc.opeCodec.Encoder(o), "OPE")
+    case p: PaillierEnc => new EncIntWrapper(PaillierEnc.encode(p).toString(), "PAILLIER")
+    case e: ElGamalEnc => new EncIntWrapper(ElGamalEnc.encode(e).toString(), "ELGAMAL")
+    case a: AesEnc => new EncIntWrapper(AesEnc.aesCodec.Encoder(a).toString(), "AES")
+    case o: OpeEnc => new EncIntWrapper(OpeEnc.opeCodec.Encoder(o).toString(), "OPE")
   }
 
   def unapply(arg: EncIntWrapper)(implicit privacyContext: PrivacyContext): Option[EncInt] =
     arg.encType match {
-      case "PAILLIER" => PaillierEnc.decode(privacyContext.keyRing.pub.paillier).decodeJson(arg.json).toOption
-      case "ELGAMAL" => ElGamalEnc.decode(privacyContext.keyRing.pub.elgamal).decodeJson(arg.json).toOption
-      case "AES" => AesEnc.aesCodec.decodeJson(arg.json).toOption
-      case "OPE" => OpeEnc.opeCodec.decodeJson(arg.json).toOption
+      case "PAILLIER" => PaillierEnc.decode(privacyContext.keyRing.pub.paillier).decodeJson(arg.json.parseOption.get).toOption
+      case "ELGAMAL" => ElGamalEnc.decode(privacyContext.keyRing.pub.elgamal).decodeJson(arg.json.parseOption.get).toOption
+      case "AES" => AesEnc.aesCodec.decodeJson( arg.json.parseOption.get ).toOption
+      case "OPE" => OpeEnc.opeCodec.decodeJson(arg.json.parseOption.get).toOption
     }
 
 }
