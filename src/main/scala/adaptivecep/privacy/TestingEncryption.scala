@@ -19,7 +19,7 @@ class EncIntWrapper(val json: Json, val encType: String) extends Serializable {
     EncIntWrapper(result)
   }
 
-  def isEven() (implicit pc: PrivacyContext): Boolean ={
+  def _isEven() (implicit pc: PrivacyContext): Boolean ={
     val self = EncIntWrapper.unapply(this).get
     import crypto.dsl.isEven
     pc.interpreter( isEven( self ))

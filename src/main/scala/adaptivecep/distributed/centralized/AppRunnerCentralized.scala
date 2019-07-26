@@ -125,7 +125,7 @@ object AppRunnerCentralized extends App {
 
   val encQuery: Query1[EncIntWrapper] =
     stream[EncIntWrapper]("A").
-      where(x => x.isEven() , frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+      where(x => x._isEven , frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
 
 

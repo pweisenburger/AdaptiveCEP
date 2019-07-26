@@ -71,8 +71,8 @@ export GLOBALIP=$(curl ipecho.net/plain)
 export LOCALIP=$(hostname -I)
 
 export HOST1="40.115.4.25"
-export HOST2="137.117.243.57"
-export HOST3="137.117.254.102"
+export HOST2="13.95.172.5"
+export HOST3="13.80.29.37"
 export HOST4="13.80.151.52"
 
 export HOST5="3.16.206.96"
