@@ -170,11 +170,11 @@ object AppRunnerCentralized extends App {
 //  val oneJson = EncIntWrapper( Common.encrypt(Comparable, keyRing)(BigInt(5)))
 //  val genFunction = (id:Integer) => Event2(oneJson,id)
 
-    val publisherAEnc: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( SomeFactory.getEncInt(id)) ) ).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+//    val publisherAEnc: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( SomeFactory.getEncInt(id)) ) ).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
 
 
 
-//    val studentsPublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( SomeFactory.getStudent(id) ))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+    val studentsPublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( SomeFactory.getStudent(id) ))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
 
   //  val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event4(id, id, id, id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
   //  val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event4(id * 2, id * 2, id * 2, id * 2))).withDeploy(Deploy(scope = RemoteScope(address2))), "B")
@@ -188,8 +188,8 @@ object AppRunnerCentralized extends App {
   //
 
   val publishers: Map[String, ActorRef] = Map(
-//    "A" -> studentsPublisher
-    "A" -> publisherAEnc
+    "A" -> studentsPublisher
+//    "A" -> publisherAEnc
     //    , "B" -> publisherB
     //    ,"C" -> publisherC
     //    ,"D" -> publisherD
@@ -209,8 +209,8 @@ object AppRunnerCentralized extends App {
 
 
   val placement: ActorRef = actorSystem.actorOf(Props(PlacementActorCentralized(actorSystem,
-    encQuery,
-//    studentsQuery,
+//    encQuery,
+    studentsQuery,
     publishers, publisherHosts,
     AverageFrequencyMonitorFactory(interval = 3000, logging = false),
     PathLatencyMonitorFactory(interval = 1000, logging = false),
