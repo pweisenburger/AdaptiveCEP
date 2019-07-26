@@ -131,6 +131,10 @@ object AppRunnerCentralized extends App {
     stream[Int,Int]("A")
       .dropElem1(frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
+  val q2: Query1[EncIntWrapper] =
+    stream[EncIntWrapper,Int]("A")
+      .dropElem2(frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+
 
   val address1 = Address("akka.tcp", "ClusterSystem", "40.115.4.25", 8000)
   val address2 = Address("akka.tcp", "ClusterSystem", sys.env("HOST2"), 8000)
@@ -149,11 +153,15 @@ object AppRunnerCentralized extends App {
 
 //  def getStudent(id: Int): Student = Student1(id,"ahmad")
 
-  val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event2(id,id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
 
-//  val genFunction = (id:Integer) => Event1( EncIntWrapper( Common.encrypt(Comparable, keyRing)(BigInt(id))))
 
-//  val publisherAEnc: ActorRef = actorSystem.actorOf(Props(RandomPublisher(genFunction) ).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+//  val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event2(id,id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+
+  val oneJson = EncIntWrapper( Common.encrypt(Comparable, keyRing)(BigInt(5)))
+
+  val genFunction = (id:Integer) => Event2(oneJson,id)
+
+  val publisherAEnc: ActorRef = actorSystem.actorOf(Props(RandomPublisher(genFunction) ).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
 
 
 
@@ -171,7 +179,7 @@ object AppRunnerCentralized extends App {
   //
 
   val publishers: Map[String, ActorRef] = Map(
-    "A" -> publisherA
+    "A" -> publisherAEnc
     //    , "B" -> publisherB
     //    ,"C" -> publisherC
     //    ,"D" -> publisherD
@@ -192,7 +200,7 @@ object AppRunnerCentralized extends App {
 
   val placement: ActorRef = actorSystem.actorOf(Props(PlacementActorCentralized(actorSystem,
 //    studentsQuery,
-    q,
+    q2,
     publishers, publisherHosts,
     AverageFrequencyMonitorFactory(interval = 3000, logging = false),
     PathLatencyMonitorFactory(interval = 1000, logging = false),
