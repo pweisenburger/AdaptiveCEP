@@ -146,7 +146,10 @@ object AppRunnerCentralized extends App {
 
 //  def getStudent(id: Int): Student = Student1(id,"ahmad")
   //  val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
-  val publisherAEnc: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( EncIntWrapper( Common.encrypt(Comparable, keyRing)(BigInt(id))))) ).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+
+  val genFunction = (id:Integer) => Event1( EncIntWrapper( Common.encrypt(Comparable, keyRing)(BigInt(id))))
+
+  val publisherAEnc: ActorRef = actorSystem.actorOf(Props(RandomPublisher(genFunction) ).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
 
 //    val studentsPublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( getStudent(id) ))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
 
