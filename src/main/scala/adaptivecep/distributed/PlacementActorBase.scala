@@ -15,6 +15,10 @@ import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Address, Deploy, 
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
 import akka.remote.RemoteScope
+
+import crypto._
+import crypto.dsl._
+
 import rescala.default._
 import rescala.{default, _}
 import rescala.core.{CreationTicket, ReSerializable}
@@ -79,7 +83,13 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
   //val createdCallback: Option[() => Any] = () => println("STATUS:\t\tGraph has been created.")
   val eventCallback: Event => Any = {
     // Callback for `query1`:
-    case Event1(e1) => println(s"COMPLEX EVENT:\tEvent1($e1)")
+
+    case Event1(e1) => e1 match {
+      case enc: EncInt => println(enc)
+      case _ => println(s"COMPLEX EVENT:\tEvent1($e1)")
+    }
+
+
     //case Event3(Left(i1), Left(i2), Left(f)) => println(s"COMPLEX EVENT:\tEvent3($i1,$i2,$f)")
     //case Event3(Right(s), _, _)              => println(s"COMPLEX EVENT:\tEvent1($s)")
     // Callback for `query2`:
