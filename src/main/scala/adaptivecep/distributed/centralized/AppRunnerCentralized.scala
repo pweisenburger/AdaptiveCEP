@@ -127,8 +127,9 @@ object AppRunnerCentralized extends App {
 
   def isBoolean(s: Student) = true
 
-//  implicit lazy val keyRing = KeyRing.create
-
+  val keyRing = KeyRing.create
+  val interpret = new LocalInterpreter(keyRing)
+  
   val studentsQuery: Query1[Student] =
     stream[Student]("A").
       where(x => isBoolean(x), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
@@ -137,8 +138,8 @@ object AppRunnerCentralized extends App {
 
 //  implicit val pc = PrivacyContext(keyRing, interpret)
 
-  import EncryptionContext.keyRing
-  import EncryptionContext.interpret
+//  import EncryptionContext.keyRing
+//  import EncryptionContext.interpret
 
   val encQuery: Query1[EncInt] =
     stream[EncInt]("A").
