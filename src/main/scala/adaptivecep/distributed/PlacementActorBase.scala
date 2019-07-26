@@ -18,6 +18,8 @@ import akka.remote.RemoteScope
 
 import crypto._
 import crypto.dsl._
+import crypto.cipher._
+import crypto.dsl.Implicits._
 
 import rescala.default._
 import rescala.{default, _}
