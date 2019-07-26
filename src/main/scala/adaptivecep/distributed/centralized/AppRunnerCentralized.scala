@@ -127,9 +127,9 @@ object AppRunnerCentralized extends App {
     stream[EncIntWrapper]("A").
       where(x => x._isEven , frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
-  val q: Query2[Int,Int] =
+  val q: Query1[Int] =
     stream[Int,Int]("A")
-      .dropElem1()(frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+      .dropElem1(frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
 
   val address1 = Address("akka.tcp", "ClusterSystem", "40.115.4.25", 8000)
