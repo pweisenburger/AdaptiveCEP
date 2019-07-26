@@ -176,8 +176,9 @@ object AppRunnerCentralized extends App {
 //  val oneJson = EncIntWrapper( Common.encrypt(Comparable, keyRing)(BigInt(5)))
 //  val genFunction = (id:Integer) => Event2(oneJson,id)
 
-    val publisherAEnc: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( SomeFactory.getEncInt(id)) ) ).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+//    val publisherAEnc: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( SomeFactory.getEncInt(id)  ) ) ).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
 
+  val publisherAEnc: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( Common.encrypt(Comparable,keyRing )( BigInt(id) )  ) ) ).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
 
 
 //    val studentsPublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( SomeFactory.getStudent(id) ))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
