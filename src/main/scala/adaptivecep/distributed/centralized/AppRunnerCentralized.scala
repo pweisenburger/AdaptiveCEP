@@ -17,11 +17,16 @@ import crypto._
 import crypto.cipher._
 import crypto.dsl._
 import crypto.dsl.Implicits._
+import argonaut._
+
+import adaptivecep.privacy._
+
 
 //sealed trait Student extends Serializable
 //
 //case class Student1[A](id: A, name: String) extends Student {
 //}
+
 
 object AppRunnerCentralized extends App {
 
@@ -113,9 +118,16 @@ object AppRunnerCentralized extends App {
 //      where(x => isBoolean(x), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
   //
 
-  val encQuery: Query1[EncInt] =
-    stream[EncInt]("A").
-      where(x => interpret(isEven(x)), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+
+  implicit val pc = PrivacyContext(keyRing, interpret)
+
+
+
+  val encQuery: Query1[EncIntWrapper] =
+    stream[EncIntWrapper]("A").
+      where(x => x.isEven() , frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+
+
 
   val address1 = Address("akka.tcp", "ClusterSystem", "40.115.4.25", 8000)
   val address2 = Address("akka.tcp", "ClusterSystem", sys.env("HOST2"), 8000)
@@ -134,7 +146,7 @@ object AppRunnerCentralized extends App {
 
 //  def getStudent(id: Int): Student = Student1(id,"ahmad")
   //  val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
-  val publisherAEnc: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(Common.encrypt(Comparable, keyRing)(BigInt(id))))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+  val publisherAEnc: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( EncIntWrapper( Common.encrypt(Comparable, keyRing)(BigInt(id))))) ).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
 
 //    val studentsPublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( getStudent(id) ))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
 
