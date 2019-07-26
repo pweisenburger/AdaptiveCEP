@@ -28,14 +28,19 @@ sealed trait Student extends Serializable
 case class Student1[A](id: A, name: String) extends Student
 
 object EncryptionContext {
-    val keyRing = KeyRing.create
-    val interpret = new LocalInterpreter(keyRing)
+    val keyRing: KeyRing = KeyRing.create
+
 }
 
 
 object SomeFactory {
   def getStudent(id: Int): Student = Student1(id,"ahmad")
-  def getEncInt(id: Int) : EncInt =  Common.encrypt(Comparable,EncryptionContext.keyRing )( BigInt(id) )
+  def getEncInt(id: Int) : EncInt = {
+    import EncryptionContext.keyRing
+    Common.encrypt(Comparable,keyRing )( BigInt(id) )
+
+  }
+
 }
 
 
@@ -131,11 +136,12 @@ object AppRunnerCentralized extends App {
 
 //  implicit val pc = PrivacyContext(keyRing, interpret)
 
-
+  import EncryptionContext.keyRing
+  val interpret: LocalInterpreter = new LocalInterpreter(keyRing)
 
   val encQuery: Query1[EncInt] =
     stream[EncInt]("A").
-      where(x => EncryptionContext.interpret(isEven(x)) , frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+      where(x => interpret(isEven(x)) , frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 //
 //  val q: Query1[Int] =
 //    stream[Int,Int]("A")
