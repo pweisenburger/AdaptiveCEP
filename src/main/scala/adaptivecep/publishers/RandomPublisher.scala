@@ -17,7 +17,6 @@ case class RandomPublisher(createEventFromId: Integer => Event) extends Publishe
   var id = 0
   def publish(id: Int): Unit = {
     val event: Event = createEventFromId(id)
-    println("generated event " + event)
     source._1.offer(event)
   }
 
