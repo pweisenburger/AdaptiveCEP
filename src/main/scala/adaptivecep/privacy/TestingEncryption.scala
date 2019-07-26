@@ -60,13 +60,20 @@ object TestingEncryption extends App {
 
 
   override def main(args: Array[String]): Unit = {
+    val keyRing: KeyRing = KeyRing.create
+    val interpret = new LocalInterpreter(keyRing)
+
+    val x = Common.encrypt(Comparable, keyRing)(BigInt(1))
+    val y = Common.encrypt(Comparable, keyRing)(BigInt(2))
+
+    val res_f = interpret(isEven(x))
+    val res_t = interpret(isEven(y))
+    println(res_f)
+    println(res_t)
+
 //    def getStudent(id: Int):Student = Student1(id,"test")
-//    val keyRing: KeyRing = KeyRing.create
-//    val interpret = new LocalInterpreter(keyRing)
 //    implicit val pc = PrivacyContext(keyRing, interpret)
 //
-//    val x = Common.encrypt(Comparable, keyRing)(BigInt(1))
-//    val y = Common.encrypt(Comparable, keyRing)(BigInt(2))
 //
 //    val xJson = EncIntWrapper(x)
 //    val yJson = EncIntWrapper(y)
