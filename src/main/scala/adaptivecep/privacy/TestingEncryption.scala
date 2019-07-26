@@ -6,7 +6,10 @@ import crypto.dsl._
 import crypto.dsl.Implicits._
 import argonaut._
 import Argonaut._
-
+import adaptivecep.publishers.RandomPublisher
+import akka.actor.{ActorRef, ActorSystem, Address, Deploy, Props}
+import akka.remote.RemoteScope
+import akka.serialization._
 
 case class PrivacyContext(keyRing: KeyRing, interpreter: LocalInterpreter)
 
@@ -46,34 +49,50 @@ object EncIntWrapper {
 
 }
 
+//
+//sealed trait Student extends Serializable
+//
+//case class Student1[A](id: A, name: String) extends Student {
+//}
+
 
 object TestingEncryption extends App {
 
+
   override def main(args: Array[String]): Unit = {
-
-    val keyRing: KeyRing = KeyRing.create
-    val interpret = new LocalInterpreter(keyRing)
-    implicit val pc = PrivacyContext(keyRing, interpret)
-
-    val x = Common.encrypt(Comparable, keyRing)(BigInt(1))
-    val y = Common.encrypt(Comparable, keyRing)(BigInt(2))
-
-    val xJson = EncIntWrapper(x)
-    val yJson = EncIntWrapper(y)
-
-    val jwResult = xJson + yJson
-
-    //  val value1 = JsonWrapper.unapply(xJson).get
-    //  val value2 = JsonWrapper.unapply(yJson).get
-
-    //  val result = interpret(value1 + value2)
-
-    val result = EncIntWrapper.unapply(jwResult).get
-
-    val decRes = Common.decrypt(keyRing.priv)(result)
-
-    println(decRes)
-
+//    def getStudent(id: Int):Student = Student1(id,"test")
+//    val keyRing: KeyRing = KeyRing.create
+//    val interpret = new LocalInterpreter(keyRing)
+//    implicit val pc = PrivacyContext(keyRing, interpret)
+//
+//    val x = Common.encrypt(Comparable, keyRing)(BigInt(1))
+//    val y = Common.encrypt(Comparable, keyRing)(BigInt(2))
+//
+//    val xJson = EncIntWrapper(x)
+//    val yJson = EncIntWrapper(y)
+//
+//    val jwResult = xJson + yJson
+//
+//    //  val value1 = JsonWrapper.unapply(xJson).get
+//    //  val value2 = JsonWrapper.unapply(yJson).get
+//
+//    //  val result = interpret(value1 + value2)
+//
+//    val result = EncIntWrapper.unapply(jwResult).get
+//
+//    val decRes = Common.decrypt(keyRing.priv)(result)
+//
+//    println(decRes)
+//  val system = ActorSystem("snitch")
+//    def sample = getStudent(3)
+//
+//    val serialization = SerializationExtension(system)
+//    val serializer = serialization.findSerializerFor(sample)
+//    val bytes = serializer.toBinary(sample)
+//    val back = serializer.fromBinary(bytes, manifest = None)
+//    println(s">>>>>>> pre-serialize: ${sample}")
+//    println(s">>>>>>>  deserialized: ${back}")
+//    system.terminate
 
   }
 
