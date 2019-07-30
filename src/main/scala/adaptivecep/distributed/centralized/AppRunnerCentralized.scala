@@ -12,15 +12,12 @@ import akka.actor.{ActorRef, ActorSystem, Address, Deploy, Props}
 import akka.remote.RemoteScope
 import akka.stream._
 import com.typesafe.config.ConfigFactory
-
 import crypto._
 import crypto.cipher._
 import crypto.dsl._
 import crypto.dsl.Implicits._
 import argonaut._
-
 import adaptivecep.privacy._
-
 
 
 sealed trait Student
@@ -28,17 +25,18 @@ sealed trait Student
 case class Student1[A](id: A, name: String) extends Student
 
 object EncryptionContext {
-    val keyRing: KeyRing = KeyRing.create
-    val interpret: LocalInterpreter = new LocalInterpreter(keyRing)
+  val keyRing: KeyRing = KeyRing.create
+  val interpret: LocalInterpreter = new LocalInterpreter(keyRing)
 
 }
 
 
 object SomeFactory {
-  def getStudent(id: Int): Student = Student1(id,"ahmad")
-  def getEncInt(id: Int) : EncInt = {
+  def getStudent(id: Int): Student = Student1(id, "ahmad")
+
+  def getEncInt(id: Int): EncInt = {
     import EncryptionContext.keyRing
-    Common.encrypt(Comparable,keyRing )( BigInt(id) )
+    Common.encrypt(Comparable, keyRing)(BigInt(id))
 
   }
 
@@ -121,53 +119,24 @@ object AppRunnerCentralized extends App {
         /*latency < timespan(200.milliseconds) otherwise { (nodeData) => /*println(s"PROBLEM:\tEvents reach node `${nodeData.name}` too slowly!")*/ }*/)
 
 
-//  val simpleQuery: Query1[Int] =
-//    stream[Int]("A").
-//      where(x => x % 2 == 0, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+  //  val simpleQuery: Query1[Int] =
+  //    stream[Int]("A").
+  //      where(x => x % 2 == 0, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
   def isBoolean(s: Student) = true
-
-
-  val studentsQuery: Query1[Student] =
-    stream[Student]("A").
-      where(x => isBoolean(x), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
-
-
-
-//  implicit val pc = PrivacyContext(keyRing, interpret)
-//
-//  import EncryptionContext.keyRing
-//  import EncryptionContext.interpret
-
-
-//  val someSimpleQuery =
-//    stream[MayEncInt]("A").
-//      where ( x => x > 400)
-
-//  val q: Query1[Int] =
-//    stream[Int,Int]("A")
-//      .dropElem1(frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
-
-//  val q2: Query1[EncIntWrapper] =
-//    stream[EncIntWrapper,Int]("A")
-//      .dropElem2(frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
-
 
   val address1 = Address("akka.tcp", "ClusterSystem", "40.115.4.25", 8000)
   val address2 = Address("akka.tcp", "ClusterSystem", sys.env("HOST2"), 8000)
   val address3 = Address("akka.tcp", "ClusterSystem", sys.env("HOST3"), 8000)
   val address4 = Address("akka.tcp", "ClusterSystem", sys.env("HOST4"), 8000)
-//  val address5 = Address("akka.tcp", "ClusterSystem", sys.env("HOST5"), 8000)
-
+  //  val address5 = Address("akka.tcp", "ClusterSystem", sys.env("HOST5"), 8000)
 
 
   val host1: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address1))), "Host" + "1")
   val host2: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address2))), "Host" + "2")
   val host3: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address3))), "Host" + "3")
   val host4: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address4))), "Host" + "4")
-//  val host5: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address5))), "Host" + "5")
-
-
+  //  val host5: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address5))), "Host" + "5")
 
 
   val hosts: Set[ActorRef] = Set(host1, host2, host3, host4)
@@ -181,12 +150,12 @@ object AppRunnerCentralized extends App {
 
 
   //  val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event2(id,id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
-//  val publisherAEnc: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( SomeFactory.getEncInt(id)  ) ) ).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
-  val publisherAEnc: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( cryptoSvc.encryptInt(Comparable,id)  ) ) ).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+  //  val publisherAEnc: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( SomeFactory.getEncInt(id)  ) ) ).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+  val publisherAEnc: ActorRef = actorSystem.actorOf(Props(EncryptedPublisher( cryptoSvc, id => Event1(id) )).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
 
   val encQuery: Query1[EncInt] =
     stream[EncInt]("A").
-      where(x => interpret( isEven(x) ) , frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+      where(x => interpret(isEven(x)), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
   //val studentsPublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( SomeFactory.getStudent(id) ))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
 
@@ -196,7 +165,7 @@ object AppRunnerCentralized extends App {
   //  val publisherD: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(s"String($id)"))).withDeploy(Deploy(scope = RemoteScope(address4))), "D")
 
   val publishers: Map[String, ActorRef] = Map(
-//    "A" -> studentsPublisher
+    //    "A" -> studentsPublisher
     "A" -> publisherAEnc
     //    , "B" -> publisherB
     //    ,"C" -> publisherC
@@ -215,10 +184,9 @@ object AppRunnerCentralized extends App {
   Thread.sleep(5000)
 
 
-
   val placement: ActorRef = actorSystem.actorOf(Props(PlacementActorCentralized(actorSystem,
     encQuery,
-//    studentsQuery,
+    //    studentsQuery,
     publishers,
     publisherHosts,
     AverageFrequencyMonitorFactory(interval = 3000, logging = false),
