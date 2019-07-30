@@ -29,7 +29,7 @@ object TestingEncryption extends App {
 
     val cryptoActor: ActorRef = actorSystem.actorOf(Props[CryptoServiceActor].withDeploy(Deploy(scope = RemoteScope(address1))), "Crypto")
 
-    val cryptoSvc = CryptoServiceWrapper(cryptoActor)
+    val cryptoSvc = new CryptoServiceWrapper(cryptoActor)
     val interpret = new CEPRemoteInterpreter(cryptoActor)
 
     val oneEnc = cryptoSvc.encryptInt(Comparable, 1)

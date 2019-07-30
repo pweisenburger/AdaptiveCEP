@@ -144,8 +144,7 @@ object AppRunnerCentralized extends App {
   hosts.foreach(host => host ! Hosts(hosts))
 
   val cryptoActor: ActorRef = actorSystem.actorOf(Props[CryptoServiceActor].withDeploy(Deploy(scope = RemoteScope(address1))), "Crypto")
-
-  val cryptoSvc = CryptoServiceWrapper(cryptoActor)
+  val cryptoSvc = new CryptoServiceWrapper(cryptoActor)
   val interpret = new CEPRemoteInterpreter(cryptoActor)
 
 
