@@ -11,7 +11,7 @@ import crypto.dsl._
 import crypto.dsl.Implicits._
 import argonaut._
 import Argonaut._
-import adaptivecep.data.Events.{EncryptIntRequest, Event1}
+import adaptivecep.data.Events.{DecryptIntAndPrintRequest, EncryptIntRequest, Event1}
 import adaptivecep.distributed.centralized.AppRunnerCentralized.{actorSystem, address1}
 import adaptivecep.distributed.centralized.EncryptionContext.keyRing
 import adaptivecep.distributed.centralized.HostActorCentralized
@@ -79,7 +79,6 @@ object TestingEncryption extends App {
   override def main(args: Array[String]): Unit = {
 
 //    import scala.concurrent.ExecutionContext.Implicits.global
-    implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
     implicit val timeout = new Timeout(5 seconds)
 
     val file = new File("application.conf")
@@ -89,7 +88,7 @@ object TestingEncryption extends App {
     val address1 = Address("akka.tcp", "ClusterSystem", "40.115.4.25", 8000)
     val host1: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address1))), "Host" + "1")
 
-    val cryptoActor: ActorRef = actorSystem.actorOf(Props(CryptoServiceActor("test")).withDeploy(Deploy(scope = RemoteScope(address1))), "Crypto")
+    val cryptoActor: ActorRef = actorSystem.actorOf(Props[CryptoServiceActor].withDeploy(Deploy(scope = RemoteScope(address1))), "Crypto")
 
     val one = cryptoActor ? EncryptIntRequest(Comparable, 1)
     val two = cryptoActor ? EncryptIntRequest(Comparable, 2)
@@ -97,6 +96,8 @@ object TestingEncryption extends App {
     val oneEnc = Await.result(one, timeout.duration).asInstanceOf[EncInt]
     val twoEnc = Await.result(two, timeout.duration).asInstanceOf[EncInt]
 
+    cryptoActor ! DecryptIntAndPrintRequest(oneEnc)
+      cryptoActor ! DecryptIntAndPrintRequest(twoEnc)
 
   }
 

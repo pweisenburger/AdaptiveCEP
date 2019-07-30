@@ -14,8 +14,9 @@ import crypto.remote.{CryptoServiceImpl, CryptoServicePlus}
 
 import scala.concurrent.{Await, ExecutionContext}
 
-case class CryptoServiceActor (s: String) (implicit ec: ExecutionContext) extends Actor with ActorLogging with RequiresMessageQueue[BoundedMessageQueueSemantics]{
+class CryptoServiceActor extends Actor with ActorLogging with RequiresMessageQueue[BoundedMessageQueueSemantics]{
   val cluster: Cluster = Cluster(context.system)
+  implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
 
   val keyRing: KeyRing = KeyRing.create
   val cryptoService: CryptoServicePlus = new CryptoServiceImpl(keyRing)
