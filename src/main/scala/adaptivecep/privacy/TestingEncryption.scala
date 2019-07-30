@@ -89,7 +89,7 @@ object TestingEncryption extends App {
     val address1 = Address("akka.tcp", "ClusterSystem", "40.115.4.25", 8000)
     val host1: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address1))), "Host" + "1")
 
-    val cryptoActor: ActorRef = actorSystem.actorOf(Props[CryptoServiceActor].withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+    val cryptoActor: ActorRef = actorSystem.actorOf(Props(CryptoServiceActor("test")).withDeploy(Deploy(scope = RemoteScope(address1))), "Crypto")
 
     val one = cryptoActor ? EncryptIntRequest(Comparable, 1)
     val two = cryptoActor ? EncryptIntRequest(Comparable, 2)
