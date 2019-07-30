@@ -97,7 +97,14 @@ object TestingEncryption extends App {
     val twoEnc = Await.result(two, timeout.duration).asInstanceOf[EncInt]
 
     cryptoActor ! DecryptIntAndPrintRequest(oneEnc)
-      cryptoActor ! DecryptIntAndPrintRequest(twoEnc)
+    cryptoActor ! DecryptIntAndPrintRequest(twoEnc)
+
+    val interpreter = CEPRemoteInterpreter(cryptoActor)
+
+    val result = interpreter.interpret( oneEnc + twoEnc )
+
+      cryptoActor ! DecryptIntAndPrintRequest(result)
+
 
   }
 

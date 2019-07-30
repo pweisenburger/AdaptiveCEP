@@ -10,7 +10,7 @@ import crypto.dsl.{CryptoInterpreter, PureCryptoInterpreter}
 
 import scala.concurrent.{Await, Future}
 
-class CEPRemoteInterpreter(actor: ActorRef) extends PureCryptoInterpreter{
+case class CEPRemoteInterpreter(actor: ActorRef) extends PureCryptoInterpreter{
   /**
     * Interpret a program written in the monadic DSL and return the result
     */
