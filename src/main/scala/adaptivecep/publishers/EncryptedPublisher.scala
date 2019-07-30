@@ -12,7 +12,9 @@ import crypto.cipher._
 
 import scala.concurrent.duration.FiniteDuration
 
-case class EncryptedPublisher(cryptoSvc: CryptoServiceWrapper,createEventFromEncId: EncInt => Event)  extends Publisher  {
+case class EncryptedPublisher(cryptoActor: ActorRef,createEventFromEncId: EncInt => Event)  extends Publisher  {
+
+  val cryptoSvc = new CryptoServiceWrapper(cryptoActor)
 
   val publisherName: String = self.path.name
 

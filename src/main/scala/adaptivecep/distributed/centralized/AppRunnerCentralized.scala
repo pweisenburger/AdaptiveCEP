@@ -24,23 +24,23 @@ sealed trait Student
 
 case class Student1[A](id: A, name: String) extends Student
 
-object EncryptionContext {
-  val keyRing: KeyRing = KeyRing.create
-  val interpret: LocalInterpreter = new LocalInterpreter(keyRing)
-
-}
-
-
-object SomeFactory {
-  def getStudent(id: Int): Student = Student1(id, "ahmad")
-
-  def getEncInt(id: Int): EncInt = {
-    import EncryptionContext.keyRing
-    Common.encrypt(Comparable, keyRing)(BigInt(id))
-
-  }
-
-}
+//object EncryptionContext {
+//  val keyRing: KeyRing = KeyRing.create
+//  val interpret: LocalInterpreter = new LocalInterpreter(keyRing)
+//
+//}
+//
+//
+//object SomeFactory {
+//  def getStudent(id: Int): Student = Student1(id, "ahmad")
+//
+//  def getEncInt(id: Int): EncInt = {
+//    import EncryptionContext.keyRing
+//    Common.encrypt(Comparable, keyRing)(BigInt(id))
+//
+//  }
+//
+//}
 
 
 object AppRunnerCentralized extends App {
@@ -144,13 +144,13 @@ object AppRunnerCentralized extends App {
   hosts.foreach(host => host ! Hosts(hosts))
 
   val cryptoActor: ActorRef = actorSystem.actorOf(Props[CryptoServiceActor].withDeploy(Deploy(scope = RemoteScope(address1))), "Crypto")
-  val cryptoSvc = new CryptoServiceWrapper(cryptoActor)
+//  val cryptoSvc = new CryptoServiceWrapper(cryptoActor)
   val interpret = new CEPRemoteInterpreter(cryptoActor)
 
 
   //  val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event2(id,id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
   //  val publisherAEnc: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( SomeFactory.getEncInt(id)  ) ) ).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
-  val publisherAEnc: ActorRef = actorSystem.actorOf(Props(EncryptedPublisher( cryptoSvc, id => Event1(id) )).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+  val publisherAEnc: ActorRef = actorSystem.actorOf(Props(EncryptedPublisher( cryptoActor, id => Event1(id) )).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
 
   val encQuery: Query1[EncInt] =
     stream[EncInt]("A").
