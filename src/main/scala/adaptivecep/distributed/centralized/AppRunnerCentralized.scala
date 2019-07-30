@@ -147,14 +147,19 @@ object AppRunnerCentralized extends App {
 //  val cryptoSvc = new CryptoServiceWrapper(cryptoActor)
   val interpret = new CEPRemoteInterpreter(cryptoActor)
 
+  println("\n Crypto actor created \n")
+
 
   //  val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event2(id,id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
   //  val publisherAEnc: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( SomeFactory.getEncInt(id)  ) ) ).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
   val publisherAEnc: ActorRef = actorSystem.actorOf(Props(EncryptedPublisher( cryptoActor, id => Event1(id) )).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+  println("\n publisher actor created \n")
 
   val encQuery: Query1[EncInt] =
     stream[EncInt]("A").
       where(x => interpret(isEven(x)), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+
+  println("\n QUERY created \n")
 
   //val studentsPublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( SomeFactory.getStudent(id) ))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
 
@@ -182,6 +187,7 @@ object AppRunnerCentralized extends App {
 
   Thread.sleep(5000)
 
+  println("\n Publishes map created and hosts map\n")
 
   val placement: ActorRef = actorSystem.actorOf(Props(PlacementActorCentralized(actorSystem,
     encQuery,
@@ -191,6 +197,9 @@ object AppRunnerCentralized extends App {
     AverageFrequencyMonitorFactory(interval = 3000, logging = false),
     PathLatencyMonitorFactory(interval = 1000, logging = false),
     PathBandwidthMonitorFactory(interval = 1000, logging = false), NodeHost(host4), hosts, optimizeFor)), "Placement")
+
+
+  println("\n Calling Initialize query \n")
 
   placement ! InitializeQuery
   Thread.sleep(10000)
