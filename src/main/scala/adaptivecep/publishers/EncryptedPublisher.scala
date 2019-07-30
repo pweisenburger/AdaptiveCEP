@@ -3,6 +3,7 @@ package adaptivecep.publishers
 import java.util.concurrent.TimeUnit
 
 import adaptivecep.data.Events.Event
+import scala.concurrent.ExecutionContext.Implicits.global
 import adaptivecep.privacy.CryptoServiceWrapper
 import akka.actor.ActorRef
 import crypto._
