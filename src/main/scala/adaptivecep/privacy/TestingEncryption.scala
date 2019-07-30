@@ -30,16 +30,16 @@ object TestingEncryption extends App {
     val cryptoActor: ActorRef = actorSystem.actorOf(Props[CryptoServiceActor].withDeploy(Deploy(scope = RemoteScope(address1))), "Crypto")
 
     val cryptoSvc = CryptoServiceWrapper(cryptoActor)
-    val interpreter = CEPRemoteInterpreter(cryptoActor)
+    val interpret = new CEPRemoteInterpreter(cryptoActor)
 
     val oneEnc = cryptoSvc.encryptInt(Comparable, 1)
     val twoEnc = cryptoSvc.encryptInt(Comparable, 2)
 
     cryptoSvc.decryptAndPrint(oneEnc)
     cryptoSvc.decryptAndPrint(twoEnc)
-    val result = interpreter.interpret(oneEnc + twoEnc)
-    cryptoSvc.decryptAndPrint(result)
+    val result = interpret(oneEnc < twoEnc)
 
+    println(result)
 
   }
 
