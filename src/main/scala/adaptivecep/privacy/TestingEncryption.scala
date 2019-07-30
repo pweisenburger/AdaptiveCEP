@@ -1,15 +1,32 @@
 package adaptivecep.privacy
 
+import java.io.File
+
+import akka.pattern.ask
+
+import scala.concurrent.duration._
 import crypto._
 import crypto.cipher._
 import crypto.dsl._
 import crypto.dsl.Implicits._
 import argonaut._
 import Argonaut._
+import adaptivecep.data.Events.{EncryptIntRequest, Event1}
+import adaptivecep.distributed.centralized.AppRunnerCentralized.{actorSystem, address1}
+import adaptivecep.distributed.centralized.EncryptionContext.keyRing
+import adaptivecep.distributed.centralized.HostActorCentralized
+import adaptivecep.distributed.operator.Operator
+import adaptivecep.publishers.RandomPublisher
+import akka.actor.{ActorRef, ActorSystem, Address, Deploy, Props}
+import akka.remote.RemoteScope
+import akka.util.Timeout
+import com.typesafe.config.ConfigFactory
+
+import scala.concurrent.{Await, ExecutionContext}
 //import adaptivecep.publishers.RandomPublisher
 //import akka.actor.{ActorRef, ActorSystem, Address, Deploy, Props}
 //import akka.remote.RemoteScope
-//import akka.serialization._
+import akka.serialization._
 //
 //case class PrivacyContext(keyRing: KeyRing, interpreter: LocalInterpreter)
 //
@@ -60,51 +77,26 @@ object TestingEncryption extends App {
 
 
   override def main(args: Array[String]): Unit = {
-    val keyRing: KeyRing = KeyRing.create
-    val interpret = new LocalInterpreter(keyRing)
 
-    val x = Common.encrypt(Comparable, keyRing)(BigInt(1))
-    val y = Common.encrypt(Comparable, keyRing)(BigInt(2))
+//    import scala.concurrent.ExecutionContext.Implicits.global
+    implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
+    implicit val timeout = new Timeout(5 seconds)
 
-    val res_f = interpret(isEven(x))
+    val file = new File("application.conf")
+    val config = ConfigFactory.parseFile(file).withFallback(ConfigFactory.load()).resolve()
+    val actorSystem: ActorSystem = ActorSystem("ClusterSystem", config)
 
+    val address1 = Address("akka.tcp", "ClusterSystem", "40.115.4.25", 8000)
+    val host1: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address1))), "Host" + "1")
 
+    val cryptoActor: ActorRef = actorSystem.actorOf(Props[CryptoServiceActor].withDeploy(Deploy(scope = RemoteScope(address1))), "A")
 
-    val res_t = interpret(isEven(y))
+    val one = cryptoActor ? EncryptIntRequest(Comparable, 1)
+    val two = cryptoActor ? EncryptIntRequest(Comparable, 2)
 
+    val oneEnc = Await.result(one, timeout.duration).asInstanceOf[EncInt]
+    val twoEnc = Await.result(two, timeout.duration).asInstanceOf[EncInt]
 
-    println(res_f)
-    println(res_t)
-
-//    def getStudent(id: Int):Student = Student1(id,"test")
-//    implicit val pc = PrivacyContext(keyRing, interpret)
-//
-//
-//    val xJson = EncIntWrapper(x)
-//    val yJson = EncIntWrapper(y)
-//
-//    val jwResult = xJson + yJson
-//
-//    //  val value1 = JsonWrapper.unapply(xJson).get
-//    //  val value2 = JsonWrapper.unapply(yJson).get
-//
-//    //  val result = interpret(value1 + value2)
-//
-//    val result = EncIntWrapper.unapply(jwResult).get
-//
-//    val decRes = Common.decrypt(keyRing.priv)(result)
-//
-//    println(decRes)
-//  val system = ActorSystem("snitch")
-//    def sample = getStudent(3)
-//
-//    val serialization = SerializationExtension(system)
-//    val serializer = serialization.findSerializerFor(sample)
-//    val bytes = serializer.toBinary(sample)
-//    val back = serializer.fromBinary(bytes, manifest = None)
-//    println(s">>>>>>> pre-serialize: ${sample}")
-//    println(s">>>>>>>  deserialized: ${back}")
-//    system.terminate
 
   }
 

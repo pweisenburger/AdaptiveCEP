@@ -34,6 +34,8 @@ trait HostActorBase extends Actor with ActorLogging with RequiresMessageQueue[Bo
 
   var latencies: Map[NodeHost, scala.concurrent.duration.Duration] = Map.empty[NodeHost, scala.concurrent.duration.Duration]
 
+  /// Which actor is responsible for which node  NodeHost -> ActorRef
+  /// NodeHost from CEP System
   var hostToNodeMap: Map[NodeHost, ActorRef] = Map.empty[NodeHost, ActorRef]
   var throughputMeasureMap: Map[Host, Int] = Map.empty[Host, Int] withDefaultValue(0)
   var throughputStartMap: Map[Host, (Instant, Instant)] = Map.empty[Host, (Instant, Instant)] withDefaultValue((clock.instant(), clock.instant()))

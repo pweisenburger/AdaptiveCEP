@@ -35,6 +35,8 @@ import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.math.Ordering.Implicits.infixOrderingOps
 import scala.util.Random
 
+
+/// A placement Actor is an actor with CEP and QOS properties
 trait PlacementActorBase extends Actor with ActorLogging with System{
 
   val actorSystem: ActorSystem
@@ -142,6 +144,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
   override def receive: Receive = {
     case InitializeQuery =>
       log.info("Query initializing: {}", query)
+      ///TODO: why this call is not moved to Start?
       context.system.scheduler.schedule(
         initialDelay = FiniteDuration(0, TimeUnit.SECONDS),
         interval = FiniteDuration(interval, TimeUnit.MILLISECONDS),
@@ -474,7 +477,11 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
         latencyMonitorFactory,
         None,
         callback))
+
+    ///TODO: create an encrypting stream node if the data is sensitive
+
     val operator = ActiveOperator(props, Seq.empty[Operator])
+    ///TODO: place the encryption actor in the same host as the publisher host
     placement.set(placement.now + (operator -> publisherHosts(streamQuery.publisherName)))
     producers.set(producers.now.+(operator))
     operators.set(operators.now.+(operator))
@@ -670,8 +677,10 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
       consumers.set(consumers.now :+ operator)
       placement.set(placement.now + (operator -> here))
     } else {
+      ///FIXME: remove this else
       operator = ActiveOperator(props, Seq(childOperator))
     }
+
     operators.set(operators.now.+(operator))
     propsOperators += props -> operator
     parents += childOperator -> Some(propsOperators(props))

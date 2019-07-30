@@ -57,7 +57,9 @@ case class PlacementActorCentralized(actorSystem: ActorSystem,
     if(host != NoHost && operator.props != null){
       val moved = placement.now.contains(operator) && placement.now.apply(operator) != host
       if(moved) {
-        propsActors(operator.props) ! Kill
+        val actor = propsActors(operator.props)
+        log.info(s"killing operator ${actor.path}")
+        actor  ! Kill
       }
       if (moved || firstTimePlacement){
         val hostActor = host.asInstanceOf[NodeHost].actorRef

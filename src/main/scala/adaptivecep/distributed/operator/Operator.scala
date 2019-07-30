@@ -30,7 +30,7 @@ trait QoSSystem{
 
 trait System extends CEPSystem with QoSSystem
 
-
+///TODO: add a boolean to indicate trusted Hosts
 case class HostProps(latency: Seq[(Host, Duration)], bandwidth: Seq[(Host, Double)])
 
 

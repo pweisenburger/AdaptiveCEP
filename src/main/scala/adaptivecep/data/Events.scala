@@ -11,6 +11,9 @@ import akka.stream.SourceRef
 
 import scala.concurrent.duration.Duration
 
+import crypto._
+import crypto.cipher._
+import crypto.dsl._
 object Events {
 
   case object Created
@@ -20,8 +23,50 @@ object Events {
   sealed trait PlacementEvent extends ControlMessage
 
   case object RequirementsMet extends PlacementEvent
+
   case class RequirementsNotMet(requirements: Set[Requirement]) extends PlacementEvent
 
+
+  ///CrytpoService events
+  sealed trait CryptoControlMessages
+
+  case class InterpretRequest[A](p: CryptoM[A]) extends  CryptoControlMessages
+
+  case object PublicKeysRequest extends CryptoControlMessages
+
+  case class PublicKeysResponse(pubKeys: PubKeys) extends CryptoControlMessages
+
+  case class ToPaillierRequest(in: EncInt) extends CryptoControlMessages
+
+  case class ToElGamalRequest(in: EncInt) extends CryptoControlMessages
+
+  case class ToAesRequest(in: EncInt) extends CryptoControlMessages
+
+  case class ToOpeRequest(in: EncInt) extends CryptoControlMessages
+
+  case class ToAesStrRequest(in: EncString) extends CryptoControlMessages
+
+  case class ToOpeStrRequest(in: EncString) extends CryptoControlMessages
+
+  case class ConvertIntRequest(s: Scheme, in: EncInt) extends CryptoControlMessages
+
+  case class EncryptIntRequest(s: Scheme, in: Int) extends CryptoControlMessages
+
+  case class DecryptIntAndPrintRequest(v: EncInt) extends CryptoControlMessages
+
+  case class SubtractRequest(lhs: EncInt, rhs: EncInt) extends CryptoControlMessages
+
+  case class IntegerDivideRequest(lhs: EncInt, rhs: EncInt) extends CryptoControlMessages
+
+  case class IsEvenRequest(enc: EncInt) extends CryptoControlMessages
+
+  case class IsOddRequest(enc: EncInt) extends CryptoControlMessages
+
+  case class SplitStrRequest(enc: EncString, regex: String) extends CryptoControlMessages
+
+  case class FloorRatioRequest(ratio: EncRatio) extends CryptoControlMessages
+
+  case class CeilRatioRequest(ratio: EncRatio) extends CryptoControlMessages
 
   //Tentative Operator Phase
   case class CostMessage(latency: Duration, bandwidth: Double) extends PlacementEvent
@@ -31,6 +76,7 @@ object Events {
 
 
   case class BecomeActiveOperator(operator: ActiveOperator) extends PlacementEvent
+
   case class SetActiveOperator(operator: Props) extends PlacementEvent
 
   case class BecomeTentativeOperator(operator: TentativeOperator, parentNode: ActorRef,
@@ -41,35 +87,47 @@ object Events {
   case class ChooseTentativeOperators(tentativeParents: Set[NodeHost]) extends PlacementEvent
 
   case object OperatorRequest extends PlacementEvent
+
   case class OperatorResponse(active: Option[ActiveOperator], tentative: Option[TentativeOperator]) extends PlacementEvent
 
   case class ParentResponse(parent: Option[ActorRef]) extends PlacementEvent
 
   case class ChildHost1(actorRef: ActorRef) extends PlacementEvent
+
   case class ChildHost2(actorRef1: ActorRef, actorRef2: ActorRef) extends PlacementEvent
+
   case class ChildResponse(childNode: ActorRef) extends PlacementEvent
 
   case class ParentHost(parentHost: ActorRef, parentNode: ActorRef) extends PlacementEvent
-  case class FinishedChoosing(tentativeChildren: Set[NodeHost]) extends  PlacementEvent
+
+  case class FinishedChoosing(tentativeChildren: Set[NodeHost]) extends PlacementEvent
 
   case object Start extends PlacementEvent
 
   case class CostRequest(instant: Instant) extends PlacementEvent
+
   case class CostResponse(instant: Instant, bandwidth: Double) extends PlacementEvent
+
   case class LatencyCostResponse(instant: Instant) extends PlacementEvent
+
   case class BandwidthCostResponse(bandwidth: Double) extends PlacementEvent
 
   case class StateTransferMessage(optimumHosts: Seq[NodeHost], parentNode: ActorRef) extends PlacementEvent
+
   case object TentativeAcknowledgement extends PlacementEvent
+
   case object ContinueSearching extends PlacementEvent
 
   case object ResetTemperature extends PlacementEvent
+
   case class SetTemperature(temp: Double) extends PlacementEvent
 
   case object CentralizedCreated
 
   case class StartThroughPutMeasurement(instant: Instant) extends PlacementEvent
+
   case class EndThroughPutMeasurement(instant: Instant, actual: Int) extends PlacementEvent
+
   case object TestEvent extends PlacementEvent
 
   case object InitializeQuery extends CEPControlMessage
@@ -85,10 +143,13 @@ object Events {
   //case class Neighbors(neighbors: Set[ActorRef], allHosts: Set[ActorRef]) extends CEPControlMessage
 
   case class Controller(controller: ActorRef) extends CEPControlMessage
+
   case class OptimizeFor(optimizer: String) extends CEPControlMessage
 
   sealed trait Child extends CEPControlMessage
-  case class Child1(c1: ActorRef)               extends Child with CEPControlMessage
+
+  case class Child1(c1: ActorRef) extends Child with CEPControlMessage
+
   case class Child2(c1: ActorRef, c2: ActorRef) extends Child with CEPControlMessage
 
   case class ChildUpdate(old: ActorRef, newChild: ActorRef) extends CEPControlMessage
@@ -96,26 +157,39 @@ object Events {
   case class Parent(p1: ActorRef) extends CEPControlMessage
 
   case object KillMe extends CEPControlMessage
+
   case object Kill extends CEPControlMessage
 
   case class LatencyRequest(instant: Instant) extends CEPControlMessage
+
   case class LatencyResponse(instant: Instant) extends CEPControlMessage
+
   case class ThroughPutResponse(eventsPerSecond: Int) extends CEPControlMessage
+
   case object HostPropsRequest extends CEPControlMessage
+
   case class HostPropsResponse(cost: Map[Host, Cost]) extends CEPControlMessage
 
   case object DependenciesRequest extends CEPControlMessage
+
   case class DependenciesResponse(dependencies: Seq[ActorRef]) extends CEPControlMessage
 
   case object SourceRequest extends CEPControlMessage
+
   case class SourceResponse(source: SourceRef[Event]) extends CEPControlMessage
 
   sealed trait Event
-  case class Event1(e1: Any)                                              extends Event
-  case class Event2(e1: Any, e2: Any)                                     extends Event
-  case class Event3(e1: Any, e2: Any, e3: Any)                            extends Event
-  case class Event4(e1: Any, e2: Any, e3: Any, e4: Any)                   extends Event
-  case class Event5(e1: Any, e2: Any, e3: Any, e4: Any, e5: Any)          extends Event
+
+  case class Event1(e1: Any) extends Event
+
+  case class Event2(e1: Any, e2: Any) extends Event
+
+  case class Event3(e1: Any, e2: Any, e3: Any) extends Event
+
+  case class Event4(e1: Any, e2: Any, e3: Any, e4: Any) extends Event
+
+  case class Event5(e1: Any, e2: Any, e3: Any, e4: Any, e5: Any) extends Event
+
   case class Event6(e1: Any, e2: Any, e3: Any, e4: Any, e5: Any, e6: Any) extends Event
 
   //val errorMsg: String = "Panic! Control flow should never reach this point!"
