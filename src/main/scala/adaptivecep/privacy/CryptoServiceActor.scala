@@ -48,7 +48,7 @@ class CryptoServiceActor extends Actor with ActorLogging with RequiresMessageQue
 
     case DecryptIntAndPrintRequest(v) =>
       cryptoService.decryptAndPrint(v)
-    case _ => println("recieved unknown messages")
+    case m => println("recieved unknown messages " + m)
   }
 
 }

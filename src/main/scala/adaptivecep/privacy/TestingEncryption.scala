@@ -9,9 +9,10 @@ import crypto.cipher._
 import crypto.dsl.Implicits._
 import adaptivecep.data.Events._
 import adaptivecep.data.Queries.Query1
-import adaptivecep.distributed.centralized.HostActorCentralized
+import adaptivecep.distributed.centralized.{HostActorCentralized, PlacementActorCentralized}
 import adaptivecep.distributed.operator.{Host, NodeHost}
 import adaptivecep.dsl.Dsl._
+import adaptivecep.graph.qos.{AverageFrequencyMonitorFactory, PathBandwidthMonitorFactory, PathLatencyMonitorFactory}
 import akka.actor.{ActorRef, ActorSystem, Address, Deploy, Props}
 import akka.remote.RemoteScope
 import akka.util.Timeout
@@ -71,9 +72,28 @@ object TestingEncryption extends App {
       //    ,"D" -> NodeHost(host4)
     )
 
-    hosts.foreach(host => host ! OptimizeFor("bandwidth"))
+    val optimizeFor = "bandwidth"
+    hosts.foreach(host => host ! OptimizeFor(optimizeFor))
 
     Thread.sleep(5000)
+
+
+    val placement: ActorRef = actorSystem.actorOf(Props(PlacementActorCentralized(actorSystem,
+      encQuery,
+      //    studentsQuery,
+      publishers,
+      publisherHosts,
+      AverageFrequencyMonitorFactory(interval = 3000, logging = false),
+      PathLatencyMonitorFactory(interval = 1000, logging = false),
+      PathBandwidthMonitorFactory(interval = 1000, logging = false), NodeHost(host4), hosts, optimizeFor)), "Placement")
+
+
+    println("\n Calling Initialize query \n")
+
+    placement ! InitializeQuery
+    Thread.sleep(10000)
+    placement ! Start
+
 
     val oneEnc = cryptoSvc.encryptInt(Comparable, 1)
     val twoEnc = cryptoSvc.encryptInt(Comparable, 2)
