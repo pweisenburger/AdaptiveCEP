@@ -11,6 +11,7 @@ import crypto.cipher._
 import crypto.dsl.Implicits._
 import adaptivecep.data.Events._
 import adaptivecep.distributed.centralized.HostActorCentralized
+import adaptivecep.publishers
 import akka.actor.{ActorRef, ActorSystem, Address, Deploy, Props}
 import akka.remote.RemoteScope
 import akka.util.Timeout
@@ -30,7 +31,7 @@ object TestingEncryption extends App {
 
     val cryptoActor: ActorRef = actorSystem.actorOf(Props[CryptoServiceActor].withDeploy(Deploy(scope = RemoteScope(address1))), "Crypto")
 
-    val publisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher( id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+    val publisher: ActorRef = actorSystem.actorOf(Props(publishers.EncryptedPublisher ( cryptoActor, id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
 
 
     val cryptoSvc = new CryptoServiceWrapper(cryptoActor)
