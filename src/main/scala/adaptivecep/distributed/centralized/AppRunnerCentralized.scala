@@ -135,13 +135,10 @@ object AppRunnerCentralized extends App {
 
 
 //  implicit val pc = PrivacyContext(keyRing, interpret)
+//
+//  import EncryptionContext.keyRing
+//  import EncryptionContext.interpret
 
-  import EncryptionContext.keyRing
-  import EncryptionContext.interpret
-
-  val encQuery: Query1[EncInt] =
-    stream[EncInt]("A").
-      where(x => interpret( isEven(x) ) , frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
 //  val someSimpleQuery =
 //    stream[MayEncInt]("A").
@@ -170,14 +167,26 @@ object AppRunnerCentralized extends App {
   val host4: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address4))), "Host" + "4")
 //  val host5: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address5))), "Host" + "5")
 
+
+
+
   val hosts: Set[ActorRef] = Set(host1, host2, host3, host4)
 
   hosts.foreach(host => host ! Hosts(hosts))
 
-//  val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event2(id,id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
-//  val publisherAEnc: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( SomeFactory.getEncInt(id)  ) ) ).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
-  val publisherAEnc: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( Common.encrypt(Comparable,keyRing )( BigInt(id) )  ) ) ).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+  val cryptoActor: ActorRef = actorSystem.actorOf(Props[CryptoServiceActor].withDeploy(Deploy(scope = RemoteScope(address1))), "Crypto")
 
+  val cryptoSvc = CryptoServiceWrapper(cryptoActor)
+  val interpret = new CEPRemoteInterpreter(cryptoActor)
+
+
+  //  val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event2(id,id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+//  val publisherAEnc: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( SomeFactory.getEncInt(id)  ) ) ).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+  val publisherAEnc: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( cryptoSvc.encryptInt(Comparable,id)  ) ) ).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+
+  val encQuery: Query1[EncInt] =
+    stream[EncInt]("A").
+      where(x => interpret( isEven(x) ) , frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
   //val studentsPublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( SomeFactory.getStudent(id) ))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
 
