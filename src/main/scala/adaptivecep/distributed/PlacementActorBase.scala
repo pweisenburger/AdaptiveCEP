@@ -11,7 +11,7 @@ import adaptivecep.distributed.operator.Operator
 import adaptivecep.distributed.operator._
 import adaptivecep.graph.nodes._
 import adaptivecep.graph.qos.MonitorFactory
-import adaptivecep.privacy.PrivacyContext
+import adaptivecep.privacy.Privacy.PrivacyContext
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Address, Deploy, PoisonPill, Props}
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._

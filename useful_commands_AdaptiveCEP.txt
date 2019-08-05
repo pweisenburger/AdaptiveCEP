@@ -67,12 +67,13 @@ git reset --hard origin/temp
 
 
 export SBT_OPTS="-Xmx512M"
+#ADD THOSE TO the machine .bashrc file
 export GLOBALIP=$(curl ipecho.net/plain)
 export LOCALIP=$(hostname -I)
 
 export HOST1="40.115.4.25"
-export HOST2="137.117.212.86"
-export HOST3="137.117.243.174"
+export HOST2="13.81.124.16"
+export HOST3="13.95.212.251"
 export HOST4="13.80.151.52"
 
 export HOST5="3.16.206.96"
