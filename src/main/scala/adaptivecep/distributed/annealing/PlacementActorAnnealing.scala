@@ -5,6 +5,7 @@ import adaptivecep.data.Queries.{Operator => _, _}
 import adaptivecep.distributed._
 import adaptivecep.distributed.operator._
 import adaptivecep.graph.qos.MonitorFactory
+import adaptivecep.privacy.Privacy.PrivacyContext
 import akka.actor.{ActorRef, ActorSystem, Deploy}
 import akka.remote.RemoteScope
 import rescala.default._
@@ -19,7 +20,7 @@ case class PlacementActorAnnealing(actorSystem: ActorSystem,
                                    bandwidthMonitorFactory: MonitorFactory,
                                    here: NodeHost,
                                    testHosts: Set[ActorRef],
-                                   optimizeFor: String)
+                                   optimizeFor: String)(implicit val privacyContext: PrivacyContext)
   extends PlacementActorBase {
 
   def placeAll(map: Map[Operator, Host]): Unit ={

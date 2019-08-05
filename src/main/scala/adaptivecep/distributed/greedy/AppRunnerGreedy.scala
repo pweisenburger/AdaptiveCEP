@@ -8,6 +8,7 @@ import adaptivecep.distributed.centralized.AppRunnerCentralized.{actorSystem, ad
 import adaptivecep.distributed.operator.{ActiveOperator, Host, NodeHost, Operator}
 import adaptivecep.dsl.Dsl._
 import adaptivecep.graph.qos._
+import adaptivecep.privacy.Privacy.PrivacyContext
 import adaptivecep.publishers._
 import akka.actor.{ActorRef, ActorSystem, Address, Deploy, Props}
 import akka.remote.RemoteScope
@@ -15,6 +16,8 @@ import com.typesafe.config.ConfigFactory
 
 
 object AppRunnerGreedy extends App{
+
+  implicit val pc: PrivacyContext = adaptivecep.privacy.Privacy.NoPrivacyContext
 
   val file = new File("application.conf")
   val config = ConfigFactory.parseFile(file).withFallback(ConfigFactory.load()).resolve()
