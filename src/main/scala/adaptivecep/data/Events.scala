@@ -192,6 +192,9 @@ object Events {
 
   case class Event6(e1: Any, e2: Any, e3: Any, e4: Any, e5: Any, e6: Any) extends Event
 
+
+
+
   //val errorMsg: String = "Panic! Control flow should never reach this point!"
 
   def toFunEventAny[A](f: (A) => Any): Event => Any = {

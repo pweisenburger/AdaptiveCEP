@@ -30,12 +30,13 @@ trait QoSSystem{
 
 trait System extends CEPSystem with QoSSystem
 
-///TODO: add a boolean to indicate trusted Hosts
+///TODO: add a boolean to indicate trusted Hosts?
 case class HostProps(latency: Seq[(Host, Duration)], bandwidth: Seq[(Host, Double)])
-
-
-
 
 case class ActiveOperator(props: Props, dependencies: Seq[Operator]) extends Operator
 case class TentativeOperator(props: Props, dependencies: Seq[Operator]) extends Operator
+
+
 case class NodeHost(actorRef: ActorRef) extends Host
+///Decorator for NodeHost
+case class TrustedNodeHost(host: Host) extends Host

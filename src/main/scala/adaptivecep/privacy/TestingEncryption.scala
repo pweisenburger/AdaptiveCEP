@@ -10,9 +10,10 @@ import crypto.dsl.Implicits._
 import adaptivecep.data.Events._
 import adaptivecep.data.Queries.Query1
 import adaptivecep.distributed.centralized.{HostActorCentralized, PlacementActorCentralized}
-import adaptivecep.distributed.operator.{Host, NodeHost}
+import adaptivecep.distributed.operator.{Host, NodeHost, TrustedNodeHost}
 import adaptivecep.dsl.Dsl._
 import adaptivecep.graph.qos.{AverageFrequencyMonitorFactory, PathBandwidthMonitorFactory, PathLatencyMonitorFactory}
+import adaptivecep.privacy.Privacy.{PrivacyContext, PrivacyContextCentralized}
 import akka.actor.{ActorRef, ActorSystem, Address, Deploy, Props}
 import akka.remote.RemoteScope
 import akka.util.Timeout
@@ -23,6 +24,8 @@ import scala.concurrent.Await
 
 object TestingEncryption extends App {
   override def main(args: Array[String]): Unit = {
+
+
 
     val file = new File("application.conf")
     val config = ConfigFactory.parseFile(file).withFallback(ConfigFactory.load()).resolve()
@@ -44,7 +47,7 @@ object TestingEncryption extends App {
 
     hosts.foreach(host => host ! Hosts(hosts))
 
-    val cryptoActor: ActorRef = actorSystem.actorOf(Props[CryptoServiceActor].withDeploy(Deploy(scope = RemoteScope(address1))), "Crypto")
+    val cryptoActor: ActorRef = actorSystem.actorOf(Props[CryptoServiceActor].withDeploy(Deploy(scope = RemoteScope(address1))), "CryptoService")
 
     val publisher: ActorRef = actorSystem.actorOf(Props(EncryptedPublisher(cryptoActor, id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
 
@@ -58,7 +61,6 @@ object TestingEncryption extends App {
 
 
     val publishers: Map[String, ActorRef] = Map(
-      //    "A" -> studentsPublisher
       "A" -> publisher
       //    , "B" -> publisherB
       //    ,"C" -> publisherC
@@ -77,16 +79,21 @@ object TestingEncryption extends App {
 
     Thread.sleep(5000)
 
+    implicit val privacyCxt: PrivacyContext = PrivacyContextCentralized(
+      interpret,
+      cryptoSvc,
+      Set.empty[TrustedNodeHost],
+       Map("A" -> Privacy.High)
+    )
+
 
     val placement: ActorRef = actorSystem.actorOf(Props(PlacementActorCentralized(actorSystem,
       encQuery,
-      //    studentsQuery,
       publishers,
       publisherHosts,
       AverageFrequencyMonitorFactory(interval = 3000, logging = false),
       PathLatencyMonitorFactory(interval = 1000, logging = false),
       PathBandwidthMonitorFactory(interval = 1000, logging = false), NodeHost(host4), hosts, optimizeFor)), "Placement")
-
 
     println("\n Calling Initialize query \n")
 

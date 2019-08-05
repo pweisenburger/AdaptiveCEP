@@ -36,6 +36,9 @@ class CryptoServiceActor extends Actor with ActorLogging with RequiresMessageQue
     case MemberRemoved(member, previousStatus) =>
       log.info("Member is Removed: {} after {}",
         member.address, previousStatus)
+
+      /////////////////////////// Crypto Requests
+
     case InterpretRequest(p) =>
       val result = remoteInterpreter.interpret(p)
       val interpreted = Await.result(result,4 seconds)

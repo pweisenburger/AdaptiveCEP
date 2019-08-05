@@ -11,16 +11,15 @@ import adaptivecep.distributed.operator.Operator
 import adaptivecep.distributed.operator._
 import adaptivecep.graph.nodes._
 import adaptivecep.graph.qos.MonitorFactory
+import adaptivecep.privacy.PrivacyContext
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Address, Deploy, PoisonPill, Props}
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
 import akka.remote.RemoteScope
-
 import crypto._
 import crypto.dsl._
 import crypto.cipher._
 import crypto.dsl.Implicits._
-
 import rescala.default._
 import rescala.{default, _}
 import rescala.core.{CreationTicket, ReSerializable}
@@ -49,6 +48,9 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
   val here: NodeHost
   val testHosts: Set[ActorRef]
   val optimizeFor: String
+  implicit val privacyContext: PrivacyContext
+
+
 
   sealed trait Optimizing
   case object Maximizing extends Optimizing
