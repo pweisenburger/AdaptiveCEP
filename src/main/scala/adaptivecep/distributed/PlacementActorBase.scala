@@ -664,7 +664,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
                                    filterQuery: FilterQuery,
                                    consumer: Boolean) = {
 
-    privacyContext.doEncrypt = false
+
     val cond = filterQuery.cond
 
     val props = Props(
