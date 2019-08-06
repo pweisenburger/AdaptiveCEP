@@ -5,9 +5,8 @@ import akka.actor.ActorRef
 
 object Privacy {
 
-  sealed trait PrivacyContext {
-    var doEncrypt: Boolean
-  }
+  sealed trait PrivacyContext
+
 
   sealed trait DataSensitivity
 
@@ -39,17 +38,14 @@ object Privacy {
   case class PrivacyContextCentralized( interpret: CEPRemoteInterpreter,
                                         cryptoService: CryptoServiceWrapper,
                                         trustedHosts: Set[TrustedNodeHost],
-                                        sourcesSensitivity: Map[String, DataSensitivity],
-                                        doEncrypt: Boolean
-                                      ) extends PrivacyContext
+                                        sourcesSensitivity: Map[String, DataSensitivity]
+                                      ) extends PrivacyContext {}
 
   /**
     * this object will be used for old queries to ensure backwards compatibility
     *
     */
-  object NoPrivacyContext extends PrivacyContext {
-    var doEncrypt = false
-  }
+  object NoPrivacyContext extends PrivacyContext
 
 
 }

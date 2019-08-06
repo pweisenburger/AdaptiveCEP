@@ -77,8 +77,7 @@ object TestingEncryption extends App {
       interpret,
       cryptoSvc,
       Set(TrustedNodeHost(NodeHost(host1)), TrustedNodeHost(NodeHost(host4))),
-      Map("A" -> Privacy.High),
-      doEncrypt = false
+      Map("A" -> Privacy.High)
     )
 
 
