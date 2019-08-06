@@ -11,6 +11,18 @@ import akka.stream.scaladsl.{Sink, Source, StreamRefs}
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
+/**
+  *
+  * @param requirements
+  * @param cond
+  * @param publishers
+  * @param frequencyMonitorFactory
+  * @param latencyMonitorFactory
+  * @param createdCallback
+  * @param eventCallback
+  * @param privacyContext represents the privacy context of the current query
+  *                       whether we would like to encrypt or not
+  */
 case class FilterNode(
     requirements: Set[Requirement],
     cond: Event => Boolean,
@@ -19,6 +31,7 @@ case class FilterNode(
     latencyMonitorFactory: MonitorFactory,
     createdCallback: Option[() => Any],
     eventCallback: Option[(Event) => Any])
+//                     (implicit val privacyContext: PrivacyContext = NoPrivacyContext)
   extends UnaryNode {
 
   var parentReceived: Boolean = false

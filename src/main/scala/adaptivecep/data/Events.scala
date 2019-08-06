@@ -178,7 +178,7 @@ object Events {
 
   case class SourceResponse(source: SourceRef[Event]) extends CEPControlMessage
 
-  sealed trait Event
+  sealed trait Event extends Serializable
 
   case class Event1(e1: Any) extends Event
 

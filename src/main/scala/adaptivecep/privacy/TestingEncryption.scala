@@ -26,7 +26,6 @@ object TestingEncryption extends App {
   override def main(args: Array[String]): Unit = {
 
 
-
     val file = new File("application.conf")
     val config = ConfigFactory.parseFile(file).withFallback(ConfigFactory.load()).resolve()
     val actorSystem: ActorSystem = ActorSystem("ClusterSystem", config)
@@ -55,11 +54,6 @@ object TestingEncryption extends App {
     val interpret = new CEPRemoteInterpreter(cryptoActor)
 
 
-    val encQuery: Query1[EncInt] =
-      stream[EncInt]("A").
-        where(x => interpret(isEven(x)), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
-
-
     val publishers: Map[String, ActorRef] = Map(
       "A" -> publisher
       //    , "B" -> publisherB
@@ -82,9 +76,16 @@ object TestingEncryption extends App {
     implicit val privacyCxt: PrivacyContext = PrivacyContextCentralized(
       interpret,
       cryptoSvc,
-      Set.empty[TrustedNodeHost],
-       Map("A" -> Privacy.High)
+      Set(TrustedNodeHost(NodeHost(host1)), TrustedNodeHost(NodeHost(host4))),
+      Map("A" -> Privacy.High),
+      doEncrypt = false
     )
+
+
+    val encQuery: Query1[EncInt] =
+      stream[EncInt]("A").
+        where(x => interpret(isEven(x)), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+
 
 
     val placement: ActorRef = actorSystem.actorOf(Props(PlacementActorCentralized(actorSystem,
@@ -102,14 +103,12 @@ object TestingEncryption extends App {
     placement ! Start
 
 
-    val oneEnc = cryptoSvc.encryptInt(Comparable, 1)
-    val twoEnc = cryptoSvc.encryptInt(Comparable, 2)
-
-    cryptoSvc.decryptAndPrint(oneEnc)
-    cryptoSvc.decryptAndPrint(twoEnc)
-    val result = interpret(oneEnc < twoEnc)
-
-    println(result)
+//    val oneEnc = cryptoSvc.encryptInt(Comparable, 1)
+//    val twoEnc = cryptoSvc.encryptInt(Comparable, 2)
+//    cryptoSvc.decryptAndPrint(oneEnc)
+//    cryptoSvc.decryptAndPrint(twoEnc)
+//    val result = interpret(oneEnc < twoEnc)
+//    println(result)
 
   }
 

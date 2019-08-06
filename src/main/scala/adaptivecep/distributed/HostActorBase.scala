@@ -23,6 +23,9 @@ import rescala.default.{Evt, Signal, Var}
 
 trait HostActorBase extends Actor with ActorLogging with RequiresMessageQueue[BoundedMessageQueueSemantics]{
   //setup
+  /**
+    * A reference to Akka cluster system
+    */
   val cluster: Cluster = Cluster(context.system)
   val interval = 3
   var optimizeFor: String = "latency"
@@ -30,12 +33,18 @@ trait HostActorBase extends Actor with ActorLogging with RequiresMessageQueue[Bo
   val random: Random = new Random(clock.millis())
 
   var measurementTask: Cancellable = _
+
   var node: Option[ActorRef] = Some(self)
 
   var latencies: Map[NodeHost, scala.concurrent.duration.Duration] = Map.empty[NodeHost, scala.concurrent.duration.Duration]
 
   /// Which actor is responsible for which node  NodeHost -> ActorRef
   /// NodeHost from CEP System
+  /**
+    * Maps between the actors ref created when the query is initialized and the hosts
+    * they are supposed to be running on
+    * used only for centralized placement
+    */
   var hostToNodeMap: Map[NodeHost, ActorRef] = Map.empty[NodeHost, ActorRef]
   var throughputMeasureMap: Map[Host, Int] = Map.empty[Host, Int] withDefaultValue(0)
   var throughputStartMap: Map[Host, (Instant, Instant)] = Map.empty[Host, (Instant, Instant)] withDefaultValue((clock.instant(), clock.instant()))
@@ -48,6 +57,7 @@ trait HostActorBase extends Actor with ActorLogging with RequiresMessageQueue[Bo
 
   var simulatedCosts: Map[NodeHost, (ContinuousBoundedValue[Duration], ContinuousBoundedValue[Double])] =
     Map.empty[NodeHost, (ContinuousBoundedValue[Duration], ContinuousBoundedValue[Double])]
+
 
   var hostProps: HostPropsSimulator = HostPropsSimulator(simulatedCosts)
 

@@ -4,6 +4,7 @@ import adaptivecep.data.Events._
 import adaptivecep.data.Queries._
 import adaptivecep.graph.nodes.traits._
 import adaptivecep.graph.qos._
+import adaptivecep.privacy.Privacy.{NoPrivacyContext, PrivacyContext}
 import adaptivecep.publishers.Publisher._
 import akka.NotUsed
 import akka.actor.{ActorRef, PoisonPill}
@@ -21,6 +22,7 @@ case class StreamNode(
     latencyMonitorFactory: MonitorFactory,
     createdCallback: Option[() => Any],
     eventCallback: Option[(Event) => Any])
+//                     (implicit val privacyContext: PrivacyContext = NoPrivacyContext)
   extends LeafNode {
 
   val publisher: ActorRef = publishers(publisherName)

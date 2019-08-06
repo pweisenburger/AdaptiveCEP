@@ -16,10 +16,6 @@ import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Address, Deploy, 
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
 import akka.remote.RemoteScope
-import crypto._
-import crypto.dsl._
-import crypto.cipher._
-import crypto.dsl.Implicits._
 import rescala.default._
 import rescala.{default, _}
 import rescala.core.{CreationTicket, ReSerializable}
@@ -48,7 +44,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
   val here: NodeHost
   val testHosts: Set[ActorRef]
   val optimizeFor: String
-  implicit val privacyContext: PrivacyContext
+//  implicit val privacyContext: PrivacyContext
 
 
 
@@ -59,8 +55,18 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
   val cluster: Cluster = Cluster(context.system)
   val r: Random = scala.util.Random
 
+  /**
+    * a quick way to lookup an operator
+    */
   var propsOperators: Map[Props, Operator] = Map.empty[Props, Operator]
+  /**
+    * a quick way to lookup an actor by its props
+    */
   var propsActors: Map[Props, ActorRef] = Map.empty[Props, ActorRef]
+
+  /**
+    * the parent (following operator) for each operator in the current placement
+    */
   var parents: Map[Operator, Option[Operator]] = Map.empty[Operator, Option[Operator]] withDefaultValue None
 
   //var hostProps: Map[Host, HostProps] = Map.empty[Host, HostProps].withDefaultValue(HostProps(Seq.empty, Seq.empty))
@@ -83,17 +89,10 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
   val placement: Var[Map[Operator, Host]] = Var(Map.empty[Operator, Host] withDefaultValue NoHost)(ReSerializable.doNotSerialize, "placement")
   val demandViolated: default.Evt[Set[Requirement]] = Evt[Set[Requirement]]()
 
-
-
-
   //val createdCallback: Option[() => Any] = () => println("STATUS:\t\tGraph has been created.")
   val eventCallback: Event => Any = {
     // Callback for `query1`:
-
     case Event1(e1) => println(s"COMPLEX EVENT:\tEvent1($e1)")
-
-
-
     //case Event3(Left(i1), Left(i2), Left(f)) => println(s"COMPLEX EVENT:\tEvent3($i1,$i2,$f)")
     //case Event3(Right(s), _, _)              => println(s"COMPLEX EVENT:\tEvent1($s)")
     // Callback for `query2`:
@@ -105,7 +104,6 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
   def placeAll(map: Map[Operator, Host]): Unit
 
   def place(operator: Operator, host: Host): Unit
-
 
   val adaption: reactives.Event[Map[Operator, Host], ParRP] = demandViolated map { _ =>
     adapt(qos(), consumers(), placement()): Map[Operator, Host]
@@ -185,7 +183,6 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
       latency.get
     }
     else Duration(50, TimeUnit.DAYS)
-
   }
 
   private def bandwidthSelector(props: HostProps, host: Host): Double = {
@@ -197,8 +194,8 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
       bandwidth.get
     }
     else 0.0
-
   }
+
   private def latencyBandwidthSelector(props: HostProps, host: Host): (Duration, Double) = {
     if(host.equals(NoHost)){
       return (Duration.apply(50, TimeUnit.DAYS), 0.0)
@@ -223,7 +220,20 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
     else
       numerics.sum / numerics.size
 
-
+  /**
+    * Measures a property of type T (bandwidth or latency or both)
+    * @param selector a function that selects the desired property from HostProps
+    * @param optimizing Maximizing or minimizing this property
+    * @param zero what zero equals for this property
+    * @param qos what are the properties for each host
+    * @param consumers who are the consumers
+    * @param placement current placement
+    * @param merge
+    * @param avg
+    * @param host
+    * @tparam T
+    * @return
+    */
   private def measure[T: Ordering](
                                     selector: (HostProps, Host) => T,
                                     optimizing: Optimizing,
@@ -245,20 +255,35 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
     avg(consumers map measure)
   }
 
+  /**
+    *
+    * @param qos
+    * @param consumers
+    * @param placement
+    * @return
+    */
   def placeOptimizingLatency(qos: Map[Host, HostProps], consumers: Seq[Operator], placement: Map[Operator, Host]): Map[Operator, Host] = {
     val measureLatency = measure(latencySelector, Minimizing, Duration.Zero, qos, consumers, placement) { _ + _ } { avg } _
 
     val placementsA = placeOptimizingHeuristicA(latencySelector, Minimizing, qos, consumers, placement)
-    val durationA = measureLatency { placementsA(_) }
+    val durationA = measureLatency {
+      placementsA(_)
+    }
 
     val placementsB = placeOptimizingHeuristicB(latencySelector, Minimizing, qos, consumers, placement) { _ + _ }
     val durationB = measureLatency { placementsB(_) }
 
     //placeAll((if (durationA < durationB) placementsA else placementsB).toMap)
     (if (durationA < durationB) placementsA else placementsB).toMap
-
   }
 
+  /**
+    * chooses between 2 bandwidth optimizing placements
+    * @param qos
+    * @param consumers
+    * @param placement
+    * @return the new placement as a map between operator and host
+    */
   def placeOptimizingBandwidth(qos: Map[Host, HostProps], consumers: Seq[Operator], placement: Map[Operator, Host]): Map[Operator, Host] = {
     val measureBandwidth = measure(bandwidthSelector, Maximizing, Double.MaxValue, qos, consumers, placement) { math.min } { avg } _
 
@@ -304,6 +329,17 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
     //placeAll((if (bandwidthA > bandwidthB) placementsA else placementsB).toMap)
   }
 
+
+  /**
+    *
+    * @param selector one of BandwidthSelector, LatencySelector and BandwidthLatency Selector
+    * @param optimizing
+    * @param qos
+    * @param consumers
+    * @param placement
+    * @tparam T
+    * @return
+    */
   private def placeOptimizingHeuristicA[T: Ordering](selector: (HostProps, Host) => T,
                                                      optimizing: Optimizing,
                                                      qos: Map[Host, HostProps],
@@ -483,7 +519,6 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
     ///TODO: create an encrypting stream node if the data is sensitive
 
     val operator = ActiveOperator(props, Seq.empty[Operator])
-    ///TODO: place the encryption actor in the same host as the publisher host
     placement.set(placement.now + (operator -> publisherHosts(streamQuery.publisherName)))
     producers.set(producers.now.+(operator))
     operators.set(operators.now.+(operator))
@@ -610,6 +645,17 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
     props
   }
 
+  /**
+    *
+    * @param publishers
+    * @param frequencyMonitorFactory
+    * @param latencyMonitorFactory
+    * @param bandwidthMonitorFactory
+    * @param callback
+    * @param filterQuery
+    * @param consumer
+    * @return
+    */
   private def initializeFilterNode(publishers: Map[String, ActorRef],
                                    frequencyMonitorFactory: MonitorFactory,
                                    latencyMonitorFactory: MonitorFactory,
@@ -617,7 +663,10 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
                                    callback: Option[Event => Any],
                                    filterQuery: FilterQuery,
                                    consumer: Boolean) = {
+
+    privacyContext.doEncrypt = false
     val cond = filterQuery.cond
+
     val props = Props(
       FilterNode(
         filterQuery.requirements,
@@ -627,6 +676,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
         latencyMonitorFactory,
         None,
         callback))
+
     connectUnaryNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, filterQuery.sq, props, consumer)
     props
   }
@@ -661,6 +711,16 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
     props
   }
 
+  /**
+    *
+    * @param publishers
+    * @param frequencyMonitorFactory
+    * @param latencyMonitorFactory
+    * @param bandwidthMonitorFactory
+    * @param query
+    * @param props parent
+    * @param consumer
+    */
   private def connectUnaryNode(publishers: Map[String, ActorRef],
                                frequencyMonitorFactory: MonitorFactory,
                                latencyMonitorFactory: MonitorFactory,
