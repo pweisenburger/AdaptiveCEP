@@ -12,8 +12,12 @@ case class EventProcessorClient(address: String, port: Int) {
     if (remoteObject == null) {
       println("\n get the registry \n")
       val registry = LocateRegistry.getRegistry(address, port)
+      println(registry.toString)
       println("\n Looking up remote object \n")
       remoteObject = registry.lookup("eventProcessor").asInstanceOf[EventProcessorServiceImpl]
+      println("\n done \n")
+      println(remoteObject.toString)
+
     }
   }
 
