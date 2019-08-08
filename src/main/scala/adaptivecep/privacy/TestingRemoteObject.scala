@@ -16,7 +16,13 @@ object TestingRemoteObject {
 
       val client = EventProcessorClient("127.0.0.1", 60000)
       client.lookupObject()
-      client.processEvent( condE,input )
+      if(client.processEvent( condE,input )){
+        println("condition satisfied")
+      }else{
+        println("condition not satisfied")
+
+      }
+
     } catch {
       case e: Exception =>
         println(e.getMessage)
