@@ -5,13 +5,22 @@ import java.rmi.registry.{LocateRegistry, Registry}
 import adaptivecep.data.Events.Event
 
 case class EventProcessorClient(address: String, port: Int) {
-  def processEvent( cond: Event => Boolean, input: Event ) = {
-    val registry = LocateRegistry.getRegistry(address, port)
-    val remoteObjectPhe = registry.lookup("eventProcessor").asInstanceOf[EventProcessorServiceImpl]
-    remoteObjectPhe.applyPredicate(cond,input)
+
+  private var remoteObject: EventProcessorServiceImpl = null
+
+  def lookupObject(): Unit = {
+    if (remoteObject == null) {
+      println("\n Looking up remote object \n")
+      val registry = LocateRegistry.getRegistry(address, port)
+      remoteObject = registry.lookup("eventProcessor").asInstanceOf[EventProcessorServiceImpl]
+    }
   }
 
+  def processEvent(cond: Event => Boolean, input: Event): Boolean = {
+    println("\n Calling remote object \n")
+    remoteObject.applyPredicate(cond, input)
 
+  }
 
 
 }

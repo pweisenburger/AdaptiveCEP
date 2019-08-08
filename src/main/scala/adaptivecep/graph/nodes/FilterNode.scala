@@ -97,6 +97,9 @@ case class FilterNode(
           if (cond(event))
             emitEvent(event)
         case SgxPrivacyContext(trustedHosts, eventProcessorClient) =>
+
+          eventProcessorClient.lookupObject()
+
           if (eventProcessorClient.processEvent(cond, event))
             emitEvent(event)
       }
