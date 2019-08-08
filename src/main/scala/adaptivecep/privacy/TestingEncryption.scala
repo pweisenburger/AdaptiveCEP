@@ -13,7 +13,7 @@ import adaptivecep.distributed.centralized.{HostActorCentralized, PlacementActor
 import adaptivecep.distributed.operator.{Host, NodeHost, TrustedNodeHost}
 import adaptivecep.dsl.Dsl._
 import adaptivecep.graph.qos.{AverageFrequencyMonitorFactory, PathBandwidthMonitorFactory, PathLatencyMonitorFactory}
-import adaptivecep.privacy.Privacy.{PrivacyContext, PrivacyContextCentralized, SgxPrivacyContext}
+import adaptivecep.privacy.Privacy.{NoPrivacyContext, PrivacyContext, PrivacyContextCentralized, SgxPrivacyContext}
 import adaptivecep.privacy.sgx.EventProcessorClient
 import akka.actor.{ActorRef, ActorSystem, Address, Deploy, Props}
 import akka.remote.RemoteScope
@@ -84,10 +84,12 @@ object TestingEncryption extends App {
 
     val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
 
-    implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
-      Set(TrustedNodeHost(NodeHost(host1)), TrustedNodeHost(NodeHost(host4))),
-      eventProcessorClient
-    )
+//    implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
+//      Set(TrustedNodeHost(NodeHost(host1)), TrustedNodeHost(NodeHost(host4))),
+//      eventProcessorClient
+//    )
+
+    implicit val pc: PrivacyContext = NoPrivacyContext
 
     val normalQuery: Query1[Int] =
       stream[Int]("A").
