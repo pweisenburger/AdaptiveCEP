@@ -21,7 +21,7 @@ libraryDependencies ++= Seq(
 )
 
 //test in assembly := {}
-
-//mainClass in assembly := Some("adaptivecep.distributed.HostSystem")
-
-//assemblyJarName in assembly := "node.jar"
+//
+//mainClass in assembly := Some("adaptivecep.privacy.sgx.Server")
+//
+//assemblyJarName in assembly := "sgx-server.jar"

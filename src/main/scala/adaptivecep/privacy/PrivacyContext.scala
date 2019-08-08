@@ -1,11 +1,11 @@
 package adaptivecep.privacy
 
 import adaptivecep.distributed.operator.TrustedNodeHost
+import adaptivecep.privacy.sgx.EventProcessorClient
 import akka.actor.ActorRef
 
 object Privacy {
 
-  sealed trait PrivacyContext
 
 
   sealed trait DataSensitivity
@@ -17,6 +17,7 @@ object Privacy {
   object Low extends DataSensitivity
 
 
+  sealed trait PrivacyContext
 
   /**
     * this class will be used by a type that should encrypt the data as needed
@@ -39,7 +40,10 @@ object Privacy {
                                         cryptoService: CryptoServiceWrapper,
                                         trustedHosts: Set[TrustedNodeHost],
                                         sourcesSensitivity: Map[String, DataSensitivity]
-                                      ) extends PrivacyContext {}
+                                      ) extends PrivacyContext
+
+
+  case class SgxPrivacyContext(trustedHosts: Set[TrustedNodeHost], eventProcessorClient: EventProcessorClient) extends PrivacyContext
 
   /**
     * this object will be used for old queries to ensure backwards compatibility

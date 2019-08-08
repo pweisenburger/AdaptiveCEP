@@ -4,6 +4,7 @@ import adaptivecep.data.Events._
 import adaptivecep.data.Queries._
 import adaptivecep.graph.nodes.traits._
 import adaptivecep.graph.qos._
+import adaptivecep.privacy.Privacy._
 import akka.actor.{ActorRef, PoisonPill}
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Sink, Source, StreamRefs}
@@ -24,14 +25,14 @@ import scala.concurrent.duration.Duration
   *                       whether we would like to encrypt or not
   */
 case class FilterNode(
-    requirements: Set[Requirement],
-    cond: Event => Boolean,
-    publishers: Map[String, ActorRef],
-    frequencyMonitorFactory: MonitorFactory,
-    latencyMonitorFactory: MonitorFactory,
-    createdCallback: Option[() => Any],
-    eventCallback: Option[(Event) => Any])
-//                     (implicit val privacyContext: PrivacyContext = NoPrivacyContext)
+                       requirements: Set[Requirement],
+                       cond: Event => Boolean,
+                       publishers: Map[String, ActorRef],
+                       frequencyMonitorFactory: MonitorFactory,
+                       latencyMonitorFactory: MonitorFactory,
+                       createdCallback: Option[() => Any],
+                       eventCallback: Option[(Event) => Any])
+                     (implicit val privacyContext: PrivacyContext = NoPrivacyContext)
   extends UnaryNode {
 
   var parentReceived: Boolean = false
@@ -43,7 +44,7 @@ case class FilterNode(
     case Created if sender() == childNode =>
       childCreated = true
     case CentralizedCreated =>
-      if(!created){
+      if (!created) {
         created = true
         emitCreated()
       }
@@ -59,7 +60,7 @@ case class FilterNode(
       sender() ! SourceResponse(sourceRef)
     case SourceResponse(ref) =>
       val s = sender()
-      ref.getSource.to(Sink foreach(e =>{
+      ref.getSource.to(Sink foreach (e => {
         processEvent(e, s)
       })).run(materializer)
     case Child1(c) => {
@@ -88,9 +89,20 @@ case class FilterNode(
       frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
       latencyMonitor.onMessageReceive(unhandledMessage, nodeData)
   }
+
   def processEvent(event: Event, sender: ActorRef): Unit = {
     if (sender == childNode) {
-      if (cond(event)) emitEvent(event)
+      privacyContext match {
+        case NoPrivacyContext =>
+          if (cond(event))
+            emitEvent(event)
+        case SgxPrivacyContext(trustedHosts, eventProcessorClient) =>
+          if (eventProcessorClient.processEvent(cond, event))
+            emitEvent(event)
+      }
+
     }
+
+
   }
 }

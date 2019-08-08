@@ -11,7 +11,7 @@ import adaptivecep.distributed.operator.Operator
 import adaptivecep.distributed.operator._
 import adaptivecep.graph.nodes._
 import adaptivecep.graph.qos.MonitorFactory
-import adaptivecep.privacy.Privacy.PrivacyContext
+import adaptivecep.privacy.Privacy.{NoPrivacyContext, PrivacyContext}
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Address, Deploy, PoisonPill, Props}
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
@@ -44,7 +44,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
   val here: NodeHost
   val testHosts: Set[ActorRef]
   val optimizeFor: String
-//  implicit val privacyContext: PrivacyContext
+  implicit val privacyContext: PrivacyContext
 
 
 
@@ -663,7 +663,6 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
                                    callback: Option[Event => Any],
                                    filterQuery: FilterQuery,
                                    consumer: Boolean) = {
-
 
     val cond = filterQuery.cond
 
