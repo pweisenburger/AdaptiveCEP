@@ -1,7 +1,7 @@
 package adaptivecep.privacy
 
 import adaptivecep.distributed.operator.TrustedNodeHost
-import adaptivecep.privacy.sgx.EventProcessorClient
+import adaptivecep.privacy.sgx.{EventProcessorClient, EventProcessorServer}
 import akka.actor.ActorRef
 
 object Privacy {
@@ -43,7 +43,7 @@ object Privacy {
                                       ) extends PrivacyContext
 
 
-  case class SgxPrivacyContext(trustedHosts: Set[TrustedNodeHost], eventProcessorClient: EventProcessorClient) extends PrivacyContext
+  case class SgxPrivacyContext(trustedHosts: Set[TrustedNodeHost], remoteObject: EventProcessorServer) extends PrivacyContext
 
   /**
     * this object will be used for old queries to ensure backwards compatibility

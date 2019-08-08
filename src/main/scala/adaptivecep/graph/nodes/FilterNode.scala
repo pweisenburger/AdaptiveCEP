@@ -96,17 +96,29 @@ case class FilterNode(
         case NoPrivacyContext =>
           if (cond(event))
             emitEvent(event)
-        case SgxPrivacyContext(trustedHosts, eventProcessorClient) =>
+
+        case SgxPrivacyContext(trustedHosts, remoteObject) =>
           try {
-
-            eventProcessorClient.lookupObject()
-
-            if (eventProcessorClient.processEvent(cond, event))
+            if(remoteObject.applyPredicate(cond,event)){
               emitEvent(event)
+            }
+          }catch {
+            case e: Exception => println("some error")
           }
-          catch {
-            case e: Exception => println(s"\nERROR ${e.getMessage}\n")
-          }
+
+        case PrivacyContextCentralized(interpret, cryptoService, trustedHosts, sourcesSensitivity)
+          => println("unexpected context!")
+//        case SgxPrivacyContext(trustedHosts, eventProcessorClient) =>
+//          try {
+//
+//            eventProcessorClient.lookupObject()
+//
+//            if (eventProcessorClient.processEvent(cond, event))
+//              emitEvent(event)
+//          }
+//          catch {
+//            case e: Exception => println(s"\nERROR ${e.getMessage}\n")
+//          }
       }
 
     }

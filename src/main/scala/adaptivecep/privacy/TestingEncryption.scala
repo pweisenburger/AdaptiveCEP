@@ -83,10 +83,11 @@ object TestingEncryption extends App {
     //    )
 
     val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
+    val remoteObject = eventProcessorClient.lookupObject()
 
     implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
       Set(TrustedNodeHost(NodeHost(host1)), TrustedNodeHost(NodeHost(host4))),
-      eventProcessorClient
+      remoteObject
     )
 
 //    implicit val pc: PrivacyContext = NoPrivacyContext
