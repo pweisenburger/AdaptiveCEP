@@ -6,7 +6,7 @@ import adaptivecep.data.Events.Event
 
 case class EventProcessorClient(address: String, port: Int) {
 
-  private var remoteObject: EventProcessorServiceImpl = null
+  private var remoteObject: EventProcessorServer = null
 
   def lookupObject(): Unit = {
     if (remoteObject == null) {
@@ -14,7 +14,7 @@ case class EventProcessorClient(address: String, port: Int) {
       val registry = LocateRegistry.getRegistry(address, port)
       println(registry.toString)
       println("\n Looking up remote object \n")
-      remoteObject = registry.lookup("eventProcessor").asInstanceOf[EventProcessorServiceImpl]
+      remoteObject = registry.lookup("eventProcessor").asInstanceOf[EventProcessorServer]
       println("\n done \n")
       println(remoteObject.toString)
 
