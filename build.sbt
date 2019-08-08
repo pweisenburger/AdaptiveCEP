@@ -19,7 +19,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-cluster" % "2.5.22",
   "com.typesafe.akka" %% "akka-cluster-tools" % "2.5.22"
 )
-
+//
 //test in assembly := {}
 //
 //mainClass in assembly := Some("adaptivecep.privacy.sgx.Server")
