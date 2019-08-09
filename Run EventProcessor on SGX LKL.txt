@@ -1,0 +1,40 @@
+#Start the tap device
+
+sudo ip tuntap add dev sgxlkl_tap0 mode tap user `whoami`
+sudo ip link set dev sgxlkl_tap0 up
+sudo ip addr add dev sgxlkl_tap0 10.0.1.254/24
+
+
+
+# Enable packet forwarding
+sudo sysctl -w net.ipv4.ip_forward=1
+# Forward traffic to enclave attestation endpoint
+sudo iptables -t nat -I PREROUTING -p tcp -i eth0 --dport 10000:60000 -j DNAT --to-destination 10.0.1.1
+# Forward traffic to enclave Wireguard endpoint
+sudo iptables -t nat -I PREROUTING -p udp -i eth0 --dport 10000:60000 -j DNAT --to-destination 10.0.1.1
+
+# Allow forwarding to/from TAP
+sudo iptables -I FORWARD -m state -d 10.0.1.0/24 --state NEW,RELATED,ESTABLISHED -j ACCEPT
+sudo iptables -I FORWARD -m state -s 10.0.1.0/24 --state NEW,RELATED,ESTABLISHED -j ACCEPT
+
+
+sudo iptables -t nat -I PREROUTING -p tcp -d `hostname -i` --dport 10000:60000 -j DNAT --to-destination 10.0.1.1
+
+# If enclave needs establish new connections to external hosts, masquerade
+# outgoing traffic from enclave
+sudo iptables -t nat -A POSTROUTING -s 10.0.1.0/24 ! -d 10.0.1.0/24 -j MASQUERADE
+
+
+
+
+#RUN
+
+sudo SGXLKL_TAP=sgxlkl_tap0 SGXLKL_HEAP=500M sgx-lkl-java ./sgxlkl-java-fs.img -jar app/sgx-server.jar app/test.policy 52.157.152.197 60000
+
+
+
+
+# DELETE device
+sudo ip tuntap del dev sgxlkl_tap0 mode tap
+
+

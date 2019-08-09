@@ -1,10 +1,11 @@
 package adaptivecep.privacy.sgx
 
-import java.rmi.registry.LocateRegistry
+import java.rmi.registry.{LocateRegistry, Registry}
 import java.rmi.server.UnicastRemoteObject
 
 object Server {
-
+  var registry: Registry = null
+//  val lock: Object = new Object
   def main(args: Array[String]): Unit = {
 
     try {
@@ -42,17 +43,20 @@ object Server {
         System.setSecurityManager(new SecurityManager)
 
       val name: String = "eventProcessor"
+//
+//      def bindObject[A <: java.rmi.Remote](name: String, myRemoteObj: A): Unit = {
+//
+//      }
 
-      def bindObject[A <: java.rmi.Remote](name: String, myRemoteObj: A): Unit = {
-        val stub = UnicastRemoteObject.exportObject(myRemoteObj, 0).asInstanceOf[A]
-        val registry = LocateRegistry.createRegistry(port)
-        registry.rebind(name, stub)
-      }
+      val myRemoteObj = new EventProcessorServiceImpl
+      val stub = UnicastRemoteObject.exportObject(myRemoteObj, 0).asInstanceOf[EventProcessorServer]
+      registry = LocateRegistry.createRegistry(port)
+      registry.rebind(name, stub)
 
-      bindObject(name, new EventProcessorServiceImpl)
+//      bindObject(name, new EventProcessorServiceImpl)
 
       println("Server ready.. listening on port " + port)
-
+//      lock.wait()
     } catch {
       case e: java.rmi.server.ExportException =>
         serverAlreadyRunningWarning()
