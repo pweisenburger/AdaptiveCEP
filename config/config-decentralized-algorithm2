@@ -1,5 +1,5 @@
 # network size
-SIZE 50
+SIZE 300
 
 # parameters of periodic execution
 CYCLES 1000
@@ -10,7 +10,7 @@ MAXDELAY 0
 # drop is a probability, 0<=DROP<=1
 DROP 0
 
-random.seed 1234567890
+random.seed 123456789
 network.size SIZE
 simulation.endtime CYCLE * CYCLES
 #simulation.logtime CYCLE
@@ -23,7 +23,7 @@ protocol.cep.linkable link
 #step is to specify how long is a cycle
 protocol.cep.step CYCLE
 protocol.cep.transport tr
-protocol.cep.adaptiveLatency true
+protocol.cep.adaptiveLatency false
 protocol.cep.adaptiveBandwidth true
 
 protocol.urt peersim.transport.UniformRandomTransport
@@ -37,7 +37,7 @@ protocol.tr.drop DROP
 ################### initialization ======================
 include.init rndlink sch ani
 init.rndlink peersim.dynamics.WireKOut
-init.rndlink.k 13
+init.rndlink.k 11
 init.rndlink.protocol link
 
 init.sch peersim.edsim.CDScheduler

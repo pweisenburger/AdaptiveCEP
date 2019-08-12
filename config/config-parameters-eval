@@ -1,0 +1,45 @@
+Graph depth:
+Querie(s): queryDepth4-7
+Size: 50
+init.rndlnk.k: 11
+fast dynamics (single advance)
+
+For Comparison: 
+Query: queryDepth7
+slow dynamics (the loop)
+
+-------------------------------
+
+Neighbor Count:
+Querie(s): query1
+Size: 50
+init.rndlnk.k: 6,8,10,11
+fast dynamics
+
+For Comparison:
+init.rndlnk.k: 6
+slow dynamics
+
+------------------------------
+
+Sources:
+Querie(s): sourcesQuery3-6
+Size: 50
+init.rndlnk.k: 11
+fast dynamics
+
+For Comparison:
+Query: sourcesQuery6
+slow dynamics
+
+-----------------------------
+
+Neighbor Sharing:
+Querie(s): queryDepth7
+Size: 50, 100, 150, 300
+init.rndlnk.k : 11
+fast dynamics
+
+For Comparison:
+Size: 300
+slow dynamics

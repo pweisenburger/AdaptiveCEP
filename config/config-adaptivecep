@@ -50,6 +50,6 @@ init.ani.protocol cep
 control.0 peersim.centralized.AdaptiveObserver
 control.0.protocol cep
 control.0.transportprotocol urt
-control.0.adaptiveLatency true
+control.0.adaptiveLatency false
 control.0.adaptiveBandwidth true
 #control.0.step CYCLE

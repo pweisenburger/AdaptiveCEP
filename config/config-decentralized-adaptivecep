@@ -23,7 +23,7 @@ protocol.cep.linkable link
 #step is to specify how long is a cycle
 protocol.cep.step CYCLE
 protocol.cep.transport tr
-protocol.cep.adaptiveLatency true
+protocol.cep.adaptiveLatency false
 protocol.cep.adaptiveBandwidth true
 
 protocol.urt peersim.transport.UniformRandomTransport

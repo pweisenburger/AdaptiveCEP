@@ -107,7 +107,12 @@ public class AdaptiveObserver implements Control {
                     System.out.println("static: " + latency.intValue() + ";" + bandwidth.intValue());
                 }
             }
-            pro.advance();
+            //pro.advance();
+            if(CommonState.getTime()%8.0 ==0){
+                for (int j = 0; j < 3; ++j) {
+                    pro.advance();
+                }
+            }
         }
         return false;
     }

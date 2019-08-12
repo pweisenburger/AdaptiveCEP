@@ -95,9 +95,15 @@ public class AdaptiveCepProtocol extends StaticValuesHolder implements EDProtoco
                 }
             }
         }
-        for (int j = 0; j < 2; ++j) {
+        /*for (int j = 0; j < 2; ++j) {
             cepProtocol.advance();
+        }*/
+        if(CommonState.getTime()%8.0 ==0){
+            for (int j = 0; j < 3; ++j) {
+                cepProtocol.advance();
+            }
         }
+        //cepProtocol.advance();
     }
 
     @Override
