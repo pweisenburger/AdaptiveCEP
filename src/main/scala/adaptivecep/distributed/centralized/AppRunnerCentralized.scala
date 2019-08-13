@@ -16,7 +16,7 @@ import com.typesafe.config.ConfigFactory
 
 object AppRunnerCentralized extends App {
 
-  val file = new File("application.conf")
+  val file = new File("applicationlocal.conf")
   val config = ConfigFactory.parseFile(file).withFallback(ConfigFactory.load()).resolve()
   var producers: Seq[Operator] = Seq.empty[Operator]
   var optimizeFor: String = "bandwidth"
@@ -89,8 +89,11 @@ object AppRunnerCentralized extends App {
       .dropElem1(frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/ }
         /*latency < timespan(200.milliseconds) otherwise { (nodeData) => /*println(s"PROBLEM:\tEvents reach node `${nodeData.name}` too slowly!")*/ }*/)
 
+  val query6: Query1[Int] =
+    stream[Int, Int]("A").dropElem1()
 
 
+  /*
   val address1 = Address("akka.tcp", "ClusterSystem", "18.219.222.126", 8000)
   val address2 = Address("akka.tcp", "ClusterSystem", sys.env("HOST2"), 8000)
   val address3 = Address("akka.tcp", "ClusterSystem", sys.env("HOST3"), 8000)
@@ -111,6 +114,12 @@ object AppRunnerCentralized extends App {
   val address18 = Address("akka.tcp", "ClusterSystem", sys.env("HOST18"), 8000)
   val address19 = Address("akka.tcp", "ClusterSystem", sys.env("HOST19"), 8000)
   val address20 = Address("akka.tcp", "ClusterSystem", sys.env("HOST20"), 8000)
+*/
+  val address1 = Address("akka.tcp", "ClusterSystem", "127.0.0.1", 2551)
+  val address2 = Address("akka.tcp", "ClusterSystem", "127.0.0.1", 2552)
+  val address3 = Address("akka.tcp", "ClusterSystem", "127.0.0.1", 2553)
+  val address4 = Address("akka.tcp", "ClusterSystem", "127.0.0.1", 2554)
+  val address5 = Address("akka.tcp", "ClusterSystem", "127.0.0.1", 2555)
 
   //LOCAL Setup
   /*
@@ -132,7 +141,7 @@ object AppRunnerCentralized extends App {
   val host3: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address3))), "Host" + "3")
   val host4: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address4))), "Host" + "4")
   val host5: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address5))), "Host" + "5")
-  val host6: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address6))), "Host" + "6")
+  /*val host6: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address6))), "Host" + "6")
   val host7: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address7))), "Host" + "7")
   val host8: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address8))), "Host" + "8")
   val host9: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address9))), "Host" + "9")
@@ -146,15 +155,17 @@ object AppRunnerCentralized extends App {
   val host17: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address17))), "Host" + "17")
   val host18: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address18))), "Host" + "18")
   val host19: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address19))), "Host" + "19")
-  val host20: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address20))), "Host" + "20")
+  val host20: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address20))), "Host" + "20")*/
 
-  val hosts: Set[ActorRef] = Set(host1, host2, host3, host4, host5, host6, host7, host8, host9, host10, host11,
-    host12, host13, host14, host15, host16, host17, host18, host19, host20)
+  val hosts: Set[ActorRef] = Set(host1, host2, host3, host4, host5)
+
+  //val hosts: Set[ActorRef] = Set(host1, host2, host3, host4, host5, host6, host7, host8, host9, host10, host11,
+  //  host12, host13, host14, host15, host16, host17, host18, host19, host20)
 
   hosts.foreach(host => host ! Hosts(hosts))
 
 
-  val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event4(id,id,id,id))).withDeploy(Deploy(scope = RemoteScope(address1))),             "A")
+  val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event2(id,id))).withDeploy(Deploy(scope = RemoteScope(address1))),          "A")
   val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event4(id * 2,id * 2,id * 2,id * 2))).withDeploy(Deploy(scope = RemoteScope(address2))),         "B")
   val publisherC: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id.toFloat))).withDeploy(Deploy(scope = RemoteScope(address3))),     "C")
   val publisherD: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(s"String($id)"))).withDeploy(Deploy(scope = RemoteScope(address4))), "D")
@@ -182,11 +193,11 @@ object AppRunnerCentralized extends App {
   Thread.sleep(5000)
 
   val placement: ActorRef = actorSystem.actorOf(Props(PlacementActorCentralized(actorSystem,
-    query5,
+    query6,
     publishers, publisherHosts,
     AverageFrequencyMonitorFactory(interval = 3000, logging = false),
     PathLatencyMonitorFactory(interval =  1000, logging = false),
-    PathBandwidthMonitorFactory(interval = 1000, logging = false),NodeHost(host20), hosts, optimizeFor)), "Placement")
+    PathBandwidthMonitorFactory(interval = 1000, logging = false),NodeHost(host5), hosts, optimizeFor)), "Placement")
 
   placement ! InitializeQuery
   Thread.sleep(10000)
