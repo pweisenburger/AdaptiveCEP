@@ -12,6 +12,7 @@ import adaptivecep.distributed.operator._
 import adaptivecep.graph.nodes._
 import adaptivecep.graph.qos.MonitorFactory
 import adaptivecep.privacy.Privacy._
+import adaptivecep.privacy.encryption.CryptoAES
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Address, Deploy, PoisonPill, Props}
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
@@ -21,6 +22,8 @@ import rescala.{default, _}
 import rescala.core.{CreationTicket, ReSerializable}
 import rescala.default.{Evt, Signal, Var}
 import helper._
+import javax.crypto.SecretKeyFactory
+import javax.crypto.spec.{IvParameterSpec, PBEKeySpec, SecretKeySpec}
 import rescala.parrp.ParRP
 
 import scala.annotation.tailrec
@@ -104,6 +107,16 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
     // This is necessary to avoid warnings about non-exhaustive `match`:
     case _                             => println("what the hell")
   }
+
+  val initVector = "ABCDEFGHIJKLMNOP"
+  val iv = new IvParameterSpec(initVector.getBytes("UTF-8"))
+  val secret = "mysecret"
+  val spec = new PBEKeySpec(secret.toCharArray, "1234".getBytes(), 65536, 128)
+  val factory: SecretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1")
+  val key: Array[Byte] = factory.generateSecret(spec).getEncoded
+  val skeySpec = new SecretKeySpec(key, "AES")
+  val encryption = CryptoAES(skeySpec, iv)
+
 
 
   private def getDecryptedEvent(e: EncEvent): Event = {
