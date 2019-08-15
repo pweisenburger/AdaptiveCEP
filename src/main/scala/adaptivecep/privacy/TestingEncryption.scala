@@ -87,18 +87,23 @@ object TestingEncryption extends App {
     val remoteObject = eventProcessorClient.lookupObject()
 
     def encryptInt(value: Any, crypto: Encryption): Any = {
-      case e: Int =>
-        val biValue = BigInt(e)
-        crypto.encrypt(biValue.toByteArray)
-      case _ => sys.error("unexpected input type")
+      value match {
+        case e: Int =>
+          val biValue = BigInt(e)
+          crypto.encrypt(biValue.toByteArray)
+        case _ => sys.error("unexpected input type")
+      }
     }
 
     def decryptInt(value: Any, crypto: Encryption): Any = {
-      case e: Array[Byte] =>
-        val result = crypto.decrypt(e)
-        val biVal = BigInt(result)
-        biVal.toInt
-      case _ => sys.error("unexpected type")
+      value match {
+        case e: Array[Byte] =>
+          val result = crypto.decrypt(e)
+          val biVal = BigInt(result)
+          biVal.toInt
+        case _ => sys.error("unexpected type")
+      }
+
     }
 
     val publisherATransformer = EncDecTransformer(encryptInt,decryptInt)
