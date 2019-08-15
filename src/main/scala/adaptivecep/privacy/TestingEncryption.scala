@@ -13,7 +13,8 @@ import adaptivecep.distributed.centralized.{HostActorCentralized, PlacementActor
 import adaptivecep.distributed.operator.{Host, NodeHost, TrustedNodeHost}
 import adaptivecep.dsl.Dsl._
 import adaptivecep.graph.qos.{AverageFrequencyMonitorFactory, PathBandwidthMonitorFactory, PathLatencyMonitorFactory}
-import adaptivecep.privacy.Privacy.{NoPrivacyContext, PrivacyContext, PrivacyContextCentralized, SgxPrivacyContext}
+import adaptivecep.privacy.Privacy._
+import adaptivecep.privacy.encryption.{CryptoAES, Encryption}
 import adaptivecep.privacy.sgx.EventProcessorClient
 import akka.actor.{ActorRef, ActorSystem, Address, Deploy, Props}
 import akka.remote.RemoteScope
@@ -85,20 +86,41 @@ object TestingEncryption extends App {
     val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
     val remoteObject = eventProcessorClient.lookupObject()
 
+    def encryptInt(value: Any, crypto: Encryption): Any = {
+      case e: Int =>
+        val biValue = BigInt(e)
+        crypto.encrypt(biValue.toByteArray)
+      case _ => sys.error("unexpected input type")
+    }
+
+    def decryptInt(value: Any, crypto: Encryption): Any = {
+      case e: Array[Byte] =>
+        val result = crypto.decrypt(e)
+        val biVal = BigInt(result)
+        biVal.toInt
+      case _ => sys.error("unexpected type")
+    }
+
+    val publisherATransformer = EncDecTransformer(encryptInt,decryptInt)
+
+
     implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
       Set(TrustedNodeHost(NodeHost(host1)), TrustedNodeHost(NodeHost(host4))),
-      remoteObject
+      remoteObject,
+      Map("A" -> Event1Rule(publisherATransformer))
     )
 
-//    implicit val pc: PrivacyContext = NoPrivacyContext
+
+
+    //    implicit val pc: PrivacyContext = NoPrivacyContext
 
     val normalQuery: Query1[Int] =
       stream[Int]("A").
         where(x => x > 1000, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
-
-    //    val encQuery: Query1[EncInt] =
-    //      stream[EncInt]("A").
-    //        where(x => interpret(isEven(x)), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+//
+//        val encQuery: Query1[EncInt] =
+//          stream[EncInt]("A").
+//            where(x => interpret(isEven(x)), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
     val placement: ActorRef = actorSystem.actorOf(Props(PlacementActorCentralized(actorSystem,
       //      encQuery,

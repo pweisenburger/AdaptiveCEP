@@ -36,6 +36,8 @@ object Queries {
   case class FrequencyRequirement (operator: Operator, instances: Int, seconds: Int, callback: NodeData => Any) extends Requirement
   case class BandwidthRequirement (operator: Operator, bandwidth: Double,            callback: NodeData => Any) extends Requirement
 
+
+
   sealed trait Query { val requirements: Set[Requirement] }
 
   sealed trait LeafQuery   extends Query

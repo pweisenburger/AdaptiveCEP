@@ -97,7 +97,7 @@ case class FilterNode(
           if (cond(event))
             emitEvent(event)
 
-        case SgxPrivacyContext(trustedHosts, remoteObject) =>
+        case SgxPrivacyContext(trustedHosts, remoteObject,conversionRules) =>
           try {
             if(remoteObject.applyPredicate(cond,event)){
               emitEvent(event)

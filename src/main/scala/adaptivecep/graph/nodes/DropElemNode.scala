@@ -125,6 +125,7 @@ DropElemNode(
         case Event4(e1, e2, e3, e4) => handleEvent4(e1, e2, e3, e4)
         case Event5(e1, e2, e3, e4, e5) => handleEvent5(e1, e2, e3, e4, e5)
         case Event6(e1, e2, e3, e4, e5, e6) => handleEvent6(e1, e2, e3, e4, e5, e6)
+          //TODO: Handle the rest of the events
       }
     }
   }

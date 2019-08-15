@@ -5,15 +5,16 @@ import java.time.Instant
 import adaptivecep.data.Cost._
 import adaptivecep.data.Queries.Requirement
 import adaptivecep.distributed.operator.{ActiveOperator, Host, NodeHost, TentativeOperator}
+import adaptivecep.privacy.Privacy._
 import akka.actor.{ActorRef, Props}
 import akka.dispatch.ControlMessage
 import akka.stream.SourceRef
 
 import scala.concurrent.duration.Duration
-
 import crypto._
 import crypto.cipher._
 import crypto.dsl._
+
 object Events {
 
   case object Created
@@ -30,7 +31,7 @@ object Events {
   ///CrytpoService events
   sealed trait CryptoControlMessages
 
-  case class InterpretRequest[A](p: CryptoM[A]) extends  CryptoControlMessages
+  case class InterpretRequest[A](p: CryptoM[A]) extends CryptoControlMessages
 
   case object PublicKeysRequest extends CryptoControlMessages
 
@@ -180,6 +181,10 @@ object Events {
 
   sealed trait Event extends Serializable
 
+  sealed trait EncEvent extends Event {
+    def rule: EventConversionRule
+  }
+
   case class Event1(e1: Any) extends Event
 
   case class Event2(e1: Any, e2: Any) extends Event
@@ -192,7 +197,17 @@ object Events {
 
   case class Event6(e1: Any, e2: Any, e3: Any, e4: Any, e5: Any, e6: Any) extends Event
 
+  case class EncEvent1(e1: Any, rule: Event1Rule) extends EncEvent
 
+  case class EncEvent2(e1: Any, e2: Any, rule: Event2Rule) extends EncEvent
+
+  case class EncEvent3(e1: Any, e2: Any, e3: Any, rule: Event3Rule) extends EncEvent
+
+  case class EncEvent4(e1: Any, e2: Any, e3: Any, e4: Any, rule: Event4Rule) extends EncEvent
+
+  case class EncEvent5(e1: Any, e2: Any, e3: Any, e4: Any, e5: Any, rule: Event5Rule) extends EncEvent
+
+  case class EncEvent6(e1: Any, e2: Any, e3: Any, e4: Any, e5: Any, e6: Any, rule: Event6Rule) extends EncEvent
 
 
   //val errorMsg: String = "Panic! Control flow should never reach this point!"
