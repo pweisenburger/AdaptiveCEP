@@ -19,7 +19,7 @@ object Privacy {
   object Low extends DataSensitivity
 
 
-  sealed trait PrivacyContext
+  sealed trait PrivacyContext extends Serializable
 
   /**
     * this class will be used by a type that should encrypt the data as needed
@@ -61,7 +61,8 @@ object Privacy {
   object NoPrivacyContext extends PrivacyContext
 
 
-  sealed trait Transformer
+  sealed trait Transformer extends Serializable
+
   case class EncDecTransformer(encrypt: (Any,Encryption)=> Any,
                                decrypt: (Any,Encryption) => Any) extends Transformer
   object NoTransformer extends Transformer

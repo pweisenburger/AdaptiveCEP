@@ -11,7 +11,7 @@ import adaptivecep.distributed.operator.Operator
 import adaptivecep.distributed.operator._
 import adaptivecep.graph.nodes._
 import adaptivecep.graph.qos.MonitorFactory
-import adaptivecep.privacy.Privacy.{NoPrivacyContext, PrivacyContext}
+import adaptivecep.privacy.Privacy._
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Address, Deploy, PoisonPill, Props}
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
@@ -93,6 +93,10 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
   val eventCallback: Event => Any = {
     // Callback for `query1`:
     case Event1(e1) => println(s"COMPLEX EVENT:\tEvent1($e1)")
+    case e:EncEvent1 =>
+      val decrypted = getDecryptedEvent(e).asInstanceOf[Event1]
+      val value = decrypted.e1
+      println(s"COMPEX EVENT:\tEncEvent carrying($value)")
     //case Event3(Left(i1), Left(i2), Left(f)) => println(s"COMPLEX EVENT:\tEvent3($i1,$i2,$f)")
     //case Event3(Right(s), _, _)              => println(s"COMPLEX EVENT:\tEvent1($s)")
     // Callback for `query2`:
@@ -100,6 +104,64 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
     // This is necessary to avoid warnings about non-exhaustive `match`:
     case _                             => println("what the hell")
   }
+
+
+  private def getDecryptedEvent(e: EncEvent): Event = {
+    e match {
+      case EncEvent1(e1, rule) =>
+        Event1(applyReverseTransformer(e1, rule.tr1))
+      case EncEvent2(e1, e2, rule) =>
+        Event2(
+          applyReverseTransformer(e1, rule.tr1),
+          applyReverseTransformer(e2, rule.tr2)
+        )
+      case EncEvent3(e1, e2, e3, rule) =>
+        Event3(
+          applyReverseTransformer(e1, rule.tr1),
+          applyReverseTransformer(e2, rule.tr2),
+          applyReverseTransformer(e3, rule.tr3)
+        )
+
+      case EncEvent4(e1, e2, e3, e4, rule) =>
+        Event4(
+          applyReverseTransformer(e1, rule.tr1),
+          applyReverseTransformer(e2, rule.tr2),
+          applyReverseTransformer(e3, rule.tr3),
+          applyReverseTransformer(e4, rule.tr4)
+        )
+
+      case EncEvent5(e1, e2, e3, e4, e5, rule) =>
+        Event5(
+          applyReverseTransformer(e1, rule.tr1),
+          applyReverseTransformer(e2, rule.tr2),
+          applyReverseTransformer(e3, rule.tr3),
+          applyReverseTransformer(e4, rule.tr4),
+          applyReverseTransformer(e5, rule.tr5)
+        )
+
+      case EncEvent6(e1, e2, e3, e4, e5, e6, rule) =>
+        Event6(
+          applyReverseTransformer(e1, rule.tr1),
+          applyReverseTransformer(e2, rule.tr2),
+          applyReverseTransformer(e3, rule.tr3),
+          applyReverseTransformer(e4, rule.tr4),
+          applyReverseTransformer(e5, rule.tr5),
+          applyReverseTransformer(e6, rule.tr6)
+        )
+
+    }
+
+
+  }
+
+
+  private def applyReverseTransformer(data: Any, transformer: Transformer): Any = {
+    transformer match {
+      case NoTransformer => data
+      case EncDecTransformer(encrypt, decrypt) => decrypt(data, encryption)
+    }
+  }
+
 
   def placeAll(map: Map[Operator, Host]): Unit
 

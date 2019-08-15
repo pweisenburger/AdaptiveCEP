@@ -56,12 +56,6 @@ class EventProcessorServiceImpl extends EventProcessorServer {
     }
 
 
-  private def applyReverseTransformer(data: Any, transformer: Transformer): Any = {
-    transformer match {
-      case NoTransformer => data
-      case EncDecTransformer(encrypt, decrypt) => decrypt(data, encryption)
-    }
-  }
 
   private def applyTransformer(data: Any, transformer: Transformer): Any = {
     transformer match {
@@ -165,4 +159,10 @@ class EventProcessorServiceImpl extends EventProcessorServer {
   }
 
 
+  private def applyReverseTransformer(data: Any, transformer: Transformer): Any = {
+    transformer match {
+      case NoTransformer => data
+      case EncDecTransformer(encrypt, decrypt) => decrypt(data, encryption)
+    }
+  }
 }
