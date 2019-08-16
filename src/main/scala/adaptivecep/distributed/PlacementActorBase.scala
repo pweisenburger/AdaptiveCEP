@@ -583,14 +583,19 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
                                     callback: Option[Event => Any],
                                     streamQuery: StreamQuery,
                                     consumer: Boolean) = {
+
+    println("\nCreating Stream Node\n")
+
     val props = Props(
+
       StreamNode(
         streamQuery.requirements,
         streamQuery.publisherName, publishers,
         frequencyMonitorFactory,
         latencyMonitorFactory,
         None,
-        callback))
+        callback, privacyContext))
+    println("\nStream Node created\n")
 
     ///TODO: create an encrypting stream node if the data is sensitive
 
@@ -610,6 +615,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
                                         disjunctionQuery: DisjunctionQuery,
                                         consumer: Boolean) = {
     val length = getQueryLength(disjunctionQuery)
+
     val props = Props(
       DisjunctionNode(
         disjunctionQuery.requirements,
@@ -742,6 +748,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
 
     val cond = filterQuery.cond
 
+    println("\ncreating Filter node\n")
     val props = Props(
       FilterNode(
         filterQuery.requirements,
@@ -752,6 +759,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
         None,
         callback,privacyContext))
 
+    println("\nFilter Node created\n")
     connectUnaryNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, filterQuery.sq, props, consumer)
     props
   }

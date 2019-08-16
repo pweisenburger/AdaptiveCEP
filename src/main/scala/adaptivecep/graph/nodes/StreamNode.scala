@@ -25,7 +25,7 @@ case class StreamNode(
                        latencyMonitorFactory: MonitorFactory,
                        createdCallback: Option[() => Any],
                        eventCallback: Option[(Event) => Any]
-//                       , privacyContext: PrivacyContext = NoPrivacyContext
+                       , privacyContext: PrivacyContext = NoPrivacyContext
                      )
 //                     (implicit val privacyContext: PrivacyContext = NoPrivacyContext)
   extends LeafNode {
