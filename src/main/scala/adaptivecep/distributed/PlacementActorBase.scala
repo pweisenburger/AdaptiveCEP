@@ -590,7 +590,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
         frequencyMonitorFactory,
         latencyMonitorFactory,
         None,
-        callback))
+        callback,privacyContext))
 
     ///TODO: create an encrypting stream node if the data is sensitive
 
@@ -750,7 +750,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
         frequencyMonitorFactory,
         latencyMonitorFactory,
         None,
-        callback))
+        callback,privacyContext))
 
     connectUnaryNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, filterQuery.sq, props, consumer)
     props

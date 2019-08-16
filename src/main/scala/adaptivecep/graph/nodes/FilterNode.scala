@@ -31,8 +31,9 @@ case class FilterNode(
                        frequencyMonitorFactory: MonitorFactory,
                        latencyMonitorFactory: MonitorFactory,
                        createdCallback: Option[() => Any],
-                       eventCallback: Option[(Event) => Any])
-                     (implicit val privacyContext: PrivacyContext = NoPrivacyContext)
+                       eventCallback: Option[(Event) => Any],
+                       privacyContext: PrivacyContext = NoPrivacyContext
+                     )
   extends UnaryNode {
 
   var parentReceived: Boolean = false

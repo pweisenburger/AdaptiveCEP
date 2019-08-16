@@ -24,8 +24,10 @@ case class StreamNode(
                        frequencyMonitorFactory: MonitorFactory,
                        latencyMonitorFactory: MonitorFactory,
                        createdCallback: Option[() => Any],
-                       eventCallback: Option[(Event) => Any])
-                     (implicit val privacyContext: PrivacyContext = NoPrivacyContext)
+                       eventCallback: Option[(Event) => Any],
+                       privacyContext: PrivacyContext = NoPrivacyContext
+                     )
+//                     (implicit val privacyContext: PrivacyContext = NoPrivacyContext)
   extends LeafNode {
 
   val publisher: ActorRef = publishers(publisherName)
