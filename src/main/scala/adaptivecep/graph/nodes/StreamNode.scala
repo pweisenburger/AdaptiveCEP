@@ -114,7 +114,7 @@ case class StreamNode(
           emitEvent(a)
         else{
           val encEvent = getEncryptedEvent(a,conversionRule.get)
-          println(s"Emitting encrypted event for event ${a} \n")
+          println(s"Emitting encrypted event for event $a and $encEvent \n")
           emitEvent(encEvent)
         }
 
