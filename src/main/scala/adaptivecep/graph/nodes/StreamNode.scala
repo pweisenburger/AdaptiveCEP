@@ -25,12 +25,8 @@ case class StreamNode(
     latencyMonitorFactory: MonitorFactory,
     createdCallback: Option[() => Any],
     eventCallback: Option[(Event) => Any])
-//                     (implicit val privacyContext: PrivacyContext = NoPrivacyContext)
+                     (implicit val privacyContext: PrivacyContext = NoPrivacyContext)
   extends LeafNode {
-
-
-
-
 
   val publisher: ActorRef = publishers(publisherName)
   var subscriptionAcknowledged: Boolean = false
@@ -104,20 +100,17 @@ case class StreamNode(
       val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1")
       val key = factory.generateSecret(spec).getEncoded
       val skeySpec = new SecretKeySpec(key, "AES")
-      val encryption = CryptoAES(skeySpec,iv)
+      implicit val encryption = CryptoAES(skeySpec,iv)
 
       ref.getSource.to(Sink.foreach(a =>{
         emitEvent(a)
-//        privacyContext match {
-//          case adaptivecep.privacy.Privacy.SgxPrivacyContext(trustedHosts, remoteObject, conversionRules)
-//            =>
-//            val encEvent = getEncryptedEvent(a,conversionRules(publisherName))
-//            emitEvent(encEvent)
-//          case NoPrivacyContext => emitEvent(a)
-//
-//        }
-
-
+        privacyContext match {
+          case adaptivecep.privacy.Privacy.SgxPrivacyContext(trustedHosts, remoteObject, conversionRules)
+            =>
+            val encEvent = getEncryptedEvent(a,conversionRules(publisherName))
+            emitEvent(encEvent)
+          case NoPrivacyContext => emitEvent(a)
+        }
       })).run(materializer)
     case Parent(p1) => {
       parentNode = p1
