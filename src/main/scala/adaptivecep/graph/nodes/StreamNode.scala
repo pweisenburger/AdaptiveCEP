@@ -26,13 +26,13 @@ case class StreamNode(
 //                     (implicit val privacyContext: PrivacyContext = NoPrivacyContext)
   extends LeafNode {
 
-  var subscriptionAcknowledged: Boolean = false
-  var parentReceived: Boolean = false
-  var publisher: ActorRef = self
+//  var subscriptionAcknowledged: Boolean = false
+//  var parentReceived: Boolean = false
+//  var publisher: ActorRef = self
 
   override def postCreated(): Unit =
   {
-    publisher = publishers(publisherName)
+    val publisher = publishers(publisherName)
     publisher ! Subscribe
     println("subscribing to publisher", publisher.path)
   }
@@ -41,8 +41,8 @@ case class StreamNode(
   override def receive: Receive = {
     case DependenciesRequest =>
       sender ! DependenciesResponse(Seq.empty)
-    case AcknowledgeSubscription(ref) if sender() == publisher =>
-      subscriptionAcknowledged = true
+    case AcknowledgeSubscription(ref) /*if sender() == publisher*/ =>
+//      subscriptionAcknowledged = true
       //      val initVector = "ABCDEFGHIJKLMNOP"
       //      val iv = new IvParameterSpec(initVector.getBytes("UTF-8"))
       //      val secret = "mysecret"
@@ -64,7 +64,7 @@ case class StreamNode(
       })).run(materializer)
     case Parent(p1) => {
       parentNode = p1
-      parentReceived = true
+//      parentReceived = true
       nodeData = LeafNodeData(name, requirements, context, parentNode)
     }
     case CentralizedCreated =>
