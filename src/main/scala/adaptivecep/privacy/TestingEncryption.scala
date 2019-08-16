@@ -79,32 +79,32 @@ object TestingEncryption extends App {
     //      Set(TrustedNodeHost(NodeHost(host1)), TrustedNodeHost(NodeHost(host4))),
     //      Map("A" -> Privacy.High)
     //    )
-
-    val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
-    val remoteObject = eventProcessorClient.lookupObject()
-
-    def encryptInt(value: Any, crypto: Encryption): Any = {
-      value match {
-        case e: Int =>
-          val biValue = BigInt(e)
-          crypto.encrypt(biValue.toByteArray)
-        case _ => sys.error("unexpected input type")
-      }
-    }
-
-    def decryptInt(value: Any, crypto: Encryption): Any = {
-      value match {
-        case e: Array[Byte] =>
-          val result = crypto.decrypt(e)
-          val biVal = BigInt(result)
-          biVal.toInt
-        case _ => sys.error("unexpected type")
-      }
-
-    }
-
-    val publisherATransformer = EncDecTransformer(encryptInt,decryptInt)
-
+//
+//    val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
+//    val remoteObject = eventProcessorClient.lookupObject()
+//
+//    def encryptInt(value: Any, crypto: Encryption): Any = {
+//      value match {
+//        case e: Int =>
+//          val biValue = BigInt(e)
+//          crypto.encrypt(biValue.toByteArray)
+//        case _ => sys.error("unexpected input type")
+//      }
+//    }
+//
+//    def decryptInt(value: Any, crypto: Encryption): Any = {
+//      value match {
+//        case e: Array[Byte] =>
+//          val result = crypto.decrypt(e)
+//          val biVal = BigInt(result)
+//          biVal.toInt
+//        case _ => sys.error("unexpected type")
+//      }
+//
+//    }
+//
+//    val publisherATransformer = EncDecTransformer(encryptInt,decryptInt)
+//
 
 //    implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
 //      Set(TrustedNodeHost(NodeHost(host1)), TrustedNodeHost(NodeHost(host4))),
