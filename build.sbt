@@ -35,9 +35,9 @@ libraryDependencies ++= Seq(
 //  case _ => MergeStrategy.first
 //}
 
-//
-//test in assembly := {}
-//
-//mainClass in assembly := Some("adaptivecep.privacy.sgx.Server")
-//
-//assemblyJarName in assembly := "sgx-server.jar"
+
+test in assembly := {}
+
+mainClass in assembly := Some("adaptivecep.privacy.sgx.Server")
+
+assemblyJarName in assembly := "sgx-server.jar"

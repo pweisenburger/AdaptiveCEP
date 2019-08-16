@@ -18,7 +18,7 @@ sudo iptables -I FORWARD -m state -d 10.0.1.0/24 --state NEW,RELATED,ESTABLISHED
 sudo iptables -I FORWARD -m state -s 10.0.1.0/24 --state NEW,RELATED,ESTABLISHED -j ACCEPT
 
 
-sudo iptables -t nat -I PREROUTING -p tcp -d `hostname -i` --dport 10000:60000 -j DNAT --to-destination 10.0.1.1
+# sudo iptables -t nat -I PREROUTING -p tcp -d `hostname -i` --dport 10000:60000 -j DNAT --to-destination 10.0.1.1
 
 # If enclave needs establish new connections to external hosts, masquerade
 # outgoing traffic from enclave

@@ -27,7 +27,6 @@ import scala.concurrent.Await
 object TestingEncryption extends App {
   override def main(args: Array[String]): Unit = {
 
-
     val file = new File("application.conf")
     val config = ConfigFactory.parseFile(file).withFallback(ConfigFactory.load()).resolve()
     val actorSystem: ActorSystem = ActorSystem("ClusterSystem", config)
@@ -43,7 +42,6 @@ object TestingEncryption extends App {
     val host4: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address4))), "Host" + "4")
     //  val host5: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address5))), "Host" + "5")
 
-
     val hosts: Set[ActorRef] = Set(host1, host2, host3, host4)
 
     hosts.foreach(host => host ! Hosts(hosts))
@@ -55,7 +53,6 @@ object TestingEncryption extends App {
 
     val cryptoSvc = new CryptoServiceWrapper(cryptoActor)
     val interpret = new CEPRemoteInterpreter(cryptoActor)
-
 
     val publishers: Map[String, ActorRef] = Map(
       "A" -> publisher
@@ -109,15 +106,13 @@ object TestingEncryption extends App {
     val publisherATransformer = EncDecTransformer(encryptInt,decryptInt)
 
 
-    implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
-      Set(TrustedNodeHost(NodeHost(host1)), TrustedNodeHost(NodeHost(host4))),
-      remoteObject,
-      Map("A" -> Event1Rule(publisherATransformer))
-    )
+//    implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
+//      Set(TrustedNodeHost(NodeHost(host1)), TrustedNodeHost(NodeHost(host4))),
+//      remoteObject,
+//      Map("A" -> Event1Rule(publisherATransformer))
+//    )
 
-
-
-    //    implicit val pc: PrivacyContext = NoPrivacyContext
+  implicit val pc: PrivacyContext = NoPrivacyContext
 
     val normalQuery: Query1[Int] =
       stream[Int]("A").
@@ -142,7 +137,6 @@ object TestingEncryption extends App {
     placement ! InitializeQuery
     Thread.sleep(10000)
     placement ! Start
-
 
     //    val oneEnc = cryptoSvc.encryptInt(Comparable, 1)
     //    val twoEnc = cryptoSvc.encryptInt(Comparable, 2)
