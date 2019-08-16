@@ -38,13 +38,13 @@ object Privacy {
     *                      this is on Host level, we need to change it to
     *                      property(field) level
     */
-  case class PrivacyContextCentralized( interpret: CEPRemoteInterpreter,
+  final case class PrivacyContextCentralized( interpret: CEPRemoteInterpreter,
                                         cryptoService: CryptoServiceWrapper,
                                         trustedHosts: Set[TrustedNodeHost],
                                         sourcesSensitivity: Map[String, DataSensitivity]
                                       ) extends PrivacyContext
 
-  case class SgxPrivacyContext(trustedHosts: Set[TrustedNodeHost],
+  final case class SgxPrivacyContext(trustedHosts: Set[TrustedNodeHost],
                                remoteObject: EventProcessorServer,
                                conversionRules: Map[String,EventConversionRule]) extends PrivacyContext
 
@@ -52,13 +52,13 @@ object Privacy {
     * this context should combine sgx and phe approaches
     * @param trustedNodeHost
     */
-  case class MixedPrivacyContext(trustedNodeHost: Set[TrustedNodeHost]) extends PrivacyContext
+  final case class MixedPrivacyContext(trustedNodeHost: Set[TrustedNodeHost]) extends PrivacyContext
 
   /**
     * this object will be used for old queries to ensure backwards compatibility
     *
     */
-  object NoPrivacyContext extends PrivacyContext
+  final case object NoPrivacyContext extends PrivacyContext
 
 
   sealed trait Transformer extends Serializable
