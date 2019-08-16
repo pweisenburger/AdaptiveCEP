@@ -30,13 +30,13 @@ case class StreamNode(
 //                     (implicit val privacyContext: PrivacyContext = NoPrivacyContext)
   extends LeafNode {
 
-  val publisher: ActorRef = publishers(publisherName)
   var subscriptionAcknowledged: Boolean = false
   var parentReceived: Boolean = false
-
+  var publisher: ActorRef = self
 
   override def postCreated(): Unit =
   {
+    publisher = publishers(publisherName)
     publisher ! Subscribe
     println("subscribing to publisher", publisher.path)
   }
