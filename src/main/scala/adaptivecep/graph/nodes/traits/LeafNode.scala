@@ -39,6 +39,9 @@ trait LeafNode extends Node {
     emitCreated()
   }
 
+  def postCreated(): Unit = {
+    //NO OP
+  }
 
   def emitCreated(): Unit = {
     frequencyMonitor.onCreated(nodeData)
