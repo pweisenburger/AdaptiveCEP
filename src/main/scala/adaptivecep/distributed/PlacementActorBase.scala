@@ -644,6 +644,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
     privacyContext match {
       case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
         rule = Some(conversionRules(streamQuery.publisherName))
+      case _ => rule = None
     }
 
 
