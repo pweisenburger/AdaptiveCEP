@@ -102,12 +102,16 @@ case class FilterNode(
             emitEvent(event)
 
         case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
+          println("filtering event..\n")
           try {
             if (remoteObject.applyPredicate(cond, event)) {
+              println("predicate matched\n")
               emitEvent(event)
+            }else{
+              println("predicate not matched\n")
             }
           } catch {
-            case e: Exception => println("some error")
+            case e: Exception => println("\n[some error]\n")
           }
 
         case PrivacyContextCentralized(interpret, cryptoService, trustedHosts, sourcesSensitivity)
