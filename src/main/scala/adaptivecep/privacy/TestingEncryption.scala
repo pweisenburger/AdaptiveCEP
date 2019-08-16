@@ -106,13 +106,13 @@ object TestingEncryption extends App {
     val publisherATransformer = EncDecTransformer(encryptInt,decryptInt)
 
 
-    implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
-      Set(TrustedNodeHost(NodeHost(host1)), TrustedNodeHost(NodeHost(host4))),
-      remoteObject,
-      Map("A" -> Event1Rule(publisherATransformer))
-    )
+//    implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
+//      Set(TrustedNodeHost(NodeHost(host1)), TrustedNodeHost(NodeHost(host4))),
+//      remoteObject,
+//      Map("A" -> Event1Rule(publisherATransformer))
+//    )
 
-//  implicit val pc: PrivacyContext = NoPrivacyContext
+  implicit val pc: PrivacyContext = NoPrivacyContext
 
     val normalQuery: Query1[Int] =
       stream[Int]("A").
