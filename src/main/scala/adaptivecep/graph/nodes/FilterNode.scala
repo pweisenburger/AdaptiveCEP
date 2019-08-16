@@ -31,8 +31,8 @@ case class FilterNode(
                        frequencyMonitorFactory: MonitorFactory,
                        latencyMonitorFactory: MonitorFactory,
                        createdCallback: Option[() => Any],
-                       eventCallback: Option[(Event) => Any],
-                       privacyContext: PrivacyContext = NoPrivacyContext
+                       eventCallback: Option[(Event) => Any]
+//                       ,privacyContext: PrivacyContext = NoPrivacyContext
                      )
   extends UnaryNode {
 
@@ -93,34 +93,37 @@ case class FilterNode(
 
   def processEvent(event: Event, sender: ActorRef): Unit = {
     if (sender == childNode) {
-      privacyContext match {
-        case NoPrivacyContext =>
-          if (cond(event))
-            emitEvent(event)
+      if (cond(event))
+        emitEvent(event)
 
-        case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
-          try {
-            if (remoteObject.applyPredicate(cond, event)) {
-              emitEvent(event)
-            }
-          } catch {
-            case e: Exception => println("some error")
-          }
-
-        case PrivacyContextCentralized(interpret, cryptoService, trustedHosts, sourcesSensitivity)
-        => println("unexpected context!")
-        //        case SgxPrivacyContext(trustedHosts, eventProcessorClient) =>
-        //          try {
-        //
-        //            eventProcessorClient.lookupObject()
-        //
-        //            if (eventProcessorClient.processEvent(cond, event))
-        //              emitEvent(event)
-        //          }
-        //          catch {
-        //            case e: Exception => println(s"\nERROR ${e.getMessage}\n")
-        //          }
-      }
+//      privacyContext match {
+//        case NoPrivacyContext =>
+//          if (cond(event))
+//            emitEvent(event)
+//
+//        case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
+//          try {
+//            if (remoteObject.applyPredicate(cond, event)) {
+//              emitEvent(event)
+//            }
+//          } catch {
+//            case e: Exception => println("some error")
+//          }
+//
+//        case PrivacyContextCentralized(interpret, cryptoService, trustedHosts, sourcesSensitivity)
+//        => println("unexpected context!")
+//        //        case SgxPrivacyContext(trustedHosts, eventProcessorClient) =>
+//        //          try {
+//        //
+//        //            eventProcessorClient.lookupObject()
+//        //
+//        //            if (eventProcessorClient.processEvent(cond, event))
+//        //              emitEvent(event)
+//        //          }
+//        //          catch {
+//        //            case e: Exception => println(s"\nERROR ${e.getMessage}\n")
+//        //          }
+//      }
 
     }
 
