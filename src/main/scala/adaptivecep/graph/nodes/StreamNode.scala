@@ -5,14 +5,10 @@ import adaptivecep.data.Queries._
 import adaptivecep.graph.nodes.traits._
 import adaptivecep.graph.qos._
 import adaptivecep.privacy.Privacy._
-import adaptivecep.privacy.encryption.{CryptoAES, Encryption}
 import adaptivecep.publishers.Publisher._
-import akka.NotUsed
 import akka.actor.{ActorRef, PoisonPill}
-import akka.stream.{KillSwitches, OverflowStrategy}
-import akka.stream.scaladsl.{Keep, Sink, Source, StreamRefs}
-import javax.crypto.SecretKeyFactory
-import javax.crypto.spec.{IvParameterSpec, PBEKeySpec, SecretKeySpec}
+import akka.stream. OverflowStrategy
+import akka.stream.scaladsl.{Sink, Source, StreamRefs}
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -32,11 +28,11 @@ case class StreamNode(
 
   var subscriptionAcknowledged: Boolean = false
   var parentReceived: Boolean = false
-  var publisher: ActorRef = self
+//  var publisher: ActorRef = self
 
   override def postCreated(): Unit =
   {
-    publisher = publishers(publisherName)
+    val publisher = publishers(publisherName)
     publisher ! Subscribe
     println("subscribing to publisher", publisher.path)
   }
@@ -45,7 +41,7 @@ case class StreamNode(
   override def receive: Receive = {
     case DependenciesRequest =>
       sender ! DependenciesResponse(Seq.empty)
-    case AcknowledgeSubscription(ref) if sender() == publisher =>
+    case AcknowledgeSubscription(ref) /*if sender() == publisher*/ =>
       subscriptionAcknowledged = true
       //      val initVector = "ABCDEFGHIJKLMNOP"
       //      val iv = new IvParameterSpec(initVector.getBytes("UTF-8"))
