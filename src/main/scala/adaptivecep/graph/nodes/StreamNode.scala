@@ -25,7 +25,7 @@ case class StreamNode(
     latencyMonitorFactory: MonitorFactory,
     createdCallback: Option[() => Any],
     eventCallback: Option[(Event) => Any])
-                     (implicit val privacyContext: PrivacyContext = NoPrivacyContext)
+//                     (implicit val privacyContext: PrivacyContext = NoPrivacyContext)
   extends LeafNode {
 
   val publisher: ActorRef = publishers(publisherName)
