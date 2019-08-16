@@ -106,15 +106,15 @@ case class StreamNode(
     case AcknowledgeSubscription(ref) if sender() == publisher =>
       subscriptionAcknowledged = true
       ref.getSource.to(Sink.foreach(a =>{
-
-        privacyContext match {
-          case adaptivecep.privacy.Privacy.SgxPrivacyContext(trustedHosts, remoteObject, conversionRules)
-            =>
-            val encEvent = getEncryptedEvent(a,conversionRules(publisherName))
-            emitEvent(encEvent)
-          case NoPrivacyContext => emitEvent(a)
-
-        }
+        emitEvent(a)
+//        privacyContext match {
+//          case adaptivecep.privacy.Privacy.SgxPrivacyContext(trustedHosts, remoteObject, conversionRules)
+//            =>
+//            val encEvent = getEncryptedEvent(a,conversionRules(publisherName))
+//            emitEvent(encEvent)
+//          case NoPrivacyContext => emitEvent(a)
+//
+//        }
 
 
       })).run(materializer)
