@@ -37,6 +37,7 @@ trait LeafNode extends Node {
         })
     }
     emitCreated()
+    postCreated()
   }
 
   def postCreated(): Unit = {
