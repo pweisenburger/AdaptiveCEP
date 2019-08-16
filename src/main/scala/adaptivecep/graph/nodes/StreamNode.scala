@@ -20,10 +20,9 @@ case class StreamNode(
                        frequencyMonitorFactory: MonitorFactory,
                        latencyMonitorFactory: MonitorFactory,
                        createdCallback: Option[() => Any],
-                       eventCallback: Option[(Event) => Any]
-//                       , privacyContext: PrivacyContext = NoPrivacyContext
+                       eventCallback: Option[(Event) => Any],
+                       conversionRule: Option[EventConversionRule] = None
                      )
-                     (implicit val privacyContext: PrivacyContext = NoPrivacyContext)
   extends LeafNode {
 
 //  var subscriptionAcknowledged: Boolean = false

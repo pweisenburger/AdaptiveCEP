@@ -586,8 +586,10 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
 
     println("\nCreating Stream Node\n")
 
-    val props = Props(
 
+
+
+    val props = Props(
       StreamNode(
         streamQuery.requirements,
         streamQuery.publisherName, publishers,
