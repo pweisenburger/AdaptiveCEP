@@ -93,14 +93,14 @@ case class StreamNode(
       sender ! DependenciesResponse(Seq.empty)
     case AcknowledgeSubscription(ref) if sender() == publisher =>
       subscriptionAcknowledged = true
-      val initVector = "ABCDEFGHIJKLMNOP"
-      val iv = new IvParameterSpec(initVector.getBytes("UTF-8"))
-      val secret = "mysecret"
-      val spec = new PBEKeySpec(secret.toCharArray, "1234".getBytes(), 65536, 128)
-      val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1")
-      val key = factory.generateSecret(spec).getEncoded
-      val skeySpec = new SecretKeySpec(key, "AES")
-      implicit val encryption: Encryption = CryptoAES(skeySpec,iv)
+//      val initVector = "ABCDEFGHIJKLMNOP"
+//      val iv = new IvParameterSpec(initVector.getBytes("UTF-8"))
+//      val secret = "mysecret"
+//      val spec = new PBEKeySpec(secret.toCharArray, "1234".getBytes(), 65536, 128)
+//      val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1")
+//      val key = factory.generateSecret(spec).getEncoded
+//      val skeySpec = new SecretKeySpec(key, "AES")
+//      implicit val encryption: Encryption = CryptoAES(skeySpec,iv)
 
       ref.getSource.to(Sink.foreach(a =>{
         emitEvent(a)
