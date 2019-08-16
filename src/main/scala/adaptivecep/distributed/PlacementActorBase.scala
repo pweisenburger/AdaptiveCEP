@@ -35,7 +35,7 @@ import scala.util.Random
 
 
 /// A placement Actor is an actor with CEP and QOS properties
-trait PlacementActorBase extends Actor with ActorLogging with System{
+trait PlacementActorBase extends Actor with ActorLogging with System {
 
   val actorSystem: ActorSystem
   val query: Query
@@ -50,9 +50,10 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
   implicit val privacyContext: PrivacyContext
 
 
-
   sealed trait Optimizing
+
   case object Maximizing extends Optimizing
+
   case object Minimizing extends Optimizing
 
   val cluster: Cluster = Cluster(context.system)
@@ -85,7 +86,9 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
 
   val costSignal: Var[Map[Host, Map[Host, Cost]]] = Var(costsMap)(ReSerializable.doNotSerialize, "cost")
   val hosts: Var[Set[NodeHost]] = Var(Set.empty[NodeHost])(ReSerializable.doNotSerialize, "hosts")
-  val qos: Signal[Map[Host, HostProps]] = Signal{hostProps(costSignal(), hosts().map(h => h.asInstanceOf[Host]))}
+  val qos: Signal[Map[Host, HostProps]] = Signal {
+    hostProps(costSignal(), hosts().map(h => h.asInstanceOf[Host]))
+  }
   val consumers: Var[Seq[Operator]] = Var(Seq.empty[Operator])(ReSerializable.doNotSerialize, "consumers")
   val producers: Var[Set[Operator]] = Var(Set.empty[Operator])(ReSerializable.doNotSerialize, "producers")
   val operators: Var[Set[Operator]] = Var(Set.empty[Operator])(ReSerializable.doNotSerialize, "operators")
@@ -96,85 +99,84 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
   val eventCallback: Event => Any = {
     // Callback for `query1`:
     case Event1(e1) => println(s"COMPLEX EVENT:\tEvent1($e1)")
-    case EncEvent1(e1,rule) => println(s"COMPLEX ENCEVENT:\tEvent1($e1)")
-//    case e:EncEvent1 =>
-//      val decrypted = getDecryptedEvent(e).asInstanceOf[Event1]
-//      val value = decrypted.e1
-//      println(s"COMPEX EVENT:\tEncEvent carrying($value)")
+    case EncEvent1(e1, rule) => println(s"COMPLEX ENCEVENT:\tEvent1($e1)")
+    //    case e:EncEvent1 =>
+    //      val decrypted = getDecryptedEvent(e).asInstanceOf[Event1]
+    //      val value = decrypted.e1
+    //      println(s"COMPEX EVENT:\tEncEvent carrying($value)")
     //case Event3(Left(i1), Left(i2), Left(f)) => println(s"COMPLEX EVENT:\tEvent3($i1,$i2,$f)")
     //case Event3(Right(s), _, _)              => println(s"COMPLEX EVENT:\tEvent1($s)")
     // Callback for `query2`:
     //case Event4(i1, i2, f, s)             => println(s"COMPLEX EVENT:\tEvent4($i1, $i2, $f,$s)")
     // This is necessary to avoid warnings about non-exhaustive `match`:
-    case _                             => println("what the hell")
+    case _ => println("what the hell")
   }
 
-//  val initVector = "ABCDEFGHIJKLMNOP"
-//  val iv = new IvParameterSpec(initVector.getBytes("UTF-8"))
-//  val secret = "mysecret"
-//  val spec = new PBEKeySpec(secret.toCharArray, "1234".getBytes(), 65536, 128)
-//  val factory: SecretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1")
-//  val key: Array[Byte] = factory.generateSecret(spec).getEncoded
-//  val skeySpec = new SecretKeySpec(key, "AES")
-//  val encryption = CryptoAES(skeySpec, iv)
+  //  val initVector = "ABCDEFGHIJKLMNOP"
+  //  val iv = new IvParameterSpec(initVector.getBytes("UTF-8"))
+  //  val secret = "mysecret"
+  //  val spec = new PBEKeySpec(secret.toCharArray, "1234".getBytes(), 65536, 128)
+  //  val factory: SecretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1")
+  //  val key: Array[Byte] = factory.generateSecret(spec).getEncoded
+  //  val skeySpec = new SecretKeySpec(key, "AES")
+  //  val encryption = CryptoAES(skeySpec, iv)
 
 
-
-//  private def getDecryptedEvent(e: EncEvent): Event = {
-//    e match {
-//      case EncEvent1(e1, rule) =>
-//        Event1(applyReverseTransformer(e1, rule.tr1))
-//      case EncEvent2(e1, e2, rule) =>
-//        Event2(
-//          applyReverseTransformer(e1, rule.tr1),
-//          applyReverseTransformer(e2, rule.tr2)
-//        )
-//      case EncEvent3(e1, e2, e3, rule) =>
-//        Event3(
-//          applyReverseTransformer(e1, rule.tr1),
-//          applyReverseTransformer(e2, rule.tr2),
-//          applyReverseTransformer(e3, rule.tr3)
-//        )
-//
-//      case EncEvent4(e1, e2, e3, e4, rule) =>
-//        Event4(
-//          applyReverseTransformer(e1, rule.tr1),
-//          applyReverseTransformer(e2, rule.tr2),
-//          applyReverseTransformer(e3, rule.tr3),
-//          applyReverseTransformer(e4, rule.tr4)
-//        )
-//
-//      case EncEvent5(e1, e2, e3, e4, e5, rule) =>
-//        Event5(
-//          applyReverseTransformer(e1, rule.tr1),
-//          applyReverseTransformer(e2, rule.tr2),
-//          applyReverseTransformer(e3, rule.tr3),
-//          applyReverseTransformer(e4, rule.tr4),
-//          applyReverseTransformer(e5, rule.tr5)
-//        )
-//
-//      case EncEvent6(e1, e2, e3, e4, e5, e6, rule) =>
-//        Event6(
-//          applyReverseTransformer(e1, rule.tr1),
-//          applyReverseTransformer(e2, rule.tr2),
-//          applyReverseTransformer(e3, rule.tr3),
-//          applyReverseTransformer(e4, rule.tr4),
-//          applyReverseTransformer(e5, rule.tr5),
-//          applyReverseTransformer(e6, rule.tr6)
-//        )
-//
-//    }
-//
-//
-//  }
-//
-//
-//  private def applyReverseTransformer(data: Any, transformer: Transformer): Any = {
-//    transformer match {
-//      case NoTransformer => data
-//      case EncDecTransformer(encrypt, decrypt) => decrypt(data, encryption)
-//    }
-//  }
+  //  private def getDecryptedEvent(e: EncEvent): Event = {
+  //    e match {
+  //      case EncEvent1(e1, rule) =>
+  //        Event1(applyReverseTransformer(e1, rule.tr1))
+  //      case EncEvent2(e1, e2, rule) =>
+  //        Event2(
+  //          applyReverseTransformer(e1, rule.tr1),
+  //          applyReverseTransformer(e2, rule.tr2)
+  //        )
+  //      case EncEvent3(e1, e2, e3, rule) =>
+  //        Event3(
+  //          applyReverseTransformer(e1, rule.tr1),
+  //          applyReverseTransformer(e2, rule.tr2),
+  //          applyReverseTransformer(e3, rule.tr3)
+  //        )
+  //
+  //      case EncEvent4(e1, e2, e3, e4, rule) =>
+  //        Event4(
+  //          applyReverseTransformer(e1, rule.tr1),
+  //          applyReverseTransformer(e2, rule.tr2),
+  //          applyReverseTransformer(e3, rule.tr3),
+  //          applyReverseTransformer(e4, rule.tr4)
+  //        )
+  //
+  //      case EncEvent5(e1, e2, e3, e4, e5, rule) =>
+  //        Event5(
+  //          applyReverseTransformer(e1, rule.tr1),
+  //          applyReverseTransformer(e2, rule.tr2),
+  //          applyReverseTransformer(e3, rule.tr3),
+  //          applyReverseTransformer(e4, rule.tr4),
+  //          applyReverseTransformer(e5, rule.tr5)
+  //        )
+  //
+  //      case EncEvent6(e1, e2, e3, e4, e5, e6, rule) =>
+  //        Event6(
+  //          applyReverseTransformer(e1, rule.tr1),
+  //          applyReverseTransformer(e2, rule.tr2),
+  //          applyReverseTransformer(e3, rule.tr3),
+  //          applyReverseTransformer(e4, rule.tr4),
+  //          applyReverseTransformer(e5, rule.tr5),
+  //          applyReverseTransformer(e6, rule.tr6)
+  //        )
+  //
+  //    }
+  //
+  //
+  //  }
+  //
+  //
+  //  private def applyReverseTransformer(data: Any, transformer: Transformer): Any = {
+  //    transformer match {
+  //      case NoTransformer => data
+  //      case EncDecTransformer(encrypt, decrypt) => decrypt(data, encryption)
+  //    }
+  //  }
 
 
   def placeAll(map: Map[Operator, Host]): Unit
@@ -202,7 +204,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
     })
   }
 
-  override def postStop(): Unit ={
+  override def postStop(): Unit = {
     propsActors.keys.foreach(key => propsActors(key) ! Kill)
     cluster.unsubscribe(self)
   }
@@ -225,7 +227,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
         initialDelay = FiniteDuration(0, TimeUnit.SECONDS),
         interval = FiniteDuration(interval, TimeUnit.MILLISECONDS),
         runnable = () => {
-          hosts.now.foreach{
+          hosts.now.foreach {
             host => host.asInstanceOf[NodeHost].actorRef ! HostPropsRequest
           }
         })
@@ -251,34 +253,34 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
   }
 
   private def latencySelector(props: HostProps, host: Host): Duration = {
-    if(host.equals(NoHost)){
+    if (host.equals(NoHost)) {
       return Duration.apply(50, TimeUnit.DAYS)
     }
     val latency = props.latency collectFirst { case (`host`, latency) => latency }
-    if(latency.isDefined){
+    if (latency.isDefined) {
       latency.get
     }
     else Duration(50, TimeUnit.DAYS)
   }
 
   private def bandwidthSelector(props: HostProps, host: Host): Double = {
-    if(host.equals(NoHost)){
+    if (host.equals(NoHost)) {
       return 0.0
     }
     val bandwidth = props.bandwidth collectFirst { case (`host`, bandwidth) => bandwidth }
-    if(bandwidth.isDefined){
+    if (bandwidth.isDefined) {
       bandwidth.get
     }
     else 0.0
   }
 
   private def latencyBandwidthSelector(props: HostProps, host: Host): (Duration, Double) = {
-    if(host.equals(NoHost)){
+    if (host.equals(NoHost)) {
       return (Duration.apply(50, TimeUnit.DAYS), 0.0)
     }
     val latency = props.latency collectFirst { case (`host`, latency) => latency }
     val bandwidth = props.bandwidth collectFirst { case (`host`, bandwidth) => bandwidth }
-    if(latency.isDefined && bandwidth.isDefined){
+    if (latency.isDefined && bandwidth.isDefined) {
       (latency.get, bandwidth.get)
     }
     else (Duration.apply(50, TimeUnit.DAYS), 0.0)
@@ -288,7 +290,9 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
     if (durations.isEmpty)
       Duration.Zero
     else
-      durations.foldLeft[Duration](Duration.Zero) { _ + _ } / durations.size
+      durations.foldLeft[Duration](Duration.Zero) {
+        _ + _
+      } / durations.size
 
   private def avg(numerics: Seq[Double]): Double =
     if (numerics.isEmpty)
@@ -298,12 +302,13 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
 
   /**
     * Measures a property of type T (bandwidth or latency or both)
-    * @param selector a function that selects the desired property from HostProps
+    *
+    * @param selector   a function that selects the desired property from HostProps
     * @param optimizing Maximizing or minimizing this property
-    * @param zero what zero equals for this property
-    * @param qos what are the properties for each host
-    * @param consumers who are the consumers
-    * @param placement current placement
+    * @param zero       what zero equals for this property
+    * @param qos        what are the properties for each host
+    * @param consumers  who are the consumers
+    * @param placement  current placement
     * @param merge
     * @param avg
     * @param host
@@ -339,15 +344,23 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
     * @return
     */
   def placeOptimizingLatency(qos: Map[Host, HostProps], consumers: Seq[Operator], placement: Map[Operator, Host]): Map[Operator, Host] = {
-    val measureLatency = measure(latencySelector, Minimizing, Duration.Zero, qos, consumers, placement) { _ + _ } { avg } _
+    val measureLatency = measure(latencySelector, Minimizing, Duration.Zero, qos, consumers, placement) {
+      _ + _
+    } {
+      avg
+    } _
 
     val placementsA = placeOptimizingHeuristicA(latencySelector, Minimizing, qos, consumers, placement)
     val durationA = measureLatency {
       placementsA(_)
     }
 
-    val placementsB = placeOptimizingHeuristicB(latencySelector, Minimizing, qos, consumers, placement) { _ + _ }
-    val durationB = measureLatency { placementsB(_) }
+    val placementsB = placeOptimizingHeuristicB(latencySelector, Minimizing, qos, consumers, placement) {
+      _ + _
+    }
+    val durationB = measureLatency {
+      placementsB(_)
+    }
 
     //placeAll((if (durationA < durationB) placementsA else placementsB).toMap)
     (if (durationA < durationB) placementsA else placementsB).toMap
@@ -355,19 +368,30 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
 
   /**
     * chooses between 2 bandwidth optimizing placements
+    *
     * @param qos
     * @param consumers
     * @param placement
     * @return the new placement as a map between operator and host
     */
   def placeOptimizingBandwidth(qos: Map[Host, HostProps], consumers: Seq[Operator], placement: Map[Operator, Host]): Map[Operator, Host] = {
-    val measureBandwidth = measure(bandwidthSelector, Maximizing, Double.MaxValue, qos, consumers, placement) { math.min } { avg } _
+    val measureBandwidth = measure(bandwidthSelector, Maximizing, Double.MaxValue, qos, consumers, placement) {
+      math.min
+    } {
+      avg
+    } _
 
     val placementsA = placeOptimizingHeuristicA(bandwidthSelector, Maximizing, qos, consumers, placement)
-    val bandwidthA = measureBandwidth { placementsA(_) }
+    val bandwidthA = measureBandwidth {
+      placementsA(_)
+    }
 
-    val placementsB = placeOptimizingHeuristicB(bandwidthSelector, Maximizing, qos, consumers, placement) { math.min }
-    val bandwidthB = measureBandwidth { placementsB(_) }
+    val placementsB = placeOptimizingHeuristicB(bandwidthSelector, Maximizing, qos, consumers, placement) {
+      math.min
+    }
+    val bandwidthB = measureBandwidth {
+      placementsB(_)
+    }
 
     //placeAll((if (bandwidthA > bandwidthB) placementsA else placementsB).toMap)
     (if (bandwidthA > bandwidthB) placementsA else placementsB).toMap
@@ -375,15 +399,19 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
 
   def placeOptimizingLatencyAndBandwidth(qos: Map[Host, HostProps], consumers: Seq[Operator], placement: Map[Operator, Host]): Map[Operator, Host] = {
     def average(durationNumerics: Seq[(Duration, Double)]): (Duration, Double) =
-      durationNumerics.unzip match { case (latencies, bandwidths) => (avg(latencies), avg(bandwidths)) }
+      durationNumerics.unzip match {
+        case (latencies, bandwidths) => (avg(latencies), avg(bandwidths))
+      }
 
     def merge(durationNumeric0: (Duration, Double), durationNumeric1: (Duration, Double)): (Duration, Double) =
-      (durationNumeric0, durationNumeric1) match { case ((duration0, numeric0), (duration1, numeric1)) =>
-        (duration0 + duration1, math.min(numeric0, numeric1))
+      (durationNumeric0, durationNumeric1) match {
+        case ((duration0, numeric0), (duration1, numeric1)) =>
+          (duration0 + duration1, math.min(numeric0, numeric1))
       }
 
     implicit val ordering = new Ordering[(Duration, Double)] {
       def abs(x: Duration) = if (x < Duration.Zero) -x else x
+
       def compare(x: (Duration, Double), y: (Duration, Double)) = ((-x._1, x._2), (-y._1, y._2)) match {
         case ((d0, n0), (d1, n1)) if d0 == d1 && n0 == n1 => 0
         case ((d0, n0), (d1, n1)) if d0 < d1 && n0 < n1 => -1
@@ -393,13 +421,23 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
       }
     }
 
-    val measureBandwidth = measure(latencyBandwidthSelector, Maximizing, (Duration.Zero, Double.MaxValue) , qos, consumers, placement) { merge } { average } _
+    val measureBandwidth = measure(latencyBandwidthSelector, Maximizing, (Duration.Zero, Double.MaxValue), qos, consumers, placement) {
+      merge
+    } {
+      average
+    } _
 
     val placementsA = placeOptimizingHeuristicA(latencyBandwidthSelector, Maximizing, qos, consumers, placement)
-    val bandwidthA = measureBandwidth { placementsA(_) }
+    val bandwidthA = measureBandwidth {
+      placementsA(_)
+    }
 
-    val placementsB = placeOptimizingHeuristicB(latencyBandwidthSelector, Maximizing, qos, consumers, placement) { merge }
-    val bandwidthB = measureBandwidth { placementsB(_) }
+    val placementsB = placeOptimizingHeuristicB(latencyBandwidthSelector, Maximizing, qos, consumers, placement) {
+      merge
+    }
+    val bandwidthB = measureBandwidth {
+      placementsB(_)
+    }
 
     (if (bandwidthA > bandwidthB) placementsA else placementsB).toMap
     //placeAll((if (bandwidthA > bandwidthB) placementsA else placementsB).toMap)
@@ -424,18 +462,24 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
     val placements = mutable.Map.empty[Operator, Host]
 
     def placeProducersConsumers(operator: Operator, consumer: Boolean): Unit = {
-      operator.dependencies foreach { placeProducersConsumers(_, consumer = false) }
+      operator.dependencies foreach {
+        placeProducersConsumers(_, consumer = false)
+      }
       if (consumer || operator.dependencies.isEmpty)
         placements += operator -> placement.apply(operator)
     }
 
     def placeIntermediates(operator: Operator, consumer: Boolean): Unit = {
-      operator.dependencies foreach { placeIntermediates(_, consumer = false) }
+      operator.dependencies foreach {
+        placeIntermediates(_, consumer = false)
+      }
 
       val host =
         if (!consumer && operator.dependencies.nonEmpty) {
           val valuesForHosts =
-            qos.toSeq collect { case (host, props) if !(placements.values exists { _== host }) =>
+            qos.toSeq collect { case (host, props) if !(placements.values exists {
+              _ == host
+            }) =>
               val propValues =
                 operator.dependencies map { dependentOperator =>
                   selector(props, placements(dependentOperator))
@@ -456,8 +500,12 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
       placements += operator -> host
     }
 
-    consumers foreach { placeProducersConsumers(_, consumer = true) }
-    consumers foreach { placeIntermediates(_, consumer = true) }
+    consumers foreach {
+      placeProducersConsumers(_, consumer = true)
+    }
+    consumers foreach {
+      placeIntermediates(_, consumer = true)
+    }
     placements
   }
 
@@ -471,11 +519,15 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
     val placements = mutable.Map.empty[Operator, Host]
 
     def allOperators(operator: Operator, parent: Option[Operator]): Seq[(Operator, Option[Operator])] =
-      (operator -> parent) +: (operator.dependencies flatMap { allOperators(_, Some(operator)) })
+      (operator -> parent) +: (operator.dependencies flatMap {
+        allOperators(_, Some(operator))
+      })
 
-    val operators = consumers. flatMap { allOperators(_, None) }
+    val operators = consumers.flatMap {
+      allOperators(_, None)
+    }
     operators foreach { case (operator, _) =>
-      placements += operator -> placement.apply(operator)//operator.host
+      placements += operator -> placement.apply(operator) //operator.host
       previousPlacements += operator -> mutable.Set(placement.apply(operator))
     }
 
@@ -483,7 +535,9 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
       val changed = operators map {
         case (operator, Some(parent)) if operator.dependencies.nonEmpty =>
           val valuesForHosts =
-            qos.toSeq collect { case (host, props) if !(placements.values exists { _ == host }) && !(previousPlacements(operator) contains host) =>
+            qos.toSeq collect { case (host, props) if !(placements.values exists {
+              _ == host
+            }) && !(previousPlacements(operator) contains host) =>
               merge(
                 minmax(optimizing, operator.dependencies map { dependentOperator =>
                   selector(props, placements(dependentOperator))
@@ -498,7 +552,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
               selector(qos.apply(placements(parent)), placements(operator)))
           val noPotentialPlacements =
             if (valuesForHosts.isEmpty) {
-              if ((qos.keySet -- placements.values --previousPlacements(operator)).isEmpty)
+              if ((qos.keySet -- placements.values -- previousPlacements(operator)).isEmpty)
                 true
               else
                 throw new UnsupportedOperationException("not enough hosts")
@@ -509,10 +563,10 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
           if (!noPotentialPlacements) {
             val (value, host) = minmaxBy(optimizing, valuesForHosts) { case (value, _) => value }
             var changePlacement = false
-            if(optimizeFor == "latency") {
+            if (optimizeFor == "latency") {
               changePlacement = value < currentValue
             }
-            else{
+            else {
               changePlacement = value > currentValue
             }
 
@@ -533,6 +587,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
       if (changed contains true)
         placeOperators()
     }
+
     placeOperators()
 
     //println("PLACEMENT ACTOR Heuristic B", placements)
@@ -555,22 +610,22 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
                  latencyMonitorFactory: MonitorFactory,
                  bandwidthMonitorFactory: MonitorFactory,
                  callback: Option[Event => Any],
-                 consumer: Boolean ): Props = {
+                 consumer: Boolean): Props = {
     query match {
       case streamQuery: StreamQuery =>
-        initializeStreamQuery(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, callback,  streamQuery, consumer)
+        initializeStreamQuery(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, callback, streamQuery, consumer)
       case sequenceQuery: SequenceQuery =>
-        initializeSequenceNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, callback,  sequenceQuery, consumer)
+        initializeSequenceNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, callback, sequenceQuery, consumer)
       case filterQuery: FilterQuery =>
-        initializeFilterNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, callback,  filterQuery, consumer)
+        initializeFilterNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, callback, filterQuery, consumer)
       case dropElemQuery: DropElemQuery =>
-        initializeDropElemNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, callback,  dropElemQuery, consumer)
+        initializeDropElemNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, callback, dropElemQuery, consumer)
       case selfJoinQuery: SelfJoinQuery =>
-        initializeSelfJoinNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, callback,  selfJoinQuery, consumer)
+        initializeSelfJoinNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, callback, selfJoinQuery, consumer)
       case joinQuery: JoinQuery =>
-        initializeJoinNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, callback,  joinQuery, consumer)
+        initializeJoinNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, callback, joinQuery, consumer)
       case conjunctionQuery: ConjunctionQuery =>
-        initializeConjunctionNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, callback,  conjunctionQuery, consumer)
+        initializeConjunctionNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, callback, conjunctionQuery, consumer)
       case disjunctionQuery: DisjunctionQuery =>
         initializeDisjunctionNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, callback, disjunctionQuery, consumer)
     }
@@ -585,8 +640,11 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
                                     consumer: Boolean) = {
 
     println("\nCreating Stream Node\n")
-
-
+    var rule: Option[EventConversionRule] = None
+    privacyContext match {
+      case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
+        rule = Some(conversionRules(streamQuery.publisherName))
+    }
 
 
     val props = Props(
@@ -596,7 +654,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
         frequencyMonitorFactory,
         latencyMonitorFactory,
         None,
-        callback))
+        callback, rule))
     println("\nStream Node created\n")
 
     ///TODO: create an encrypting stream node if the data is sensitive
@@ -680,13 +738,13 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
     props
   }
 
-  private def initializeSelfJoinNode(publishers:              Map[String, ActorRef],
+  private def initializeSelfJoinNode(publishers: Map[String, ActorRef],
                                      frequencyMonitorFactory: MonitorFactory,
-                                     latencyMonitorFactory:   MonitorFactory,
+                                     latencyMonitorFactory: MonitorFactory,
                                      bandwidthMonitorFactory: MonitorFactory,
-                                     callback:                Option[Event => Any],
-                                     selfJoinQuery:           SelfJoinQuery,
-                                     consumer:                Boolean) = {
+                                     callback: Option[Event => Any],
+                                     selfJoinQuery: SelfJoinQuery,
+                                     consumer: Boolean) = {
     val wt1 = getWindowType(selfJoinQuery.w1)
     val ws1 = getWindowSize(selfJoinQuery.w1)
     val wt2 = getWindowType(selfJoinQuery.w2)
@@ -809,7 +867,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
                                bandwidthMonitorFactory: MonitorFactory,
                                query: Query,
                                props: Props,
-                               consumer: Boolean) : Unit = {
+                               consumer: Boolean): Unit = {
     val child = initialize(query, publishers,
       frequencyMonitorFactory,
       latencyMonitorFactory,
@@ -837,7 +895,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
                                 query1: Query,
                                 query2: Query,
                                 props: Props,
-                                consumer: Boolean) : Unit = {
+                                consumer: Boolean): Unit = {
     val child1 = initialize(query1, publishers,
       frequencyMonitorFactory,
       latencyMonitorFactory,
@@ -872,13 +930,14 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
     case _: Query6[_, _, _, _, _, _] => 6
   }
 
-  def getQueryLength(noReqStream: NStream):Int = noReqStream match {
+  def getQueryLength(noReqStream: NStream): Int = noReqStream match {
     case _: NStream1[_] => 1
     case _: NStream2[_, _] => 2
     case _: NStream3[_, _, _] => 3
     case _: NStream4[_, _, _, _] => 4
     case _: NStream5[_, _, _, _, _] => 5
   }
+
   def elemToBeDropped(query: Query): Int = query match {
     case DropElem1Of2(_, _) => 1
     case DropElem1Of3(_, _) => 1
@@ -903,14 +962,14 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
     case _ => 1
   }
 
-  def getWindowType(window: Window): String = window match{
-    case _ : SlidingInstances => "SI"
-    case _ : TumblingInstances => "TI"
-    case _ : SlidingTime => "ST"
-    case _ : TumblingTime => "TT"
+  def getWindowType(window: Window): String = window match {
+    case _: SlidingInstances => "SI"
+    case _: TumblingInstances => "TI"
+    case _: SlidingTime => "ST"
+    case _: TumblingTime => "TT"
   }
 
-  def getWindowSize(window: Window): Int = window match{
+  def getWindowSize(window: Window): Int = window match {
     case SlidingInstances(i) => i
     case TumblingInstances(i) => i
     case SlidingTime(i) => i
