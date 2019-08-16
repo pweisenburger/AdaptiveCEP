@@ -100,7 +100,7 @@ case class StreamNode(
       val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1")
       val key = factory.generateSecret(spec).getEncoded
       val skeySpec = new SecretKeySpec(key, "AES")
-      implicit val encryption = CryptoAES(skeySpec,iv)
+      implicit val encryption: Encryption = CryptoAES(skeySpec,iv)
 
       ref.getSource.to(Sink.foreach(a =>{
         emitEvent(a)
