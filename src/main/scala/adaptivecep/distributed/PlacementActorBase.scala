@@ -594,7 +594,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
         frequencyMonitorFactory,
         latencyMonitorFactory,
         None,
-        callback))
+        callback, privacyContext))
     println("\nStream Node created\n")
 
     ///TODO: create an encrypting stream node if the data is sensitive
@@ -623,7 +623,6 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
         publishers,
         frequencyMonitorFactory,
         latencyMonitorFactory,
-
         None,
         callback))
     connectBinaryNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, disjunctionQuery.sq1, disjunctionQuery.sq2, props, consumer)
@@ -647,7 +646,6 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
         publishers,
         frequencyMonitorFactory,
         latencyMonitorFactory,
-
         None,
         callback))
     connectBinaryNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, conjunctionQuery.sq1, conjunctionQuery.sq2, props, consumer)
@@ -674,7 +672,6 @@ trait PlacementActorBase extends Actor with ActorLogging with System{
         publishers,
         frequencyMonitorFactory,
         latencyMonitorFactory,
-
         None,
         callback))
     connectBinaryNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, joinQuery.sq1, joinQuery.sq2, props, consumer)
