@@ -46,13 +46,13 @@ object TestingEncryption extends App {
 
     hosts.foreach(host => host ! Hosts(hosts))
 
-    val cryptoActor: ActorRef = actorSystem.actorOf(Props[CryptoServiceActor].withDeploy(Deploy(scope = RemoteScope(address1))), "CryptoService")
+//    val cryptoActor: ActorRef = actorSystem.actorOf(Props[CryptoServiceActor].withDeploy(Deploy(scope = RemoteScope(address1))), "CryptoService")
 
     //    val publisher: ActorRef = actorSystem.actorOf(Props(EncryptedPublisher(cryptoActor, id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
     val publisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
 
-    val cryptoSvc = new CryptoServiceWrapper(cryptoActor)
-    val interpret = new CEPRemoteInterpreter(cryptoActor)
+//    val cryptoSvc = new CryptoServiceWrapper(cryptoActor)
+//    val interpret = new CEPRemoteInterpreter(cryptoActor)
 
     val publishers: Map[String, ActorRef] = Map(
       "A" -> publisher
@@ -80,30 +80,30 @@ object TestingEncryption extends App {
     //      Map("A" -> Privacy.High)
     //    )
 
-    val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
-    val remoteObject = eventProcessorClient.lookupObject()
-
-    def encryptInt(value: Any, crypto: Encryption): Any = {
-      value match {
-        case e: Int =>
-          val biValue = BigInt(e)
-          crypto.encrypt(biValue.toByteArray)
-        case _ => sys.error("unexpected input type")
-      }
-    }
-
-    def decryptInt(value: Any, crypto: Encryption): Any = {
-      value match {
-        case e: Array[Byte] =>
-          val result = crypto.decrypt(e)
-          val biVal = BigInt(result)
-          biVal.toInt
-        case _ => sys.error("unexpected type")
-      }
-
-    }
-
-    val publisherATransformer = EncDecTransformer(encryptInt,decryptInt)
+//    val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
+//    val remoteObject = eventProcessorClient.lookupObject()
+//
+//    def encryptInt(value: Any, crypto: Encryption): Any = {
+//      value match {
+//        case e: Int =>
+//          val biValue = BigInt(e)
+//          crypto.encrypt(biValue.toByteArray)
+//        case _ => sys.error("unexpected input type")
+//      }
+//    }
+//
+//    def decryptInt(value: Any, crypto: Encryption): Any = {
+//      value match {
+//        case e: Array[Byte] =>
+//          val result = crypto.decrypt(e)
+//          val biVal = BigInt(result)
+//          biVal.toInt
+//        case _ => sys.error("unexpected type")
+//      }
+//
+//    }
+//
+//    val publisherATransformer = EncDecTransformer(encryptInt,decryptInt)
 
 
 //    implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(

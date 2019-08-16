@@ -181,9 +181,7 @@ object Events {
 
   sealed trait Event extends Serializable
 
-  sealed trait EncEvent extends Event {
-    def rule: EventConversionRule
-  }
+  sealed trait EncEvent extends Event
 
   case class Event1(e1: Any) extends Event
 
