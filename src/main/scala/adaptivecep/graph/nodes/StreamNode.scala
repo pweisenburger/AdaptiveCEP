@@ -104,13 +104,13 @@ case class StreamNode(
 
       ref.getSource.to(Sink.foreach(a =>{
         emitEvent(a)
-        privacyContext match {
-          case adaptivecep.privacy.Privacy.SgxPrivacyContext(trustedHosts, remoteObject, conversionRules)
-            =>
-            val encEvent = getEncryptedEvent(a,conversionRules(publisherName))
-            emitEvent(encEvent)
-          case NoPrivacyContext => emitEvent(a)
-        }
+//        privacyContext match {
+//          case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules)
+//            =>
+//            val encEvent = getEncryptedEvent(a,conversionRules(publisherName))
+//            emitEvent(encEvent)
+//          case NoPrivacyContext => emitEvent(a)
+//        }
       })).run(materializer)
     case Parent(p1) => {
       parentNode = p1
