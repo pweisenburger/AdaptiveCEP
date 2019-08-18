@@ -36,7 +36,15 @@ case class HostProps(latency: Seq[(Host, Duration)], bandwidth: Seq[(Host, Doubl
 case class ActiveOperator(props: Props, dependencies: Seq[Operator]) extends Operator
 case class TentativeOperator(props: Props, dependencies: Seq[Operator]) extends Operator
 
-
 case class NodeHost(actorRef: ActorRef) extends Host
-///Decorator for NodeHost
-case class TrustedNodeHost(host: Host) extends Host
+
+trait HostDecorator extends Host {
+  def host: Host
+}
+
+case class TrustedHost(host: Host) extends HostDecorator
+
+
+
+
+

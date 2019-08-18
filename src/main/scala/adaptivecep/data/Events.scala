@@ -2,6 +2,7 @@ package adaptivecep.data
 
 import java.time.Instant
 
+import adaptivecep.privacy.ConversionRules._
 import adaptivecep.data.Cost._
 import adaptivecep.data.Queries.Requirement
 import adaptivecep.distributed.operator.{ActiveOperator, Host, NodeHost, TentativeOperator}

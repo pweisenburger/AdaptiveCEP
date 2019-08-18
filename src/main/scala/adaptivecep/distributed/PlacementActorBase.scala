@@ -4,6 +4,7 @@ import java.util.concurrent.TimeUnit
 
 import adaptivecep.data.Cost.Cost
 import adaptivecep.data.Events._
+import adaptivecep.privacy.ConversionRules._
 import adaptivecep.data.Events.Event
 import adaptivecep.data.Queries.{Operator => _, _}
 import adaptivecep.distributed
@@ -95,6 +96,17 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
   val placement: Var[Map[Operator, Host]] = Var(Map.empty[Operator, Host] withDefaultValue NoHost)(ReSerializable.doNotSerialize, "placement")
   val demandViolated: default.Evt[Set[Requirement]] = Evt[Set[Requirement]]()
 
+  val initVector = "ABCDEFGHIJKLMNOP"
+  val iv = new IvParameterSpec(initVector.getBytes("UTF-8"))
+  val secret = "mysecret"
+  val spec = new PBEKeySpec(secret.toCharArray, "1234".getBytes(), 65536, 128)
+  val factory: SecretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1")
+  val key: Array[Byte] = factory.generateSecret(spec).getEncoded
+  val skeySpec = new SecretKeySpec(key, "AES")
+  implicit val encryption = CryptoAES(skeySpec, iv)
+
+
+
   //val createdCallback: Option[() => Any] = () => println("STATUS:\t\tGraph has been created.")
   val eventCallback: Event => Any = {
     // Callback for `query1`:
@@ -112,71 +124,6 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
     case _ => println("what the hell")
   }
 
-    val initVector = "ABCDEFGHIJKLMNOP"
-    val iv = new IvParameterSpec(initVector.getBytes("UTF-8"))
-    val secret = "mysecret"
-    val spec = new PBEKeySpec(secret.toCharArray, "1234".getBytes(), 65536, 128)
-    val factory: SecretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1")
-    val key: Array[Byte] = factory.generateSecret(spec).getEncoded
-    val skeySpec = new SecretKeySpec(key, "AES")
-    val encryption = CryptoAES(skeySpec, iv)
-
-
-    private def getDecryptedEvent(e: EncEvent): Event = {
-      e match {
-        case EncEvent1(e1, rule) =>
-          Event1(applyReverseTransformer(e1, rule.tr1))
-        case EncEvent2(e1, e2, rule) =>
-          Event2(
-            applyReverseTransformer(e1, rule.tr1),
-            applyReverseTransformer(e2, rule.tr2)
-          )
-        case EncEvent3(e1, e2, e3, rule) =>
-          Event3(
-            applyReverseTransformer(e1, rule.tr1),
-            applyReverseTransformer(e2, rule.tr2),
-            applyReverseTransformer(e3, rule.tr3)
-          )
-
-        case EncEvent4(e1, e2, e3, e4, rule) =>
-          Event4(
-            applyReverseTransformer(e1, rule.tr1),
-            applyReverseTransformer(e2, rule.tr2),
-            applyReverseTransformer(e3, rule.tr3),
-            applyReverseTransformer(e4, rule.tr4)
-          )
-
-        case EncEvent5(e1, e2, e3, e4, e5, rule) =>
-          Event5(
-            applyReverseTransformer(e1, rule.tr1),
-            applyReverseTransformer(e2, rule.tr2),
-            applyReverseTransformer(e3, rule.tr3),
-            applyReverseTransformer(e4, rule.tr4),
-            applyReverseTransformer(e5, rule.tr5)
-          )
-
-        case EncEvent6(e1, e2, e3, e4, e5, e6, rule) =>
-          Event6(
-            applyReverseTransformer(e1, rule.tr1),
-            applyReverseTransformer(e2, rule.tr2),
-            applyReverseTransformer(e3, rule.tr3),
-            applyReverseTransformer(e4, rule.tr4),
-            applyReverseTransformer(e5, rule.tr5),
-            applyReverseTransformer(e6, rule.tr6)
-          )
-
-      }
-
-
-    }
-
-
-    private def applyReverseTransformer(data: Any, transformer: Transformer): Any = {
-      transformer match {
-        case NoTransformer => data
-        case EncDecTransformer(encrypt, decrypt) => decrypt(data, encryption)
-      }
-    }
 
 
   def placeAll(map: Map[Operator, Host]): Unit
