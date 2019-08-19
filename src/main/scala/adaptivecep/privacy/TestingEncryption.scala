@@ -77,32 +77,10 @@ object TestingEncryption extends App {
     val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
     val remoteObject = eventProcessorClient.lookupObject()
 
-    def encryptInt(value: Any, crypto: Encryption): Any = {
-      value match {
-        case e: Int =>
-          val biValue = BigInt(e)
-          crypto.encrypt(biValue.toByteArray)
-        case _ => sys.error("unexpected input type")
-      }
-    }
-
-    def decryptInt(value: Any, crypto: Encryption): Any = {
-      value match {
-        case e: Array[Byte] =>
-          val result = crypto.decrypt(e)
-          val biVal = BigInt(result)
-          biVal.toInt
-        case _ => sys.error("unexpected type")
-      }
-
-    }
-
-    val publisherATransformer = EncDecTransformer(encryptInt,decryptInt)
-
     implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
       Set(TrustedHost(NodeHost(host1)), TrustedHost(NodeHost(host4))), // Trusted hosts
       remoteObject, // a reference to the remote sgx object? do we need it?
-      Map("A" -> Event1Rule(publisherATransformer))
+      Map("A" -> Event1Rule(IntEventTransformer))
     )
 
 //  implicit val pc: PrivacyContext = NoPrivacyContext

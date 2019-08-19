@@ -2,8 +2,85 @@ package adaptivecep.privacy
 
 import adaptivecep.data.Events._
 import adaptivecep.privacy.encryption.Encryption
+import java.nio.ByteBuffer
 
 object ConversionRules {
+
+  def encryptInt(value: Any, crypto: Encryption): Any = {
+
+    value match {
+      case e: Int =>
+        //val biValue = BigInt(e)
+        val buffer = ByteBuffer.allocate(4)
+        crypto.encrypt(buffer.putInt(e).array())
+      case _ => sys.error("unexpected input type")
+    }
+  }
+
+  def decryptInt(value: Any, crypto: Encryption): Any = {
+    value match {
+      case e: Array[Byte] =>
+        val result = crypto.decrypt(e)
+        ByteBuffer.wrap(result).getInt
+      case _ => sys.error("unexpected type")
+    }
+  }
+
+  def encryptString(value: Any, crypto: Encryption): Any = {
+    value match {
+      case str: String =>
+        crypto.encrypt(str.getBytes)
+      case _ => sys.error("unexpected type")
+    }
+  }
+  def decryptString(value: Any, crypto: Encryption): Any = {
+    value match {
+      case arr: Array[Byte] =>
+        val result = crypto.decrypt(arr)
+        result.mkString
+      case _ => sys.error("unexpected type")
+    }
+  }
+
+  def encryptFloat(value: Any, crypto: Encryption): Any = {
+    value match {
+      case e: Float =>
+        val buffer = ByteBuffer.allocate(4)
+        crypto.encrypt(buffer.putFloat(e).array())
+      case _ => sys.error("unexpected input type")
+    }
+  }
+  def decryptFloat(value: Any, crypto: Encryption): Any = {
+    value match {
+      case e: Array[Byte] =>
+        val result = crypto.decrypt(e)
+        ByteBuffer.wrap(result).getFloat
+      case _ => sys.error("unexpected type")
+    }
+  }
+
+  def encryptDouble(value: Any, crypto: Encryption): Any = {
+    value match {
+      case e: Double =>
+        val buffer = ByteBuffer.allocate(8)
+        crypto.encrypt(buffer.putDouble(e).array())
+      case _ => sys.error("unexpected input type")
+    }
+  }
+
+  def decryptDouble(value: Any, crypto: Encryption): Any = {
+    value match {
+      case e: Array[Byte] =>
+        val result = crypto.decrypt(e)
+        ByteBuffer.wrap(result).getDouble
+      case _ => sys.error("unexpected type")
+    }
+  }
+
+  object IntEventTransformer extends EncDecTransformer(encryptInt,decryptInt)
+  object StringEventTransformer extends EncDecTransformer(encryptString,decryptString)
+  object FloatEventTransformer extends EncDecTransformer(encryptFloat,decryptFloat)
+  object DoubleEventTransformer extends EncDecTransformer(encryptFloat,decryptFloat)
 
   sealed trait Transformer extends Serializable
 
@@ -11,11 +88,22 @@ object ConversionRules {
                                decrypt: (Any,Encryption) => Any) extends Transformer
   object NoTransformer extends Transformer
 
-
+  /***
+    * Represents the event conversion rule
+    */
   sealed trait EventConversionRule extends Serializable
 
+  /***
+    * Represents Event1 Conversion rule,
+    * @param tr1 carries the transformation rules for Event1
+    */
   case class Event1Rule(tr1: Transformer) extends EventConversionRule
 
+  /***
+    * Represents Event2 Conversion rule
+    * @param tr1 transformation rule for the first data type the event carries
+    * @param tr2 transformation rule for the second data type the event carries
+    */
   case class Event2Rule(tr1: Transformer, tr2: Transformer) extends EventConversionRule
 
   case class Event3Rule(tr1: Transformer, tr2: Transformer,tr3: Transformer) extends EventConversionRule
