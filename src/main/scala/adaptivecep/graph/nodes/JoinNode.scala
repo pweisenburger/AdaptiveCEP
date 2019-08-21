@@ -219,7 +219,7 @@ case class JoinNode(
       (rule1.get, rule2.get) match {
         case (Event1Rule(e1tr1), Event1Rule(e2tr1)) =>
           resultRule = Some(Event2Rule(e1tr1, e2tr1))
-        case _ => sys.error("unexepected context")
+        case _ => sys.error("Rules are not matching the event types")
       }
       resultRule.get.asInstanceOf[Event2Rule]
     }
@@ -239,7 +239,7 @@ case class JoinNode(
           resultRule = Some(Event3Rule(e1tr1, e2tr1, e2tr2))
         case (Event2Rule(e1tr1, e1tr2), Event1Rule(e2tr1)) =>
           resultRule = Some(Event3Rule(e1tr1, e1tr2, e2tr1))
-        case _ => sys.error("unexepected context")
+        case _ => sys.error("Rules are not matching the event types")
       }
       resultRule.get.asInstanceOf[Event3Rule]
     }
@@ -255,7 +255,7 @@ case class JoinNode(
           resultRule = Some(Event4Rule(e1tr1, e1tr2, e2tr1, e2tr2))
         case (Event3Rule(e1tr1, e1tr2, e1tr3), Event1Rule(e2tr1)) =>
           resultRule = Some(Event4Rule(e1tr1, e1tr2, e1tr3, e2tr1))
-        case _ => sys.error("unexepected context")
+        case _ => sys.error("Rules are not matching the event types")
       }
       resultRule.get.asInstanceOf[Event4Rule]
     }
@@ -273,7 +273,7 @@ case class JoinNode(
           resultRule = Some(Event5Rule(e1tr1, e1tr2, e1tr3, e2tr1, e2tr2))
         case (Event4Rule(e1tr1, e1tr2, e1tr3, e1tr4), Event1Rule(e2tr1)) =>
           resultRule = Some(Event5Rule(e1tr1, e1tr2, e1tr3, e1tr4, e2tr1))
-        case _ => sys.error("unexepected context")
+        case _ => sys.error("Rules are not matching the event types")
       }
       resultRule.get.asInstanceOf[Event5Rule]
     }
@@ -293,7 +293,7 @@ case class JoinNode(
           resultRule = Some(Event6Rule(e1tr1, e1tr2, e1tr3, e1tr4, e2tr1, e2tr2))
         case (Event5Rule(e1tr1, e1tr2, e1tr3, e1tr4, e1tr5), Event1Rule(e2tr1)) =>
           resultRule = Some(Event6Rule(e1tr1, e1tr2, e1tr3, e1tr4, e1tr5, e2tr1))
-        case _ => sys.error("unexepected context")
+        case _ => sys.error("Rules are not matching the event types")
       }
       resultRule.get.asInstanceOf[Event6Rule]
     }
