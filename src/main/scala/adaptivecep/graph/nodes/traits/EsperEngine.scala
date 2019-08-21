@@ -12,7 +12,7 @@ trait EsperEngine {
   // Using `lazy val`s here is inspired by Frank Sauer's template `akka-with-esper`:
   // https://www.lightbend.com/activator/template/akka-with-esper
   lazy val serviceProvider: EPServiceProvider =
-    EPServiceProviderManager.getProvider(esperServiceProviderUri, configuration)
+  EPServiceProviderManager.getProvider(esperServiceProviderUri, configuration)
   lazy val runtime: EPRuntime = serviceProvider.getEPRuntime
   lazy val administrator: EPAdministrator = serviceProvider.getEPAdministrator
 
@@ -65,6 +65,15 @@ object EsperEngine {
     case 5 => Array("e1", "e2", "e3", "e4", "e5")
     case 6 => Array("e1", "e2", "e3", "e4", "e5", "e6")
   }
+
+//  def createArrayOfSecNames(length: Int): Array[String] = length match {
+//    case 1 => Array("e1", "tr1")
+//    case 2 => Array("e1", "e2", "tr1", "tr2")
+//    case 3 => Array("e1", "e2", "e3", "tr1", "tr2", "tr3")
+//    case 4 => Array("e1", "e2", "e3", "e4", "tr1", "tr2", "tr3", "tr4")
+//    case 5 => Array("e1", "e2", "e3", "e4", "e5", "tr1", "tr2", "tr3", "tr4", "tr5")
+//    case 6 => Array("e1", "e2", "e3", "e4", "e5", "e6", "tr1", "tr2", "tr3", "tr4", "tr5", "tr6")
+//  }
 
   def createArrayOfClasses(length: Int): Array[Class[_]] = {
     val clazz: Class[_] = classOf[AnyRef]
