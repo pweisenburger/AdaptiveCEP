@@ -1,5 +1,7 @@
 # AdaptiveCEP
 
+[AdaptiveCEP DSL](#adaptivecep-dsl)
+
 AdaptiveCEP is a research project exploring ways to embed quality demands into queries for event processing systems. As such, its main contributions are:
 
 + **AdaptiveCEP DSL** for _expressing_ EP queries including quality demands
