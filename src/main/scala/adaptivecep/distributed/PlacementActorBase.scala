@@ -106,16 +106,15 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
   implicit val encryption = CryptoAES(skeySpec, iv)
 
 
-
   //val createdCallback: Option[() => Any] = () => println("STATUS:\t\tGraph has been created.")
   val eventCallback: Event => Any = {
     // Callback for `query1`:
     case Event1(e1) => println(s"COMPLEX EVENT:\tEvent1($e1)")
-//    case EncEvent1(e1, rule) => println(s"COMPLEX ENCEVENT:\tEvent1($e1)")
-        case e:EncEvent1 =>
-          val decrypted = getDecryptedEvent(e).asInstanceOf[Event1]
-          val value = decrypted.e1
-          println(s"COMPEX EVENT:\tEncEvent carrying($value)")
+    //    case EncEvent1(e1, rule) => println(s"COMPLEX ENCEVENT:\tEvent1($e1)")
+    case e: EncEvent1 =>
+      val decrypted = getDecryptedEvent(e).asInstanceOf[Event1]
+      val value = decrypted.e1
+      println(s"COMPEX EVENT:\tEncEvent carrying($value)")
     //case Event3(Left(i1), Left(i2), Left(f)) => println(s"COMPLEX EVENT:\tEvent3($i1,$i2,$f)")
     //case Event3(Right(s), _, _)              => println(s"COMPLEX EVENT:\tEvent1($s)")
     // Callback for `query2`:
@@ -123,7 +122,6 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
     // This is necessary to avoid warnings about non-exhaustive `match`:
     case _ => println("what the hell")
   }
-
 
 
   def placeAll(map: Map[Operator, Host]): Unit
@@ -673,6 +671,15 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
     val ws2 = getWindowSize(joinQuery.w2)
     val length1 = getQueryLength(joinQuery.sq1)
     val length2 = getQueryLength(joinQuery.sq2)
+
+    var encryptedEvents: Boolean = false
+    privacyContext match {
+      case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
+        encryptedEvents = true
+      case _ => encryptedEvents = false
+    }
+
+
     val props = Props(
       JoinNode(
         joinQuery.requirements,
@@ -681,7 +688,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
         frequencyMonitorFactory,
         latencyMonitorFactory,
         None,
-        callback))
+        callback, encryptedEvents))
     connectBinaryNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, joinQuery.sq1, joinQuery.sq2, props, consumer)
     props
   }
