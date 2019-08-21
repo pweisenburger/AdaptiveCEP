@@ -1,7 +1,9 @@
 # AdaptiveCEP
 
 [AdaptiveCEP DSL](#adaptivecep-dsl)
+
 [Examples](#examples)
+
 [Scientific Publications](#scientific-publications)
 
 ## AdaptiveCEP Akka/Esper Backend
