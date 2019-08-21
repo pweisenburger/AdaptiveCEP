@@ -1,6 +1,11 @@
 # AdaptiveCEP
 
 [AdaptiveCEP DSL](#adaptivecep-dsl)
+[Examples](#examples)
+[Scientific Publications](#scientific-publications)
+
+## AdaptiveCEP Akka/Esper Backend
+
 
 AdaptiveCEP is a research project exploring ways to embed quality demands into queries for event processing systems. As such, its main contributions are:
 
@@ -73,6 +78,6 @@ As said, the AdaptiveCEP backend is a tree of Akka actors representing a query, 
 
 A node representing a primitive (so far, there's only one primitive: a subscription to a stream) is just a plain Akka actor subscribing to the respective publisher, whereas nodes representing operators are all running an independent instance of the Esper event processing engine.
 
-# Publications
+# Scientific Publications
 
 Pascal Weisenburger, Manisha Luthra, Boris Koldehofe, and Guido Salvaneschi. 2017. Quality-aware runtime adaptation in complex event processing. In Proceedings of the 12th International Symposium on Software Engineering for Adaptive and Self-Managing Systems (SEAMS '17). IEEE Press, Piscataway, NJ, USA, 140-151
