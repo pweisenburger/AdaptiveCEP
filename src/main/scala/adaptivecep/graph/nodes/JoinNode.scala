@@ -126,7 +126,6 @@ case class JoinNode(
         case Event4(e1, e2, e3, e4) => sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4)))
         case Event5(e1, e2, e3, e4, e5) => sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5)))
         case Event6(e1, e2, e3, e4, e5, e6) => sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5), toAnyRef(e6)))
-        //TODO: add EncEvents
         case EncEvent1(e1, rule) => sendEvent("sq1", Array(toAnyRef(e1)))
           if (rule1.isEmpty) rule1 = Some(rule)
         case EncEvent2(e1, e2, rule) => sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2)))
@@ -151,7 +150,6 @@ case class JoinNode(
         case Event4(e1, e2, e3, e4) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4)))
         case Event5(e1, e2, e3, e4, e5) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5)))
         case Event6(e1, e2, e3, e4, e5, e6) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5), toAnyRef(e6)))
-        //TODO: add EncEvents
         case EncEvent1(e1, rule) => sendEvent("sq2", Array(toAnyRef(e1)))
           if (rule2.isEmpty) rule2 = Some(rule)
         case EncEvent2(e1, e2, rule) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2)))
