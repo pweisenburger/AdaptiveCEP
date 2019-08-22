@@ -30,13 +30,15 @@ Internally, queries expressed using AdaptiveCEP DSL are represented by case clas
     + Example 1: `join` of two streams:
 
     ```scala
-    val q1 = streamA join streamB in (slidingWindow(3 seconds), tumblingWindow(3 instances))
+    val q1 = streamA join streamB in (slidingWindow(3 seconds),
+                                      tumblingWindow(3 instances))
     ```
 
     + Example 2: `join` composing a stream with another subquery:
 
     ```scala
-    val q2 = streamC join q1 in (slidingWindow(2 instances), tumblingWindow(2 seconds))
+    val q2 = streamC join q1 in (slidingWindow(2 instances),
+                                 tumblingWindow(2 seconds))
     ```
 
     + Available windows:
