@@ -107,7 +107,7 @@ case class FilterNode(
               emitEvent(event)
             }
           } catch {
-            case e: Exception => println("\n[some error]\n")
+            case e: Exception => println("\n[SGX Service unable to apply predicate]\n")
           }
 
         case PrivacyContextCentralized(interpret, cryptoService, trustedHosts, sourcesSensitivity)
