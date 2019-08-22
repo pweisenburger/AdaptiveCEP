@@ -115,6 +115,12 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
       val decrypted = getDecryptedEvent(e).asInstanceOf[Event1]
       val value = decrypted.e1
       println(s"COMPEX EVENT:\tEncEvent carrying($value)")
+
+    case e: EncEvent2 =>
+      val decrypted = getDecryptedEvent(e).asInstanceOf[Event2]
+      val value1 = decrypted.e1
+      val value2 = decrypted.e2
+      println(s"COMPEX EVENT:\tEncEvent carrying($value1,$value2)")
     //case Event3(Left(i1), Left(i2), Left(f)) => println(s"COMPLEX EVENT:\tEvent3($i1,$i2,$f)")
     //case Event3(Right(s), _, _)              => println(s"COMPLEX EVENT:\tEvent1($s)")
     // Callback for `query2`:

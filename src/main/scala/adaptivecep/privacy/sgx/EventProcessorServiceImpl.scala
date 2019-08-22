@@ -5,7 +5,7 @@ import adaptivecep.data.Events._
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.{IvParameterSpec, PBEKeySpec, SecretKeySpec}
 import adaptivecep.privacy.Privacy._
-import adaptivecep.privacy.encryption.CryptoAES
+import adaptivecep.privacy.encryption._
 
 class EventProcessorServiceImpl extends EventProcessorServer {
   /**
@@ -24,7 +24,7 @@ class EventProcessorServiceImpl extends EventProcessorServer {
   val factory: SecretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1")
   val key: Array[Byte] = factory.generateSecret(spec).getEncoded
   val skeySpec = new SecretKeySpec(key, "AES")
-  implicit val encryption = CryptoAES(skeySpec, iv)
+  implicit val encryption: Encryption = CryptoAES(skeySpec, iv)
 
 
   override def applyPredicate(cond: Event => Boolean, input: Event): Boolean =
