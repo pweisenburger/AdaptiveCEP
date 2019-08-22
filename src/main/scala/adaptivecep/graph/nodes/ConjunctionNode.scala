@@ -113,18 +113,24 @@ case class ConjunctionNode(
         case Event4(e1, e2, e3, e4) => sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4)))
         case Event5(e1, e2, e3, e4, e5) => sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5)))
         case Event6(e1, e2, e3, e4, e5, e6) => sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5), toAnyRef(e6)))
-        case EncEvent1(e1, rule) => sendEvent("sq1", Array(toAnyRef(e1)))
+        case EncEvent1(e1, rule) =>
           if (rule1.isEmpty) rule1 = Some(rule)
-        case EncEvent2(e1, e2, rule) => sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2)))
+          sendEvent("sq1", Array(toAnyRef(e1)))
+        case EncEvent2(e1, e2, rule) =>
           if (rule1.isEmpty) rule1 = Some(rule)
-        case EncEvent3(e1, e2, e3, rule) => sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3)))
+          sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2)))
+        case EncEvent3(e1, e2, e3, rule) =>
           if (rule1.isEmpty) rule1 = Some(rule)
-        case EncEvent4(e1, e2, e3, e4, rule) => sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4)))
+          sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3)))
+        case EncEvent4(e1, e2, e3, e4, rule) =>
           if (rule1.isEmpty) rule1 = Some(rule)
-        case EncEvent5(e1, e2, e3, e4, e5, rule) => sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5)))
+          sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4)))
+        case EncEvent5(e1, e2, e3, e4, e5, rule) =>
           if (rule1.isEmpty) rule1 = Some(rule)
-        case EncEvent6(e1, e2, e3, e4, e5, e6, rule) => sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5), toAnyRef(e6)))
+          sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5)))
+        case EncEvent6(e1, e2, e3, e4, e5, e6, rule) =>
           if (rule1.isEmpty) rule1 = Some(rule)
+          sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5), toAnyRef(e6)))
       }
     }
     else if (sender == childNode2) {
@@ -135,18 +141,24 @@ case class ConjunctionNode(
         case Event4(e1, e2, e3, e4) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4)))
         case Event5(e1, e2, e3, e4, e5) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5)))
         case Event6(e1, e2, e3, e4, e5, e6) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5), toAnyRef(e6)))
-        case EncEvent1(e1, rule) => sendEvent("sq2", Array(toAnyRef(e1)))
+        case EncEvent1(e1, rule) =>
           if (rule2.isEmpty) rule2 = Some(rule)
-        case EncEvent2(e1, e2, rule) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2)))
+          sendEvent("sq2", Array(toAnyRef(e1)))
+        case EncEvent2(e1, e2, rule) =>
           if (rule2.isEmpty) rule2 = Some(rule)
-        case EncEvent3(e1, e2, e3, rule) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3)))
+          sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2)))
+        case EncEvent3(e1, e2, e3, rule) =>
           if (rule2.isEmpty) rule2 = Some(rule)
-        case EncEvent4(e1, e2, e3, e4, rule) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4)))
+          sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3)))
+        case EncEvent4(e1, e2, e3, e4, rule) =>
           if (rule2.isEmpty) rule2 = Some(rule)
-        case EncEvent5(e1, e2, e3, e4, e5, rule) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5)))
+          sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4)))
+        case EncEvent5(e1, e2, e3, e4, e5, rule) =>
           if (rule2.isEmpty) rule2 = Some(rule)
-        case EncEvent6(e1, e2, e3, e4, e5, e6, rule) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5), toAnyRef(e6)))
+          sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5)))
+        case EncEvent6(e1, e2, e3, e4, e5, e6, rule) =>
           if (rule2.isEmpty) rule2 = Some(rule)
+          sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5), toAnyRef(e6)))
       }
     }
   }
