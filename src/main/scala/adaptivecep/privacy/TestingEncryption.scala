@@ -26,6 +26,11 @@ import crypto.dsl._
 import scala.concurrent.Await
 
 object TestingEncryption extends App {
+
+  def test(in: Either[Int,String]) = {
+
+  }
+
   override def main(args: Array[String]): Unit = {
 
     val file = new File("application.conf")
@@ -92,9 +97,9 @@ object TestingEncryption extends App {
         join(stream[Int]("B"), slidingWindow(1.instances), slidingWindow(1.instances) ).
         where((a,b) => a > b, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
-    //        val encQuery: Query1[EncInt] =
-    //          stream[EncInt]("A").
-    //            where(x => interpret(isEven(x)), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+//    val testQ = stream[Int]("A").or(stream[Double,String]("B"))
+//      .where()
+
 
     val placement: ActorRef = actorSystem.actorOf(Props(PlacementActorCentralized(actorSystem,
       normalQuery,

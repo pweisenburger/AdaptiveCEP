@@ -33,6 +33,7 @@ object ConversionRules {
       case _ => sys.error("unexpected type")
     }
   }
+
   def decryptString(value: Any, crypto: Encryption): Any = {
     value match {
       case arr: Array[Byte] =>
@@ -50,6 +51,7 @@ object ConversionRules {
       case _ => sys.error("unexpected input type")
     }
   }
+
   def decryptFloat(value: Any, crypto: Encryption): Any = {
     value match {
       case e: Array[Byte] =>
@@ -77,48 +79,72 @@ object ConversionRules {
     }
   }
 
-  object IntEventTransformer extends EncDecTransformer(encryptInt,decryptInt)
-  object StringEventTransformer extends EncDecTransformer(encryptString,decryptString)
-  object FloatEventTransformer extends EncDecTransformer(encryptFloat,decryptFloat)
-  object DoubleEventTransformer extends EncDecTransformer(encryptFloat,decryptFloat)
+  object IntEventTransformer extends EncDecTransformer(encryptInt, decryptInt)
+
+  object StringEventTransformer extends EncDecTransformer(encryptString, decryptString)
+
+  object FloatEventTransformer extends EncDecTransformer(encryptFloat, decryptFloat)
+
+  object DoubleEventTransformer extends EncDecTransformer(encryptFloat, decryptFloat)
 
   sealed trait Transformer extends Serializable
 
-  case class EncDecTransformer(encrypt: (Any,Encryption)=> Any,
-                               decrypt: (Any,Encryption) => Any) extends Transformer
+  case class EncDecTransformer(encrypt: (Any, Encryption) => Any,
+                               decrypt: (Any, Encryption) => Any) extends Transformer
+
+  case class DisjunctionTransformer(leftTransformer: Transformer, rightTransformer: Transformer) extends Transformer
+
   object NoTransformer extends Transformer
 
-  /***
+  /** *
     * Represents the event conversion rule
     */
   sealed trait EventConversionRule extends Serializable
 
-  /***
+  /** *
     * Represents Event1 Conversion rule,
+    *
     * @param tr1 carries the transformation rules for Event1
     */
   case class Event1Rule(tr1: Transformer) extends EventConversionRule
 
-  /***
+  /** *
     * Represents Event2 Conversion rule
+    *
     * @param tr1 transformation rule for the first data type the event carries
     * @param tr2 transformation rule for the second data type the event carries
     */
   case class Event2Rule(tr1: Transformer, tr2: Transformer) extends EventConversionRule
 
-  case class Event3Rule(tr1: Transformer, tr2: Transformer,tr3: Transformer) extends EventConversionRule
+  case class Event3Rule(tr1: Transformer, tr2: Transformer, tr3: Transformer) extends EventConversionRule
 
-  case class Event4Rule(tr1: Transformer, tr2: Transformer,tr3: Transformer,tr4: Transformer) extends EventConversionRule
+  case class Event4Rule(tr1: Transformer, tr2: Transformer, tr3: Transformer, tr4: Transformer) extends EventConversionRule
 
-  case class Event5Rule(tr1: Transformer, tr2: Transformer,tr3: Transformer,tr4: Transformer, tr5: Transformer) extends EventConversionRule
+  case class Event5Rule(tr1: Transformer, tr2: Transformer, tr3: Transformer, tr4: Transformer, tr5: Transformer) extends EventConversionRule
 
-  case class Event6Rule(tr1: Transformer, tr2: Transformer,tr3: Transformer,tr4: Transformer,tr5: Transformer,tr6: Transformer) extends EventConversionRule
+  case class Event6Rule(tr1: Transformer, tr2: Transformer, tr3: Transformer, tr4: Transformer, tr5: Transformer, tr6: Transformer) extends EventConversionRule
 
 
+  /** *
+    * applies the transformation function on data
+    *
+    * @param data        the actual data carried by the event (non-encrypted in the case of EncDecTransformer)
+    * @param transformer transformation rule from the raw data to another format
+    * @param encryption  Encryption scheme used, notice that this object does not carry the keys
+    * @return the data in the new format after applying the transformer
+    */
   private def applyTransformer(data: Any, transformer: Transformer)(implicit encryption: Encryption): Any = {
     transformer match {
       case NoTransformer => data
       case EncDecTransformer(encrypt, decrypt) => encrypt(data, encryption)
+      case DisjunctionTransformer(leftTransformer, rightTransformer) =>
+        data match {
+          case e: Either[Any, Any] =>
+            if (e.isLeft)
+              Left(applyTransformer(e.left.get, leftTransformer))
+            else
+              Right(applyTransformer(e.right.get, rightTransformer))
+        }
     }
   }
 
@@ -209,16 +235,21 @@ object ConversionRules {
           applyReverseTransformer(e5, rule.tr5),
           applyReverseTransformer(e6, rule.tr6)
         )
-
     }
-
-
   }
 
   private def applyReverseTransformer(data: Any, transformer: Transformer)(implicit encryption: Encryption): Any = {
     transformer match {
       case NoTransformer => data
       case EncDecTransformer(encrypt, decrypt) => decrypt(data, encryption)
+      case DisjunctionTransformer(leftTransformer, rightTransformer) =>
+        data match {
+          case e: Either[Any, Any] =>
+            if (e.isLeft)
+              Left(applyReverseTransformer(e.left.get, leftTransformer))
+            else
+              Right(applyReverseTransformer(e.right.get, rightTransformer))
+        }
     }
   }
 
