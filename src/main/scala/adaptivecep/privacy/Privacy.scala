@@ -1,14 +1,9 @@
 package adaptivecep.privacy
 
 import adaptivecep.privacy.ConversionRules._
-import adaptivecep.data.Events.Event
 import adaptivecep.distributed.operator.TrustedHost
-import adaptivecep.privacy.encryption.Encryption
-import adaptivecep.privacy.sgx.{EventProcessorClient, EventProcessorServer}
-import akka.actor.ActorRef
-
+import adaptivecep.privacy.sgx.EventProcessorServer
 object Privacy {
-
 
 
   sealed trait DataSensitivity
@@ -20,6 +15,10 @@ object Privacy {
   object Low extends DataSensitivity
 
 
+  /***
+    * a privacy context contains enough information to distribute privacy preserving methodology to
+    * the nodes in the deployed query graph
+    */
   sealed trait PrivacyContext extends Serializable
 
   /**
@@ -64,11 +63,6 @@ object Privacy {
     *
     */
   final case object NoPrivacyContext extends PrivacyContext
-
-
-
-
-
 
 }
 
