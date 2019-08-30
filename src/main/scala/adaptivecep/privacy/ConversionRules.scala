@@ -4,10 +4,62 @@ import adaptivecep.data.Events._
 import adaptivecep.privacy.encryption.Encryption
 import java.nio.ByteBuffer
 
+import scala.util.Random
+
 object ConversionRules {
 
-  def encryptInt(value: Any, crypto: Encryption): Any = {
 
+  def encryptBigInt(value: Any, crypto: Encryption): Any = {
+    value match {
+      case e: BigInt =>
+        crypto.encrypt(e.toByteArray)
+      case _ => sys.error("unexpected conversion expecting BigInt to Array[Byte]")
+    }
+  }
+  def decryptBigInt(value: Any, crypto: Encryption): Any = {
+    value match {
+      case e: Array[Byte] =>
+        val result = crypto.decrypt(e)
+        BigInt(result)
+      case _ => sys.error("unexpected conversion expecting Array[Byte] to BigInt")
+    }
+  }
+
+  def encryptChar(value: Any, crypto: Encryption): Any = {
+    value match {
+      case e: Char =>
+        val buffer = ByteBuffer.allocate(2)
+        crypto.encrypt(buffer.putChar(e).array())
+      case _ => sys.error("unexpected input type")
+    }
+  }
+  def decryptChar(value: Any, crypto: Encryption): Any = {
+    value match {
+      case e: Array[Byte] =>
+        val result = crypto.decrypt(e)
+        ByteBuffer.wrap(result).getChar
+      case _ => sys.error("unexpected type")
+    }
+  }
+
+  def encryptShort(value: Any, crypto: Encryption): Any = {
+    value match {
+      case e: Short =>
+        val buffer = ByteBuffer.allocate(2)
+        crypto.encrypt(buffer.putShort(e).array())
+      case _ => sys.error("unexpected input type")
+    }
+  }
+  def decryptShort(value: Any, crypto: Encryption): Any = {
+    value match {
+      case e: Array[Byte] =>
+        val result = crypto.decrypt(e)
+        ByteBuffer.wrap(result).getShort
+      case _ => sys.error("unexpected type")
+    }
+  }
+
+  def encryptInt(value: Any, crypto: Encryption): Any = {
     value match {
       case e: Int =>
         //val biValue = BigInt(e)
@@ -16,7 +68,6 @@ object ConversionRules {
       case _ => sys.error("unexpected input type")
     }
   }
-
   def decryptInt(value: Any, crypto: Encryption): Any = {
     value match {
       case e: Array[Byte] =>
@@ -33,7 +84,6 @@ object ConversionRules {
       case _ => sys.error("unexpected type")
     }
   }
-
   def decryptString(value: Any, crypto: Encryption): Any = {
     value match {
       case arr: Array[Byte] =>
@@ -51,7 +101,6 @@ object ConversionRules {
       case _ => sys.error("unexpected input type")
     }
   }
-
   def decryptFloat(value: Any, crypto: Encryption): Any = {
     value match {
       case e: Array[Byte] =>
@@ -69,7 +118,6 @@ object ConversionRules {
       case _ => sys.error("unexpected input type")
     }
   }
-
   def decryptDouble(value: Any, crypto: Encryption): Any = {
     value match {
       case e: Array[Byte] =>
@@ -79,6 +127,40 @@ object ConversionRules {
     }
   }
 
+  /***
+    * in order to obfuscate the boolean single byte value
+    * we generate a random positive integer and encrypt it to represent True
+    * and generate random negative integer to represent False
+    * @param value
+    * @param crypto
+    * @return
+    */
+  def encryptBoolean(value: Any, crypto: Encryption): Any = {
+    value match {
+      case e: Boolean =>
+        val randomInt = Random.nextInt(Integer.MAX_VALUE)
+        val buffer = ByteBuffer.allocate(4)
+        if(e){
+          val posInt = buffer.putInt(randomInt).array()
+          crypto.encrypt(posInt)
+        }else{
+          val negInt = buffer.putInt(-1 * randomInt ).array()
+          crypto.encrypt(negInt)
+        }
+      case _ => sys.error("unexpected input type")
+    }
+  }
+  def decryptBoolean(value: Any, crypto: Encryption): Any = {
+    value match {
+      case e: Array[Byte] =>
+        val result = crypto.decrypt(e)
+        val intVal = ByteBuffer.wrap(result).getInt
+        if (intVal > 0) true else false
+      case _ => sys.error("unexpected type")
+    }
+  }
+
+
   object IntEventTransformer extends EncDecTransformer(encryptInt, decryptInt)
 
   object StringEventTransformer extends EncDecTransformer(encryptString, decryptString)
@@ -87,13 +169,49 @@ object ConversionRules {
 
   object DoubleEventTransformer extends EncDecTransformer(encryptFloat, decryptFloat)
 
+  object ShortEventTransformer extends EncDecTransformer(encryptShort,decryptShort)
+
+  object CharEventTransformer extends EncDecTransformer(encryptChar,decryptChar)
+
+  object BigIntEventTransformer extends EncDecTransformer(encryptBigInt,decryptBigInt)
+
+  object BooleanEventTransformer extends EncDecTransformer(encryptBoolean,decryptBoolean)
+
+  ///TODO: find a way to better retrieve those transformers by type
+
+  /***
+    * this trait represents a specific transformer from some type to another
+    * can be used to encrypt/decrypt
+    * or to copy the data as is
+    */
   sealed trait Transformer extends Serializable
 
+  /***
+    * This transformer is used to change one data element of the event to the encrypted representation of it
+    * and vise versa
+    * e.g.1 Int -> Array[Byte]
+    * e.g.2 Employee(id: Int, name: String, salary: Int) -> EncStudent(id: Int, name: Array[Byte], salary: Array[Byte])
+    * @param encrypt defines how to create the encrypted type from the given type
+    *                should take the data as Any with Encryption Scheme and returns Any
+    * @param decrypt defines how to get back the original data from the encrypted data
+    *                takes the encrypted data as Any, and returns the original data as Any
+    */
   case class EncDecTransformer(encrypt: (Any, Encryption) => Any,
                                decrypt: (Any, Encryption) => Any) extends Transformer
 
+  /***
+    * Disjunction Transformer is used for the disjunction Node in AdaptiveCEP
+    * the event resulting from that node will carry a data type of Either[X,Y]
+    * @param leftTransformer is the original transformer for type X or Left
+    * @param rightTransformer is the original transformer for type Y or Right
+    */
   case class DisjunctionTransformer(leftTransformer: Transformer, rightTransformer: Transformer) extends Transformer
 
+  /***
+    * represents no transformation on the data
+    * when this object is encountered the data should be copied as is
+    *
+    */
   object NoTransformer extends Transformer
 
   /** *
@@ -103,19 +221,23 @@ object ConversionRules {
 
   /** *
     * Represents Event1 Conversion rule,
-    *
     * @param tr1 carries the transformation rules for Event1
     */
   case class Event1Rule(tr1: Transformer) extends EventConversionRule
 
   /** *
     * Represents Event2 Conversion rule
-    *
     * @param tr1 transformation rule for the first data type the event carries
     * @param tr2 transformation rule for the second data type the event carries
     */
   case class Event2Rule(tr1: Transformer, tr2: Transformer) extends EventConversionRule
 
+  /***
+    * Represents Event3 Conversion rule
+    * @param tr1 transformation rule for the first data type the event carries
+    * @param tr2 transformation rule for the second data type the event carries
+    * @param tr3 transformation rule for the third data type the event carries
+    */
   case class Event3Rule(tr1: Transformer, tr2: Transformer, tr3: Transformer) extends EventConversionRule
 
   case class Event4Rule(tr1: Transformer, tr2: Transformer, tr3: Transformer, tr4: Transformer) extends EventConversionRule
@@ -125,11 +247,11 @@ object ConversionRules {
   case class Event6Rule(tr1: Transformer, tr2: Transformer, tr3: Transformer, tr4: Transformer, tr5: Transformer, tr6: Transformer) extends EventConversionRule
 
 
-  /** *
+  /***
     * applies the transformation function on data
-    *
     * @param data        the actual data carried by the event (non-encrypted in the case of EncDecTransformer)
     * @param transformer transformation rule from the raw data to another format
+    *                    when the transformer is NoTransformer just copies the data as is
     * @param encryption  Encryption scheme used, notice that this object does not carry the keys
     * @return the data in the new format after applying the transformer
     */
@@ -148,6 +270,14 @@ object ConversionRules {
     }
   }
 
+  /**
+    * this function gets the Encrypted Event EncEvent out of the normal event of type Event provided in the input
+    * @param e the input unencrypted event ideally of type Event1 to Event6
+    * @param conversionRule a conversion rule that corresponds the passed Event e.g. Event1 with Event1Rule
+    * @param encryption the encryption scheme which should be initialized in a secure context
+    * @return the encrypted representation of the event
+    *         a subtype of EncEvent
+    */
   def getEncryptedEvent(e: Event, conversionRule: EventConversionRule)(implicit encryption: Encryption): EncEvent = {
     (e, conversionRule) match {
       case (Event1(e1), er: Event1Rule) => EncEvent1(applyTransformer(e1, er.tr1), er)
@@ -193,6 +323,14 @@ object ConversionRules {
     }
   }
 
+  /**
+    * this function returns the original Event out of the encrypted event of type EncEvent provided in the input
+    * @param e the input encrypted event ideally of type EncEvent1 to EncEvent6
+    * @param conversionRule a conversion rule that corresponds the passed EncEvent e.g. EncEvent1 with Event1Rule
+    * @param encryption the encryption scheme which should be initialized in a secure context
+    * @return the original unencrypted event
+    *         Event1 to Event6 based on the passed EncEvent
+    */
   def getDecryptedEvent(e: EncEvent)(implicit encryption: Encryption): Event = {
     e match {
       case EncEvent1(e1, rule) =>
@@ -238,6 +376,14 @@ object ConversionRules {
     }
   }
 
+  /***
+    * applies the referse transformation function on the encrypted/changed data
+    * @param data        the actual data carried by the event (non-encrypted in the case of EncDecTransformer)
+    * @param transformer transformation rule from the raw data to another format
+    *                    when the transformer is NoTransformer just copies the data as is
+    * @param encryption  Encryption scheme used, notice that this object does not carry the keys
+    * @return the data in the new format after applying the transformer
+    */
   private def applyReverseTransformer(data: Any, transformer: Transformer)(implicit encryption: Encryption): Any = {
     transformer match {
       case NoTransformer => data

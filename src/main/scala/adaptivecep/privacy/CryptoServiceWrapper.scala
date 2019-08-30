@@ -22,4 +22,6 @@ class CryptoServiceWrapper(cryptoActor: ActorRef) extends Serializable {
   def decryptAndPrint(in: EncInt): Unit = {
     cryptoActor ! DecryptIntAndPrintRequest(in)
   }
+
+
 }
