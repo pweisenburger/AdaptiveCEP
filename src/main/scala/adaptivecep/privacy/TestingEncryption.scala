@@ -80,17 +80,17 @@ object TestingEncryption extends App {
 
     Thread.sleep(5000)
 
-    val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
-    val remoteObject = eventProcessorClient.lookupObject()
+//    val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
+//    val remoteObject = eventProcessorClient.lookupObject()
 
-    implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
-      Set(TrustedHost(NodeHost(host1)), TrustedHost(NodeHost(host4))), // Trusted hosts
-      remoteObject, // a reference to the remote sgx object? do we need it?
-      Map("A" -> Event1Rule(IntEventTransformer), "B" -> Event1Rule(NoTransformer))
+//    implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
+//      Set(TrustedHost(NodeHost(host1)), TrustedHost(NodeHost(host4))), // Trusted hosts
+//      remoteObject, // a reference to the remote sgx object? do we need it?
+//      Map("A" -> Event1Rule(IntEventTransformer), "B" -> Event1Rule(NoTransformer))
+//
+//    )
 
-    )
-
-    //  implicit val pc: PrivacyContext = NoPrivacyContext
+      implicit val pc: PrivacyContext = NoPrivacyContext
 
     val normalQuery: Query2[Int,Int] =
       stream[Int]("A").
