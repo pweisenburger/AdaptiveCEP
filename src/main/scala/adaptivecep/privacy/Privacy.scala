@@ -52,6 +52,7 @@ object Privacy {
                                            publisherConversionRules: Map[String,EventConversionRule]
                                           ) extends PrivacyContext
 
+  //TODO:
   /***
     * this context should combine sgx and phe approaches
     * @param trustedNodeHost
