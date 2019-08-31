@@ -26,7 +26,7 @@ case class StreamNode(
                        createdCallback: Option[() => Any],
                        eventCallback: Option[(Event) => Any],
                        conversionRule: Option[EventConversionRule] = None
-                     ) (implicit val privacyContext: PrivacyContext = NoPrivacyContext)
+                     )
   extends LeafNode {
 
 //  var subscriptionAcknowledged: Boolean = false
