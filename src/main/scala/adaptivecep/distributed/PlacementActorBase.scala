@@ -110,6 +110,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
   val eventCallback: Event => Any = {
     // Callback for `query1`:
     case Event1(e1) => println(s"COMPLEX EVENT:\tEvent1($e1)")
+    case Event2(e1,e2) => println(s"COMPLEX EVENT:\tEvent2($e1,$e2)")
     //    case EncEvent1(e1, rule) => println(s"COMPLEX ENCEVENT:\tEvent1($e1)")
     case e: EncEvent1 =>
       val decrypted = getDecryptedEvent(e).asInstanceOf[Event1]
