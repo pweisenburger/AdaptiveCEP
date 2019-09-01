@@ -36,19 +36,19 @@ import adaptivecep.privacy.sgx.EventProcessorServer
     *                      this is on Host level, we need to change it to
     *                      property(field) level
     */
-  final case class PrivacyContextCentralized( interpret: CEPRemoteInterpreter,
-                                        cryptoService: CryptoServiceWrapper,
-                                        trustedHosts: Set[TrustedHost],
-                                        sourcesSensitivity: Map[String, DataSensitivity]
-                                      ) extends PrivacyContext
+//  final case class PrivacyContextCentralized( interpret: CEPRemoteInterpreter,
+//                                        cryptoService: CryptoServiceWrapper,
+//                                        trustedHosts: Set[TrustedHost],
+//                                        sourcesSensitivity: Map[String, DataSensitivity]
+//                                      ) extends PrivacyContext
 
-  final case class SgxPrivacyContext(trustedHosts: Set[TrustedHost],
+  final case class SgxPrivacyContext(
                                      remoteObject: EventProcessorServer,
                                      conversionRules: Map[String,EventConversionRule]) extends PrivacyContext
-
-  final case class SgxDecentralizedContext(trustedHosts: Set[TrustedHost],
-                                           publisherConversionRules: Map[String,EventConversionRule]
-                                          ) extends PrivacyContext
+//
+//  final case class SgxDecentralizedContext(trustedHosts: Set[TrustedHost],
+//                                           publisherConversionRules: Map[String,EventConversionRule]
+//                                          ) extends PrivacyContext
 
   //TODO:
   /***

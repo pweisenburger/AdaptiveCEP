@@ -98,7 +98,7 @@ case class FilterNode(
           if (cond(event))
             emitEvent(event)
 
-        case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
+        case SgxPrivacyContext(remoteObject, conversionRules) =>
           try {
             if (remoteObject.applyPredicate(cond, event)) {
               emitEvent(event)
@@ -107,7 +107,7 @@ case class FilterNode(
             case e: Exception => println("\n[SGX Service unable to apply predicate]\n")
           }
 
-        case PrivacyContextCentralized(interpret, cryptoService, trustedHosts, sourcesSensitivity)
+        case _
         => println("unexpected context!")
 
       }
