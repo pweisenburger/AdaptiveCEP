@@ -591,7 +591,6 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
                                     streamQuery: StreamQuery,
                                     consumer: Boolean) = {
 
-    println("\nCreating Stream Node\n")
     var rule: Option[EventConversionRule] = None
     privacyContext match {
       case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
@@ -686,7 +685,6 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
       case _ => encryptedEvents = false
     }
 
-
     val props = Props(
       JoinNode(
         joinQuery.requirements,
@@ -767,7 +765,6 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
 
     val cond = filterQuery.cond
 
-    println("\ncreating Filter node\n")
     val props = Props(
       FilterNode(
         filterQuery.requirements,

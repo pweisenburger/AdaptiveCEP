@@ -56,7 +56,7 @@ object TestingEncryption extends App {
 
     //    val publisher: ActorRef = actorSystem.actorOf(Props(EncryptedPublisher(cryptoActor, id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
     val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id * 2))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
-    val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "B")
+    val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address2))), "B")
 
     //    val cryptoSvc = new CryptoServiceWrapper(cryptoActor)
     //    val interpret = new CEPRemoteInterpreter(cryptoActor)

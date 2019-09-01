@@ -71,7 +71,7 @@ case class PlacementActorCentralized(actorSystem: ActorSystem,
         hostActor ! Node(ref)
         ref ! Controller(self)
 
-        log.info(s"\nactor ${ref.path} deployed\n")
+        log.info(s"\nactor ${ref.path} deployed............\n")
 
       }
     }
