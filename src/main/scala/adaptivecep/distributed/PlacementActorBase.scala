@@ -599,6 +599,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
       case _ => rule = None
     }
 
+    val streamPc = Some(privacyContext)
 
     val props = Props(
       StreamNode(
@@ -607,7 +608,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
         frequencyMonitorFactory,
         latencyMonitorFactory,
         None,
-        callback, rule, privacyContext))
+        callback, rule, streamPc ))
     println("\nStream Node created\n")
 
     ///TODO: create an encrypting stream node if the data is sensitive
