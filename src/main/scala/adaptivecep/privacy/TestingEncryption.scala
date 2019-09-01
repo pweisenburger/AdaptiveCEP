@@ -95,8 +95,8 @@ object TestingEncryption extends App {
     val normalQuery: Query1[Int] =
       stream[Int]("A").
         join(stream[Int]("B"), slidingWindow(1.instances), slidingWindow(1.instances) ).
-        where((a,b) => a > b, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
-        .dropElem1()
+        where((a,b) => a > b)
+        .dropElem1(frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
 //    val testQ = stream[Int]("A").or(stream[Double,String]("B"))
 //      .where()
