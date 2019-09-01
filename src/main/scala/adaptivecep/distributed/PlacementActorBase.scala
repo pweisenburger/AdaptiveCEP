@@ -12,7 +12,7 @@ import adaptivecep.distributed.operator.Operator
 import adaptivecep.distributed.operator._
 import adaptivecep.graph.nodes._
 import adaptivecep.graph.qos.MonitorFactory
-import adaptivecep.privacy._
+import adaptivecep.privacy.Privacy._
 import adaptivecep.privacy.encryption.CryptoAES
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Address, Deploy, PoisonPill, Props}
 import akka.cluster.Cluster

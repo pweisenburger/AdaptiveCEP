@@ -7,7 +7,7 @@ import adaptivecep.data.Queries._
 import adaptivecep.distributed.operator.{ActiveOperator, Host, NodeHost, Operator}
 import adaptivecep.dsl.Dsl._
 import adaptivecep.graph.qos._
-import adaptivecep.privacy._
+import adaptivecep.privacy.Privacy._
 import adaptivecep.publishers._
 import akka.actor.{ActorRef, ActorSystem, Address, Deploy, Props}
 import akka.remote.RemoteScope

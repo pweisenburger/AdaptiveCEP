@@ -4,7 +4,6 @@ import adaptivecep.privacy.ConversionRules._
 import adaptivecep.data.Events._
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.{IvParameterSpec, PBEKeySpec, SecretKeySpec}
-import adaptivecep.privacy._
 import adaptivecep.privacy.encryption._
 
 class EventProcessorServiceImpl extends EventProcessorServer {

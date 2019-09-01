@@ -6,7 +6,7 @@ import adaptivecep.privacy.ConversionRules._
 import adaptivecep.data.Cost._
 import adaptivecep.data.Queries.Requirement
 import adaptivecep.distributed.operator.{ActiveOperator, Host, NodeHost, TentativeOperator}
-import adaptivecep.privacy._
+import adaptivecep.privacy.Privacy._
 import akka.actor.{ActorRef, Props}
 import akka.dispatch.ControlMessage
 import akka.stream.SourceRef

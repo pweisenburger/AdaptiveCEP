@@ -12,6 +12,7 @@ import adaptivecep.distributed.operator.TrustedHost
 //
 //  object Low extends DataSensitivity
 
+object Privacy {
 
   /***
     * a privacy context contains enough information to distribute privacy preserving methodology to
@@ -63,5 +64,6 @@ import adaptivecep.distributed.operator.TrustedHost
   case object NoPrivacyContext extends PrivacyContext
 
 
+}
 
 

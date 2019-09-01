@@ -5,7 +5,7 @@ import adaptivecep.data.Queries.Query
 import adaptivecep.distributed._
 import adaptivecep.distributed.operator._
 import adaptivecep.graph.qos.MonitorFactory
-import adaptivecep.privacy.PrivacyContext
+import adaptivecep.privacy.Privacy.PrivacyContext
 import akka.actor.{ActorRef, ActorSystem, Deploy}
 import akka.remote.RemoteScope
 import rescala.default._
