@@ -5,7 +5,7 @@ import adaptivecep.data.Events._
 import adaptivecep.data.Queries._
 import adaptivecep.graph.nodes.traits._
 import adaptivecep.graph.qos._
-import adaptivecep.privacy.Privacy.PrivacyContext
+import adaptivecep.privacy.Privacy.{NoPrivacyContext, PrivacyContext, SgxPrivacyContext}
 import adaptivecep.privacy.encryption.{CryptoAES, Encryption}
 import adaptivecep.publishers.Publisher._
 import akka.actor.{ActorRef, PoisonPill}
@@ -25,7 +25,7 @@ case class StreamNode(
                        latencyMonitorFactory: MonitorFactory,
                        createdCallback: Option[() => Any],
                        eventCallback: Option[(Event) => Any],
-                       conversionRule: Option[EventConversionRule] = None,
+//                       conversionRule: Option[EventConversionRule] = None,
                        privacyContext: Option[PrivacyContext] = None
                      )
   extends LeafNode {
@@ -59,15 +59,21 @@ case class StreamNode(
 
       ref.getSource.to(Sink.foreach(a => {
 //        emitEvent(a)
-        if (conversionRule == None)
+        if(privacyContext.isEmpty)
+//        if (conversionRule == None)
           emitEvent(a)
         else{
-          val encEvent = getEncryptedEvent(a,conversionRule.get)
-          println(s"Emitting encrypted event for event $a and $encEvent \n")
-          emitEvent(encEvent)
+
+          privacyContext.get match {
+            case NoPrivacyContext =>
+              emitEvent(a)
+            case  SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
+              val encEvent = getEncryptedEvent(a,conversionRules(publisherName))
+              println(s"Emitting encrypted event for event $a and $encEvent \n")
+              emitEvent(encEvent)
+            case _ => sys.error("unsupported context yet")
+          }
         }
-
-
       })).run(materializer)
     case Parent(p1) => {
       parentNode = p1

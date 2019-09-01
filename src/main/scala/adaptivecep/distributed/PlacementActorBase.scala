@@ -608,7 +608,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
         frequencyMonitorFactory,
         latencyMonitorFactory,
         None,
-        callback, rule, streamPc ))
+        callback, /*rule,*/ streamPc ))
     println("\nStream Node created\n")
 
     ///TODO: create an encrypting stream node if the data is sensitive
@@ -768,7 +768,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
 
     val cond = filterQuery.cond
 
-    println("\ncreating Filter node\n")
+    val filterContext = Some(privacyContext)
     val props = Props(
       FilterNode(
         filterQuery.requirements,
@@ -777,9 +777,9 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
         frequencyMonitorFactory,
         latencyMonitorFactory,
         None,
-        callback, privacyContext))
+        callback, filterContext))
 
-    println("\nFilter Node created\n")
+
     connectUnaryNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, filterQuery.sq, props, consumer)
     props
   }

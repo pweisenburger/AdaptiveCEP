@@ -31,8 +31,8 @@ case class FilterNode(
                        frequencyMonitorFactory: MonitorFactory,
                        latencyMonitorFactory: MonitorFactory,
                        createdCallback: Option[() => Any],
-                       eventCallback: Option[(Event) => Any]
-                       ,privacyContext: PrivacyContext = NoPrivacyContext
+                       eventCallback: Option[(Event) => Any],
+                       privacyContext: Option[PrivacyContext] = None
                      )
   extends UnaryNode {
 
@@ -92,25 +92,31 @@ case class FilterNode(
   }
 
   def processEvent(event: Event, sender: ActorRef): Unit = {
+
+
     if (sender == childNode) {
-      privacyContext match {
-        case NoPrivacyContext =>
-          if (cond(event))
-            emitEvent(event)
-
-        case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
-          try {
-            if (remoteObject.applyPredicate(cond, event)) {
+      if (privacyContext.nonEmpty) {
+        privacyContext.get match {
+          case NoPrivacyContext =>
+            if (cond(event))
               emitEvent(event)
+          case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
+            try {
+              if (remoteObject.applyPredicate(cond, event)) {
+                emitEvent(event)
+              }
+            } catch {
+              case e: Exception => println("\n[SGX Service unable to apply predicate]\n")
             }
-          } catch {
-            case e: Exception => println("\n[SGX Service unable to apply predicate]\n")
-          }
-
-        case PrivacyContextCentralized(interpret, cryptoService, trustedHosts, sourcesSensitivity)
-        => println("unexpected context!")
-
+          case PrivacyContextCentralized(interpret, cryptoService, trustedHosts, sourcesSensitivity)
+          => println("unexpected context!")
+        } /// pattern matching
+      } ///check if pc is empty
+      else{
+        if (cond(event))
+          emitEvent(event)
       }
+
     }
   }
 }
