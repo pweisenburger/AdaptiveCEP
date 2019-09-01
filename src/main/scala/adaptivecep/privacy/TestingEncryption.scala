@@ -55,22 +55,22 @@ object TestingEncryption extends App {
     //    val cryptoActor: ActorRef = actorSystem.actorOf(Props[CryptoServiceActor].withDeploy(Deploy(scope = RemoteScope(address1))), "CryptoService")
 
     //    val publisher: ActorRef = actorSystem.actorOf(Props(EncryptedPublisher(cryptoActor, id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
-    val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id * 2))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
-    val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address2))), "B")
+    val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+    val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id * 2))).withDeploy(Deploy(scope = RemoteScope(address2))), "B")
 
     //    val cryptoSvc = new CryptoServiceWrapper(cryptoActor)
     //    val interpret = new CEPRemoteInterpreter(cryptoActor)
 
     val publishers: Map[String, ActorRef] = Map(
       "A" -> publisherA
-      , "B" -> publisherB
+//      , "B" -> publisherB
       //    ,"C" -> publisherC
       //    ,"D" -> publisherD
     )
 
     val publisherHosts: Map[String, Host] = Map(
       "A" -> NodeHost(host1)
-      , "B" -> NodeHost(host2)
+//      , "B" -> NodeHost(host2)
       //    ,"C" -> NodeHost(host3)
       //    ,"D" -> NodeHost(host4)
     )
@@ -95,14 +95,18 @@ object TestingEncryption extends App {
     val normalQuery: Query2[Int,Int] =
       stream[Int]("A").
         join(stream[Int]("B"), slidingWindow(1.instances), slidingWindow(1.instances) ).
-        where((a,b) => a > b,frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+        where((a,b) => a < b,frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
-//    val testQ = stream[Int]("A").or(stream[Double,String]("B"))
-//      .where()
+    val simpleQuery: Query1[Int] =
+      stream[Int]("A").
+        where(a => a > 1000)
+        .where(a => a < 3000,frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+
+
 
 
     val placement: ActorRef = actorSystem.actorOf(Props(PlacementActorCentralized(actorSystem,
-      normalQuery,
+      simpleQuery,
       publishers,
       publisherHosts,
       AverageFrequencyMonitorFactory(interval = 3000, logging = false),
