@@ -5,6 +5,7 @@ import adaptivecep.data.Queries._
 import adaptivecep.graph.nodes.traits._
 import adaptivecep.graph.qos._
 import adaptivecep.privacy._
+import adaptivecep.privacy.sgx.{EventProcessorClient, EventProcessorServer}
 import akka.actor.{ActorRef, PoisonPill}
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Sink, Source, StreamRefs}
@@ -91,6 +92,21 @@ case class FilterNode(
       latencyMonitor.onMessageReceive(unhandledMessage, nodeData)
   }
 
+
+  private var remoteObject: Option[EventProcessorServer] = None
+
+  def getRemoteObject(address: String, port: Int): EventProcessorServer = {
+    if(remoteObject.isEmpty)
+      {
+        val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
+        val server = eventProcessorClient.lookupObject()
+        remoteObject = Some(server)
+        remoteObject.get
+      }
+    else
+      remoteObject.get
+  }
+
   def processEvent(event: Event, sender: ActorRef): Unit = {
     if (sender == childNode) {
       privacyContext match {
@@ -98,9 +114,9 @@ case class FilterNode(
           if (cond(event))
             emitEvent(event)
 
-        case SgxPrivacyContext(remoteObject, conversionRules) =>
+        case SgxPrivacyContext(address,port, conversionRules) =>
           try {
-            if (remoteObject.applyPredicate(cond, event)) {
+            if (getRemoteObject(address,port).applyPredicate(cond, event)) {
               emitEvent(event)
             }
           } catch {

@@ -2,15 +2,15 @@ package adaptivecep.privacy
 
 import adaptivecep.privacy.ConversionRules._
 import adaptivecep.distributed.operator.TrustedHost
-import adaptivecep.privacy.sgx.EventProcessorServer
+//import adaptivecep.privacy.sgx.EventProcessorServer
 
-  sealed trait DataSensitivity
-
-  object High extends DataSensitivity
-
-  object Medium extends DataSensitivity
-
-  object Low extends DataSensitivity
+//  sealed trait DataSensitivity
+//
+//  object High extends DataSensitivity
+//
+//  object Medium extends DataSensitivity
+//
+//  object Low extends DataSensitivity
 
 
   /***
@@ -42,8 +42,7 @@ import adaptivecep.privacy.sgx.EventProcessorServer
 //                                        sourcesSensitivity: Map[String, DataSensitivity]
 //                                      ) extends PrivacyContext
 
-  final case class SgxPrivacyContext(
-                                     remoteObject: EventProcessorServer,
+  case class SgxPrivacyContext(address: String, port: Int,
                                      conversionRules: Map[String,EventConversionRule]) extends PrivacyContext
 //
 //  final case class SgxDecentralizedContext(trustedHosts: Set[TrustedHost],
