@@ -19,7 +19,7 @@ object Privacy {
     * the nodes in the deployed query graph
     */
   trait PrivacyContext extends Serializable {
-     def clone: PrivacyContext
+     def clonePC: PrivacyContext
   }
 
   /**
@@ -47,9 +47,7 @@ object Privacy {
 
   case class SgxPrivacyContext(address: String, port: Int,
                                      conversionRules: Map[String,EventConversionRule]) extends PrivacyContext {
-    override def clone: PrivacyContext =
-      SgxPrivacyContext(address,port,conversionRules)
-
+    override def clonePC: PrivacyContext = SgxPrivacyContext(address, port, conversionRules)
   }
 //
 //  final case class SgxDecentralizedContext(trustedHosts: Set[TrustedHost],
@@ -68,7 +66,7 @@ object Privacy {
     *
     */
   case object NoPrivacyContext extends PrivacyContext {
-    override def clone: PrivacyContext = NoPrivacyContext
+    override def clonePC: PrivacyContext = NoPrivacyContext
   }
 
 
