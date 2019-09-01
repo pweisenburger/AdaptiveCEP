@@ -7,6 +7,7 @@ import adaptivecep.data.Queries._
 import adaptivecep.distributed.operator.{ActiveOperator, Host, NodeHost, Operator}
 import adaptivecep.dsl.Dsl._
 import adaptivecep.graph.qos._
+import adaptivecep.privacy._
 import adaptivecep.publishers._
 import akka.actor.{ActorRef, ActorSystem, Address, Deploy, Props}
 import akka.remote.RemoteScope
@@ -20,7 +21,7 @@ import argonaut._
 
 object AppRunnerCentralized extends App {
 
-  implicit val pc = adaptivecep.privacy.Privacy.NoPrivacyContext
+  implicit val pc: PrivacyContext = NoPrivacyContext
 
 
   val file = new File("application.conf")
