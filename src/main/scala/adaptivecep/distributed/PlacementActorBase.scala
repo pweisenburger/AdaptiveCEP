@@ -607,7 +607,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
         frequencyMonitorFactory,
         latencyMonitorFactory,
         None,
-        callback, rule))
+        callback, rule, privacyContext))
     println("\nStream Node created\n")
 
     ///TODO: create an encrypting stream node if the data is sensitive

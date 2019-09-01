@@ -5,6 +5,7 @@ import adaptivecep.data.Events._
 import adaptivecep.data.Queries._
 import adaptivecep.graph.nodes.traits._
 import adaptivecep.graph.qos._
+import adaptivecep.privacy.Privacy.PrivacyContext
 import adaptivecep.privacy.encryption.{CryptoAES, Encryption}
 import adaptivecep.publishers.Publisher._
 import akka.actor.{ActorRef, PoisonPill}
@@ -24,7 +25,8 @@ case class StreamNode(
                        latencyMonitorFactory: MonitorFactory,
                        createdCallback: Option[() => Any],
                        eventCallback: Option[(Event) => Any],
-                       conversionRule: Option[EventConversionRule] = None
+                       conversionRule: Option[EventConversionRule] = None,
+                       privacyContext: Option[PrivacyContext] = None
                      )
   extends LeafNode {
 
