@@ -68,7 +68,8 @@ case class StreamNode(
             case NoPrivacyContext =>
               emitEvent(a)
             case  SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
-              val encEvent = getEncryptedEvent(a,conversionRules(publisherName))
+              val rule = conversionRules(publisherName)
+              val encEvent = getEncryptedEvent(a, rule)
               println(s"Emitting encrypted event for event $a and $encEvent \n")
               emitEvent(encEvent)
             case _ => sys.error("unsupported context yet")

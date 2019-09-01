@@ -87,7 +87,6 @@ object TestingEncryption extends App {
       Set(TrustedHost(NodeHost(host1))), // Trusted hosts
       remoteObject, // a reference to the remote sgx object? do we need it?
       Map("A" -> Event1Rule(IntEventTransformer)/*, "B" -> Event1Rule(NoTransformer)*/)
-
     )
 
 //      implicit val pc: PrivacyContext = NoPrivacyContext
