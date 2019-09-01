@@ -18,7 +18,9 @@ object Privacy {
     * a privacy context contains enough information to distribute privacy preserving methodology to
     * the nodes in the deployed query graph
     */
-  sealed trait PrivacyContext extends Serializable
+  sealed trait PrivacyContext extends Serializable {
+    def clone: PrivacyContext
+  }
 
   /**
     * this class will be used by a type that should encrypt the data as needed
@@ -44,24 +46,30 @@ object Privacy {
 //                                      ) extends PrivacyContext
 
   case class SgxPrivacyContext(address: String, port: Int,
-                                     conversionRules: Map[String,EventConversionRule]) extends PrivacyContext
+                                     conversionRules: Map[String,EventConversionRule]) extends PrivacyContext {
+    override def clone: PrivacyContext =
+      SgxPrivacyContext(address,port,conversionRules)
+
+  }
 //
 //  final case class SgxDecentralizedContext(trustedHosts: Set[TrustedHost],
 //                                           publisherConversionRules: Map[String,EventConversionRule]
 //                                          ) extends PrivacyContext
 
-  //TODO:
-  /***
-    * this context should combine sgx and phe approaches
-    * @param trustedNodeHost
-    */
-  final case class MixedPrivacyContext(trustedNodeHost: Set[TrustedHost]) extends PrivacyContext
+//  //TODO:
+//  /***
+//    * this context should combine sgx and phe approaches
+//    * @param trustedNodeHost
+//    */
+//  final case class MixedPrivacyContext(trustedNodeHost: Set[TrustedHost]) extends PrivacyContext
 
   /**
     * this object will be used for old queries to ensure backwards compatibility
     *
     */
-  case object NoPrivacyContext extends PrivacyContext
+  case object NoPrivacyContext extends PrivacyContext {
+    override def clone: PrivacyContext = NoPrivacyContext
+  }
 
 
 }
