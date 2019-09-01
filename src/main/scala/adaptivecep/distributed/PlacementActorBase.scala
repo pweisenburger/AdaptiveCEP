@@ -593,7 +593,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
 
     var rule: Option[EventConversionRule] = None
     privacyContext match {
-      case SgxPrivacyContext(remoteObject, conversionRules) =>
+      case SgxPrivacyContext(address, port, conversionRules) =>
         rule = Some(conversionRules(streamQuery.publisherName))
       case _ => rule = None
     }
@@ -680,7 +680,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
 
     var encryptedEvents: Boolean = false
     privacyContext match {
-      case SgxPrivacyContext(remoteObject, conversionRules) =>
+      case SgxPrivacyContext(adress,port, conversionRules) =>
         encryptedEvents = true
       case _ => encryptedEvents = false
     }
