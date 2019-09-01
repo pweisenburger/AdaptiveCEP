@@ -1,6 +1,6 @@
 package adaptivecep.privacy
 
-import adaptivecep.privacy.Privacy.{PrivacyContext, PrivacyContextCentralized}
+import adaptivecep.privacy._
 import crypto._
 import crypto.dsl._
 import crypto.cipher._

@@ -3,8 +3,6 @@ package adaptivecep.privacy
 import adaptivecep.privacy.ConversionRules._
 import adaptivecep.distributed.operator.TrustedHost
 import adaptivecep.privacy.sgx.EventProcessorServer
-object Privacy {
-
 
   sealed trait DataSensitivity
 
@@ -63,9 +61,8 @@ object Privacy {
     * this object will be used for old queries to ensure backwards compatibility
     *
     */
-  final case object NoPrivacyContext extends PrivacyContext
+  case object NoPrivacyContext extends PrivacyContext
 
-}
 
 
 

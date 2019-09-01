@@ -4,7 +4,7 @@ import adaptivecep.data.Events._
 import adaptivecep.data.Queries._
 import adaptivecep.graph.nodes.traits._
 import adaptivecep.graph.qos._
-import adaptivecep.privacy.Privacy._
+import adaptivecep.privacy._
 import akka.actor.{ActorRef, PoisonPill}
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Sink, Source, StreamRefs}

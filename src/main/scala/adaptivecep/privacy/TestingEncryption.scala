@@ -14,7 +14,7 @@ import adaptivecep.distributed.centralized.{HostActorCentralized, PlacementActor
 import adaptivecep.distributed.operator.{Host, NodeHost, TrustedHost}
 import adaptivecep.dsl.Dsl._
 import adaptivecep.graph.qos.{AverageFrequencyMonitorFactory, PathBandwidthMonitorFactory, PathLatencyMonitorFactory}
-import adaptivecep.privacy.Privacy._
+import adaptivecep.privacy._
 import adaptivecep.privacy.encryption.{CryptoAES, Encryption}
 import adaptivecep.privacy.sgx.EventProcessorClient
 import akka.actor.{ActorRef, ActorSystem, Address, Deploy, Props}
