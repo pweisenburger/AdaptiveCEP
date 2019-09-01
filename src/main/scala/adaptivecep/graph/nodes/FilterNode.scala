@@ -5,7 +5,6 @@ import adaptivecep.data.Queries._
 import adaptivecep.graph.nodes.traits._
 import adaptivecep.graph.qos._
 import adaptivecep.privacy.Privacy._
-import adaptivecep.privacy.sgx.{EventProcessorClient, EventProcessorServer}
 import akka.actor.{ActorRef, PoisonPill}
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Sink, Source, StreamRefs}
@@ -92,21 +91,6 @@ case class FilterNode(
       latencyMonitor.onMessageReceive(unhandledMessage, nodeData)
   }
 
-
-  private var remoteObject: Option[EventProcessorServer] = None
-
-  def getRemoteObject(address: String, port: Int): EventProcessorServer = {
-    if(remoteObject.isEmpty)
-      {
-        val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
-        val server = eventProcessorClient.lookupObject()
-        remoteObject = Some(server)
-        remoteObject.get
-      }
-    else
-      remoteObject.get
-  }
-
   def processEvent(event: Event, sender: ActorRef): Unit = {
     if (sender == childNode) {
       privacyContext match {
@@ -114,16 +98,16 @@ case class FilterNode(
           if (cond(event))
             emitEvent(event)
 
-        case SgxPrivacyContext(address,port, conversionRules) =>
+        case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
           try {
-            if (getRemoteObject(address,port).applyPredicate(cond, event)) {
+            if (remoteObject.applyPredicate(cond, event)) {
               emitEvent(event)
             }
           } catch {
             case e: Exception => println("\n[SGX Service unable to apply predicate]\n")
           }
 
-        case _
+        case PrivacyContextCentralized(interpret, cryptoService, trustedHosts, sourcesSensitivity)
         => println("unexpected context!")
 
       }

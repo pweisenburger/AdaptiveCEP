@@ -2,25 +2,24 @@ package adaptivecep.privacy
 
 import adaptivecep.privacy.ConversionRules._
 import adaptivecep.distributed.operator.TrustedHost
-//import adaptivecep.privacy.sgx.EventProcessorServer
-
-//  sealed trait DataSensitivity
-//
-//  object High extends DataSensitivity
-//
-//  object Medium extends DataSensitivity
-//
-//  object Low extends DataSensitivity
-
+import adaptivecep.privacy.sgx.EventProcessorServer
 object Privacy {
+
+
+  sealed trait DataSensitivity
+
+  object High extends DataSensitivity
+
+  object Medium extends DataSensitivity
+
+  object Low extends DataSensitivity
+
 
   /***
     * a privacy context contains enough information to distribute privacy preserving methodology to
     * the nodes in the deployed query graph
     */
-  trait PrivacyContext extends Serializable {
-     def clonePC: PrivacyContext
-  }
+  sealed trait PrivacyContext extends Serializable
 
   /**
     * this class will be used by a type that should encrypt the data as needed
@@ -39,37 +38,34 @@ object Privacy {
     *                      this is on Host level, we need to change it to
     *                      property(field) level
     */
-//  final case class PrivacyContextCentralized( interpret: CEPRemoteInterpreter,
-//                                        cryptoService: CryptoServiceWrapper,
-//                                        trustedHosts: Set[TrustedHost],
-//                                        sourcesSensitivity: Map[String, DataSensitivity]
-//                                      ) extends PrivacyContext
+  final case class PrivacyContextCentralized( interpret: CEPRemoteInterpreter,
+                                        cryptoService: CryptoServiceWrapper,
+                                        trustedHosts: Set[TrustedHost],
+                                        sourcesSensitivity: Map[String, DataSensitivity]
+                                      ) extends PrivacyContext
 
-  case class SgxPrivacyContext(address: String, port: Int,
-                                     conversionRules: Map[String,EventConversionRule]) extends PrivacyContext {
-    override def clonePC: PrivacyContext = SgxPrivacyContext(address, port, conversionRules)
-  }
-//
-//  final case class SgxDecentralizedContext(trustedHosts: Set[TrustedHost],
-//                                           publisherConversionRules: Map[String,EventConversionRule]
-//                                          ) extends PrivacyContext
+  final case class SgxPrivacyContext(trustedHosts: Set[TrustedHost],
+                                     remoteObject: EventProcessorServer,
+                                     conversionRules: Map[String,EventConversionRule]) extends PrivacyContext
 
-//  //TODO:
-//  /***
-//    * this context should combine sgx and phe approaches
-//    * @param trustedNodeHost
-//    */
-//  final case class MixedPrivacyContext(trustedNodeHost: Set[TrustedHost]) extends PrivacyContext
+  final case class SgxDecentralizedContext(trustedHosts: Set[TrustedHost],
+                                           publisherConversionRules: Map[String,EventConversionRule]
+                                          ) extends PrivacyContext
+
+  //TODO:
+  /***
+    * this context should combine sgx and phe approaches
+    * @param trustedNodeHost
+    */
+  final case class MixedPrivacyContext(trustedNodeHost: Set[TrustedHost]) extends PrivacyContext
 
   /**
     * this object will be used for old queries to ensure backwards compatibility
     *
     */
-  case object NoPrivacyContext extends PrivacyContext {
-    override def clonePC: PrivacyContext = NoPrivacyContext
-  }
-
+  final case object NoPrivacyContext extends PrivacyContext
 
 }
+
 
 

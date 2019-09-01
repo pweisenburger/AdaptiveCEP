@@ -98,8 +98,7 @@ object TestingEncryption extends App {
         where((a,b) => a < b,frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
     val simpleQuery: Query1[Int] =
-      stream[Int]("A").
-        where(a => a > 1000)
+      stream[Int]("A")
         .where(a => a < 3000,frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
 

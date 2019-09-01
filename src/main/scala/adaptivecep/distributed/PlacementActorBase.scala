@@ -110,7 +110,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
   val eventCallback: Event => Any = {
     // Callback for `query1`:
     case Event1(e1) => println(s"COMPLEX EVENT:\tEvent1($e1)")
-    case Event2(e1,e2) => println(s"COMPLEX EVENT:\tEvent2($e1,$e2)")
+    case Event2(e1,e2) => println(s"COMPLEX EVENT:\tEvent1($e1,$e2)")
     //    case EncEvent1(e1, rule) => println(s"COMPLEX ENCEVENT:\tEvent1($e1)")
     case e: EncEvent1 =>
       val decrypted = getDecryptedEvent(e).asInstanceOf[Event1]
@@ -591,9 +591,10 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
                                     streamQuery: StreamQuery,
                                     consumer: Boolean) = {
 
+    println("\nCreating Stream Node\n")
     var rule: Option[EventConversionRule] = None
     privacyContext match {
-      case SgxPrivacyContext(address, port, conversionRules) =>
+      case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
         rule = Some(conversionRules(streamQuery.publisherName))
       case _ => rule = None
     }
@@ -680,10 +681,11 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
 
     var encryptedEvents: Boolean = false
     privacyContext match {
-      case SgxPrivacyContext(adress,port, conversionRules) =>
+      case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
         encryptedEvents = true
       case _ => encryptedEvents = false
     }
+
 
     val props = Props(
       JoinNode(
@@ -765,6 +767,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
 
     val cond = filterQuery.cond
 
+    println("\ncreating Filter node\n")
     val props = Props(
       FilterNode(
         filterQuery.requirements,
@@ -773,7 +776,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
         frequencyMonitorFactory,
         latencyMonitorFactory,
         None,
-        callback, privacyContext.clonePC))
+        callback, privacyContext))
 
     println("\nFilter Node created\n")
     connectUnaryNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, filterQuery.sq, props, consumer)
