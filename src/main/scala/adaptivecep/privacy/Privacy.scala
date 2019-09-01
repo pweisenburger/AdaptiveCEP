@@ -18,8 +18,8 @@ object Privacy {
     * a privacy context contains enough information to distribute privacy preserving methodology to
     * the nodes in the deployed query graph
     */
-  sealed trait PrivacyContext extends Serializable {
-    def clone: PrivacyContext
+  trait PrivacyContext extends Serializable {
+     def clone: PrivacyContext
   }
 
   /**
