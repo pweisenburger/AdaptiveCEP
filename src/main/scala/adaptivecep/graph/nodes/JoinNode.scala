@@ -33,7 +33,7 @@ case class JoinNode(
                      createdCallback: Option[() => Any],
                      eventCallback: Option[(Event) => Any],
                      encryptedEvents: Boolean = false
-                   ) (implicit val privacyContext: PrivacyContext = NoPrivacyContext)
+                   )
   extends BinaryNode with EsperEngine {
 
   override val esperServiceProviderUri: String = name
