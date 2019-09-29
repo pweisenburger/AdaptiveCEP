@@ -10,6 +10,11 @@ import crypto.dsl.{CryptoInterpreter, PureCryptoInterpreter}
 
 import scala.concurrent.{Await, Future}
 
+/***
+  * This hides the synchronous call to the actor hosting the actual Interpreter
+  * @param actor this actor is initialized as CryptorServiceActor
+  *
+  */
 class CEPRemoteInterpreter(actor: ActorRef) extends PureCryptoInterpreter{
 
   implicit val timeout = Timeout(5 seconds)

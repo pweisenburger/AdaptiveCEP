@@ -14,6 +14,11 @@ import crypto.remote.{CryptoServiceImpl, CryptoServicePlus}
 
 import scala.concurrent.{Await, ExecutionContext}
 
+/***
+  * this actor should be deployed on a Trusted host
+  * it initializes the crypto services and the remote interpreter
+  *
+  */
 class CryptoServiceActor extends Actor with ActorLogging with RequiresMessageQueue[BoundedMessageQueueSemantics]{
   val cluster: Cluster = Cluster(context.system)
   implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global

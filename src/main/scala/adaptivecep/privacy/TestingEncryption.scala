@@ -80,6 +80,7 @@ object TestingEncryption extends App {
 
     Thread.sleep(5000)
 
+
     val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
     val remoteObject = eventProcessorClient.lookupObject()
 
@@ -89,12 +90,15 @@ object TestingEncryption extends App {
       Map("A" -> Event1Rule(IntEventTransformer)/*, "B" -> Event1Rule(NoTransformer)*/)
     )
 
+    
+
+
 //      implicit val pc: PrivacyContext = NoPrivacyContext
 
     val normalQuery: Query2[Int,Int] =
-      stream[Int]("A").
+      stream[Int]("A") .
         join(stream[Int]("B"), slidingWindow(1.instances), slidingWindow(1.instances) ).
-        where((a,b) => a < b,frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+        where((a,b) => a < b, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
     val simpleQuery: Query1[Int] =
       stream[Int]("A")

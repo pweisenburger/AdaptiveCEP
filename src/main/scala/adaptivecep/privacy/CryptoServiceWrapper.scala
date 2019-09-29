@@ -10,6 +10,10 @@ import scala.concurrent.duration._
 import crypto._
 import crypto.cipher._
 
+/***
+  * this class only
+  * @param cryptoActor
+  */
 class CryptoServiceWrapper(cryptoActor: ActorRef) extends Serializable {
   implicit val timeout = new Timeout(5 seconds)
 

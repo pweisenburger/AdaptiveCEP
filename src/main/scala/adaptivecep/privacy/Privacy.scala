@@ -3,8 +3,8 @@ package adaptivecep.privacy
 import adaptivecep.privacy.ConversionRules._
 import adaptivecep.distributed.operator.TrustedHost
 import adaptivecep.privacy.sgx.EventProcessorServer
-object Privacy {
 
+object Privacy {
 
   sealed trait DataSensitivity
 
@@ -14,9 +14,8 @@ object Privacy {
 
   object Low extends DataSensitivity
 
-
   /***
-    * a privacy context contains enough information to distribute privacy preserving methodology to
+    * a privacy context contains enough information to distribute privacy preserving method to
     * the nodes in the deployed query graph
     */
   sealed trait PrivacyContext extends Serializable
@@ -44,15 +43,29 @@ object Privacy {
                                         sourcesSensitivity: Map[String, DataSensitivity]
                                       ) extends PrivacyContext
 
+  /***
+    * only one trusted event processor
+    *
+    * @param trustedHosts
+    * @param remoteObject
+    * @param conversionRules
+    */
   final case class SgxPrivacyContext(trustedHosts: Set[TrustedHost],
                                      remoteObject: EventProcessorServer,
                                      conversionRules: Map[String,EventConversionRule]) extends PrivacyContext
 
+  /***
+    * this context should contain multiple sgx event processors
+    * so the node calling the trusted event processor will chose the nearest
+    *
+    * @param trustedHosts
+    * @param publisherConversionRules
+    */
   final case class SgxDecentralizedContext(trustedHosts: Set[TrustedHost],
                                            publisherConversionRules: Map[String,EventConversionRule]
                                           ) extends PrivacyContext
 
-  //TODO:
+  //TODO: Remove this Context
   /***
     * this context should combine sgx and phe approaches
     * @param trustedNodeHost
@@ -61,7 +74,6 @@ object Privacy {
 
   /**
     * this object will be used for old queries to ensure backwards compatibility
-    *
     */
   final case object NoPrivacyContext extends PrivacyContext
 
