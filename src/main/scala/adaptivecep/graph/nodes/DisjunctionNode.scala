@@ -6,6 +6,7 @@ import adaptivecep.data.Queries._
 import adaptivecep.graph.nodes.traits._
 import adaptivecep.graph.qos._
 import adaptivecep.privacy.ConversionRules._
+import adaptivecep.privacy.Privacy._
 import akka.remote.RemoteScope
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Sink, Source, StreamRefs}
@@ -21,12 +22,15 @@ case class DisjunctionNode(
                             latencyMonitorFactory: MonitorFactory,
                             createdCallback: Option[() => Any],
                             eventCallback: Option[(Event) => Any],
-                            encryptedEvents: Boolean = false)
+                            privacyContext: Option[PrivacyContext] = None
+//                            encryptedEvents: Boolean = false
+                          )
   extends BinaryNode {
 
   var childNode1Created: Boolean = false
   var childNode2Created: Boolean = false
   var parentReceived: Boolean = false
+  var encryptedEvents = false
 
   var leftRule: Option[EventConversionRule] = None
   var rightRule: Option[EventConversionRule] = None
@@ -411,6 +415,9 @@ case class DisjunctionNode(
     case CentralizedCreated =>
       if (!created) {
         created = true
+
+
+
         emitCreated()
       }
     case Parent(p1) => {
@@ -463,6 +470,12 @@ case class DisjunctionNode(
   }
 
   def processEvent(event: Event, sender: ActorRef): Unit = {
+    if(privacyContext.nonEmpty)
+      privacyContext.get match {
+        case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
+          encryptedEvents = true
+        case _ => encryptedEvents = false
+      }
     processedEvents += 1
     if (sender == childNode1) {
       event match {

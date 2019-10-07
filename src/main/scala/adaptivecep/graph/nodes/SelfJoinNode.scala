@@ -9,6 +9,7 @@ import adaptivecep.graph.nodes.traits.EsperEngine._
 import adaptivecep.graph.nodes.traits._
 import adaptivecep.graph.qos._
 import adaptivecep.privacy.ConversionRules._
+import adaptivecep.privacy.Privacy._
 import akka.actor.{ActorRef, PoisonPill}
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Sink, Source, StreamRefs}
@@ -30,7 +31,8 @@ case class SelfJoinNode(
                          latencyMonitorFactory: MonitorFactory,
                          createdCallback: Option[() => Any],
                          eventCallback: Option[(Event) => Any],
-                         encryptedEvents: Boolean = false)
+                         privacyContext: Option[PrivacyContext] = None
+                       )
   extends UnaryNode with EsperEngine {
 
   override val esperServiceProviderUri: String = name
@@ -152,6 +154,15 @@ case class SelfJoinNode(
     val values: Array[Any] =
       eventBean.get("lhs").asInstanceOf[Array[Any]] ++
         eventBean.get("rhs").asInstanceOf[Array[Any]]
+
+    var encryptedEvents: Boolean = false
+    if(privacyContext.nonEmpty)
+      privacyContext.get match {
+        case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
+          encryptedEvents = true
+        case _ => encryptedEvents = false
+      }
+
 
     val event: Event = (encryptedEvents, values.length) match {
       case (false, 2) => Event2(values(0), values(1))

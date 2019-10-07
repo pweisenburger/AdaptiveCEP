@@ -99,16 +99,15 @@ object TestingEncryption extends App {
       stream[Int]("A") .
         join(stream[Int]("B"), slidingWindow(1.instances), slidingWindow(1.instances) ).
         where((a,b) => a < b, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
-
-    val simpleQuery: Query1[Int] =
-      stream[Int]("A")
-        .where(a => a < 3000,frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
-
+//
+//    val simpleQuery: Query1[Int] =
+//      stream[Int]("A")
+//        .where(a => a < 3000,frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
 
 
     val placement: ActorRef = actorSystem.actorOf(Props(PlacementActorCentralized(actorSystem,
-      simpleQuery,
+      normalQuery,
       publishers,
       publisherHosts,
       AverageFrequencyMonitorFactory(interval = 3000, logging = false),

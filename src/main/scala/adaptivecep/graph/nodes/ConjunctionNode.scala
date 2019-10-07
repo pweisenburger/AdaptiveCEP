@@ -10,6 +10,7 @@ import adaptivecep.graph.nodes.traits._
 import adaptivecep.graph.nodes.traits.EsperEngine._
 import adaptivecep.graph.qos._
 import adaptivecep.privacy.ConversionRules._
+import adaptivecep.privacy.Privacy._
 import akka.NotUsed
 import akka.remote.RemoteScope
 import akka.stream.{OverflowStrategy, SourceRef}
@@ -28,7 +29,8 @@ case class ConjunctionNode(
                             latencyMonitorFactory: MonitorFactory,
                             createdCallback: Option[() => Any],
                             eventCallback: Option[(Event) => Any],
-                            encryptedEvents: Boolean = false)
+                            //                            encryptedEvents: Boolean = false
+                            privacyContext: Option[PrivacyContext] = None)
   extends BinaryNode with EsperEngine {
 
   override val esperServiceProviderUri: String = name
@@ -36,6 +38,7 @@ case class ConjunctionNode(
   var childNode1Created: Boolean = false
   var childNode2Created: Boolean = false
   var parentReceived: Boolean = false
+  var encryptedEvents: Boolean = false
 
   override def receive: Receive = {
     case DependenciesRequest =>
@@ -104,6 +107,12 @@ case class ConjunctionNode(
   var resultRule: Option[EventConversionRule] = None
 
   def processEvent(event: Event, sender: ActorRef): Unit = {
+    if (privacyContext.nonEmpty)
+      privacyContext.get match {
+        case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
+          encryptedEvents = true
+        case _ => encryptedEvents = false
+      }
     processedEvents += 1
     if (sender == childNode1) {
       event match {

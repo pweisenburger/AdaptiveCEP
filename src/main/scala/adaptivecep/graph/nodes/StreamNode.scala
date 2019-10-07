@@ -25,49 +25,57 @@ case class StreamNode(
                        latencyMonitorFactory: MonitorFactory,
                        createdCallback: Option[() => Any],
                        eventCallback: Option[(Event) => Any],
-//                       conversionRule: Option[EventConversionRule] = None,
                        privacyContext: Option[PrivacyContext] = None
                      )
   extends LeafNode {
 
-//  var subscriptionAcknowledged: Boolean = false
-//  var parentReceived: Boolean = false
-//  var publisher: ActorRef = self
+  //  var subscriptionAcknowledged: Boolean = false
+  //  var parentReceived: Boolean = false
+  //  var publisher: ActorRef = self
 
-  override def postCreated(): Unit =
-  {
+  override def postCreated(): Unit = {
     val publisher = publishers(publisherName)
     publisher ! Subscribe
     println("subscribing to publisher", publisher.path)
   }
 
 
-
   override def receive: Receive = {
     case DependenciesRequest =>
       sender ! DependenciesResponse(Seq.empty)
     case AcknowledgeSubscription(ref) /*if sender() == publisher*/ =>
-//      subscriptionAcknowledged = true
-            val initVector = "ABCDEFGHIJKLMNOP"
-            val iv = new IvParameterSpec(initVector.getBytes("UTF-8"))
-            val secret = "mysecret"
-            val spec = new PBEKeySpec(secret.toCharArray, "1234".getBytes(), 65536, 128)
-            val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1")
-            val key = factory.generateSecret(spec).getEncoded
-            val skeySpec = new SecretKeySpec(key, "AES")
-            implicit val encryption: Encryption = CryptoAES(skeySpec,iv)
+      //      subscriptionAcknowledged = true
+      /** *
+        * TODO: this encryption keys can be exposed during operators deployment
+        * we assume secure deployment phase
+        * another approach is to point to the encryption key position in the stream node
+        * and only load that key here
+        * according to our trust model, even if we expose the private key path here
+        * the attacker cannot access the trusted Stream/Publisher node so passing the path to the key
+        * here is considered safe
+        *
+        */
+
+      val initVector = "ABCDEFGHIJKLMNOP"
+      val iv = new IvParameterSpec(initVector.getBytes("UTF-8"))
+      val secret = "mysecret"
+      val spec = new PBEKeySpec(secret.toCharArray, "1234".getBytes(), 65536, 128)
+      val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1")
+      val key = factory.generateSecret(spec).getEncoded
+      val skeySpec = new SecretKeySpec(key, "AES")
+      implicit val encryption: Encryption = CryptoAES(skeySpec, iv)
 
       ref.getSource.to(Sink.foreach(a => {
-//        emitEvent(a)
-        if(privacyContext.isEmpty)
-//        if (conversionRule == None)
+        //        emitEvent(a)
+        if (privacyContext.isEmpty)
+        //        if (conversionRule == None)
           emitEvent(a)
-        else{
+        else {
 
           privacyContext.get match {
             case NoPrivacyContext =>
               emitEvent(a)
-            case  SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
+            case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
               val rule = conversionRules(publisherName)
               val encEvent = getEncryptedEvent(a, rule)
               println(s"Emitting encrypted event for event $a and $encEvent \n")
@@ -78,7 +86,7 @@ case class StreamNode(
       })).run(materializer)
     case Parent(p1) => {
       parentNode = p1
-//      parentReceived = true
+      //      parentReceived = true
       nodeData = LeafNodeData(name, requirements, context, parentNode)
     }
     case CentralizedCreated =>

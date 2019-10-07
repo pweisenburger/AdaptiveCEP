@@ -6,6 +6,7 @@ import adaptivecep.data.Queries._
 import adaptivecep.graph.nodes.traits._
 import adaptivecep.graph.qos._
 import adaptivecep.privacy.ConversionRules._
+import adaptivecep.privacy.Privacy._
 import akka.remote.RemoteScope
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Sink, Source, StreamRefs}
@@ -22,7 +23,9 @@ DropElemNode(
               frequencyMonitorFactory: MonitorFactory,
               latencyMonitorFactory: MonitorFactory,
               createdCallback: Option[() => Any],
-              eventCallback: Option[(Event) => Any])
+              eventCallback: Option[(Event) => Any],
+              privacyContext: Option[PrivacyContext] = None
+            )
   extends UnaryNode {
 
   var parentReceived: Boolean = false

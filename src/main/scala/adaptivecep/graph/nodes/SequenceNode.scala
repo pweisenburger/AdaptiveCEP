@@ -8,28 +8,34 @@ import adaptivecep.graph.nodes.traits.EsperEngine._
 import adaptivecep.graph.nodes.traits._
 import adaptivecep.graph.qos._
 import adaptivecep.privacy.ConversionRules._
+import adaptivecep.privacy.Privacy._
+import adaptivecep.privacy.encryption.{CryptoAES, Encryption}
 import adaptivecep.publishers.Publisher._
 import akka.actor.{ActorRef, PoisonPill}
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Sink, Source, StreamRefs}
 import com.espertech.esper.client._
+import javax.crypto.SecretKeyFactory
+import javax.crypto.spec.{IvParameterSpec, PBEKeySpec, SecretKeySpec}
 
 import scala.concurrent.Await
 import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 case class SequenceNode(
-    requirements: Set[Requirement],
-    publisherName1: String,
-    publisherName2: String,
-    queryLength1: Int,
-    queryLength2: Int,
-    publishers: Map[String, ActorRef],
-    frequencyMonitorFactory: MonitorFactory,
-    latencyMonitorFactory: MonitorFactory,
-    createdCallback: Option[() => Any],
-    eventCallback: Option[(Event) => Any],
-    encryptedEvents: Boolean = false )
+                         requirements: Set[Requirement],
+                         publisherName1: String,
+                         publisherName2: String,
+                         queryLength1: Int,
+                         queryLength2: Int,
+                         publishers: Map[String, ActorRef],
+                         frequencyMonitorFactory: MonitorFactory,
+                         latencyMonitorFactory: MonitorFactory,
+                         createdCallback: Option[() => Any],
+                         eventCallback: Option[(Event) => Any],
+                         privacyContext: Option[PrivacyContext] = None
+                         //  ,encryptedEvents: Boolean = false
+                       )
   extends LeafNode with EsperEngine {
 
   override val esperServiceProviderUri: String = name
@@ -45,7 +51,17 @@ case class SequenceNode(
   var rule1: Option[EventConversionRule] = None
   var rule2: Option[EventConversionRule] = None
   var resultRule: Option[EventConversionRule] = None
-
+  /***
+    * this data is considered trusted as
+    */
+  val initVector = "ABCDEFGHIJKLMNOP"
+  val iv = new IvParameterSpec(initVector.getBytes("UTF-8"))
+  val secret = "mysecret"
+  val spec = new PBEKeySpec(secret.toCharArray, "1234".getBytes(), 65536, 128)
+  val factory: SecretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1")
+  val key: Array[Byte] = factory.generateSecret(spec).getEncoded
+  val skeySpec = new SecretKeySpec(key, "AES")
+  implicit val encryption: Encryption = CryptoAES(skeySpec, iv)
 
   override def receive: Receive = {
     case DependenciesRequest =>
@@ -53,18 +69,18 @@ case class SequenceNode(
     case AcknowledgeSubscription(ref) if sender() == queryPublishers(0) =>
       subscription1Acknowledged = true
       println("Acknowledged Subscription 1")
-      ref.getSource.to(Sink.foreach(a =>{
+      ref.getSource.to(Sink.foreach(a => {
         processEvent(a, queryPublishers(0))
       })).run(materializer)
     case AcknowledgeSubscription(ref) if sender() == queryPublishers(1) =>
       subscription2Acknowledged = true
       println("Acknowledged Subscription 2")
-      ref.getSource.to(Sink.foreach(a =>{
+      ref.getSource.to(Sink.foreach(a => {
         processEvent(a, queryPublishers(1))
       })).run(materializer)
 
     case CentralizedCreated =>
-      if(!created){
+      if (!created) {
         created = true
         emitCreated()
       }
@@ -93,11 +109,11 @@ case class SequenceNode(
   }
 
   def processEvent(event: Event, sender: ActorRef) = {
-    if(sender == queryPublishers(0)){
+    if (sender == queryPublishers(0)) {
       context.system.scheduler.scheduleOnce(
         FiniteDuration(costs(parentNode).duration.toMillis, TimeUnit.MILLISECONDS),
         () => {
-          if(parentNode == self || (parentNode != self && emittedEvents < costs(parentNode).bandwidth.toInt)) {
+          if (parentNode == self || (parentNode != self && emittedEvents < costs(parentNode).bandwidth.toInt)) {
             frequencyMonitor.onEventEmit(event, nodeData)
             emittedEvents += 1
             event match {
@@ -108,31 +124,38 @@ case class SequenceNode(
               case Event4(e1, e2, e3, e4) => sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4)))
               case Event5(e1, e2, e3, e4, e5) => sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5)))
               case Event6(e1, e2, e3, e4, e5, e6) => sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5), toAnyRef(e6)))
-              case EncEvent1(e1, rule) =>
-                if (rule1.isEmpty) rule1 = Some(rule)
-                sendEvent("sq1", Array(toAnyRef(e1)))
-              case EncEvent2(e1, e2, rule) =>
-                if (rule1.isEmpty) rule1 = Some(rule)
-                sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2)))
-              case EncEvent3(e1, e2, e3, rule) =>
-                if (rule1.isEmpty) rule1 = Some(rule)
-                sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3)))
-              case EncEvent4(e1, e2, e3, e4, rule) =>
-                if (rule1.isEmpty) rule1 = Some(rule)
-                sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4)))
-              case EncEvent5(e1, e2, e3, e4, e5, rule) =>
-                if (rule1.isEmpty) rule1 = Some(rule)
-                sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5)))
-              case EncEvent6(e1, e2, e3, e4, e5, e6, rule) =>
-                if (rule1.isEmpty) rule1 = Some(rule)
-                sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5), toAnyRef(e6)))
 
-            }}})}
-    if(sender == queryPublishers(1)){
+              /** *
+                * those cases will not be matched as the publisher will not publish EncEvent
+                */
+              //              case EncEvent1(e1, rule) =>
+              //                if (rule1.isEmpty) rule1 = Some(rule)
+              //                sendEvent("sq1", Array(toAnyRef(e1)))
+              //              case EncEvent2(e1, e2, rule) =>
+              //                if (rule1.isEmpty) rule1 = Some(rule)
+              //                sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2)))
+              //              case EncEvent3(e1, e2, e3, rule) =>
+              //                if (rule1.isEmpty) rule1 = Some(rule)
+              //                sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3)))
+              //              case EncEvent4(e1, e2, e3, e4, rule) =>
+              //                if (rule1.isEmpty) rule1 = Some(rule)
+              //                sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4)))
+              //              case EncEvent5(e1, e2, e3, e4, e5, rule) =>
+              //                if (rule1.isEmpty) rule1 = Some(rule)
+              //                sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5)))
+              //              case EncEvent6(e1, e2, e3, e4, e5, e6, rule) =>
+              //                if (rule1.isEmpty) rule1 = Some(rule)
+              //                sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5), toAnyRef(e6)))
+
+            }
+          }
+        })
+    }
+    if (sender == queryPublishers(1)) {
       context.system.scheduler.scheduleOnce(
         FiniteDuration(costs(parentNode).duration.toMillis, TimeUnit.MILLISECONDS),
         () => {
-          if(parentNode == self || (parentNode != self && emittedEvents < costs(parentNode).bandwidth.toInt)) {
+          if (parentNode == self || (parentNode != self && emittedEvents < costs(parentNode).bandwidth.toInt)) {
             frequencyMonitor.onEventEmit(event, nodeData)
             emittedEvents += 1
             event match {
@@ -142,30 +165,38 @@ case class SequenceNode(
               case Event4(e1, e2, e3, e4) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4)))
               case Event5(e1, e2, e3, e4, e5) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5)))
               case Event6(e1, e2, e3, e4, e5, e6) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5), toAnyRef(e6)))
-              case EncEvent1(e1, rule) =>
-                if (rule2.isEmpty) rule2 = Some(rule)
-                sendEvent("sq2", Array(toAnyRef(e1)))
-              case EncEvent2(e1, e2, rule) =>
-                if (rule2.isEmpty) rule2 = Some(rule)
-                sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2)))
-              case EncEvent3(e1, e2, e3, rule) =>
-                if (rule2.isEmpty) rule2 = Some(rule)
-                sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3)))
-              case EncEvent4(e1, e2, e3, e4, rule) =>
-                if (rule2.isEmpty) rule2 = Some(rule)
-                sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4)))
-              case EncEvent5(e1, e2, e3, e4, e5, rule) =>
-                if (rule2.isEmpty) rule2 = Some(rule)
-                sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5)))
-              case EncEvent6(e1, e2, e3, e4, e5, e6, rule) =>
-                if (rule2.isEmpty) rule2 = Some(rule)
-                sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5), toAnyRef(e6)))
-            }}})}
+
+              /** *
+                * those cases will not be matched
+                */
+              //              case EncEvent1(e1, rule) =>
+              //                if (rule2.isEmpty) rule2 = Some(rule)
+              //                sendEvent("sq2", Array(toAnyRef(e1)))
+              //              case EncEvent2(e1, e2, rule) =>
+              //                if (rule2.isEmpty) rule2 = Some(rule)
+              //                sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2)))
+              //              case EncEvent3(e1, e2, e3, rule) =>
+              //                if (rule2.isEmpty) rule2 = Some(rule)
+              //                sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3)))
+              //              case EncEvent4(e1, e2, e3, e4, rule) =>
+              //                if (rule2.isEmpty) rule2 = Some(rule)
+              //                sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4)))
+              //              case EncEvent5(e1, e2, e3, e4, e5, rule) =>
+              //                if (rule2.isEmpty) rule2 = Some(rule)
+              //                sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5)))
+              //              case EncEvent6(e1, e2, e3, e4, e5, e6, rule) =>
+              //                if (rule2.isEmpty) rule2 = Some(rule)
+              //                sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2), toAnyRef(e3), toAnyRef(e4), toAnyRef(e5), toAnyRef(e6)))
+            }
+          }
+        })
+    }
   }
 
   override def postStop(): Unit = {
     destroyServiceProvider()
   }
+
   addEventType("sq1", createArrayOfNames(queryLength1), createArrayOfClasses(queryLength1))
   addEventType("sq2", createArrayOfNames(queryLength2), createArrayOfClasses(queryLength2))
 
@@ -179,28 +210,55 @@ case class SequenceNode(
   val updateListener: UpdateListener = (newEventBeans: Array[EventBean], _) => newEventBeans.foreach(eventBean => {
     val values: Array[Any] =
       eventBean.get("sq1").asInstanceOf[Array[Any]] ++
-      eventBean.get("sq2").asInstanceOf[Array[Any]]
+        eventBean.get("sq2").asInstanceOf[Array[Any]]
 
-    val event: Event = (encryptedEvents, values.length) match {
-      case (false, 2) => Event2(values(0), values(1))
-      case (false, 3) => Event3(values(0), values(1), values(2))
-      case (false, 4) => Event4(values(0), values(1), values(2), values(3))
-      case (false, 5) => Event5(values(0), values(1), values(2), values(3), values(4))
-      case (false, 6) => Event6(values(0), values(1), values(2), values(3), values(4), values(5))
-      case (true, 2) => EncEvent2(values(0), values(1), getResultRule2)
-      case (true, 3) => EncEvent3(values(0), values(1), values(2), getResultRule3)
-      case (true, 4) => EncEvent4(values(0), values(1), values(2), values(3), getResultRule4)
-      case (true, 5) => EncEvent5(values(0), values(1), values(2), values(3), values(4), getResultRule5)
-      case (true, 6) => EncEvent6(values(0), values(1), values(2), values(3), values(4), values(5), getResultRule6)
+    var encryptedEvents = false
+    if (privacyContext.nonEmpty) {
+      privacyContext.get match {
+        case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
+          if (rule1.isEmpty) rule1 = Some(conversionRules(publisherName1))
+          if (rule2.isEmpty) rule2 = Some(conversionRules(publisherName2))
+          encryptedEvents = true
+        case _ =>
+          encryptedEvents = false
+      }
     }
 
-//    val event: Event = values.length match {
-//      case 2 => Event2(values(0), values(1))
-//      case 3 => Event3(values(0), values(1), values(2))
-//      case 4 => Event4(values(0), values(1), values(2), values(3))
-//      case 5 => Event5(values(0), values(1), values(2), values(3), values(4))
-//      case 6 => Event6(values(0), values(1), values(2), values(3), values(4), values(5))
+//
+//    val event: Event = (encryptedEvents, values.length) match {
+//      case (false, 2) => Event2(values(0), values(1))
+//      case (false, 3) => Event3(values(0), values(1), values(2))
+//      case (false, 4) => Event4(values(0), values(1), values(2), values(3))
+//      case (false, 5) => Event5(values(0), values(1), values(2), values(3), values(4))
+//      case (false, 6) => Event6(values(0), values(1), values(2), values(3), values(4), values(5))
+//      case (true, 2) =>
+//        getEncryptedEvent(Event2(values(0), values(1)), getResultRule2)
+//      //        EncEvent2(values(0), values(1), getResultRule2)
+//      case (true, 3) => EncEvent3(values(0), values(1), values(2), getResultRule3)
+//      case (true, 4) => EncEvent4(values(0), values(1), values(2), values(3), getResultRule4)
+//      case (true, 5) => EncEvent5(values(0), values(1), values(2), values(3), values(4), getResultRule5)
+//      case (true, 6) => EncEvent6(values(0), values(1), values(2), values(3), values(4), values(5), getResultRule6)
 //    }
+
+    val event: Event = values.length match {
+      case 2 =>
+        if(!encryptedEvents) Event2(values(0), values(1))
+        else getEncryptedEvent(Event2(values(0), values(1)), getResultRule2)
+      case 3 =>
+        if(!encryptedEvents) Event3(values(0), values(1), values(2))
+        else getEncryptedEvent(Event3(values(0), values(1), values(2)), getResultRule3)
+      case 4 =>
+        if(!encryptedEvents) Event4(values(0), values(1), values(2), values(3))
+        else getEncryptedEvent(Event4(values(0), values(1), values(2), values(3)), getResultRule4)
+      case 5 =>
+        if(!encryptedEvents) Event5(values(0), values(1), values(2), values(3), values(4))
+        else getEncryptedEvent(Event5(values(0), values(1), values(2), values(3), values(4)), getResultRule5)
+      case 6 =>
+        if(!encryptedEvents) Event6(values(0), values(1), values(2), values(3), values(4), values(5))
+        else getEncryptedEvent(Event6(values(0), values(1), values(2), values(3), values(4), values(5)), getResultRule6)
+
+    }
+
     emitEvent(event)
   })
 

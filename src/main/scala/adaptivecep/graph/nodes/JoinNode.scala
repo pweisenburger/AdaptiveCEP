@@ -9,6 +9,7 @@ import adaptivecep.graph.nodes.traits.EsperEngine._
 import adaptivecep.graph.nodes.traits._
 import adaptivecep.graph.qos._
 import adaptivecep.privacy.ConversionRules._
+import adaptivecep.privacy.Privacy._
 import akka.actor.{ActorRef, PoisonPill}
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Sink, Source, StreamRefs}
@@ -31,7 +32,7 @@ case class JoinNode(
                      latencyMonitorFactory: MonitorFactory,
                      createdCallback: Option[() => Any],
                      eventCallback: Option[(Event) => Any],
-                     encryptedEvents: Boolean = false
+                     privacyContext: Option[PrivacyContext] = None
                    )
   extends BinaryNode with EsperEngine {
 
@@ -198,6 +199,16 @@ case class JoinNode(
       s"sq2.${createWindowEplString(createWindow(windowType2, windowSize2))} as sq2")
 
   val updateListener: UpdateListener = (newEventBeans: Array[EventBean], _) => newEventBeans.foreach(eventBean => {
+
+    var encryptedEvents: Boolean = false
+    if(privacyContext.nonEmpty)
+      privacyContext.get match {
+        case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
+          encryptedEvents = true
+        case _ => encryptedEvents = false
+      }
+
+
     val values: Array[Any] =
       eventBean.get("sq1").asInstanceOf[Array[Any]] ++
         eventBean.get("sq2").asInstanceOf[Array[Any]]
