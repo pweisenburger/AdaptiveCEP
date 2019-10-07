@@ -63,7 +63,7 @@ object TestingEncryption extends App {
 
     val publishers: Map[String, ActorRef] = Map(
       "A" -> publisherA
-//      , "B" -> publisherB
+      , "B" -> publisherB
       //    ,"C" -> publisherC
       //    ,"D" -> publisherD
     )
@@ -87,7 +87,7 @@ object TestingEncryption extends App {
     implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
       Set(TrustedHost(NodeHost(host1))), // Trusted hosts
       remoteObject, // a reference to the remote sgx object? do we need it?
-      Map("A" -> Event1Rule(IntEventTransformer)/*, "B" -> Event1Rule(NoTransformer)*/)
+      Map("A" -> Event1Rule(IntEventTransformer), "B" -> Event1Rule(NoTransformer))
     )
 
     
