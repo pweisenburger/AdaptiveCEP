@@ -70,7 +70,7 @@ object TestingEncryption extends App {
 
     val publisherHosts: Map[String, Host] = Map(
       "A" -> NodeHost(host1)
-//      , "B" -> NodeHost(host2)
+      , "B" -> NodeHost(host2)
       //    ,"C" -> NodeHost(host3)
       //    ,"D" -> NodeHost(host4)
     )
