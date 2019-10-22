@@ -91,6 +91,10 @@ case class FilterNode(
       latencyMonitor.onMessageReceive(unhandledMessage, nodeData)
   }
 
+  override def preStart(): X = {
+
+  }
+
   def processEvent(event: Event, sender: ActorRef): Unit = {
 
 

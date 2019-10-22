@@ -68,6 +68,7 @@ git reset --hard origin/temp
 
 export SBT_OPTS="-Xmx512M"
 #ADD THOSE TO the machine .bashrc file
+
 export GLOBALIP=$(curl ipecho.net/plain)
 export LOCALIP=$(hostname -I)
 
