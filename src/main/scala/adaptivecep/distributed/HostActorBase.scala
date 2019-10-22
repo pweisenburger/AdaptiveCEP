@@ -21,6 +21,10 @@ import rescala.{default, _}
 import rescala.core.{CreationTicket, ReSerializable}
 import rescala.default.{Evt, Signal, Var}
 
+/***
+  * describes the  host actor actor used for centralized algorithms
+  * this host actor reports its distance from all other nodes
+  */
 trait HostActorBase extends Actor with ActorLogging with RequiresMessageQueue[BoundedMessageQueueSemantics]{
   //setup
   /**

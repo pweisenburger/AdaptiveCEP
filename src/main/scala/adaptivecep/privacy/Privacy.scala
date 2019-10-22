@@ -46,9 +46,9 @@ object Privacy {
   /***
     * only one trusted event processor
     *
-    * @param trustedHosts
-    * @param remoteObject
-    * @param conversionRules
+    * @param trustedHosts which hosts are considered trusted
+    * @param remoteObject address of the trusted event processor
+    * @param conversionRules map between publisher name -> used conversion rule
     */
   final case class SgxPrivacyContext(trustedHosts: Set[TrustedHost],
                                      remoteObject: EventProcessorServer,

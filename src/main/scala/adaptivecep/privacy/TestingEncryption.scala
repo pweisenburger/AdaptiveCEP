@@ -27,7 +27,7 @@ import scala.concurrent.Await
 
 object TestingEncryption extends App {
 
-  def test(in: Either[Int,String]) = {
+  def test(in: Either[Int, String]) = {
 
   }
 
@@ -41,25 +41,31 @@ object TestingEncryption extends App {
     val address2 = Address("akka.tcp", "ClusterSystem", sys.env("HOST2"), 8000)
     val address3 = Address("akka.tcp", "ClusterSystem", sys.env("HOST3"), 8000)
     val address4 = Address("akka.tcp", "ClusterSystem", sys.env("HOST4"), 8000)
+    val address5 = Address("akka.tcp", "ClusterSystem", sys.env("HOST5"), 8000)
 
     val host1: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address1))), "Host" + "1")
     val host2: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address2))), "Host" + "2")
     val host3: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address3))), "Host" + "3")
     val host4: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address4))), "Host" + "4")
-    //  val host5: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address5))), "Host" + "5")
+    val host5: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address5))), "Host" + "5")
 
-    val hosts: Set[ActorRef] = Set(host1, host2, host3, host4)
+    val hosts: Set[ActorRef] = Set(host1, host2, host3, host4, host5)
 
     hosts.foreach(host => host ! Hosts(hosts))
 
-    //    val cryptoActor: ActorRef = actorSystem.actorOf(Props[CryptoServiceActor].withDeploy(Deploy(scope = RemoteScope(address1))), "CryptoService")
 
-    //    val publisher: ActorRef = actorSystem.actorOf(Props(EncryptedPublisher(cryptoActor, id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
     val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
     val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id * 2))).withDeploy(Deploy(scope = RemoteScope(address2))), "B")
 
+    //    val cryptoActor: ActorRef = actorSystem.actorOf(Props[CryptoServiceActor].withDeploy(Deploy(scope = RemoteScope(address1))), "CryptoService")
     //    val cryptoSvc = new CryptoServiceWrapper(cryptoActor)
     //    val interpret = new CEPRemoteInterpreter(cryptoActor)
+    //    val publisher: ActorRef = actorSystem.actorOf(Props(EncryptedPublisher(cryptoActor, id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+    //
+    //    val encQuery: Query1[EncInt] =
+    //      stream[EncInt]("A").
+    //        where(x => interpret(isEven(x)), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+
 
     val publishers: Map[String, ActorRef] = Map(
       "A" -> publisherA
@@ -86,24 +92,26 @@ object TestingEncryption extends App {
 
     implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
       Set(TrustedHost(NodeHost(host1))), // Trusted hosts
-      remoteObject, // a reference to the remote sgx object? do we need it?
-      Map("A" -> Event1Rule(IntEventTransformer), "B" -> Event1Rule(NoTransformer))
+      remoteObject,
+      Map("A" -> Event1Rule(IntEventTransformer), "B" -> Event1Rule(IntEventTransformer))
     )
 
-    
 
 
-//      implicit val pc: PrivacyContext = NoPrivacyContext
 
-    val normalQuery: Query2[Int,Int] =
-      stream[Int]("A") .
-        join(stream[Int]("B"), slidingWindow(1.instances), slidingWindow(1.instances) ).
-        where((a,b) => a < b, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
-//
-//    val simpleQuery: Query1[Int] =
-//      stream[Int]("A")
-//        .where(a => a < 3000,frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+    //      implicit val pc: PrivacyContext = NoPrivacyContext
 
+    val normalQuery: Query2[Int, Int] =
+      stream[Int]("A").
+        join(stream[Int]("B"), slidingWindow(1.instances), slidingWindow(1.instances)).
+        where(( a , b ) => a > 1000).
+        where((a, b) => a < b, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+
+
+    //
+    //    val simpleQuery: Query1[Int] =
+    //      stream[Int]("A")
+    //        .where(a => a < 3000,frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
 
     val placement: ActorRef = actorSystem.actorOf(Props(PlacementActorCentralized(actorSystem,
@@ -112,7 +120,7 @@ object TestingEncryption extends App {
       publisherHosts,
       AverageFrequencyMonitorFactory(interval = 3000, logging = false),
       PathLatencyMonitorFactory(interval = 1000, logging = false),
-      PathBandwidthMonitorFactory(interval = 1000, logging = false), NodeHost(host4),
+      PathBandwidthMonitorFactory(interval = 1000, logging = false), NodeHost(host5),
       hosts, optimizeFor)), "Placement")
 
     println("\n Calling Initialize query \n")
