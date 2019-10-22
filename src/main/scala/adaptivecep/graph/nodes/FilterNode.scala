@@ -103,6 +103,7 @@ case class FilterNode(
             case e: Exception => println("\n[unable to lookup the remote event processor]\n")
               println(e.getMessage)
           }
+        case _ =>
       } /// pattern matching
     } ///check if pc is empty
   }
