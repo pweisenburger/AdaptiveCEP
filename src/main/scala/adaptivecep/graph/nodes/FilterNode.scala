@@ -5,6 +5,7 @@ import adaptivecep.data.Queries._
 import adaptivecep.graph.nodes.traits._
 import adaptivecep.graph.qos._
 import adaptivecep.privacy.Privacy._
+import adaptivecep.privacy.sgx.EventProcessorServer
 import akka.actor.{ActorRef, PoisonPill}
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Sink, Source, StreamRefs}
@@ -38,7 +39,7 @@ case class FilterNode(
 
   var parentReceived: Boolean = false
   var childCreated: Boolean = false
-
+  var eventProcessor: Option[EventProcessorServer] = None
   override def receive: Receive = {
     case DependenciesRequest =>
       sender ! DependenciesResponse(Seq(childNode))
@@ -91,8 +92,19 @@ case class FilterNode(
       latencyMonitor.onMessageReceive(unhandledMessage, nodeData)
   }
 
-  override def preStart(): X = {
-
+  override def preStart(): Unit = {
+    if (privacyContext.nonEmpty) {
+      privacyContext.get match {
+        case SgxPrivacyContext(trustedHosts, client, conversionRules) =>
+          try {
+            eventProcessor = Some( client.lookupObject())
+            println("remote object created")
+          } catch {
+            case e: Exception => println("\n[unable to lookup the remote event processor]\n")
+              println(e.getMessage)
+          }
+      } /// pattern matching
+    } ///check if pc is empty
   }
 
   def processEvent(event: Event, sender: ActorRef): Unit = {
@@ -106,11 +118,16 @@ case class FilterNode(
               emitEvent(event)
           case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
             try {
-              if (remoteObject.applyPredicate(cond, event)) {
-                emitEvent(event)
-              }
+              if(eventProcessor.nonEmpty)
+                if(eventProcessor.get.applyPredicate(cond,event)) {
+                  emitEvent(event)
+                }
+              else{
+                  println("could not call remote event processor")
+                }
             } catch {
               case e: Exception => println("\n[SGX Service unable to apply predicate]\n")
+                println(e.getMessage)
             }
           case PrivacyContextCentralized(interpret, cryptoService, trustedHosts, sourcesSensitivity)
           => println("unexpected context!")

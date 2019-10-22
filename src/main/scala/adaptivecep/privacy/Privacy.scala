@@ -2,7 +2,7 @@ package adaptivecep.privacy
 
 import adaptivecep.privacy.ConversionRules._
 import adaptivecep.distributed.operator.TrustedHost
-import adaptivecep.privacy.sgx.EventProcessorServer
+import adaptivecep.privacy.sgx.{EventProcessorClient, EventProcessorServer}
 
 object Privacy {
 
@@ -51,7 +51,7 @@ object Privacy {
     * @param conversionRules map between publisher name -> used conversion rule
     */
   final case class SgxPrivacyContext(trustedHosts: Set[TrustedHost],
-                                     remoteObject: EventProcessorServer,
+                                     eventProcessorClient: EventProcessorClient,
                                      conversionRules: Map[String,EventConversionRule]) extends PrivacyContext
 
   /***
