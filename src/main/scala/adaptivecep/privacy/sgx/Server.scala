@@ -49,6 +49,9 @@ object Server {
 //      }
 
       val myRemoteObj = new EventProcessorServiceImpl
+
+
+
       val stub = UnicastRemoteObject.exportObject(myRemoteObj, 0).asInstanceOf[EventProcessorServer]
       registry = LocateRegistry.createRegistry(port)
       registry.rebind(name, stub)

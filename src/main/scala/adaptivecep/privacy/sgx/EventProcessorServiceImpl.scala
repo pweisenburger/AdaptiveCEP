@@ -27,7 +27,7 @@ class EventProcessorServiceImpl extends EventProcessorServer {
   implicit val encryption: Encryption = CryptoAES(skeySpec, iv)
 
 
-  override def applyPredicate(cond: Event => Boolean, input: Event): Boolean =
+  override def applyPredicate(cond: Event => Boolean, input: Event): Boolean = this.synchronized(
     (cond, input) match {
       case (f: (Event1 => Boolean), e: Event1) => f(e)
       case (f: (Event2 => Boolean), e: Event2) => f(e)
@@ -55,8 +55,7 @@ class EventProcessorServiceImpl extends EventProcessorServer {
         f(decryptedEvent)
       case _ => sys.error("unexpected type!")
     }
-
-
+  )
 
 
 }
