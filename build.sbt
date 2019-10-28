@@ -36,8 +36,11 @@ libraryDependencies ++= Seq(
 //}
 //
 //
+
+/// uncomment this section to compile the sgx trusted event processor
+
 //test in assembly := {}
 //
 //mainClass in assembly := Some("adaptivecep.privacy.sgx.Server")
 //
-//assemblyJarName in assembly := "sgx-server-ext.jar"
+//assemblyJarName in assembly := "sgx-server.jar"

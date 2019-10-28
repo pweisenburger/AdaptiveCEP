@@ -39,7 +39,26 @@ case class FilterNode(
 
   var parentReceived: Boolean = false
   var childCreated: Boolean = false
-  var eventProcessor: Option[EventProcessorServer] = None
+  val eventProcessor: Option[EventProcessorServer] =
+  if (privacyContext.nonEmpty) {
+    privacyContext.get match {
+      case SgxPrivacyContext(_, client, _) =>
+        try {
+          val obj = client.lookupObject()
+          println("remote object created")
+          Some(obj)
+        } catch {
+          case e: Exception =>
+            println("\n[unable to lookup the remote event processor]\n")
+            println(e.getMessage)
+            None
+        }
+      case _ => None
+    } /// pattern matching
+  } ///check if pc is empty
+  else None
+
+
   override def receive: Receive = {
     case DependenciesRequest =>
       sender ! DependenciesResponse(Seq(childNode))
@@ -91,22 +110,10 @@ case class FilterNode(
       frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
       latencyMonitor.onMessageReceive(unhandledMessage, nodeData)
   }
-
-  override def preStart(): Unit = {
-    if (privacyContext.nonEmpty) {
-      privacyContext.get match {
-        case SgxPrivacyContext(trustedHosts, client, conversionRules) =>
-          try {
-            eventProcessor = Some( client.lookupObject())
-            println("remote object created")
-          } catch {
-            case e: Exception => println("\n[unable to lookup the remote event processor]\n")
-              println(e.getMessage)
-          }
-        case _ =>
-      } /// pattern matching
-    } ///check if pc is empty
-  }
+//
+//  override def preStart(): Unit = {
+//
+//  }
 
   def processEvent(event: Event, sender: ActorRef): Unit = {
 
@@ -117,7 +124,7 @@ case class FilterNode(
           case NoPrivacyContext =>
             if (cond(event))
               emitEvent(event)
-          case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
+          case SgxPrivacyContext(_, _, _) =>
             try {
               if(eventProcessor.nonEmpty)
                 if(eventProcessor.get.applyPredicate(cond,event)) {

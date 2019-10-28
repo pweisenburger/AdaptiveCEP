@@ -5,14 +5,17 @@ import java.nio.ByteBuffer
 import adaptivecep.privacy.encryption.Encryption
 
 
-
-object Extended {
+/***
+  * the user adds any custom classes here to be serialized to the sgx
+  * trusted event processor service
+  * each class MUST extend serializable otherwise this class will not be serializable with RMI
+  *
+  */
+object Custom {
 
   case class Employee(name: String, salary: Int) extends Serializable
 
   case class EncEmployee(name: String, salary: Array[Byte]) extends Serializable
-
-
 
   def empEncrypt(emp: Any, encryption: Encryption): Any = {
     emp match {

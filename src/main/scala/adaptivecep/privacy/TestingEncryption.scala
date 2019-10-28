@@ -4,7 +4,7 @@ import java.io.File
 import java.nio.ByteBuffer
 
 import adaptivecep.privacy.ConversionRules._
-import adaptivecep.privacy.shared.Extended._
+import adaptivecep.privacy.shared.Custom._
 import akka.pattern.ask
 import crypto._
 import adaptivecep.publishers._
