@@ -6,6 +6,7 @@ import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.{IvParameterSpec, PBEKeySpec, SecretKeySpec}
 import adaptivecep.privacy.Privacy._
 import adaptivecep.privacy.encryption._
+import adaptivecep.privacy.shared.Extended._
 
 class EventProcessorServiceImpl extends EventProcessorServer {
   /**

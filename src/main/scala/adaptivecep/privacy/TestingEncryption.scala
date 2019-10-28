@@ -4,6 +4,7 @@ import java.io.File
 import java.nio.ByteBuffer
 
 import adaptivecep.privacy.ConversionRules._
+import adaptivecep.privacy.shared.Extended._
 import akka.pattern.ask
 import crypto._
 import adaptivecep.publishers._
@@ -27,10 +28,6 @@ import crypto.dsl._
 import scala.concurrent.Await
 
 object TestingEncryption extends App {
-
-  case class Employee(name: String, salary: Int) extends Serializable
-
-  case class EncEmployee(name: String, salary: Array[Byte]) extends Serializable
 
 
 
@@ -82,23 +79,7 @@ object TestingEncryption extends App {
       //    ,"D" -> publisherD
     )
 
-    def empEncrypt(emp: Any, encryption: Encryption): Any = {
-      emp match {
-        case Employee(name,salary) =>
-          val buffer = ByteBuffer.allocate(4)
-          EncEmployee(name, encryption.encrypt(buffer.putInt(salary).array()))
-        case _ => sys.error("unexpected data type")
-      }
-    }
-    def empDecrypt(encEmp: Any, encryption: Encryption): Any = {
-      encEmp match {
-        case EncEmployee(name,encSalary) =>
-          val result = encryption.decrypt(encSalary)
-          val salary = ByteBuffer.wrap(result).getInt
-          Employee(name,salary)
-        case _ => sys.error("unexpected data type")
-      }
-    }
+
     val empTransformer: Transformer = EncDecTransformer(empEncrypt,empDecrypt)
 
     val employeePublishers: Map[String, ActorRef] = Map(

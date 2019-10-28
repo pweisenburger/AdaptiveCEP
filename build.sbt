@@ -40,4 +40,4 @@ libraryDependencies ++= Seq(
 //
 //mainClass in assembly := Some("adaptivecep.privacy.sgx.Server")
 //
-//assemblyJarName in assembly := "sgx-server-sync.jar"
+//assemblyJarName in assembly := "sgx-server-ext.jar"
