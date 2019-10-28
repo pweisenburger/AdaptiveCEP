@@ -39,26 +39,7 @@ case class FilterNode(
 
   var parentReceived: Boolean = false
   var childCreated: Boolean = false
-  val eventProcessor: Option[EventProcessorServer] =
-  if (privacyContext.nonEmpty) {
-    privacyContext.get match {
-      case SgxPrivacyContext(_, client, _) =>
-        try {
-          val obj = client.lookupObject()
-          println("remote object created")
-          Some(obj)
-        } catch {
-          case e: Exception =>
-            println("\n[unable to lookup the remote event processor]\n")
-            println(e.getMessage)
-            None
-        }
-      case _ => None
-    } /// pattern matching
-  } ///check if pc is empty
-  else None
-
-
+  var eventProcessor: Option[EventProcessorServer] = None
   override def receive: Receive = {
     case DependenciesRequest =>
       sender ! DependenciesResponse(Seq(childNode))
@@ -110,14 +91,25 @@ case class FilterNode(
       frequencyMonitor.onMessageReceive(unhandledMessage, nodeData)
       latencyMonitor.onMessageReceive(unhandledMessage, nodeData)
   }
-//
-//  override def preStart(): Unit = {
-//
-//  }
+
+
+  override def preStart(): Unit = {
+    if (privacyContext.nonEmpty) {
+      privacyContext.get match {
+        case SgxPrivacyContext(_, client, _) =>
+          try {
+            eventProcessor = Some(client.lookupObject())
+            println("remote object created")
+          } catch {
+            case e: Exception => println("\n[unable to lookup the remote event processor]\n")
+              println(e.getMessage)
+          }
+        case _ => println("not an SGX context")
+      } /// pattern matching
+    } ///check if pc is empty
+  }
 
   def processEvent(event: Event, sender: ActorRef): Unit = {
-
-
     if (sender == childNode) {
       if (privacyContext.nonEmpty) {
         privacyContext.get match {
@@ -126,13 +118,15 @@ case class FilterNode(
               emitEvent(event)
           case SgxPrivacyContext(_, _, _) =>
             try {
-              if(eventProcessor.nonEmpty)
+              if(eventProcessor.nonEmpty) {
                 if(eventProcessor.get.applyPredicate(cond,event)) {
                   emitEvent(event)
+                } else {
+                  println("event dropped!")
                 }
-              else{
-                  println("could not call remote event processor")
-                }
+              } else {
+                println("event processor not initialized")
+              }
             } catch {
               case e: Exception => println("\n[SGX Service unable to apply predicate]\n")
                 println(e.getMessage)
