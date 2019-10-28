@@ -28,9 +28,9 @@ import scala.concurrent.Await
 
 object TestingEncryption extends App {
 
-  case class Employee(name: String, salary: Int)
+  case class Employee(name: String, salary: Int) extends Serializable
 
-  case class EncEmployee(name: String, salary: Array[Byte])
+  case class EncEmployee(name: String, salary: Array[Byte]) extends Serializable
 
 
 
