@@ -1,6 +1,6 @@
 package adaptivecep.privacy
 
-import adaptivecep.data.Events.{DecryptIntAndPrintRequest, EncryptIntRequest, InterpretRequest}
+import adaptivecep.data.Events._
 import akka.actor.{Actor, ActorLogging}
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
@@ -57,6 +57,10 @@ class CryptoServiceActor extends Actor with ActorLogging with RequiresMessageQue
     case DecryptIntAndPrintRequest(v) =>
       cryptoService.decryptAndPrint(v)
 
+    case PublicKeysRequest =>
+      val result = cryptoService.publicKeys
+      val keys = Await.result(result, 4 seconds)
+      sender() ! PublicKeysResponse(keys)
     //TODO: complete the rest of functionalities
 
     case m => println("recieved unknown messages " + m)
