@@ -37,10 +37,16 @@ libraryDependencies ++= Seq(
 //
 //
 
-/// uncomment this section to compile the sgx trusted event processor
+/***
+  * uncomment this section to compile the sgx trusted event processor
+  * 1) uncomment the last 3 lines of code
+  * 2) run sbt
+  * 3) run assembly
+  * 4) the output will be saved in folder: target/scala-2.12
+   */
 
-//test in assembly := {}
-//
-//mainClass in assembly := Some("adaptivecep.privacy.sgx.Server")
-//
-//assemblyJarName in assembly := "sgx-server.jar"
+test in assembly := {}
+
+mainClass in assembly := Some("adaptivecep.privacy.sgx.Server")
+
+assemblyJarName in assembly := "sgx-server.jar"

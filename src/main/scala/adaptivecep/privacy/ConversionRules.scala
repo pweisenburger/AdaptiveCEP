@@ -62,7 +62,6 @@ object ConversionRules {
   def encryptInt(value: Any, crypto: Encryption): Any = {
     value match {
       case e: Int =>
-        //val biValue = BigInt(e)
         val buffer = ByteBuffer.allocate(4)
         crypto.encrypt(buffer.putInt(e).array())
       case _ => sys.error("unexpected input type")

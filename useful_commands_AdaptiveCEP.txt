@@ -17,6 +17,12 @@ source ~/.bashrc
 #JAVA <Ubuntu 16.04 LTS>
 sudo apt-get install openjdk-8-jdk openjdk-8-demo openjdk-8-jre-headless
 
+#JAVA <Ubuntu 18.04 LTS>
+sudo apt update
+sudo apt-get install openjdk-8-jdk openjdk-8-demo openjdk-8-jre-headless
+
+
+
 #SBT <Ubuntu 16.04 LTS>
 echo "deb https://dl.bintray.com/sbt/debian /" | sudo tee -a /etc/apt/sources.list.d/sbt.list
 sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 2EE0EA64E40A89B84B2DF73499E82A75642AC823
@@ -26,7 +32,10 @@ sudo apt-get install sbt
 #Clone the repository, switch the directory and chackout the correct branch
 
 git clone <insert repository url> #https://github.com/pweisenburger/AdaptiveCEP.git
-              cd AdaptiveCEP
+git clone https://github.com/pweisenburger/AdaptiveCEP.git
+cd AdaptiveCEP
+
+
 git checkout privacy-preserved
 
 #export local and global IPs for usage in the code
@@ -76,10 +85,11 @@ export HOST1="40.115.4.25"
 export HOST2="40.91.219.140"
 export HOST3="40.91.219.244"
 export HOST4="40.91.218.27"
-export HOST5="13.80.151.52"
+export HOST5="18.221.95.245"
+export HOST6="52.15.108.225"
+export HOST7="13.80.151.52"
 
-export HOST6="18.221.95.245"
-export HOST7="52.15.108.225"
+
 export HOST8="18.216.144.166"
 export HOST9="52.14.111.157"
 export HOST10="3.19.57.155"

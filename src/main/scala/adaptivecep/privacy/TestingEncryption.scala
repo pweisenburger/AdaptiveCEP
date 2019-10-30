@@ -44,6 +44,8 @@ object TestingEncryption extends App {
     val address3 = Address("akka.tcp", "ClusterSystem", sys.env("HOST3"), 8000)
     val address4 = Address("akka.tcp", "ClusterSystem", sys.env("HOST4"), 8000)
     val address5 = Address("akka.tcp", "ClusterSystem", sys.env("HOST5"), 8000)
+    val address6 = Address("akka.tcp", "ClusterSystem", sys.env("HOST6"), 8000)
+    val address7 = Address("akka.tcp", "ClusterSystem", sys.env("HOST7"), 8000)
 
     ////deploy host actors
     val host1: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address1))), "Host" + "1")
@@ -51,8 +53,10 @@ object TestingEncryption extends App {
     val host3: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address3))), "Host" + "3")
     val host4: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address4))), "Host" + "4")
     val host5: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address5))), "Host" + "5")
+    val host6: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address6))), "Host" + "6")
+    val host7: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address7))), "Host" + "7")
 
-    val hosts: Set[ActorRef] = Set(host1, host2, host3, host4, host5)
+    val hosts: Set[ActorRef] = Set(host1, host2, host3, host4, host5, host6, host7)
 
     hosts.foreach(host => host ! Hosts(hosts))
 
@@ -74,7 +78,7 @@ object TestingEncryption extends App {
     //// associate publisher names with actor references
     val publishers: Map[String, ActorRef] = Map(
       "A" -> publisherA
-      , "B" -> publisherB
+      ,"B" -> publisherB
       //    ,"C" -> publisherC
       //    ,"D" -> publisherD
     )
@@ -108,21 +112,21 @@ object TestingEncryption extends App {
     val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
 //    val remoteObject = eventProcessorClient.lookupObject()
 
-//    implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
-//      Set(TrustedHost(NodeHost(host1))), // Trusted hosts
-//      eventProcessorClient,
-//      Map("A" -> Event1Rule(IntEventTransformer), "B" -> Event1Rule(IntEventTransformer))
-//    )
+    implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
+      Set(TrustedHost(NodeHost(host1))), // Trusted hosts
+      eventProcessorClient,
+      Map("A" -> Event1Rule(IntEventTransformer), "B" -> Event1Rule(IntEventTransformer))
+    )
 
-        implicit val empSgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
-          Set(TrustedHost(NodeHost(host1))), // Trusted hosts
-          eventProcessorClient,
-          Map("E" -> Event1Rule(empTransformer))
-        )
+//        implicit val empSgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
+//          Set(TrustedHost(NodeHost(host1))), // Trusted hosts
+//          eventProcessorClient,
+//          Map("E" -> Event1Rule(empTransformer))
+//        )
 
 
-    val employeeQuery: Query1[Employee] = stream[Employee]("E").
-      where( e => e.salary > 5000,frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+//    val employeeQuery: Query1[Employee] = stream[Employee]("E").
+//      where( e => e.salary > 5000,frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
     //      implicit val pc: PrivacyContext = NoPrivacyContext
 
@@ -139,12 +143,12 @@ object TestingEncryption extends App {
 
 
     val placement: ActorRef = actorSystem.actorOf(Props(PlacementActorCentralized(actorSystem,
-      employeeQuery,
-      employeePublishers,
-      empPublishersHosts,
+      normalQuery,
+      publishers,
+      publisherHosts,
       AverageFrequencyMonitorFactory(interval = 3000, logging = false),
       PathLatencyMonitorFactory(interval = 1000, logging = false),
-      PathBandwidthMonitorFactory(interval = 1000, logging = false), NodeHost(host5),
+      PathBandwidthMonitorFactory(interval = 1000, logging = false), NodeHost(host7),
       hosts, optimizeFor)), "Placement")
 
     println("\n Calling Initialize query \n")
