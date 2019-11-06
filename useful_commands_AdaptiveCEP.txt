@@ -81,6 +81,14 @@ export SBT_OPTS="-Xmx512M"
 export GLOBALIP=$(curl ipecho.net/plain)
 export LOCALIP=$(hostname -I)
 
+
+export HOST1="40.115.4.25"
+export HOST2="13.81.85.145"
+export HOST3="40.68.36.111"
+export HOST4="13.80.151.52"
+
+
+
 export HOST1="40.115.4.25"
 export HOST2="40.68.36.121"
 export HOST3="13.81.85.145"
