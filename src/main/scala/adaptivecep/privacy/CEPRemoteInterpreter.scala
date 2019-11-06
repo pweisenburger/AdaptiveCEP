@@ -19,12 +19,11 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 
 class CEPRemoteInterpreter(cryptoServiceWrapper: CryptoServiceWrapper) extends PureCryptoInterpreter with Serializable {
 
-  implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
-    implicit val timeout = Timeout(5 seconds)
+
+  implicit val timeout = Timeout(5 seconds)
 
   val publicKeys: PubKeys = Await.result(cryptoServiceWrapper.publicKeys,timeout.duration).asInstanceOf[PubKeys]
 
-  val remoteInterpreter = RemoteInterpreter(cryptoServiceWrapper,publicKeys)
 
 
 //
@@ -37,6 +36,10 @@ class CEPRemoteInterpreter(cryptoServiceWrapper: CryptoServiceWrapper) extends P
   /**
     * Interpret a program written in the monadic DSL and return the result
     */
-  override def interpret[A](p: _root_.crypto.dsl.CryptoM[A]): A =
+  override def interpret[A](p: _root_.crypto.dsl.CryptoM[A]): A = {
+    implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
+    val remoteInterpreter = RemoteInterpreter(cryptoServiceWrapper,publicKeys)
     Await.result(remoteInterpreter.interpret(p),timeout.duration)
+  }
+
 }
