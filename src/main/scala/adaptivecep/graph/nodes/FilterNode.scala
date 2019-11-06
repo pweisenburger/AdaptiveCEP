@@ -132,8 +132,20 @@ case class FilterNode(
                 println(e.getMessage)
             }
           case PhePrivacyContext(cryptoService, sourceMappers) =>
-            if (cond(event))
+            try{
+
+
+            println("recevieved an event ")
+            if (cond(event)) {
+              println("forwarding event")
               emitEvent(event)
+            }
+            else
+              println("dropping event")
+            } catch {
+              case e => println("encountered some error while filtering: " + e.getMessage)
+            }
+
           case PrivacyContextCentralized(interpret, cryptoService, trustedHosts, sourcesSensitivity)
           => println("unexpected context!")
         } /// pattern matching

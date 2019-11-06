@@ -39,7 +39,8 @@ class CEPRemoteInterpreter(cryptoServiceWrapper: CryptoServiceWrapper) extends P
   override def interpret[A](p: _root_.crypto.dsl.CryptoM[A]): A = {
     implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
     val remoteInterpreter = RemoteInterpreter(cryptoServiceWrapper,publicKeys)
-    Await.result(remoteInterpreter.interpret(p),timeout.duration)
+    val result = Await.result(remoteInterpreter.interpret(p),timeout.duration)
+    result
   }
 
 }
