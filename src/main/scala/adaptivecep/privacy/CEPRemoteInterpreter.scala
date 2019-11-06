@@ -15,7 +15,7 @@ import scala.concurrent.{Await, Future}
   * @param actor this actor is initialized as CryptorServiceActor
   *
   */
-class CEPRemoteInterpreter(actor: ActorRef) extends PureCryptoInterpreter{
+class CEPRemoteInterpreter(actor: ActorRef) extends PureCryptoInterpreter with Serializable {
 
   implicit val timeout = Timeout(5 seconds)
 
