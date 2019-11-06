@@ -70,7 +70,12 @@ object Events {
   case class CeilRatioRequest(ratio: EncRatio) extends CryptoControlMessages
 
   case class SubstractRequest(lhs: EncInt, rhs: EncInt) extends CryptoControlMessages
+
   case class IntegerDevideRequest(lhs: EncInt, rhs: EncInt) extends CryptoControlMessages
+
+  case class BatchConvertRequest(xs: List[(Scheme, EncInt)]) extends CryptoControlMessages
+
+  case class BatchEncryptRequest(xs: List[(Scheme, Int)]) extends CryptoControlMessages
 
 
   //Tentative Operator Phase

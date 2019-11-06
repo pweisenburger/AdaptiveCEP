@@ -11,6 +11,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
 import crypto._
 import crypto.cipher._
+import crypto.dsl.ToAesStr
 import crypto.remote.CryptoServicePlus
 
 /***
@@ -20,7 +21,7 @@ import crypto.remote.CryptoServicePlus
 class CryptoServiceWrapper(cryptoActor: ActorRef) extends CryptoServicePlus with Serializable {
 
 
-  implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
+//  implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
 
   implicit val timeout = new Timeout(5 seconds)
 //
@@ -99,9 +100,16 @@ class CryptoServiceWrapper(cryptoActor: ActorRef) extends CryptoServicePlus with
     result.asInstanceOf[Future[OpeEnc]]
   }
 
-  override def toAesStr(in: EncString): Future[AesString] = Future(AesString(Array.empty[Byte]))
+  override def toAesStr(in: EncString): Future[AesString] = {
+    val result = cryptoActor ? ToAesStrRequest(in)
+    result.asInstanceOf[Future[AesString]]
+  }
 
-  override def toOpeStr(in: EncString): Future[OpeString] = Future(OpeString(List.empty[BigInt]))
+  override def toOpeStr(in: EncString): Future[OpeString] = {
+    val result = cryptoActor ? ToOpeStrRequest(in)
+    result.asInstanceOf[Future[OpeString]]
+
+  }
 
   /** Convert the encoded value for the given scheme */
   override def convert(s: Scheme)(in: EncInt): Future[EncInt] =
@@ -114,8 +122,10 @@ class CryptoServiceWrapper(cryptoActor: ActorRef) extends CryptoServicePlus with
     * scheme (if necessary) before replying with the whole list of
     * results
     */
-  override def batchConvert(xs: List[(Scheme, EncInt)]): Future[List[EncInt]] =
-    Future(List.empty[EncInt])
+  override def batchConvert(xs: List[(Scheme, EncInt)]): Future[List[EncInt]] = {
+    val result = cryptoActor ? BatchConvertRequest(xs)
+    result.asInstanceOf[Future[List[EncInt]]]
+  }
 
   /** Encrypt the plain number with the given scheme NOTE: the value is
     * NOT encrypted for sending and therefore may be visible to
@@ -132,9 +142,8 @@ class CryptoServiceWrapper(cryptoActor: ActorRef) extends CryptoServicePlus with
     * the whole list is processed
     */
   override def batchEncrypt(xs: List[(Scheme, Int)]): Future[List[EncInt]] = {
-    Future(List.empty[EncInt])
-
-
+    val result = cryptoActor ? BatchEncryptRequest(xs)
+    result.asInstanceOf[Future[List[EncInt]]]
   }
 
   /** Decrypt the value and print it locally (where the service runs) to stdout */
