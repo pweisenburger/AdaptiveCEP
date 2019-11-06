@@ -1,5 +1,6 @@
 package adaptivecep.privacy
 
+import adaptivecep.data.Events
 import adaptivecep.data.Events._
 import akka.actor.ActorRef
 import akka.dispatch.Futures
@@ -34,9 +35,17 @@ class CryptoServiceWrapper(cryptoActor: ActorRef) extends CryptoServicePlus with
 //  }
 
 
-  override def subtract(lhs: EncInt, rhs: EncInt): Future[EncInt] = Future(EncInt(1))
+  override def subtract(lhs: EncInt, rhs: EncInt): Future[EncInt] = {
 
-  override def integerDivide(lhs: EncInt, rhs: EncInt): Future[EncInt] = Future(EncInt(1))
+    val result = cryptoActor ? SubstractRequest(lhs,rhs)
+    result.asInstanceOf[Future[EncInt]]
+
+  }
+  override def integerDivide(lhs: EncInt, rhs: EncInt): Future[EncInt] = {
+    val result = cryptoActor ? IntegerDevideRequest(lhs,rhs)
+    result.asInstanceOf[Future[EncInt]]
+
+  }
 
   override def isEven(enc: EncInt): Future[Boolean] =  {
     val result = cryptoActor ? IsEvenRequest(enc)
@@ -53,10 +62,16 @@ class CryptoServiceWrapper(cryptoActor: ActorRef) extends CryptoServicePlus with
     result.asInstanceOf[ Future[List[EncString]]]
   }
 
-  override def floorRatio(ratio: EncRatio): Future[EncInt] = Future(EncInt(1))
+  override def floorRatio(ratio: EncRatio): Future[EncInt] = {
+    val result = cryptoActor ? FloorRatioRequest(ratio)
+    result.asInstanceOf[ Future[EncInt]]
 
-  override def ceilRatio(ratio: EncRatio): Future[EncInt] = Future(EncInt(1))
+  }
 
+  override def ceilRatio(ratio: EncRatio): Future[EncInt] = {
+    val result = cryptoActor ? CeilRatioRequest(ratio)
+    result.asInstanceOf[ Future[EncInt]]
+  }
   /** Replies with the public keys of the KeyRing used by this service */
   override def publicKeys: Future[PubKeys] = {
     val result = cryptoActor ? PublicKeysRequest
@@ -90,7 +105,10 @@ class CryptoServiceWrapper(cryptoActor: ActorRef) extends CryptoServicePlus with
 
   /** Convert the encoded value for the given scheme */
   override def convert(s: Scheme)(in: EncInt): Future[EncInt] =
-    Future(EncInt(1))
+    {
+      val result = cryptoActor ? ConvertIntRequest(s,in)
+      result.asInstanceOf[Future[EncInt]]
+    }
 
   /** Process the list of (scheme,encoding) and convert the encoding to
     * scheme (if necessary) before replying with the whole list of

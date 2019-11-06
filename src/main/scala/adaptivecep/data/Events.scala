@@ -69,6 +69,10 @@ object Events {
 
   case class CeilRatioRequest(ratio: EncRatio) extends CryptoControlMessages
 
+  case class SubstractRequest(lhs: EncInt, rhs: EncInt) extends CryptoControlMessages
+  case class IntegerDevideRequest(lhs: EncInt, rhs: EncInt) extends CryptoControlMessages
+
+
   //Tentative Operator Phase
   case class CostMessage(latency: Duration, bandwidth: Double) extends PlacementEvent
 
