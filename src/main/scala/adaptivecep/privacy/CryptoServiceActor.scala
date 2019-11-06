@@ -56,31 +56,35 @@ class CryptoServiceActor extends Actor with ActorLogging with RequiresMessageQue
 
     case IsEvenRequest(enc: EncInt) =>
       val result = cryptoService.isEven(enc)
-      sender() ! result
+      val actualResult = Await.result(result,4 seconds)
+      sender() ! actualResult
 
     case DecryptIntAndPrintRequest(v) =>
       cryptoService.decryptAndPrint(v)
 
     case ToOpeRequest(in: EncInt) =>
       val result = cryptoService.toOpe(in)
-      sender() ! result
+      val actualResult = Await.result(result,4 seconds)
+      sender() ! actualResult
 
     case ToAesRequest(in: EncInt) =>
       val result = cryptoService.toAes(in)
-      sender() ! result
+      val actualResult = Await.result(result,4 seconds)
+      sender() ! actualResult
 
     case ToElGamalRequest(in: EncInt) =>
       val result = cryptoService.toElGamal(in)
-      sender() ! result
+      val actualResult = Await.result(result,4 seconds)
+      sender() ! actualResult
 
     case ToPaillierRequest(in: EncInt) =>
       val result = cryptoService.toPaillier(in)
-      sender() ! result
+      val actualResult = Await.result(result,4 seconds)
+      sender() ! actualResult
 
     case PublicKeysRequest =>
       val result = cryptoService.publicKeys
       val keys = Await.result(result, 4 seconds)
-//      sender() ! PublicKeysResponse(keys)
       sender() ! keys
     //TODO: complete the rest of functionalities
 
