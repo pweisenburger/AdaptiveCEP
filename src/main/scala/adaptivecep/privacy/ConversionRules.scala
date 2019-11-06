@@ -4,10 +4,14 @@ import adaptivecep.data.Events._
 import adaptivecep.privacy.encryption.Encryption
 import java.nio.ByteBuffer
 
+import akka.util.Timeout
 import crypto.EncInt
 import crypto.cipher.Comparable
 
+import scala.concurrent.Await
 import scala.util.Random
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.duration._
 
 object ConversionRules {
 
@@ -187,9 +191,12 @@ object ConversionRules {
 
 
     def pheMapInt(value: Any,crypto: CryptoServiceWrapper): Any ={
+      implicit val timeout = new Timeout(5 seconds)
+
       value match {
         case e: Int =>
-          crypto.encryptInt(Comparable,e)
+          val result = Await.result(  crypto.encrypt(Comparable)(e),timeout.duration)
+          result
         case _ =>
           sys.error("unexpected data type")
       }
