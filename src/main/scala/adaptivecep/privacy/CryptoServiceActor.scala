@@ -79,9 +79,9 @@ class CryptoServiceActor extends Actor with ActorLogging with RequiresMessageQue
 
     case PublicKeysRequest =>
       val result = cryptoService.publicKeys
-//      val keys = Await.result(result, 4 seconds)
+      val keys = Await.result(result, 4 seconds)
 //      sender() ! PublicKeysResponse(keys)
-      sender() ! result
+      sender() ! keys
     //TODO: complete the rest of functionalities
 
     case m => println("recieved unknown messages " + m)
