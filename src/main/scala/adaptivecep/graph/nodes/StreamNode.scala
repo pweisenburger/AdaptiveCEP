@@ -5,7 +5,7 @@ import adaptivecep.data.Events._
 import adaptivecep.data.Queries._
 import adaptivecep.graph.nodes.traits._
 import adaptivecep.graph.qos._
-import adaptivecep.privacy.Privacy.{NoPrivacyContext, PrivacyContext, SgxPrivacyContext}
+import adaptivecep.privacy.Privacy._
 import adaptivecep.privacy.encryption.{CryptoAES, Encryption}
 import adaptivecep.publishers.Publisher._
 import akka.actor.{ActorRef, PoisonPill}
@@ -80,6 +80,11 @@ case class StreamNode(
               val encEvent = getEncryptedEvent(a, rule)
               println(s"Emitting encrypted event for event $a and $encEvent \n")
               emitEvent(encEvent)
+            case PhePrivacyContext(interpret, cryptoService, sourceMappers) =>
+              val mapper = sourceMappers(publisherName)
+              val mappedEvent = mapSource(a,mapper,cryptoService)
+              emitEvent(mappedEvent )
+              //TODO: encrypt using source conversion rules
             case _ => sys.error("unsupported context yet")
           }
         }

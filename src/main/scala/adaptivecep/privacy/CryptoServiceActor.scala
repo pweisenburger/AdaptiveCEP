@@ -54,6 +54,7 @@ class CryptoServiceActor extends Actor with ActorLogging with RequiresMessageQue
       val interpreted = Await.result(result,4 seconds)
       sender() !  interpreted
 
+
     case DecryptIntAndPrintRequest(v) =>
       cryptoService.decryptAndPrint(v)
 

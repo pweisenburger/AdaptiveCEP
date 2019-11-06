@@ -43,6 +43,11 @@ object Privacy {
                                         sourcesSensitivity: Map[String, DataSensitivity]
                                       ) extends PrivacyContext
 
+  final case class PhePrivacyContext(interpret: CEPRemoteInterpreter,
+                                     cryptoService: CryptoServiceWrapper,
+                                     sourceMappers: Map[String,EventConversionRule]
+                                    ) extends PrivacyContext
+
   /***
     * only one trusted event processor
     *

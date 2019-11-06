@@ -39,7 +39,7 @@ object TestingEncryption extends App {
     val actorSystem: ActorSystem = ActorSystem("ClusterSystem", config)
 
     ///declare remote nodes addresses
-    val address1 = Address("akka.tcp", "ClusterSystem", "40.115.4.25", 8000)
+    val address1 = Address("akka.tcp", "ClusterSystem", sys.env("HOST1"), 8000)
     val address2 = Address("akka.tcp", "ClusterSystem", sys.env("HOST2"), 8000)
     val address3 = Address("akka.tcp", "ClusterSystem", sys.env("HOST3"), 8000)
     val address4 = Address("akka.tcp", "ClusterSystem", sys.env("HOST4"), 8000)
@@ -64,7 +64,7 @@ object TestingEncryption extends App {
     val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
     val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id * 2))).withDeploy(Deploy(scope = RemoteScope(address2))), "B")
 
-    val employeePublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( Employee("ahmad",id * 2)))).withDeploy(Deploy(scope = RemoteScope(address1))), "E")
+    val employeePublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( Employee(id,"ahmad",id * 200)))).withDeploy(Deploy(scope = RemoteScope(address1))), "E")
 
     //    val cryptoActor: ActorRef = actorSystem.actorOf(Props[CryptoServiceActor].withDeploy(Deploy(scope = RemoteScope(address1))), "CryptoService")
     //    val cryptoSvc = new CryptoServiceWrapper(cryptoActor)
@@ -98,9 +98,10 @@ object TestingEncryption extends App {
       //    ,"D" -> NodeHost(host4)
     )
 
-    val empPublishersHosts: Map[String,Host] = Map(
-      "E" -> NodeHost(host1)
-    )
+//    val empPublishersHosts: Map[String,Host] = Map(
+//      "E" -> NodeHost(host1),
+//      "D" -> NodeHost(host2) ///entrance event stream
+//    )
 
 
     val optimizeFor = "bandwidth"
@@ -113,7 +114,7 @@ object TestingEncryption extends App {
 //    val remoteObject = eventProcessorClient.lookupObject()
 
     implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
-      Set(TrustedHost(NodeHost(host1))), // Trusted hosts
+      Set(TrustedHost(NodeHost(host1)), TrustedHost(NodeHost(host2))), // Trusted hosts
       eventProcessorClient,
       Map("A" -> Event1Rule(IntEventTransformer), "B" -> Event1Rule(IntEventTransformer))
     )
@@ -125,16 +126,28 @@ object TestingEncryption extends App {
 //        )
 
 
-//    val employeeQuery: Query1[Employee] = stream[Employee]("E").
+//    val employeeQuery: Query1[Employee] =
+//      stream[Employee]("E").
+//        join(stream[EntryEvent]("D"))
 //      where( e => e.salary > 5000,frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
-
+//
     //      implicit val pc: PrivacyContext = NoPrivacyContext
 
     val normalQuery: Query2[Int, Int] =
       stream[Int]("A").
         join(stream[Int]("B"), slidingWindow(1.instances), slidingWindow(1.instances)).
-        where((a, b) => a < b, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+        where((a, b) => a < b, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => })
+//    val normalQuery: Query2[Int, Int] =
+//      stream[Int]("A").
+//        join(stream[Int]("B"), slidingWindow(1.instances), slidingWindow(1.instances)).
+//        where((a, b) => a < b, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
+
+    val orQuery =
+      stream[Int]("A").
+        or(stream[String]("B")).
+        where((x) => x.left.get > 3).
+        join(stream[Char]("t"),slidingWindow(1.instances),slidingWindow(2.instances)).where()
 
     //
     //    val simpleQuery: Query1[Int] =

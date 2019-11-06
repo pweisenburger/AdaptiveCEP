@@ -13,25 +13,27 @@ import adaptivecep.privacy.encryption.Encryption
   */
 object Custom {
 
-  case class Employee(name: String, salary: Int) extends Serializable
+  case class Employee(id: Int, name: String, salary: Int) extends Serializable
 
-  case class EncEmployee(name: String, salary: Array[Byte]) extends Serializable
+  case class EncEmployee(id: Int, name: Array[Byte], salary: Array[Byte]) extends Serializable
 
   def empEncrypt(emp: Any, encryption: Encryption): Any = {
     emp match {
-      case Employee(name,salary) =>
-        EncEmployee(name, encryption.encryptInt(salary))
+      case Employee(id,name,salary) =>
+        EncEmployee(id, encryption.encryptString(name), encryption.encryptInt(salary))
       case _ => sys.error("unexpected data type")
     }
   }
   def empDecrypt(encEmp: Any, encryption: Encryption): Any = {
     encEmp match {
-      case EncEmployee(name,encSalary) =>
+      case EncEmployee(id, encName,encSalary) =>
+        val name = encryption.decryptString(encName)
         val salary = encryption.decryptInt(encSalary)
-        Employee(name,salary)
+        Employee(id, name,salary)
       case _ => sys.error("unexpected data type")
     }
   }
 
+  case class EntryEvent(employeeId: Int, hour: Int, minute: Int, second: Int) extends Serializable
 
 }

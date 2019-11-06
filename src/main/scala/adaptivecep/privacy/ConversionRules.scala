@@ -4,6 +4,9 @@ import adaptivecep.data.Events._
 import adaptivecep.privacy.encryption.Encryption
 import java.nio.ByteBuffer
 
+import crypto.EncInt
+import crypto.cipher.Comparable
+
 import scala.util.Random
 
 object ConversionRules {
@@ -178,6 +181,23 @@ object ConversionRules {
 
   ///TODO: find a way to better retrieve those transformers by type
 
+
+
+
+
+
+    def pheMapInt(value: Any,crypto: CryptoServiceWrapper): Any ={
+      value match {
+        case e: Int =>
+          crypto.encryptInt(Comparable,e)
+        case _ =>
+          sys.error("unexpected data type")
+      }
+    }
+
+
+  object IntPheSourceMapper extends PheSourceTransformer(pheMapInt)
+
   /***
     * this trait represents a specific transformer from some type to another
     * can be used to encrypt/decrypt
@@ -197,6 +217,11 @@ object ConversionRules {
     */
   case class EncDecTransformer(encrypt: (Any, Encryption) => Any,
                                decrypt: (Any, Encryption) => Any) extends Transformer
+
+
+
+  case class PheSourceTransformer(map: (Any,CryptoServiceWrapper) => Any
+                           ) extends Transformer
 
   /***
     * Disjunction Transformer is used for the disjunction Node in AdaptiveCEP
@@ -245,6 +270,52 @@ object ConversionRules {
 
   case class Event6Rule(tr1: Transformer, tr2: Transformer, tr3: Transformer, tr4: Transformer, tr5: Transformer, tr6: Transformer) extends EventConversionRule
 
+  def mapSource(e:Event, rule: EventConversionRule, cryptoService: CryptoServiceWrapper) : Event ={
+    (e,rule) match {
+      case (Event1(v1),Event1Rule(tr1)) =>
+        Event1(applyMapTransformer(v1,tr1,cryptoService))
+      case (Event2(v1, v2), Event2Rule(tr1, tr2)) =>
+        Event2(applyMapTransformer(v1,tr1,cryptoService),
+          applyMapTransformer(v2,tr2,cryptoService))
+
+      case (Event3(v1, v2, v3),Event3Rule(tr1, tr2, tr3)) =>
+        Event3(applyMapTransformer(v1,tr1,cryptoService),
+          applyMapTransformer(v2,tr2,cryptoService),
+          applyMapTransformer(v3,tr3,cryptoService),
+        )
+      case (Event4(v1, v2,v3,v4),Event4Rule(tr1, tr2, tr3, tr4)) =>
+        Event4(applyMapTransformer(v1,tr1,cryptoService),
+          applyMapTransformer(v2,tr2,cryptoService),
+          applyMapTransformer(v3,tr3,cryptoService),
+          applyMapTransformer(v4,tr4,cryptoService)
+        )
+      case (Event5(v1, v2,v3,v4,v5),Event5Rule(tr1, tr2, tr3, tr4, tr5)) =>
+        Event5(applyMapTransformer(v1,tr1,cryptoService),
+          applyMapTransformer(v2,tr2,cryptoService),
+          applyMapTransformer(v3,tr3,cryptoService),
+          applyMapTransformer(v4,tr4,cryptoService),
+          applyMapTransformer(v5,tr5,cryptoService)
+        )
+      case (Event6(v1, v2,v3,v4,v5,v6),Event6Rule(tr1, tr2, tr3, tr4, tr5, tr6)) =>
+        Event6(applyMapTransformer(v1,tr1,cryptoService),
+          applyMapTransformer(v2,tr2,cryptoService),
+          applyMapTransformer(v3,tr3,cryptoService),
+          applyMapTransformer(v4,tr4,cryptoService),
+          applyMapTransformer(v5,tr5,cryptoService),
+          applyMapTransformer(v6,tr6,cryptoService)
+        )
+    }
+  }
+
+  private def applyMapTransformer(data: Any, transformer: Transformer, crypto: CryptoServiceWrapper): Any = {
+    transformer match {
+      case pheSourceTransformer: PheSourceTransformer =>
+        pheSourceTransformer.map(data,crypto)
+      case NoTransformer =>
+        data
+      case _ => sys.error("unexpected transformer")
+    }
+  }
 
   /***
     * applies the transformation function on data
