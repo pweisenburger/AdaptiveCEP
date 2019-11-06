@@ -70,7 +70,7 @@ object TestingEncryption extends App {
 
     val cryptoSvc = new CryptoServiceWrapper(cryptoActor)
 
-    val interpret = new CEPRemoteInterpreter(cryptoActor)
+    val interpret = new CEPRemoteInterpreter(cryptoSvc)
 
 //    val publisher: ActorRef = actorSystem.actorOf(Props(EncryptedPublisher(cryptoActor, id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
 
@@ -132,7 +132,6 @@ object TestingEncryption extends App {
 //    )
 //
     implicit val phePrivacyContext: PrivacyContext = PhePrivacyContext(
-      interpret,
       cryptoSvc,
       Map("A" -> Event1Rule(IntPheSourceMapper))
     )

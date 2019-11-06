@@ -80,7 +80,7 @@ case class StreamNode(
               val encEvent = getEncryptedEvent(a, rule)
               println(s"Emitting encrypted event for event $a and $encEvent\n")
               emitEvent(encEvent)
-            case PhePrivacyContext(interpret, cryptoService, sourceMappers) =>
+            case PhePrivacyContext(cryptoService, sourceMappers) =>
               val mapper = sourceMappers(publisherName)
               val mappedEvent = mapSource(a,mapper,cryptoService)
               emitEvent(mappedEvent )
