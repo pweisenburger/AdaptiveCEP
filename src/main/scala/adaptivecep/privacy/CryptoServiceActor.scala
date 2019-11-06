@@ -51,8 +51,8 @@ class CryptoServiceActor extends Actor with ActorLogging with RequiresMessageQue
 
     case EncryptIntRequest(s,in) =>
       val result = cryptoService.encrypt(s)(in)
-//      val interpreted = Await.result(result,4 seconds)
-      sender() !  result
+      val encrypted = Await.result(result,4 seconds)
+      sender() !  encrypted
 
     case IsEvenRequest(enc: EncInt) =>
       val result = cryptoService.isEven(enc)
