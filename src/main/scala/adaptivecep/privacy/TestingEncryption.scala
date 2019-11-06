@@ -61,8 +61,8 @@ object TestingEncryption extends App {
     hosts.foreach(host => host ! Hosts(hosts))
 
     /////deploy publishers
-    val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
-    val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id * 2))).withDeploy(Deploy(scope = RemoteScope(address2))), "B")
+//    val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+//    val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id * 2))).withDeploy(Deploy(scope = RemoteScope(address2))), "B")
 
 //    val employeePublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(Employee(id, "ahmad", id * 200)))).withDeploy(Deploy(scope = RemoteScope(address1))), "E")
 
@@ -72,7 +72,7 @@ object TestingEncryption extends App {
 
     val interpret = new CEPRemoteInterpreter(cryptoActor)
 
-//    val publisher: ActorRef = actorSystem.actorOf(Props(EncryptedPublisher(cryptoActor, id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+    val publisher: ActorRef = actorSystem.actorOf(Props(EncryptedPublisher(cryptoActor, id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
 
     val encQuery: Query1[EncInt] =
       stream[EncInt]("A").
@@ -84,8 +84,8 @@ object TestingEncryption extends App {
 
     //// associate publisher names with actor references
     val publishers: Map[String, ActorRef] = Map(
-      "A" -> publisherA
-      , "B" -> publisherB
+      "A" -> publisher
+//      , "B" -> publisherB
       //    ,"C" -> publisherC
       //    ,"D" -> publisherD
     )
@@ -100,7 +100,7 @@ object TestingEncryption extends App {
 //    ////
     val publisherHosts: Map[String, Host] = Map(
       "A" -> NodeHost(host1)
-      , "B" -> NodeHost(host2)
+//      , "B" -> NodeHost(host2)
       //    ,"C" -> NodeHost(host3)
       //    ,"D" -> NodeHost(host4)
     )
@@ -124,11 +124,18 @@ object TestingEncryption extends App {
 //      Map("A" -> Event1Rule(IntEventTransformer), "B" -> Event1Rule(IntEventTransformer))
 //    )
 
-    implicit val phePrivacyContext: PrivacyContext = PhePrivacyContext(
+    implicit val context: PrivacyContext = PrivacyContextCentralized(
       interpret,
       cryptoSvc,
-      Map("A" -> Event1Rule(IntPheSourceMapper))
+      Set(TrustedHost(NodeHost(host1))),
+      Map.empty
     )
+
+//    implicit val phePrivacyContext: PrivacyContext = PhePrivacyContext(
+//      interpret,
+//      cryptoSvc,
+//      Map("A" -> Event1Rule(IntPheSourceMapper))
+//    )
 
     //        implicit val empSgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
     //          Set(TrustedHost(NodeHost(host1))), // Trusted hosts
