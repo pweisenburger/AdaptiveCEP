@@ -131,6 +131,9 @@ case class FilterNode(
               case e: Exception => println("\n[SGX Service unable to apply predicate]\n")
                 println(e.getMessage)
             }
+          case PhePrivacyContext(interpret, cryptoService, sourceMappers) =>
+            if (cond(event))
+              emitEvent(event)
           case PrivacyContextCentralized(interpret, cryptoService, trustedHosts, sourcesSensitivity)
           => println("unexpected context!")
         } /// pattern matching

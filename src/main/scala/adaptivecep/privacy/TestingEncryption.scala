@@ -30,7 +30,6 @@ import scala.concurrent.Await
 object TestingEncryption extends App {
 
 
-
   override def main(args: Array[String]): Unit = {
 
     //Joining the previously configured cluster
@@ -64,33 +63,40 @@ object TestingEncryption extends App {
     val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
     val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id * 2))).withDeploy(Deploy(scope = RemoteScope(address2))), "B")
 
-    val employeePublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1( Employee(id,"ahmad",id * 200)))).withDeploy(Deploy(scope = RemoteScope(address1))), "E")
+//    val employeePublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(Employee(id, "ahmad", id * 200)))).withDeploy(Deploy(scope = RemoteScope(address1))), "E")
 
-    //    val cryptoActor: ActorRef = actorSystem.actorOf(Props[CryptoServiceActor].withDeploy(Deploy(scope = RemoteScope(address1))), "CryptoService")
-    //    val cryptoSvc = new CryptoServiceWrapper(cryptoActor)
-    //    val interpret = new CEPRemoteInterpreter(cryptoActor)
-    //    val publisher: ActorRef = actorSystem.actorOf(Props(EncryptedPublisher(cryptoActor, id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
-    //
-    //    val encQuery: Query1[EncInt] =
-    //      stream[EncInt]("A").
-    //        where(x => interpret(isEven(x)), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+    val cryptoActor: ActorRef = actorSystem.actorOf(Props[CryptoServiceActor].withDeploy(Deploy(scope = RemoteScope(address1))), "CryptoService")
+
+    val cryptoSvc = new CryptoServiceWrapper(cryptoActor)
+
+    val interpret = new CEPRemoteInterpreter(cryptoActor)
+
+//    val publisher: ActorRef = actorSystem.actorOf(Props(EncryptedPublisher(cryptoActor, id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+
+    val encQuery: Query1[EncInt] =
+      stream[EncInt]("A").
+        where(x => interpret(isEven(x)), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+
+
+
+
 
     //// associate publisher names with actor references
     val publishers: Map[String, ActorRef] = Map(
       "A" -> publisherA
-      ,"B" -> publisherB
+      , "B" -> publisherB
       //    ,"C" -> publisherC
       //    ,"D" -> publisherD
     )
-
-
-    val empTransformer: Transformer = EncDecTransformer(empEncrypt,empDecrypt)
-
-    val employeePublishers: Map[String, ActorRef] = Map(
-      "E" -> employeePublisher
-    )
-
-    ////
+//
+//
+//    val empTransformer: Transformer = EncDecTransformer(empEncrypt, empDecrypt)
+//
+//    val employeePublishers: Map[String, ActorRef] = Map(
+//      "E" -> employeePublisher
+//    )
+//
+//    ////
     val publisherHosts: Map[String, Host] = Map(
       "A" -> NodeHost(host1)
       , "B" -> NodeHost(host2)
@@ -98,10 +104,10 @@ object TestingEncryption extends App {
       //    ,"D" -> NodeHost(host4)
     )
 
-//    val empPublishersHosts: Map[String,Host] = Map(
-//      "E" -> NodeHost(host1),
-//      "D" -> NodeHost(host2) ///entrance event stream
-//    )
+    //    val empPublishersHosts: Map[String,Host] = Map(
+    //      "E" -> NodeHost(host1),
+    //      "D" -> NodeHost(host2) ///entrance event stream
+    //    )
 
 
     val optimizeFor = "bandwidth"
@@ -110,44 +116,47 @@ object TestingEncryption extends App {
     Thread.sleep(5000)
 
 
-    val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
-//    val remoteObject = eventProcessorClient.lookupObject()
+//    val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
+//    implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
+//      Set(TrustedHost(NodeHost(host1)), TrustedHost(NodeHost(host2))), // Trusted hosts
+//      eventProcessorClient,
+//      Map("A" -> Event1Rule(IntEventTransformer), "B" -> Event1Rule(IntEventTransformer))
+//    )
 
-    implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
-      Set(TrustedHost(NodeHost(host1)), TrustedHost(NodeHost(host2))), // Trusted hosts
-      eventProcessorClient,
-      Map("A" -> Event1Rule(IntEventTransformer), "B" -> Event1Rule(IntEventTransformer))
+    implicit val phePrivacyContext: PrivacyContext = PhePrivacyContext(
+      interpret,
+      cryptoSvc,
+      Map("A" -> Event1Rule(IntPheSourceMapper))
     )
 
-//        implicit val empSgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
-//          Set(TrustedHost(NodeHost(host1))), // Trusted hosts
-//          eventProcessorClient,
-//          Map("E" -> Event1Rule(empTransformer))
-//        )
+    //        implicit val empSgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
+    //          Set(TrustedHost(NodeHost(host1))), // Trusted hosts
+    //          eventProcessorClient,
+    //          Map("E" -> Event1Rule(empTransformer))
+    //        )
 
 
-//    val employeeQuery: Query1[Employee] =
-//      stream[Employee]("E").
-//        join(stream[EntryEvent]("D"))
-//      where( e => e.salary > 5000,frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
-//
+    //    val employeeQuery: Query1[Employee] =
+    //      stream[Employee]("E").
+    //        join(stream[EntryEvent]("D"))
+    //      where( e => e.salary > 5000,frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+    //
     //      implicit val pc: PrivacyContext = NoPrivacyContext
 
     val normalQuery: Query2[Int, Int] =
       stream[Int]("A").
         join(stream[Int]("B"), slidingWindow(1.instances), slidingWindow(1.instances)).
         where((a, b) => a < b, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => })
-//    val normalQuery: Query2[Int, Int] =
-//      stream[Int]("A").
-//        join(stream[Int]("B"), slidingWindow(1.instances), slidingWindow(1.instances)).
-//        where((a, b) => a < b, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+    //    val normalQuery: Query2[Int, Int] =
+    //      stream[Int]("A").
+    //        join(stream[Int]("B"), slidingWindow(1.instances), slidingWindow(1.instances)).
+    //        where((a, b) => a < b, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
 
     val orQuery =
       stream[Int]("A").
         or(stream[String]("B")).
-        where((x) => x.left.get > 3).
-        join(stream[Char]("t"),slidingWindow(1.instances),slidingWindow(2.instances)).where()
+        where((x) => x.left.get > 3)
 
     //
     //    val simpleQuery: Query1[Int] =
@@ -156,7 +165,7 @@ object TestingEncryption extends App {
 
 
     val placement: ActorRef = actorSystem.actorOf(Props(PlacementActorCentralized(actorSystem,
-      normalQuery,
+      encQuery,
       publishers,
       publisherHosts,
       AverageFrequencyMonitorFactory(interval = 3000, logging = false),

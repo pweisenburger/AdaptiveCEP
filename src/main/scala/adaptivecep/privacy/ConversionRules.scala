@@ -281,21 +281,18 @@ object ConversionRules {
       case (Event3(v1, v2, v3),Event3Rule(tr1, tr2, tr3)) =>
         Event3(applyMapTransformer(v1,tr1,cryptoService),
           applyMapTransformer(v2,tr2,cryptoService),
-          applyMapTransformer(v3,tr3,cryptoService),
-        )
+          applyMapTransformer(v3,tr3,cryptoService))
       case (Event4(v1, v2,v3,v4),Event4Rule(tr1, tr2, tr3, tr4)) =>
         Event4(applyMapTransformer(v1,tr1,cryptoService),
           applyMapTransformer(v2,tr2,cryptoService),
           applyMapTransformer(v3,tr3,cryptoService),
-          applyMapTransformer(v4,tr4,cryptoService)
-        )
+          applyMapTransformer(v4,tr4,cryptoService))
       case (Event5(v1, v2,v3,v4,v5),Event5Rule(tr1, tr2, tr3, tr4, tr5)) =>
         Event5(applyMapTransformer(v1,tr1,cryptoService),
           applyMapTransformer(v2,tr2,cryptoService),
           applyMapTransformer(v3,tr3,cryptoService),
           applyMapTransformer(v4,tr4,cryptoService),
-          applyMapTransformer(v5,tr5,cryptoService)
-        )
+          applyMapTransformer(v5,tr5,cryptoService))
       case (Event6(v1, v2,v3,v4,v5,v6),Event6Rule(tr1, tr2, tr3, tr4, tr5, tr6)) =>
         Event6(applyMapTransformer(v1,tr1,cryptoService),
           applyMapTransformer(v2,tr2,cryptoService),
@@ -304,6 +301,7 @@ object ConversionRules {
           applyMapTransformer(v5,tr5,cryptoService),
           applyMapTransformer(v6,tr6,cryptoService)
         )
+      case _ => sys.error("unexpected")
     }
   }
 
