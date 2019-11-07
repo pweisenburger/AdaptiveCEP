@@ -34,11 +34,10 @@ class CryptoServiceWrapper(cryptoActor: ActorRef) extends CryptoServicePlus with
 
 
   override def subtract(lhs: EncInt, rhs: EncInt): Future[EncInt] = {
-
     val result = cryptoActor ? SubstractRequest(lhs,rhs)
     result.asInstanceOf[Future[EncInt]]
-
   }
+
   override def integerDivide(lhs: EncInt, rhs: EncInt): Future[EncInt] = {
     val result = cryptoActor ? IntegerDevideRequest(lhs,rhs)
     result.asInstanceOf[Future[EncInt]]
