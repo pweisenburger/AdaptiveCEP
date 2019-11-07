@@ -18,6 +18,7 @@ import adaptivecep.dsl.Dsl._
 import adaptivecep.graph.qos.{AverageFrequencyMonitorFactory, PathBandwidthMonitorFactory, PathLatencyMonitorFactory}
 import adaptivecep.privacy.Privacy._
 import adaptivecep.privacy.encryption.{CryptoAES, Encryption}
+import adaptivecep.privacy.phe.{CEPRemoteInterpreter, CryptoServiceActor, CryptoServiceWrapper}
 import adaptivecep.privacy.sgx.EventProcessorClient
 import akka.actor.{ActorRef, ActorSystem, Address, Deploy, Props}
 import akka.remote.RemoteScope
@@ -79,9 +80,6 @@ object TestingEncryption extends App {
         where(x => interpret(isEven(x)), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
 
-
-
-
     //// associate publisher names with actor references
     val publishers: Map[String, ActorRef] = Map(
       "A" -> publisherA
@@ -131,6 +129,7 @@ object TestingEncryption extends App {
 //      Map.empty
 //    )
 //
+
     implicit val phePrivacyContext: PrivacyContext = PhePrivacyContext(
       cryptoSvc,
       Map("A" -> Event1Rule(IntPheSourceMapper))

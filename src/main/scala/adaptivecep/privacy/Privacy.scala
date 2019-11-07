@@ -2,6 +2,7 @@ package adaptivecep.privacy
 
 import adaptivecep.privacy.ConversionRules._
 import adaptivecep.distributed.operator.TrustedHost
+import adaptivecep.privacy.phe.{CEPRemoteInterpreter, CryptoServiceWrapper}
 import adaptivecep.privacy.sgx.{EventProcessorClient, EventProcessorServer}
 
 object Privacy {

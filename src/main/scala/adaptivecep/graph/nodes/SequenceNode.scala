@@ -15,6 +15,7 @@ import akka.actor.{ActorRef, PoisonPill}
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Sink, Source, StreamRefs}
 import com.espertech.esper.client._
+import crypto.remote.CryptoServicePlus
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.{IvParameterSpec, PBEKeySpec, SecretKeySpec}
 
@@ -213,12 +214,19 @@ case class SequenceNode(
         eventBean.get("sq2").asInstanceOf[Array[Any]]
 
     var encryptedEvents = false
+    var pheMode = false
+    var cryptoService: Option[CryptoServicePlus] = None
     if (privacyContext.nonEmpty) {
       privacyContext.get match {
         case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
           if (rule1.isEmpty) rule1 = Some(conversionRules(publisherName1))
           if (rule2.isEmpty) rule2 = Some(conversionRules(publisherName2))
           encryptedEvents = true
+        case PhePrivacyContext(crypto, sourceMappers) =>
+          if (cryptoService.isEmpty) cryptoService = Some(crypto)
+          if (rule1.isEmpty) rule1 = Some(sourceMappers(publisherName1))
+          if (rule2.isEmpty) rule2 = Some(sourceMappers(publisherName2))
+          pheMode = true
         case _ =>
           encryptedEvents = false
       }
@@ -242,20 +250,25 @@ case class SequenceNode(
 
     val event: Event = values.length match {
       case 2 =>
-        if(!encryptedEvents) Event2(values(0), values(1))
-        else getEncryptedEvent(Event2(values(0), values(1)), getResultRule2)
+        if(!encryptedEvents && !pheMode) Event2(values(0), values(1))
+        else if (encryptedEvents) getEncryptedEvent(Event2(values(0), values(1)), getResultRule2)
+        else mapSource(Event2(values(0), values(1)),getResultRule2,cryptoService.get)
       case 3 =>
-        if(!encryptedEvents) Event3(values(0), values(1), values(2))
-        else getEncryptedEvent(Event3(values(0), values(1), values(2)), getResultRule3)
+        if(!encryptedEvents && !pheMode) Event3(values(0), values(1), values(2))
+        else if (encryptedEvents) getEncryptedEvent(Event3(values(0), values(1), values(2)), getResultRule3)
+        else mapSource(Event3(values(0), values(1), values(2)),getResultRule3,cryptoService.get)
       case 4 =>
-        if(!encryptedEvents) Event4(values(0), values(1), values(2), values(3))
-        else getEncryptedEvent(Event4(values(0), values(1), values(2), values(3)), getResultRule4)
+        if(!encryptedEvents && !pheMode) Event4(values(0), values(1), values(2), values(3))
+        else if (encryptedEvents) getEncryptedEvent(Event4(values(0), values(1), values(2), values(3)), getResultRule4)
+        else mapSource(Event4(values(0), values(1), values(2), values(3)),getResultRule4,cryptoService.get)
       case 5 =>
-        if(!encryptedEvents) Event5(values(0), values(1), values(2), values(3), values(4))
-        else getEncryptedEvent(Event5(values(0), values(1), values(2), values(3), values(4)), getResultRule5)
+        if(!encryptedEvents && !pheMode) Event5(values(0), values(1), values(2), values(3), values(4))
+        else if (encryptedEvents) getEncryptedEvent(Event5(values(0), values(1), values(2), values(3), values(4)), getResultRule5)
+        else mapSource(Event5(values(0), values(1), values(2), values(3), values(4)),getResultRule5,cryptoService.get)
       case 6 =>
-        if(!encryptedEvents) Event6(values(0), values(1), values(2), values(3), values(4), values(5))
-        else getEncryptedEvent(Event6(values(0), values(1), values(2), values(3), values(4), values(5)), getResultRule6)
+        if(!encryptedEvents && !pheMode) Event6(values(0), values(1), values(2), values(3), values(4), values(5))
+        else if (encryptedEvents) getEncryptedEvent(Event6(values(0), values(1), values(2), values(3), values(4), values(5)), getResultRule6)
+        else mapSource(Event6(values(0), values(1), values(2), values(3), values(4), values(5)),getResultRule6,cryptoService.get)
 
     }
 

@@ -4,9 +4,11 @@ import adaptivecep.data.Events._
 import adaptivecep.privacy.encryption.Encryption
 import java.nio.ByteBuffer
 
+import adaptivecep.privacy.phe.CryptoServiceWrapper
 import akka.util.Timeout
 import crypto.EncInt
 import crypto.cipher.Comparable
+import crypto.remote.CryptoServicePlus
 
 import scala.concurrent.Await
 import scala.util.Random
@@ -190,7 +192,7 @@ object ConversionRules {
 
 
 
-    def pheMapInt(value: Any,crypto: CryptoServiceWrapper): Any ={
+    def pheMapInt(value: Any,crypto: CryptoServicePlus): Any ={
       implicit val timeout = new Timeout(5 seconds)
 
       value match {
@@ -226,8 +228,11 @@ object ConversionRules {
                                decrypt: (Any, Encryption) => Any) extends Transformer
 
 
-
-  case class PheSourceTransformer(map: (Any,CryptoServiceWrapper) => Any
+  /***
+    * this transformer type is used to map the source data to the required data type by secure scala
+    * @param map
+    */
+  case class PheSourceTransformer(map: (Any,CryptoServicePlus) => Any
                            ) extends Transformer
 
   /***
@@ -277,7 +282,7 @@ object ConversionRules {
 
   case class Event6Rule(tr1: Transformer, tr2: Transformer, tr3: Transformer, tr4: Transformer, tr5: Transformer, tr6: Transformer) extends EventConversionRule
 
-  def mapSource(e:Event, rule: EventConversionRule, cryptoService: CryptoServiceWrapper) : Event ={
+  def mapSource(e:Event, rule: EventConversionRule, cryptoService: CryptoServicePlus) : Event ={
     (e,rule) match {
       case (Event1(v1),Event1Rule(tr1)) =>
         Event1(applyMapTransformer(v1,tr1,cryptoService))
@@ -312,7 +317,7 @@ object ConversionRules {
     }
   }
 
-  private def applyMapTransformer(data: Any, transformer: Transformer, crypto: CryptoServiceWrapper): Any = {
+  private def applyMapTransformer(data: Any, transformer: Transformer, crypto: CryptoServicePlus): Any = {
     transformer match {
       case pheSourceTransformer: PheSourceTransformer =>
         pheSourceTransformer.map(data,crypto)

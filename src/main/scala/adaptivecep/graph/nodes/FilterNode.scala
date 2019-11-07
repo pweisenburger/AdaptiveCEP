@@ -40,6 +40,7 @@ case class FilterNode(
   var parentReceived: Boolean = false
   var childCreated: Boolean = false
   var eventProcessor: Option[EventProcessorServer] = None
+
   override def receive: Receive = {
     case DependenciesRequest =>
       sender ! DependenciesResponse(Seq(childNode))
@@ -92,7 +93,6 @@ case class FilterNode(
       latencyMonitor.onMessageReceive(unhandledMessage, nodeData)
   }
 
-
   override def preStart(): Unit = {
     if (privacyContext.nonEmpty) {
       privacyContext.get match {
@@ -118,8 +118,8 @@ case class FilterNode(
               emitEvent(event)
           case SgxPrivacyContext(_, _, _) =>
             try {
-              if(eventProcessor.nonEmpty) {
-                if(eventProcessor.get.applyPredicate(cond,event)) {
+              if (eventProcessor.nonEmpty) {
+                if (eventProcessor.get.applyPredicate(cond, event)) {
                   emitEvent(event)
                 } else {
                   println("event dropped!")
@@ -132,25 +132,18 @@ case class FilterNode(
                 println(e.getMessage)
             }
           case PhePrivacyContext(cryptoService, sourceMappers) =>
-            try{
-
-
-            println("recevieved an event ")
-            if (cond(event)) {
-              println("forwarding event")
-              emitEvent(event)
-            }
-            else
-              println("dropping event")
+            try {
+              if (cond(event)) {
+                emitEvent(event)
+              }
             } catch {
               case e => println("encountered some error while filtering: " + e.getMessage)
             }
-
           case PrivacyContextCentralized(interpret, cryptoService, trustedHosts, sourcesSensitivity)
           => println("unexpected context!")
         } /// pattern matching
       } ///check if pc is empty
-      else{
+      else {
         if (cond(event))
           emitEvent(event)
       }

@@ -1,15 +1,11 @@
-package adaptivecep.privacy
-import akka.pattern.ask
-import akka.actor.ActorRef
+package adaptivecep.privacy.phe
+
 import akka.util.Timeout
+import crypto.PubKeys
+import crypto.dsl.{PureCryptoInterpreter, _}
 
 import scala.concurrent.duration._
-import crypto.dsl._
-import adaptivecep.data.Events._
-import crypto.PubKeys
-import crypto.dsl.{CryptoInterpreter, PureCryptoInterpreter}
-
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext}
 
 /***
   * This hides the synchronous call to the actor hosting the actual Interpreter

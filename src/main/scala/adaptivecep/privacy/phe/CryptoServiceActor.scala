@@ -1,4 +1,4 @@
-package adaptivecep.privacy
+package adaptivecep.privacy.phe
 
 import adaptivecep.data.Events._
 import akka.actor.{Actor, ActorLogging}
@@ -7,11 +7,9 @@ import akka.cluster.ClusterEvent._
 import akka.dispatch.{BoundedMessageQueueSemantics, RequiresMessageQueue}
 import crypto._
 import crypto.dsl._
-import crypto.cipher._
-
-import scala.concurrent.duration._
 import crypto.remote.{CryptoServiceImpl, CryptoServicePlus}
 
+import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext}
 
 /***
@@ -25,6 +23,8 @@ class CryptoServiceActor extends Actor with ActorLogging with RequiresMessageQue
 
   val keyRing: KeyRing = KeyRing.create
   val cryptoService: CryptoServicePlus = new CryptoServiceImpl(keyRing)
+
+  //TODO: remove this interpreter as it will not be used anymore
   val remoteInterpreter = RemoteInterpreter(cryptoService,keyRing)
 
   override def preStart() = {
@@ -44,6 +44,7 @@ class CryptoServiceActor extends Actor with ActorLogging with RequiresMessageQue
 
       /////////////////////////// Crypto Requests
 
+    //TODO: delete this request, it is no longer used
     case InterpretRequest(p) =>
       val result = remoteInterpreter.interpret(p)
       val interpreted = Await.result(result,4 seconds)

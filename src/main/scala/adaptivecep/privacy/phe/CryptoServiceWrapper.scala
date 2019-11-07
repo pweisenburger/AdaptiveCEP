@@ -1,18 +1,15 @@
-package adaptivecep.privacy
+package adaptivecep.privacy.phe
 
-import adaptivecep.data.Events
 import adaptivecep.data.Events._
 import akka.actor.ActorRef
-import akka.dispatch.Futures
 import akka.pattern.ask
 import akka.util.Timeout
-
-import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.concurrent.duration._
 import crypto._
 import crypto.cipher._
-import crypto.dsl.ToAesStr
 import crypto.remote.CryptoServicePlus
+
+import scala.concurrent.Future
+import scala.concurrent.duration._
 
 /***
   * this class only
