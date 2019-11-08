@@ -46,7 +46,7 @@ object TestingEncryption extends App {
     val address5 = Address("akka.tcp", "ClusterSystem", sys.env("HOST5"), 8000)
     val address6 = Address("akka.tcp", "ClusterSystem", sys.env("HOST6"), 8000)
     val address7 = Address("akka.tcp", "ClusterSystem", sys.env("HOST7"), 8000)
-    val address8 = Address("akka.tcp", "ClusterSystem", sys.env("HOST8"), 8000)
+//    val address8 = Address("akka.tcp", "ClusterSystem", sys.env("HOST8"), 8000)
 
     ////deploy host actors
     val host1: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address1))), "Host" + "1")
@@ -56,9 +56,9 @@ object TestingEncryption extends App {
     val host5: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address5))), "Host" + "5")
     val host6: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address6))), "Host" + "6")
     val host7: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address7))), "Host" + "7")
-    val host8: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address8))), "Host" + "7")
+//    val host8: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address8))), "Host" + "7")
 
-    val hosts: Set[ActorRef] = Set(host1, host2, host3, host4, host5, host6, host7, host8)
+    val hosts: Set[ActorRef] = Set(host1, host2, host3, host4, host5, host6, host7)
     //    val hosts: Set[ActorRef] = Set(host1, host2, host3, host4)
 
     hosts.foreach(host => host ! Hosts(hosts))
@@ -183,7 +183,7 @@ object TestingEncryption extends App {
       complexPublishersHosts,
       AverageFrequencyMonitorFactory(interval = 3000, logging = false),
       PathLatencyMonitorFactory(interval = 1000, logging = false),
-      PathBandwidthMonitorFactory(interval = 1000, logging = false), NodeHost(host8),
+      PathBandwidthMonitorFactory(interval = 1000, logging = false), NodeHost(host7),
       hosts, optimizeFor)), "Placement")
 
     println("\n Calling Initialize query \n")
