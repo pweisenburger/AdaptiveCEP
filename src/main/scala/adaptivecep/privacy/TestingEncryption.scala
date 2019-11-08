@@ -21,7 +21,7 @@ import adaptivecep.privacy.encryption.{CryptoAES, Encryption}
 import adaptivecep.privacy.phe.{CEPRemoteInterpreter, CryptoServiceActor, CryptoServiceWrapper}
 import adaptivecep.privacy.sgx.EventProcessorClient
 import akka.actor.{ActorRef, ActorSystem, Address, Deploy, Props}
-import akka.remote.RemoteScope
+import akka.remote.{RemoteScope, WireFormats}
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import crypto.dsl._
@@ -43,71 +43,73 @@ object TestingEncryption extends App {
     val address2 = Address("akka.tcp", "ClusterSystem", sys.env("HOST2"), 8000)
     val address3 = Address("akka.tcp", "ClusterSystem", sys.env("HOST3"), 8000)
     val address4 = Address("akka.tcp", "ClusterSystem", sys.env("HOST4"), 8000)
-//    val address5 = Address("akka.tcp", "ClusterSystem", sys.env("HOST5"), 8000)
-//    val address6 = Address("akka.tcp", "ClusterSystem", sys.env("HOST6"), 8000)
-//    val address7 = Address("akka.tcp", "ClusterSystem", sys.env("HOST7"), 8000)
+    val address5 = Address("akka.tcp", "ClusterSystem", sys.env("HOST5"), 8000)
+    val address6 = Address("akka.tcp", "ClusterSystem", sys.env("HOST6"), 8000)
+    val address7 = Address("akka.tcp", "ClusterSystem", sys.env("HOST7"), 8000)
+    val address8 = Address("akka.tcp", "ClusterSystem", sys.env("HOST8"), 8000)
 
     ////deploy host actors
     val host1: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address1))), "Host" + "1")
     val host2: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address2))), "Host" + "2")
     val host3: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address3))), "Host" + "3")
     val host4: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address4))), "Host" + "4")
-//    val host5: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address5))), "Host" + "5")
-//    val host6: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address6))), "Host" + "6")
-//    val host7: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address7))), "Host" + "7")
+    val host5: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address5))), "Host" + "5")
+    val host6: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address6))), "Host" + "6")
+    val host7: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address7))), "Host" + "7")
+    val host8: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address8))), "Host" + "7")
 
-//    val hosts: Set[ActorRef] = Set(host1, host2, host3, host4, host5, host6, host7)
-    val hosts: Set[ActorRef] = Set(host1, host2, host3, host4)
+    val hosts: Set[ActorRef] = Set(host1, host2, host3, host4, host5, host6, host7, host8)
+    //    val hosts: Set[ActorRef] = Set(host1, host2, host3, host4)
 
     hosts.foreach(host => host ! Hosts(hosts))
 
     /////deploy publishers
-    val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
-//    val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id * 2))).withDeploy(Deploy(scope = RemoteScope(address2))), "B")
+    //    val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+    //    val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id * 2))).withDeploy(Deploy(scope = RemoteScope(address2))), "B")
 
-//    val employeePublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(Employee(id, "ahmad", id * 200)))).withDeploy(Deploy(scope = RemoteScope(address1))), "E")
-
-    val cryptoActor: ActorRef = actorSystem.actorOf(Props[CryptoServiceActor].withDeploy(Deploy(scope = RemoteScope(address1))), "CryptoService")
-
-    val cryptoSvc = new CryptoServiceWrapper(cryptoActor)
-
-    val interpret = new CEPRemoteInterpreter(cryptoSvc)
-
-//    val publisher: ActorRef = actorSystem.actorOf(Props(EncryptedPublisher(cryptoActor, id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
-
-    val encQuery: Query1[EncInt] =
-      stream[EncInt]("A").
-        where(x => interpret(isEven(x)), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+    //    val employeePublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(Employee(id, "ahmad", id * 200)))).withDeploy(Deploy(scope = RemoteScope(address1))), "E")
 
 
-    //// associate publisher names with actor references
-    val publishers: Map[String, ActorRef] = Map(
-      "A" -> publisherA
-//      , "B" -> publisherB
-      //    ,"C" -> publisherC
-      //    ,"D" -> publisherD
-    )
-//
-//
-//    val empTransformer: Transformer = EncDecTransformer(empEncrypt, empDecrypt)
-//
-//    val employeePublishers: Map[String, ActorRef] = Map(
-//      "E" -> employeePublisher
-//    )
-//
-//    ////
-    val publisherHosts: Map[String, Host] = Map(
-      "A" -> NodeHost(host1)
-//      , "B" -> NodeHost(host2)
-      //    ,"C" -> NodeHost(host3)
-      //    ,"D" -> NodeHost(host4)
+    //    val cryptoActor: ActorRef = actorSystem.actorOf(Props[CryptoServiceActor].withDeploy(Deploy(scope = RemoteScope(address1))), "CryptoService")
+    //
+    //    val cryptoSvc = new CryptoServiceWrapper(cryptoActor)
+    //
+    //    val interpret = new CEPRemoteInterpreter(cryptoSvc)
+
+    //    val publisher: ActorRef = actorSystem.actorOf(Props(EncryptedPublisher(cryptoActor, id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+
+    //    val encQuery: Query1[EncInt] =
+    //      stream[EncInt]("A").
+    //        where(x => interpret(isEven(x)), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+
+
+    val carEventPublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(CarEvent(s"${id % 99}${(id + 2) % 99}${(id + 3) % 99}", id % 200)))).withDeploy(Deploy(scope = RemoteScope(address1))), "C")
+    val checkpointEventPublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(CheckPointEvent(id, s"${id % 99}${(id + 2) % 99}${(id + 3) % 99}", id % 24, id % 60)))).withDeploy(Deploy(scope = RemoteScope(address2))), "K")
+
+
+    val carEventTransformer = EncDecTransformer(encryptCarEvent, decryptCarEvent)
+    val checkpointTransformer = EncDecTransformer(encryptCheckPointEvent, decryptCheckPointEvent)
+
+
+    val complexPublishers: Map[String, ActorRef] = Map(
+      "C" -> carEventPublisher,
+      "K" -> checkpointEventPublisher
     )
 
-    //    val empPublishersHosts: Map[String,Host] = Map(
-    //      "E" -> NodeHost(host1),
-    //      "D" -> NodeHost(host2) ///entrance event stream
+    val complexPublishersHosts: Map[String, Host] = Map(
+      "C" -> NodeHost(host1),
+      "K" -> NodeHost(host2)
+    )
+
+    //    val simplePublishers: Map[String, ActorRef] = Map(
+    //      "A" -> publisherA
+    //      , "B" -> publisherB
     //    )
 
+    //    val simplePublisherHosts: Map[String, Host] = Map(
+    //      "A" -> NodeHost(host1)
+    //      ,"B" -> NodeHost(host2)
+    //    )
 
     val optimizeFor = "bandwidth"
     hosts.foreach(host => host ! OptimizeFor(optimizeFor))
@@ -115,25 +117,30 @@ object TestingEncryption extends App {
     Thread.sleep(5000)
 
 
-//    val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
-//    implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
-//      Set(TrustedHost(NodeHost(host1)), TrustedHost(NodeHost(host2))), // Trusted hosts
-//      eventProcessorClient,
-//      Map("A" -> Event1Rule(IntEventTransformer), "B" -> Event1Rule(IntEventTransformer))
-//    )
-//
-//    implicit val context: PrivacyContext = PrivacyContextCentralized(
-//      interpret,
-//      cryptoSvc,
-//      Set(TrustedHost(NodeHost(host1))),
-//      Map.empty
-//    )
-//
+    val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
 
-    implicit val phePrivacyContext: PrivacyContext = PhePrivacyContext(
-      cryptoSvc,
-      Map("A" -> Event1Rule(IntPheSourceMapper))
+
+    implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
+      Set(TrustedHost(NodeHost(host1)), TrustedHost(NodeHost(host2))), // Trusted hosts
+      eventProcessorClient,
+      Map("C" -> Event1Rule(carEventTransformer), "K" -> Event1Rule(checkpointTransformer))
+      //      Map("A" -> Event1Rule(IntEventTransformer), "B" -> Event1Rule(IntEventTransformer))
     )
+
+    val carQuery: Query1[CheckPointEvent] =
+      stream[CarEvent]("C")
+        .join(
+          stream[CheckPointEvent]("K"),
+          slidingWindow(5.instances),slidingWindow(5.instances))
+        .where((car,checkpoint) =>
+          car.plateNumber == checkpoint.plateNumber && car.speed > 30
+      ).dropElem1(frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+
+    //    implicit val phePrivacyContext: PrivacyContext = PhePrivacyContext(
+    //      cryptoSvc,
+    //      Map("A" -> Event1Rule(IntPheSourceMapper))
+    //    )
+
 
     //        implicit val empSgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
     //          Set(TrustedHost(NodeHost(host1))), // Trusted hosts
@@ -149,20 +156,20 @@ object TestingEncryption extends App {
     //
     //      implicit val pc: PrivacyContext = NoPrivacyContext
 
-//    val normalQuery: Query2[Int, Int] =
-//      stream[Int]("A").
-//        join(stream[Int]("B"), slidingWindow(1.instances), slidingWindow(1.instances)).
-//        where((a, b) => a < b, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => })
+    //    val normalQuery: Query2[Int, Int] =
+    //      stream[Int]("A").
+    //        join(stream[Int]("B"), slidingWindow(1.instances), slidingWindow(1.instances)).
+    //        where((a, b) => a < b, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => })
     //    val normalQuery: Query2[Int, Int] =
     //      stream[Int]("A").
     //        join(stream[Int]("B"), slidingWindow(1.instances), slidingWindow(1.instances)).
     //        where((a, b) => a < b, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
 
-//    val orQuery =
-//      stream[Int]("A").
-//        or(stream[String]("B")).
-//        where((x) => x.left.get > 3)
+    //    val orQuery =
+    //      stream[Int]("A").
+    //        or(stream[String]("B")).
+    //        where((x) => x.left.get > 3)
 
     //
     //    val simpleQuery: Query1[Int] =
@@ -171,9 +178,9 @@ object TestingEncryption extends App {
 
 
     val placement: ActorRef = actorSystem.actorOf(Props(PlacementActorCentralized(actorSystem,
-      encQuery,
-      publishers,
-      publisherHosts,
+      carQuery,
+      complexPublishers,
+      complexPublishersHosts,
       AverageFrequencyMonitorFactory(interval = 3000, logging = false),
       PathLatencyMonitorFactory(interval = 1000, logging = false),
       PathBandwidthMonitorFactory(interval = 1000, logging = false), NodeHost(host4),

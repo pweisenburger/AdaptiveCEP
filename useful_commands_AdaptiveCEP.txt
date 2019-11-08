@@ -95,7 +95,8 @@ export HOST3="13.81.85.145"
 export HOST4="40.68.36.111"
 export HOST5="40.68.36.214"
 export HOST6="40.68.37.36"
-export HOST7="13.80.151.52"
+export HOST7="40.68.37.36"
+export HOST8="13.80.151.52"
 
 
 export HOST8="18.216.144.166"
