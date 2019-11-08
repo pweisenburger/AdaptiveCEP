@@ -120,6 +120,7 @@ case class JoinNode(
     //println(event)
     processedEvents += 1
     if (sender == childNode1) {
+      logEvent(event, "child1")
       event match {
         case Event1(e1) => sendEvent("sq1", Array(toAnyRef(e1)))
         case Event2(e1, e2) => sendEvent("sq1", Array(toAnyRef(e1), toAnyRef(e2)))
@@ -149,7 +150,7 @@ case class JoinNode(
     }
 
     else if (sender == childNode2) {
-
+      logEvent(event,"child2")
       event match {
         case Event1(e1) => sendEvent("sq2", Array(toAnyRef(e1)))
         case Event2(e1, e2) => sendEvent("sq2", Array(toAnyRef(e1), toAnyRef(e2)))

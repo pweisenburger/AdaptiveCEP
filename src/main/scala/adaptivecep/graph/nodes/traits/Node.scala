@@ -1,7 +1,7 @@
 package adaptivecep.graph.nodes.traits
 
 import adaptivecep.data.Cost.Cost
-import adaptivecep.data.Events.Event
+import adaptivecep.data.Events._
 import adaptivecep.data.Queries._
 import adaptivecep.graph.qos._
 import akka.NotUsed
@@ -43,5 +43,15 @@ trait Node extends Actor with RequiresMessageQueue[BoundedMessageQueueSemantics]
     }
   }
   println(name)
+
+  def logEvent(event: Event, sender: String = ""): Unit ={
+    event match {
+      case Event1(e1) => println(s" received event ${if (sender != "") "from" + sender } carrying ${e1}" )
+      case Event2(e1, e2) => println(s"received event ${if (sender != "") "from" + sender } carrying ${e1}, ${e2}")
+      case Event3(e1, e2, e3) => println(s"received event ${if (sender != "") "from" + sender } carrying ${e1}, ${e2}, ${e3}")
+      case EncEvent1(e1,_) => println(s"received encrypted ${if (sender != "") "from" + sender } event carrying ${e1}")
+      case EncEvent2(e1,e2,_) => println(s"received encrypted ${if (sender != "") "from" + sender } event carrying ${e1}, ${e2}")
+    }
+  }
 
 }

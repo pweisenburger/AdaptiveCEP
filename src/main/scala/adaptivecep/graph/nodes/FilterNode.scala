@@ -110,6 +110,10 @@ case class FilterNode(
   }
 
   def processEvent(event: Event, sender: ActorRef): Unit = {
+
+
+    logEvent(event)
+
     if (sender == childNode) {
       if (privacyContext.nonEmpty) {
         privacyContext.get match {
@@ -121,8 +125,6 @@ case class FilterNode(
               if (eventProcessor.nonEmpty) {
                 if (eventProcessor.get.applyPredicate(cond, event)) {
                   emitEvent(event)
-                } else {
-                  println("event dropped!")
                 }
               } else {
                 println("event processor not initialized")
@@ -131,7 +133,7 @@ case class FilterNode(
               case e: Exception => println("\n[SGX Service unable to apply predicate]\n")
                 println(e.getMessage)
             }
-          case PhePrivacyContext(cryptoService, sourceMappers) =>
+          case PhePrivacyContext(_, _) =>
             try {
               if (cond(event)) {
                 emitEvent(event)

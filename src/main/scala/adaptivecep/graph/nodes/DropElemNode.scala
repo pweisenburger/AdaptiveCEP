@@ -154,6 +154,7 @@ DropElemNode(
   }
 
   def processEvent(event: Event, sender: ActorRef): Unit = {
+    logEvent(event)
     processedEvents += 1
     if (sender == childNode) {
       event match {

@@ -5,7 +5,7 @@ import java.nio.ByteBuffer
 import adaptivecep.privacy.encryption.Encryption
 
 
-/***
+/** *
   * the user adds any custom classes here to be serialized to the sgx
   * trusted event processor service
   * each class MUST extend serializable otherwise this class will not be serializable with RMI
@@ -13,27 +13,44 @@ import adaptivecep.privacy.encryption.Encryption
   */
 object Custom {
 
-  case class Employee(id: Int, name: String, salary: Int) extends Serializable
+  case class CarEvent(plateNumber: String, speed: Int) extends Serializable
 
-  case class EncEmployee(id: Int, name: Array[Byte], salary: Array[Byte]) extends Serializable
+  case class CarEventEnc(plateNumber: Array[Byte], speed: Array[Byte]) extends Serializable
 
-  def empEncrypt(emp: Any, encryption: Encryption): Any = {
-    emp match {
-      case Employee(id,name,salary) =>
-        EncEmployee(id, encryption.encryptString(name), encryption.encryptInt(salary))
-      case _ => sys.error("unexpected data type")
-    }
-  }
-  def empDecrypt(encEmp: Any, encryption: Encryption): Any = {
-    encEmp match {
-      case EncEmployee(id, encName,encSalary) =>
-        val name = encryption.decryptString(encName)
-        val salary = encryption.decryptInt(encSalary)
-        Employee(id, name,salary)
-      case _ => sys.error("unexpected data type")
+  case class CheckPointEvent(id: Int, plateNumber: String, hour: Int, min: Int) extends Serializable
+
+  case class CheckPointEventEnc(id: Int, plateNumber: Array[Byte], hour: Int, min: Int) extends Serializable
+
+  def encryptCarEvent(e: Any, encryption: Encryption): Any = {
+    e match {
+      case CarEvent(plateNumber, speed) =>
+        CarEventEnc(encryption.encryptString(plateNumber), encryption.encryptInt(speed))
+      case _ => sys.error("unexpected event type!")
     }
   }
 
-  case class EntryEvent(employeeId: Int, hour: Int, minute: Int, second: Int) extends Serializable
+  def decryptCarEvent(e: Any, encryption: Encryption): Any = {
+    e match {
+      case CarEventEnc(plateNumber, speed) =>
+        CarEvent(encryption.decryptString(plateNumber), encryption.decryptInt(speed))
+      case _ => sys.error("unexpected event type!")
+    }
+  }
+
+  def encryptCheckPointEvent(e: Any, encryption: Encryption): Any = {
+    e match {
+      case CheckPointEvent(id,plateNumber,h,m) =>
+        CheckPointEventEnc(id,encryption.encryptString(plateNumber),h,m)
+      case _ => sys.error("unexpected event type!")
+    }
+  }
+
+  def decryptCheckPointEvent(e: Any, encryption: Encryption): Any = {
+    e match {
+      case CheckPointEventEnc(id,plateNumber,h,m) =>
+        CheckPointEvent(id,encryption.decryptString(plateNumber),h,m)
+      case _ => sys.error("unexpected event type")
+    }
+  }
 
 }
