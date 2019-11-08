@@ -112,7 +112,7 @@ case class FilterNode(
   def processEvent(event: Event, sender: ActorRef): Unit = {
 
 
-    logEvent(event)
+//    logEvent(event)
 
     if (sender == childNode) {
       if (privacyContext.nonEmpty) {
