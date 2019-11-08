@@ -85,21 +85,21 @@ object TestingEncryption extends App {
 
 
     val carEventPublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(CarEvent(s"${id % 99}${(id + 2) % 99}${(id + 3) % 99}", id % 200)))).withDeploy(Deploy(scope = RemoteScope(address1))), "C")
-//    val checkpointEventPublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(CheckPointEvent(id, s"${id % 99}${(id + 2) % 99}${(id + 3) % 99}", id % 24, id % 60)))).withDeploy(Deploy(scope = RemoteScope(address2))), "K")
+    val checkpointEventPublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(CheckPointEvent(id, s"${id % 99}${(id + 2) % 99}${(id + 3) % 99}", id % 24, id % 60)))).withDeploy(Deploy(scope = RemoteScope(address2))), "K")
 
 
     val carEventTransformer = EncDecTransformer(encryptCarEvent, decryptCarEvent)
-//    val checkpointTransformer = EncDecTransformer(encryptCheckPointEvent, decryptCheckPointEvent)
+    val checkpointTransformer = EncDecTransformer(encryptCheckPointEvent, decryptCheckPointEvent)
 
 
     val complexPublishers: Map[String, ActorRef] = Map(
       "C" -> carEventPublisher
-//      ,"K" -> checkpointEventPublisher
+      ,"K" -> checkpointEventPublisher
     )
 
     val complexPublishersHosts: Map[String, Host] = Map(
       "C" -> NodeHost(host1)
-//      ,"K" -> NodeHost(host2)
+      ,"K" -> NodeHost(host2)
     )
 
     //    val simplePublishers: Map[String, ActorRef] = Map(
@@ -124,12 +124,12 @@ object TestingEncryption extends App {
     implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
       Set(TrustedHost(NodeHost(host1))), // Trusted hosts
       eventProcessorClient,
-      Map("C" -> Event1Rule(carEventTransformer))
+      Map("C" -> Event1Rule(carEventTransformer), "K" -> Event1Rule(checkpointTransformer))
       //      Map("A" -> Event1Rule(IntEventTransformer), "B" -> Event1Rule(IntEventTransformer))
     )
 
-    val simpleCarQuery : Query1[CarEvent] = stream[CarEvent]("C").
-      where(c => c.speed > 30,frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+    val simpleCarQuery : Query1[CheckPointEvent] = stream[CheckPointEvent]("K").
+      where(c => c.id > 1000,frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
 //    val carQuery: Query1[CheckPointEvent] =
 //      stream[CarEvent]("C")
