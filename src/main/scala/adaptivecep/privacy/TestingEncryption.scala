@@ -25,6 +25,7 @@ import akka.remote.{RemoteScope, WireFormats}
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import crypto.dsl._
+import adaptivecep.privacy.shared.Custom._
 
 import scala.concurrent.Await
 
@@ -127,6 +128,9 @@ object TestingEncryption extends App {
       //      Map("A" -> Event1Rule(IntEventTransformer), "B" -> Event1Rule(IntEventTransformer))
     )
 
+    val simpleCarQuery : Query1[CarEvent] = stream[CarEvent]("C").
+      where(c => c.speed > 30,frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+
     val carQuery: Query1[CheckPointEvent] =
       stream[CarEvent]("C")
         .join(
@@ -178,7 +182,7 @@ object TestingEncryption extends App {
 
 
     val placement: ActorRef = actorSystem.actorOf(Props(PlacementActorCentralized(actorSystem,
-      carQuery,
+      simpleCarQuery,
       complexPublishers,
       complexPublishersHosts,
       AverageFrequencyMonitorFactory(interval = 3000, logging = false),
