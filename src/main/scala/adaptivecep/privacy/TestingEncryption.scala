@@ -131,15 +131,15 @@ object TestingEncryption extends App {
     val simpleCarQuery : Query1[CheckPointEvent] = stream[CheckPointEvent]("K").
       where(c => c.id > 1000,frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
-//    val carQuery: Query1[CheckPointEvent] =
-//      stream[CarEvent]("C")
-//        .join(
-//          stream[CheckPointEvent]("K"),
-//          slidingWindow(5.instances),slidingWindow(5.instances))
-//        .where((car,checkpoint) =>
-//          car.plateNumber == checkpoint.plateNumber && car.speed > 30
-//      ).dropElem1(frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
-
+    val carQuery: Query2[CarEvent,CheckPointEvent] =
+      stream[CarEvent]("C")
+        .join(
+          stream[CheckPointEvent]("K"),
+          slidingWindow(1.instances),slidingWindow(1.instances))
+        .where((car,checkpoint) =>
+          car.plateNumber == checkpoint.plateNumber && car.speed > 30
+          ,frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/}
+      )
     //    implicit val phePrivacyContext: PrivacyContext = PhePrivacyContext(
     //      cryptoSvc,
     //      Map("A" -> Event1Rule(IntPheSourceMapper))
@@ -182,7 +182,7 @@ object TestingEncryption extends App {
 
 
     val placement: ActorRef = actorSystem.actorOf(Props(PlacementActorCentralized(actorSystem,
-      simpleCarQuery,
+      carQuery,
       complexPublishers,
       complexPublishersHosts,
       AverageFrequencyMonitorFactory(interval = 3000, logging = false),
