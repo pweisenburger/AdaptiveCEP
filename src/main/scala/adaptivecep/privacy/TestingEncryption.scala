@@ -44,9 +44,9 @@ object TestingEncryption extends App {
     val address2 = Address("akka.tcp", "ClusterSystem", sys.env("HOST2"), 8000)
     val address3 = Address("akka.tcp", "ClusterSystem", sys.env("HOST3"), 8000)
     val address4 = Address("akka.tcp", "ClusterSystem", sys.env("HOST4"), 8000)
-    val address5 = Address("akka.tcp", "ClusterSystem", sys.env("HOST5"), 8000)
-    val address6 = Address("akka.tcp", "ClusterSystem", sys.env("HOST6"), 8000)
-    val address7 = Address("akka.tcp", "ClusterSystem", sys.env("HOST7"), 8000)
+//    val address5 = Address("akka.tcp", "ClusterSystem", sys.env("HOST5"), 8000)
+//    val address6 = Address("akka.tcp", "ClusterSystem", sys.env("HOST6"), 8000)
+//    val address7 = Address("akka.tcp", "ClusterSystem", sys.env("HOST7"), 8000)
 //    val address8 = Address("akka.tcp", "ClusterSystem", sys.env("HOST8"), 8000)
 
     ////deploy host actors
@@ -54,13 +54,13 @@ object TestingEncryption extends App {
     val host2: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address2))), "Host" + "2")
     val host3: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address3))), "Host" + "3")
     val host4: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address4))), "Host" + "4")
-    val host5: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address5))), "Host" + "5")
-    val host6: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address6))), "Host" + "6")
-    val host7: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address7))), "Host" + "7")
+//    val host5: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address5))), "Host" + "5")
+//    val host6: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address6))), "Host" + "6")
+//    val host7: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address7))), "Host" + "7")
 //    val host8: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address8))), "Host" + "7")
 
-    val hosts: Set[ActorRef] = Set(host1, host2, host3, host4, host5, host6, host7)
-    //    val hosts: Set[ActorRef] = Set(host1, host2, host3, host4)
+//    val hosts: Set[ActorRef] = Set(host1, host2, host3, host4, host5, host6, host7)
+        val hosts: Set[ActorRef] = Set(host1, host2, host3, host4)
 
     hosts.foreach(host => host ! Hosts(hosts))
 
@@ -85,21 +85,21 @@ object TestingEncryption extends App {
 
 
     val carEventPublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(CarEvent(s"${id % 99}${(id + 2) % 99}${(id + 3) % 99}", id % 200)))).withDeploy(Deploy(scope = RemoteScope(address1))), "C")
-    val checkpointEventPublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(CheckPointEvent(id, s"${id % 99}${(id + 2) % 99}${(id + 3) % 99}", id % 24, id % 60)))).withDeploy(Deploy(scope = RemoteScope(address2))), "K")
+//    val checkpointEventPublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(CheckPointEvent(id, s"${id % 99}${(id + 2) % 99}${(id + 3) % 99}", id % 24, id % 60)))).withDeploy(Deploy(scope = RemoteScope(address2))), "K")
 
 
     val carEventTransformer = EncDecTransformer(encryptCarEvent, decryptCarEvent)
-    val checkpointTransformer = EncDecTransformer(encryptCheckPointEvent, decryptCheckPointEvent)
+//    val checkpointTransformer = EncDecTransformer(encryptCheckPointEvent, decryptCheckPointEvent)
 
 
     val complexPublishers: Map[String, ActorRef] = Map(
-      "C" -> carEventPublisher,
-      "K" -> checkpointEventPublisher
+      "C" -> carEventPublisher
+//      ,"K" -> checkpointEventPublisher
     )
 
     val complexPublishersHosts: Map[String, Host] = Map(
-      "C" -> NodeHost(host1),
-      "K" -> NodeHost(host2)
+      "C" -> NodeHost(host1)
+//      ,"K" -> NodeHost(host2)
     )
 
     //    val simplePublishers: Map[String, ActorRef] = Map(
@@ -122,23 +122,23 @@ object TestingEncryption extends App {
 
 
     implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
-      Set(TrustedHost(NodeHost(host1)), TrustedHost(NodeHost(host2))), // Trusted hosts
+      Set(TrustedHost(NodeHost(host1))), // Trusted hosts
       eventProcessorClient,
-      Map("C" -> Event1Rule(carEventTransformer), "K" -> Event1Rule(checkpointTransformer))
+      Map("C" -> Event1Rule(carEventTransformer))
       //      Map("A" -> Event1Rule(IntEventTransformer), "B" -> Event1Rule(IntEventTransformer))
     )
 
     val simpleCarQuery : Query1[CarEvent] = stream[CarEvent]("C").
       where(c => c.speed > 30,frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
-    val carQuery: Query1[CheckPointEvent] =
-      stream[CarEvent]("C")
-        .join(
-          stream[CheckPointEvent]("K"),
-          slidingWindow(5.instances),slidingWindow(5.instances))
-        .where((car,checkpoint) =>
-          car.plateNumber == checkpoint.plateNumber && car.speed > 30
-      ).dropElem1(frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+//    val carQuery: Query1[CheckPointEvent] =
+//      stream[CarEvent]("C")
+//        .join(
+//          stream[CheckPointEvent]("K"),
+//          slidingWindow(5.instances),slidingWindow(5.instances))
+//        .where((car,checkpoint) =>
+//          car.plateNumber == checkpoint.plateNumber && car.speed > 30
+//      ).dropElem1(frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
     //    implicit val phePrivacyContext: PrivacyContext = PhePrivacyContext(
     //      cryptoSvc,
@@ -187,7 +187,7 @@ object TestingEncryption extends App {
       complexPublishersHosts,
       AverageFrequencyMonitorFactory(interval = 3000, logging = false),
       PathLatencyMonitorFactory(interval = 1000, logging = false),
-      PathBandwidthMonitorFactory(interval = 1000, logging = false), NodeHost(host7),
+      PathBandwidthMonitorFactory(interval = 1000, logging = false), NodeHost(host4),
       hosts, optimizeFor)), "Placement")
 
     println("\n Calling Initialize query \n")

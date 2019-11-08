@@ -17,9 +17,9 @@ object Custom {
 
   case class CarEventEnc(plateNumber: Array[Byte], speed: Array[Byte]) extends Serializable
 
-  case class CheckPointEvent(id: Int, plateNumber: String, hour: Int, min: Int) extends Serializable
+//  case class CheckPointEvent(id: Int, plateNumber: String, hour: Int, min: Int) extends Serializable
 
-  case class CheckPointEventEnc(id: Int, plateNumber: Array[Byte], hour: Int, min: Int) extends Serializable
+//  case class CheckPointEventEnc(id: Int, plateNumber: Array[Byte], hour: Int, min: Int) extends Serializable
 
   def encryptCarEvent(e: Any, encryption: Encryption): Any = {
     e match {
@@ -37,20 +37,20 @@ object Custom {
     }
   }
 
-  def encryptCheckPointEvent(e: Any, encryption: Encryption): Any = {
-    e match {
-      case CheckPointEvent(id,plateNumber,h,m) =>
-        CheckPointEventEnc(id,encryption.encryptString(plateNumber),h,m)
-      case _ => sys.error("unexpected event type!")
-    }
-  }
-
-  def decryptCheckPointEvent(e: Any, encryption: Encryption): Any = {
-    e match {
-      case CheckPointEventEnc(id,plateNumber,h,m) =>
-        CheckPointEvent(id,encryption.decryptString(plateNumber),h,m)
-      case _ => sys.error("unexpected event type")
-    }
-  }
+//  def encryptCheckPointEvent(e: Any, encryption: Encryption): Any = {
+//    e match {
+//      case CheckPointEvent(id,plateNumber,h,m) =>
+//        CheckPointEventEnc(id,encryption.encryptString(plateNumber),h,m)
+//      case _ => sys.error("unexpected event type!")
+//    }
+//  }
+//
+//  def decryptCheckPointEvent(e: Any, encryption: Encryption): Any = {
+//    e match {
+//      case CheckPointEventEnc(id,plateNumber,h,m) =>
+//        CheckPointEvent(id,encryption.decryptString(plateNumber),h,m)
+//      case _ => sys.error("unexpected event type")
+//    }
+//  }
 
 }

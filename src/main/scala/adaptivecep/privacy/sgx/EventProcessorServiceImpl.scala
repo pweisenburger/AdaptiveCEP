@@ -31,7 +31,7 @@ class EventProcessorServiceImpl extends EventProcessorServer {
 
 
   override def applyPredicate(cond: Event => Boolean, input: Event): Boolean = this.synchronized(
-//    try {
+    try {
       (cond, input) match {
         case (f: (Event1 => Boolean), e: Event1) => f(e)
         case (f: (Event2 => Boolean), e: Event2) => f(e)
@@ -59,10 +59,10 @@ class EventProcessorServiceImpl extends EventProcessorServer {
           f(decryptedEvent)
         case _ => sys.error("unexpected type!")
       }
-//    } catch {
-//      case e: RemoteException => throw e
-//      case e: Exception => sys.error(e.getMessage)
-//    }
+    } catch {
+      case e: RemoteException => throw e
+      case e: Exception => sys.error(e.getMessage)
+    }
   ) ///sycn
 
 
