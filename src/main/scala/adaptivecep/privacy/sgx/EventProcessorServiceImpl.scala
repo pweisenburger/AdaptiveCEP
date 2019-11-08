@@ -43,7 +43,9 @@ class EventProcessorServiceImpl extends EventProcessorServer {
           val decryptedEvent = getDecryptedEvent(e).asInstanceOf[Event1]
           f(decryptedEvent)
         case (f: (Event2 => Boolean), e: EncEvent2) =>
+          println(s"decrypting event 2 ${e}")
           val decryptedEvent = getDecryptedEvent(e).asInstanceOf[Event2]
+          println(s"decrypted and applying predicate ${decryptedEvent}")
           f(decryptedEvent)
         case (f: (Event3 => Boolean), e: EncEvent3) =>
           val decryptedEvent = getDecryptedEvent(e).asInstanceOf[Event3]
@@ -57,11 +59,13 @@ class EventProcessorServiceImpl extends EventProcessorServer {
         case (f: (Event6 => Boolean), e: EncEvent6) =>
           val decryptedEvent = getDecryptedEvent(e).asInstanceOf[Event6]
           f(decryptedEvent)
-        case _ => sys.error("unexpected type!")
+        case _ => println("unexpected type!")
+          sys.error("an error happened")
       }
     } catch {
       case e: RemoteException => throw e
-      case e: Exception => sys.error(e.getMessage)
+      case e: Exception => println("ERROR" + e.getMessage)
+        sys.error("some error happened")
     }
   ) ///sycn
 
