@@ -183,7 +183,7 @@ object TestingEncryption extends App {
       complexPublishersHosts,
       AverageFrequencyMonitorFactory(interval = 3000, logging = false),
       PathLatencyMonitorFactory(interval = 1000, logging = false),
-      PathBandwidthMonitorFactory(interval = 1000, logging = false), NodeHost(host4),
+      PathBandwidthMonitorFactory(interval = 1000, logging = false), NodeHost(host8),
       hosts, optimizeFor)), "Placement")
 
     println("\n Calling Initialize query \n")
