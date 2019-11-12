@@ -21,7 +21,7 @@ case class RandomPublisher(createEventFromId: Integer => Event) extends Publishe
   }
 
   context.system.scheduler.schedule(
-    initialDelay = FiniteDuration(10000, TimeUnit.MILLISECONDS),
+    initialDelay = FiniteDuration(20000, TimeUnit.MILLISECONDS),
     interval = FiniteDuration(1, TimeUnit.SECONDS),
     runnable = () => {
       (1 to 5000).foreach(n => publish(n))

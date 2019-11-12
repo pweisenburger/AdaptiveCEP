@@ -38,7 +38,7 @@ case class EvaluationPublisher(createEventFromId: Integer => Event) extends Publ
   val publishedEventsTimestamps: Map[String, Long] = Map.empty[String, Long]
 
   context.system.scheduler.schedule(
-    initialDelay = FiniteDuration(10000, TimeUnit.MILLISECONDS),
+    initialDelay = FiniteDuration(20000, TimeUnit.MILLISECONDS),
     interval = FiniteDuration(1, TimeUnit.SECONDS),
     runnable = () => {
       (1 to 5000).foreach(n => {
@@ -55,9 +55,10 @@ case class EvaluationPublisher(createEventFromId: Integer => Event) extends Publ
         val t1 = System.nanoTime()
         val timespan = (t1 - t0) / 1000000
         println(s"${eid},${data},${timespan}")
-      } else {
-        println("did not record this event!")
       }
+//      else {
+//        println("did not record this event!")
+//      }
   }
 
 
