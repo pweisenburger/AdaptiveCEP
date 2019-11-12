@@ -3,6 +3,13 @@ package adaptivecep.privacy.shared
 import java.nio.ByteBuffer
 
 import adaptivecep.privacy.encryption.Encryption
+import akka.util.Timeout
+import crypto.EncInt
+import crypto.cipher.Comparable
+import crypto.remote.CryptoServicePlus
+import scala.concurrent.duration._
+
+import scala.concurrent.Await
 
 
 /** *
@@ -52,5 +59,22 @@ object Custom {
       case _ => sys.error("unexpected event type")
     }
   }
+
+  case class Employee(id: Int, name: String, salary: Int) extends Serializable
+  case class EmployeeEnc(id: EncInt, name: String, salary: EncInt) extends Serializable
+
+  def pheMapEmployee(value: Any,crypto: CryptoServicePlus): Any ={
+
+    implicit val timeout = new Timeout(5 seconds)
+    value match {
+      case Employee(id,name,salary) =>
+        val encId = Await.result(  crypto.encrypt(Comparable)(id),timeout.duration)
+        val encSalary = Await.result(  crypto.encrypt(Comparable)(salary),timeout.duration)
+        EmployeeEnc(encId,name,encSalary)
+      case _ =>
+        sys.error("unexpected data type")
+    }
+  }
+
 
 }
