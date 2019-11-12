@@ -94,11 +94,11 @@ object TestingEncryption extends App {
     //
 
     val encOne: EncInt = Await.result(cryptoSvc.encrypt(Comparable)(1), Duration(5, TimeUnit.SECONDS))
-    val encTwo: EncInt = Await.result(cryptoSvc.encrypt(Comparable)(1), Duration(5, TimeUnit.SECONDS))
+    val encTwo: EncInt = Await.result(cryptoSvc.encrypt(Comparable)(2), Duration(5, TimeUnit.SECONDS))
 
     val encQuery2: Query2[EncInt, EncInt] =
     stream[EncInt]("A").join(stream[EncInt]("B"), slidingWindow(2.instances), slidingWindow(2.instances))
-      .where((x, y) => interpret(interpret(x * encTwo ) =:= y), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+      .where((x, y) => interpret(interpret( interpret(x * encTwo ) + encOne) > y), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
 
 
