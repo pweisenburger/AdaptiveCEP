@@ -21,9 +21,9 @@ import scala.concurrent.Await
   */
 object Custom {
 
-  case class MeasureEvent(id: Int, data: Int) extends Serializable
-  case class MeasureEventEncSgx(id: Int, data: Array[Byte]) extends Serializable
-  case class MeasureEventEncPhe(id: Int, data: EncInt) extends Serializable
+  case class MeasureEvent(id: String, data: Int) extends Serializable
+  case class MeasureEventEncSgx(id: String, data: Array[Byte]) extends Serializable
+  case class MeasureEventEncPhe(id: String, data: EncInt) extends Serializable
 
   def encryptMeasureEvent(e: Any, encryption: Encryption): Any = {
     e match {

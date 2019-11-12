@@ -66,7 +66,7 @@ object PerformanceEvaluation extends App {
     hosts.foreach(host => host ! Hosts(hosts))
 
     /////deploy publishers
-    val publisherA: ActorRef = actorSystem.actorOf(Props(EvaluationPublisher(id => Event1(MeasureEvent(id, id)))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+    val publisherA: ActorRef = actorSystem.actorOf(Props(EvaluationPublisher(id => Event1(MeasureEvent(java.util.UUID.randomUUID.toString, id)))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
     val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id * 2))).withDeploy(Deploy(scope = RemoteScope(address2))), "B")
 //
 //    val cryptoActor: ActorRef = actorSystem.actorOf(Props[CryptoServiceActor].withDeploy(Deploy(scope = RemoteScope(address1))), "CryptoService")
@@ -79,12 +79,14 @@ object PerformanceEvaluation extends App {
 //    val encTwo: EncInt = Await.result(cryptoSvc.encrypt(Comparable)(2), Duration(5, TimeUnit.SECONDS))
 //
 //    val encQuery2: Query2[MeasureEventEncPhe, EncInt] =
-//      stream[MeasureEventEncPhe]("A").join(stream[EncInt]("B"), slidingWindow(3.instances), slidingWindow(3.instances))
+//      stream[MeasureEventEncPhe]("A").and(stream[EncInt]("B"))
 //        .where((x, y) => interpret(interpret(interpret(x.data * encTwo) + encOne) > y), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
     val query: Query2[MeasureEvent, Int] =
-      stream[MeasureEvent]("A").join(stream[Int]("B"), slidingWindow(3.instances), slidingWindow(3.instances))
+      stream[MeasureEvent]("A").
+        and(stream[Int]("B"))
         .where((x, y) => x.data * 2 + 1 > y, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+
 
     val publishers: Map[String, ActorRef] = Map(
       "A" -> publisherA,
