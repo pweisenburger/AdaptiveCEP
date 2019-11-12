@@ -9,6 +9,7 @@ import adaptivecep.privacy.sgx.EventProcessorServer
 import akka.actor.{ActorRef, PoisonPill}
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Sink, Source, StreamRefs}
+import crypto.EncInt
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -133,11 +134,23 @@ case class FilterNode(
               case e: Exception => println("\n[SGX Service unable to apply predicate]\n")
                 println(e.getMessage)
             }
-          case PhePrivacyContext(_, _) =>
+          case PhePrivacyContext(svc, _) =>
             try {
+
+              event match {
+                case Event2(e1: EncInt, e2: EncInt) =>
+                  svc.decryptAndPrint(e1)
+                  svc.decryptAndPrint(e2)
+                case _ => 
+              }
+
               if (cond(event)) {
+                svc.println("--------passed")
                 emitEvent(event)
               }
+              svc.println("--------dropped")
+
+
             } catch {
               case e => println("encountered some error while filtering: " + e.getMessage)
             }

@@ -147,7 +147,7 @@ class CryptoServiceWrapper(cryptoActor: ActorRef) extends CryptoServicePlus with
 
   /** Print the string on the CrytpoService side */
   override def println[A](a: A): Unit = {
-
+    cryptoActor ! PrintLineRequest(a)
   }
 
 

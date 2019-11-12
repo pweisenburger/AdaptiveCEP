@@ -77,6 +77,7 @@ object Events {
 
   case class BatchEncryptRequest(xs: List[(Scheme, Int)]) extends CryptoControlMessages
 
+  case class PrintLineRequest[A](v: A) extends CryptoControlMessages
 
   //Tentative Operator Phase
   case class CostMessage(latency: Duration, bandwidth: Double) extends PlacementEvent
