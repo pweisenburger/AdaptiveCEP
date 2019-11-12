@@ -93,8 +93,8 @@ object TestingEncryption extends App {
     //        where(x => interpret(isEven(x)), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
     //
     val encQuery2: Query2[EncInt, EncInt] =
-    stream[EncInt]("A").join(stream[EncInt]("B"), slidingWindow(1.instances), slidingWindow(1.instances))
-      .where((x, y) => interpret(x < y), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+    stream[EncInt]("A").join(stream[EncInt]("B"), slidingWindow(2.instances), slidingWindow(2.instances))
+      .where((x, y) => interpret(interpret(x * x) < y), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
 
 
@@ -116,15 +116,15 @@ object TestingEncryption extends App {
     //      , "K" -> NodeHost(host2)
     //    )
 
-        val simplePublishers: Map[String, ActorRef] = Map(
-          "A" -> publisherA
-          , "B" -> publisherB
-        )
+    val simplePublishers: Map[String, ActorRef] = Map(
+      "A" -> publisherA
+      , "B" -> publisherB
+    )
 
-        val simplePublisherHosts: Map[String, Host] = Map(
-          "A" -> NodeHost(host1)
-          ,"B" -> NodeHost(host2)
-        )
+    val simplePublisherHosts: Map[String, Host] = Map(
+      "A" -> NodeHost(host1)
+      , "B" -> NodeHost(host2)
+    )
 
     val optimizeFor = "bandwidth"
     hosts.foreach(host => host ! OptimizeFor(optimizeFor))

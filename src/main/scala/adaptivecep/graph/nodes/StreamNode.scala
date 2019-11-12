@@ -78,13 +78,13 @@ case class StreamNode(
             case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
               val rule = conversionRules(publisherName)
               val encEvent = getEncryptedEvent(a, rule)
-              println(s"Emitting encrypted event for event $a and $encEvent\n")
+//              println(s"Emitting encrypted event for event $a and $encEvent\n")
               emitEvent(encEvent)
             case PhePrivacyContext(cryptoService, sourceMappers) =>
               val mapper = sourceMappers(publisherName)
               val mappedEvent = mapSource(a,mapper,cryptoService)
               emitEvent(mappedEvent )
-              println(s"Emitting encrypted event for event $a and $mappedEvent\n")
+//              println(s"Emitting encrypted event for event $a and $mappedEvent\n")
               //TODO: encrypt using source conversion rules
             case _ => sys.error("unsupported context yet")
           }
