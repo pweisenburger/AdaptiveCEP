@@ -25,17 +25,24 @@ case class EvaluationPublisher(createEventFromId: Integer => Event) extends Publ
 
   val publishedEventsTimestamps: Map[Int,Long] = Map.empty[Int,Long]
 
-  context.system.scheduler.schedule(
-    initialDelay = FiniteDuration(0, TimeUnit.MILLISECONDS),
-    interval = FiniteDuration(1, TimeUnit.SECONDS),
-    runnable = () => {
-      (1 to 5000).foreach(n => {
-        val timestamp = System.nanoTime()
-        if(!publishedEventsTimestamps.contains(n))
-          publishedEventsTimestamps.put(n,timestamp)
-        publish(n)
-      })
-    })
+  (1 to 5000).foreach(n => {
+    val timestamp = System.nanoTime()
+    if(!publishedEventsTimestamps.contains(n))
+      publishedEventsTimestamps.put(n,timestamp)
+    publish(n)
+  })
+
+//  context.system.scheduler.schedule(
+//    initialDelay = FiniteDuration(0, TimeUnit.MILLISECONDS),
+//    interval = FiniteDuration(1, TimeUnit.SECONDS),
+//    runnable = () => {
+//      (1 to 5000).foreach(n => {
+//        val timestamp = System.nanoTime()
+//        if(!publishedEventsTimestamps.contains(n))
+//          publishedEventsTimestamps.put(n,timestamp)
+//        publish(n)
+//      })
+//    })
 
   override def receive: Receive = {
     case Subscribe =>
