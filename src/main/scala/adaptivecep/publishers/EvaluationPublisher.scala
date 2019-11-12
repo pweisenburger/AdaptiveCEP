@@ -20,12 +20,16 @@ case class EvaluationPublisher(createEventFromId: Integer => Event) extends Publ
 
   var id = 0
 
+  var recordOnce = false
+
   def publish(id: Int): Unit = {
     val event: Event = createEventFromId(id)
     event match {
       case Event1(e1: MeasureEvent) =>
-        val timestamp = System.nanoTime()
-        publishedEventsTimestamps.put(e1.id, timestamp)
+        if(id == 10000) recordOnce = true
+        if(!recordOnce)
+          val timestamp = System.nanoTime()
+          publishedEventsTimestamps.put(e1.id, timestamp)
     }
     source._1.offer(event)
   }
@@ -50,9 +54,8 @@ case class EvaluationPublisher(createEventFromId: Integer => Event) extends Publ
         val t1 = System.nanoTime()
         val timespan = (t1 - t0) / 1000000
         println(s"${eid},${data},${timespan}")
-
       } else {
-        println("didn't send this event!")
+        println("did not record this event!")
       }
   }
 
