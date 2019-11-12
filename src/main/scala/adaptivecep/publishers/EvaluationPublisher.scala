@@ -27,9 +27,10 @@ case class EvaluationPublisher(createEventFromId: Integer => Event) extends Publ
     event match {
       case Event1(e1: MeasureEvent) =>
         if(id == 5000) recordOnce = true
-        if(!recordOnce)
+        if(!recordOnce){
           val timestamp = System.nanoTime()
           publishedEventsTimestamps.put(e1.id, timestamp)
+        }
     }
     source._1.offer(event)
   }
