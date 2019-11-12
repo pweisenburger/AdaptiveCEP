@@ -112,14 +112,14 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
     // Callback for `query1`:
     case Event1(e1) => println(s"COMPLEX EVENT:\tEvent1($e1)")
       e1 match {
-        case MeasureEvent(id,_) => publishers("A") ! EventReceived(id)
-        case MeasureEventEncPhe(id,_) => publishers("A") ! EventReceived(id)
+        case MeasureEvent(id, data) => publishers("A") ! EventReceived(id, data)
+        case MeasureEventEncPhe(id, data) => publishers("A") ! EventReceived(id, 0)
         case _ =>
       }
-    case Event2(e1,e2) => println(s"COMPLEX EVENT:\tEvent1($e1,$e2)")
+    case Event2(e1, e2) => println(s"COMPLEX EVENT:\tEvent1($e1,$e2)")
       e1 match {
-        case MeasureEvent(id,_) => publishers("A") ! EventReceived(id)
-        case MeasureEventEncPhe(id,_) => publishers("A") ! EventReceived(id)
+        case MeasureEvent(id, data) => publishers("A") ! EventReceived(id, data)
+        case MeasureEventEncPhe(id, data) => publishers("A") ! EventReceived(id, 0)
         case _ =>
       }
     //    case EncEvent1(e1, rule) => println(s"COMPLEX ENCEVENT:\tEvent1($e1)")
@@ -127,7 +127,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
       val decrypted = getDecryptedEvent(e).asInstanceOf[Event1]
       val value = decrypted.e1
       value match {
-        case MeasureEvent(id,_) => publishers("A") ! EventReceived(id)
+        case MeasureEvent(id, data) => publishers("A") ! EventReceived(id, data)
         case _ =>
       }
       println(s"COMPEX EVENT:\tEncEvent carrying($value)")
@@ -137,7 +137,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
       val value1 = decrypted.e1
       val value2 = decrypted.e2
       value1 match {
-        case MeasureEvent(id,_) => publishers("A") ! EventReceived(id)
+        case MeasureEvent(id, data) => publishers("A") ! EventReceived(id,data)
         case _ =>
       }
       println(s"COMPEX EVENT:\tEncEvent carrying($value1,$value2)")
@@ -609,7 +609,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
                                     callback: Option[Event => Any],
                                     streamQuery: StreamQuery,
                                     consumer: Boolean) = {
-    /***
+    /** *
       * this call will copy the value of the privacy context
       * thus creating a new immutable object that is not referencing the current privacy context
       * hence it can be safely serialized using Akka serialization
@@ -623,7 +623,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
         frequencyMonitorFactory,
         latencyMonitorFactory,
         None,
-        callback, /*rule,*/ streamContext ))
+        callback, /*rule,*/ streamContext))
     println("\nStream Node created\n")
 
     ///TODO: create an encrypting stream node if the data is sensitive
@@ -644,12 +644,12 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
                                         disjunctionQuery: DisjunctionQuery,
                                         consumer: Boolean) = {
     val length = getQueryLength(disjunctionQuery)
-//    var encryptedEvents: Boolean = false
-//    privacyContext match {
-//      case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
-//        encryptedEvents = true
-//      case _ => encryptedEvents = false
-//    }
+    //    var encryptedEvents: Boolean = false
+    //    privacyContext match {
+    //      case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
+    //        encryptedEvents = true
+    //      case _ => encryptedEvents = false
+    //    }
     val disjunctionContext = Some(privacyContext)
 
     val props = Props(
@@ -660,7 +660,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
         frequencyMonitorFactory,
         latencyMonitorFactory,
         None,
-        callback,disjunctionContext))
+        callback, disjunctionContext))
     connectBinaryNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, disjunctionQuery.sq1, disjunctionQuery.sq2, props, consumer)
     props
   }
@@ -676,13 +676,13 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
     val length2 = getQueryLength(conjunctionQuery.sq2)
 
     val conjunctionContext = Some(privacyContext)
-//
-//    var encryptedEvents: Boolean = false
-//    privacyContext match {
-//      case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
-//        encryptedEvents = true
-//      case _ => encryptedEvents = false
-//    }
+    //
+    //    var encryptedEvents: Boolean = false
+    //    privacyContext match {
+    //      case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
+    //        encryptedEvents = true
+    //      case _ => encryptedEvents = false
+    //    }
 
 
     val props = Props(
@@ -694,7 +694,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
         frequencyMonitorFactory,
         latencyMonitorFactory,
         None,
-        callback,conjunctionContext))
+        callback, conjunctionContext))
     connectBinaryNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, conjunctionQuery.sq1, conjunctionQuery.sq2, props, consumer)
     props
   }
@@ -713,12 +713,12 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
     val length1 = getQueryLength(joinQuery.sq1)
     val length2 = getQueryLength(joinQuery.sq2)
 
-//    var encryptedEvents: Boolean = false
-//    privacyContext match {
-//      case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
-//        encryptedEvents = true
-//      case _ => encryptedEvents = false
-//    }
+    //    var encryptedEvents: Boolean = false
+    //    privacyContext match {
+    //      case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
+    //        encryptedEvents = true
+    //      case _ => encryptedEvents = false
+    //    }
 
     val joinContext = Some(privacyContext)
 
@@ -730,7 +730,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
         frequencyMonitorFactory,
         latencyMonitorFactory,
         None,
-        callback, joinContext ))
+        callback, joinContext))
     connectBinaryNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, joinQuery.sq1, joinQuery.sq2, props, consumer)
     props
   }
@@ -746,12 +746,12 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
     val ws1 = getWindowSize(selfJoinQuery.w1)
     val wt2 = getWindowType(selfJoinQuery.w2)
     val ws2 = getWindowSize(selfJoinQuery.w2)
-//    var encryptedEvents: Boolean = false
-//    privacyContext match {
-//      case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
-//        encryptedEvents = true
-//      case _ => encryptedEvents = false
-//    }
+    //    var encryptedEvents: Boolean = false
+    //    privacyContext match {
+    //      case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
+    //        encryptedEvents = true
+    //      case _ => encryptedEvents = false
+    //    }
 
     val joinContext = Some(privacyContext)
 
@@ -764,7 +764,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
         frequencyMonitorFactory,
         latencyMonitorFactory,
         None,
-        callback,joinContext ))
+        callback, joinContext))
     connectUnaryNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, selfJoinQuery.sq, props, consumer)
     props
   }
@@ -787,7 +787,7 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
         frequencyMonitorFactory,
         latencyMonitorFactory,
         None,
-        callback,dropContext))
+        callback, dropContext))
     connectUnaryNode(publishers, frequencyMonitorFactory, latencyMonitorFactory, bandwidthMonitorFactory, dropElemQuery.sq, props, consumer)
     props
   }

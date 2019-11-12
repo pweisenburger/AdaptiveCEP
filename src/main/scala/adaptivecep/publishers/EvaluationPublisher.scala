@@ -45,12 +45,12 @@ case class EvaluationPublisher(createEventFromId: Integer => Event) extends Publ
   override def receive: Receive = {
     case Subscribe =>
       super.receive(Subscribe)
-    case EventReceived(eid) =>
+    case EventReceived(eid,data) =>
       if (publishedEventsTimestamps.contains(eid)) {
         val t0 = publishedEventsTimestamps(eid)
         val t1 = System.nanoTime()
         val timespan = (t1 - t0) / 1000000
-        println(s"${eid},${timespan}")
+        println(s"${eid},${data},${timespan}")
 
       } else {
         println("didn't send this event!")
