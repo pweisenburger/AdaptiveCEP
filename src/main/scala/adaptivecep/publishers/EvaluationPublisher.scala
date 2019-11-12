@@ -27,14 +27,13 @@ case class EvaluationPublisher(createEventFromId: Integer => Event) extends Publ
         val timestamp = System.nanoTime()
         publishedEventsTimestamps.put(e1.id, timestamp)
     }
-
     source._1.offer(event)
   }
 
   val publishedEventsTimestamps: Map[String, Long] = Map.empty[String, Long]
 
   context.system.scheduler.schedule(
-    initialDelay = FiniteDuration(0, TimeUnit.MILLISECONDS),
+    initialDelay = FiniteDuration(5000, TimeUnit.MILLISECONDS),
     interval = FiniteDuration(1, TimeUnit.SECONDS),
     runnable = () => {
       (1 to 5000).foreach(n => {
