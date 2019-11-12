@@ -64,7 +64,6 @@ object Custom {
   case class EmployeeEnc(id: EncInt, name: String, salary: EncInt) extends Serializable
 
   def pheMapEmployee(value: Any,crypto: CryptoServicePlus): Any ={
-
     implicit val timeout = new Timeout(5 seconds)
     value match {
       case Employee(id,name,salary) =>

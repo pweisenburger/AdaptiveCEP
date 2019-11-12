@@ -68,17 +68,17 @@ object TestingEncryption extends App {
     hosts.foreach(host => host ! Hosts(hosts))
 
     /////deploy publishers
-    //    val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
-    //    val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id * 2))).withDeploy(Deploy(scope = RemoteScope(address2))), "B")
-    val employeePublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(Employee(id, "ahmad", id * 10)))).withDeploy(Deploy(scope = RemoteScope(address1))), "E")
-
-    val employeePublishers: Map[String, ActorRef] = Map(
-      "E" -> employeePublisher
-    )
-
-    val employeePublishersHosts: Map[String, Host] = Map(
-      "E" -> NodeHost(host1)
-    )
+    val publisherA: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+    val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id * 2))).withDeploy(Deploy(scope = RemoteScope(address2))), "B")
+    //    val employeePublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(Employee(id, "ahmad", id * 10)))).withDeploy(Deploy(scope = RemoteScope(address1))), "E")
+    //
+    //    val employeePublishers: Map[String, ActorRef] = Map(
+    //      "E" -> employeePublisher
+    //    )
+    //
+    //    val employeePublishersHosts: Map[String, Host] = Map(
+    //      "E" -> NodeHost(host1)
+    //    )
 
 
     val cryptoActor: ActorRef = actorSystem.actorOf(Props[CryptoServiceActor].withDeploy(Deploy(scope = RemoteScope(address1))), "CryptoService")
@@ -88,39 +88,43 @@ object TestingEncryption extends App {
     val interpret = new CEPRemoteInterpreter(cryptoSvc)
 
 
-
     //    val encQuery: Query1[EncInt] =
     //      stream[EncInt]("A").
     //        where(x => interpret(isEven(x)), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+    //
+    val encQuery2: Query2[EncInt, EncInt] =
+    stream[EncInt]("A").join(stream[EncInt]("B"), slidingWindow(1.instances), slidingWindow(1.instances))
+      .where((x, y) => interpret(x < y), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
 
-//    val carEventPublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(CarEvent(s"${id % 99}${(id + 2) % 99}${(id + 3) % 99}", id % 200)))).withDeploy(Deploy(scope = RemoteScope(address1))), "C")
-//    val checkpointEventPublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(CheckPointEvent(id, s"${id % 99}${(id + 2) % 99}${(id + 3) % 99}", id % 24, id % 60)))).withDeploy(Deploy(scope = RemoteScope(address2))), "K")
-//
-//
-//    val carEventTransformer = EncDecTransformer(encryptCarEvent, decryptCarEvent)
-//    val checkpointTransformer = EncDecTransformer(encryptCheckPointEvent, decryptCheckPointEvent)
-//
-//
-//    val complexPublishers: Map[String, ActorRef] = Map(
-//      "C" -> carEventPublisher
-//      , "K" -> checkpointEventPublisher
-//    )
-//
-//    val complexPublishersHosts: Map[String, Host] = Map(
-//      "C" -> NodeHost(host1)
-//      , "K" -> NodeHost(host2)
-//    )
 
-    //    val simplePublishers: Map[String, ActorRef] = Map(
-    //      "A" -> publisherA
-    //      , "B" -> publisherB
+    //    val carEventPublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(CarEvent(s"${id % 99}${(id + 2) % 99}${(id + 3) % 99}", id % 200)))).withDeploy(Deploy(scope = RemoteScope(address1))), "C")
+    //    val checkpointEventPublisher: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(CheckPointEvent(id, s"${id % 99}${(id + 2) % 99}${(id + 3) % 99}", id % 24, id % 60)))).withDeploy(Deploy(scope = RemoteScope(address2))), "K")
+    //
+    //
+    //    val carEventTransformer = EncDecTransformer(encryptCarEvent, decryptCarEvent)
+    //    val checkpointTransformer = EncDecTransformer(encryptCheckPointEvent, decryptCheckPointEvent)
+    //
+    //
+    //    val complexPublishers: Map[String, ActorRef] = Map(
+    //      "C" -> carEventPublisher
+    //      , "K" -> checkpointEventPublisher
+    //    )
+    //
+    //    val complexPublishersHosts: Map[String, Host] = Map(
+    //      "C" -> NodeHost(host1)
+    //      , "K" -> NodeHost(host2)
     //    )
 
-    //    val simplePublisherHosts: Map[String, Host] = Map(
-    //      "A" -> NodeHost(host1)
-    //      ,"B" -> NodeHost(host2)
-    //    )
+        val simplePublishers: Map[String, ActorRef] = Map(
+          "A" -> publisherA
+          , "B" -> publisherB
+        )
+
+        val simplePublisherHosts: Map[String, Host] = Map(
+          "A" -> NodeHost(host1)
+          ,"B" -> NodeHost(host2)
+        )
 
     val optimizeFor = "bandwidth"
     hosts.foreach(host => host ! OptimizeFor(optimizeFor))
@@ -128,7 +132,7 @@ object TestingEncryption extends App {
     Thread.sleep(5000)
 
 
-//    val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
+    //    val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
 
 
     //    implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
@@ -138,40 +142,40 @@ object TestingEncryption extends App {
     //      //      Map("A" -> Event1Rule(IntEventTransformer), "B" -> Event1Rule(IntEventTransformer))
     //    )
 
-//    val simpleCarQuery: Query1[CheckPointEvent] = stream[CheckPointEvent]("K").
-//      where(c => c.id > 1000, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
-//
+    //    val simpleCarQuery: Query1[CheckPointEvent] = stream[CheckPointEvent]("K").
+    //      where(c => c.id > 1000, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+    //
 
     /** *
       * this query is to be run with SGX Mode
       * uncomment the following query
       */
-//    val carQuery: Query2[CarEvent, CheckPointEvent] =
-//      stream[CarEvent]("C")
-//        .join(
-//          stream[CheckPointEvent]("K"),
-//          slidingWindow(1.instances), slidingWindow(1.instances))
-//        .where((car, checkpoint) =>
-//          car.plateNumber == checkpoint.plateNumber && car.speed > 30
-//          , frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/}
-//        )
+    //    val carQuery: Query2[CarEvent, CheckPointEvent] =
+    //      stream[CarEvent]("C")
+    //        .join(
+    //          stream[CheckPointEvent]("K"),
+    //          slidingWindow(1.instances), slidingWindow(1.instances))
+    //        .where((car, checkpoint) =>
+    //          car.plateNumber == checkpoint.plateNumber && car.speed > 30
+    //          , frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/}
+    //        )
 
-    val enc5000: EncInt = Await.result(cryptoSvc.encrypt(Comparable)(5000), Duration(5, TimeUnit.SECONDS))
+    //    val enc5000: EncInt = Await.result(cryptoSvc.encrypt(Comparable)(5000), Duration(5, TimeUnit.SECONDS))
+    //
+    //    val employeeQuery: Query1[EmployeeEnc] =
+    //      stream[EmployeeEnc]("E")
+    //        .where(e => interpret(e.salary > enc5000))
 
-    val employeeQuery: Query1[EmployeeEnc] =
-      stream[EmployeeEnc]("E")
-        .where(e => interpret(e.salary > enc5000))
-
-    //    implicit val phePrivacyContext: PrivacyContext = PhePrivacyContext(
-    //      cryptoSvc,
-    //      Map("A" -> Event1Rule(IntPheSourceMapper))
-    //    )
-
-    val employeePheSourceMapper: Transformer = PheSourceTransformer(pheMapEmployee)
-    implicit val employeePhePrivacyContext: PrivacyContext = PhePrivacyContext(
+    implicit val phePrivacyContext: PrivacyContext = PhePrivacyContext(
       cryptoSvc,
-      Map("E" -> Event1Rule(employeePheSourceMapper))
+      Map("A" -> Event1Rule(IntPheSourceMapper), "B" -> Event1Rule(IntPheSourceMapper))
     )
+
+    //    val employeePheSourceMapper: Transformer = PheSourceTransformer(pheMapEmployee)
+    //    implicit val employeePhePrivacyContext: PrivacyContext = PhePrivacyContext(
+    //      cryptoSvc,
+    //      Map("E" -> Event1Rule(employeePheSourceMapper))
+    //    )
 
 
     //        implicit val empSgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
@@ -209,9 +213,9 @@ object TestingEncryption extends App {
     //        .where(a => a < 3000,frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
     val placement: ActorRef = actorSystem.actorOf(Props(PlacementActorCentralized(actorSystem,
-      employeeQuery,
-      employeePublishers,
-      employeePublishersHosts,
+      encQuery2,
+      simplePublishers,
+      simplePublisherHosts,
       AverageFrequencyMonitorFactory(interval = 3000, logging = false),
       PathLatencyMonitorFactory(interval = 1000, logging = false),
       PathBandwidthMonitorFactory(interval = 1000, logging = false), NodeHost(host4),
