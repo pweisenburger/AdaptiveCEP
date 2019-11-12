@@ -94,7 +94,7 @@ object TestingEncryption extends App {
     //
     val encQuery2: Query2[EncInt, EncInt] =
     stream[EncInt]("A").join(stream[EncInt]("B"), slidingWindow(2.instances), slidingWindow(2.instances))
-      .where((x, y) => interpret(interpret(x * x) = y), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+      .where((x, y) => interpret(interpret(x * x) =:= y), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
 
 
