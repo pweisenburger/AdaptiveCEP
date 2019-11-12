@@ -3,12 +3,13 @@ package adaptivecep.privacy.shared
 import java.nio.ByteBuffer
 
 import adaptivecep.privacy.encryption.Encryption
+import adaptivecep.privacy.shared.Custom.MeasureEventEncPhe
 import akka.util.Timeout
 import crypto.EncInt
 import crypto.cipher.Comparable
 import crypto.remote.CryptoServicePlus
-import scala.concurrent.duration._
 
+import scala.concurrent.duration._
 import scala.concurrent.Await
 
 
@@ -19,6 +20,38 @@ import scala.concurrent.Await
   *
   */
 object Custom {
+
+  case class MeasureEvent(id: Int, data: Int) extends Serializable
+  case class MeasureEventEncSgx(id: Int, data: Array[Byte]) extends Serializable
+  case class MeasureEventEncPhe(id: Int, data: EncInt) extends Serializable
+
+  def encryptMeasureEvent(e: Any, encryption: Encryption): Any = {
+    e match {
+      case MeasureEvent(id, data) =>
+        MeasureEventEncSgx(id, encryption.encryptInt(data))
+      case _ => sys.error("unexpected event type!")
+    }
+  }
+
+  def decryptMeasureEvent(e: Any, encryption: Encryption): Any = {
+    e match {
+      case MeasureEventEncSgx(id, encData) =>
+        MeasureEvent(id, encryption.decryptInt(encData))
+      case _ => sys.error("unexpected event type!")
+    }
+  }
+
+  def pheMapMeasureEvent(value: Any,crypto: CryptoServicePlus): Any ={
+    implicit val timeout = new Timeout(5 seconds)
+    value match {
+      case MeasureEvent(id,data) =>
+        val encdata = Await.result(  crypto.encrypt(Comparable)(data),timeout.duration)
+        MeasureEventEncPhe(id,encdata )
+      case _ =>
+        sys.error("unexpected data type")
+    }
+  }
+
 
   case class CarEvent(plateNumber: String, speed: Int) extends Serializable
 

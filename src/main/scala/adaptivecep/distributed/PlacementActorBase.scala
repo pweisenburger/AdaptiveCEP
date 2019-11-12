@@ -14,6 +14,7 @@ import adaptivecep.graph.nodes._
 import adaptivecep.graph.qos.MonitorFactory
 import adaptivecep.privacy.Privacy._
 import adaptivecep.privacy.encryption.CryptoAES
+import adaptivecep.privacy.shared.Custom.{MeasureEvent, MeasureEventEncPhe}
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Address, Deploy, PoisonPill, Props}
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
@@ -110,17 +111,35 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
   val eventCallback: Event => Any = {
     // Callback for `query1`:
     case Event1(e1) => println(s"COMPLEX EVENT:\tEvent1($e1)")
+      e1 match {
+        case MeasureEvent(id,_) => publishers("A") ! EventReceived(id)
+        case MeasureEventEncPhe(id,_) => publishers("A") ! EventReceived(id)
+        case _ =>
+      }
     case Event2(e1,e2) => println(s"COMPLEX EVENT:\tEvent1($e1,$e2)")
+      e1 match {
+        case MeasureEvent(id,_) => publishers("A") ! EventReceived(id)
+        case MeasureEventEncPhe(id,_) => publishers("A") ! EventReceived(id)
+        case _ =>
+      }
     //    case EncEvent1(e1, rule) => println(s"COMPLEX ENCEVENT:\tEvent1($e1)")
     case e: EncEvent1 =>
       val decrypted = getDecryptedEvent(e).asInstanceOf[Event1]
       val value = decrypted.e1
+      value match {
+        case MeasureEvent(id,_) => publishers("A") ! EventReceived(id)
+        case _ =>
+      }
       println(s"COMPEX EVENT:\tEncEvent carrying($value)")
 
     case e: EncEvent2 =>
       val decrypted = getDecryptedEvent(e).asInstanceOf[Event2]
       val value1 = decrypted.e1
       val value2 = decrypted.e2
+      value1 match {
+        case MeasureEvent(id,_) => publishers("A") ! EventReceived(id)
+        case _ =>
+      }
       println(s"COMPEX EVENT:\tEncEvent carrying($value1,$value2)")
     //case Event3(Left(i1), Left(i2), Left(f)) => println(s"COMPLEX EVENT:\tEvent3($i1,$i2,$f)")
     //case Event3(Right(s), _, _)              => println(s"COMPLEX EVENT:\tEvent1($s)")

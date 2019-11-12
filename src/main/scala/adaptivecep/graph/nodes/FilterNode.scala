@@ -137,18 +137,18 @@ case class FilterNode(
           case PhePrivacyContext(svc, _) =>
             try {
 
-              event match {
-                case Event2(e1: EncInt, e2: EncInt) =>
-                  svc.decryptAndPrint(e1)
-                  svc.decryptAndPrint(e2)
-                case _ => 
-              }
+//              event match {
+//                case Event2(e1: EncInt, e2: EncInt) =>
+//                  svc.decryptAndPrint(e1)
+//                  svc.decryptAndPrint(e2)
+//                case _ =>
+//              }
 
               if (cond(event)) {
-                svc.println("--------passed")
+//                svc.println("--------passed")
                 emitEvent(event)
               }
-              svc.println("--------dropped")
+//              svc.println("--------dropped")
 
 
             } catch {

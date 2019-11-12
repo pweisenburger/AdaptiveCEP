@@ -56,19 +56,19 @@ class CryptoServiceActor extends Actor with ActorLogging with RequiresMessageQue
       sender() ! encrypted
 
     case IsEvenRequest(enc: EncInt) =>
-      println("received (is even request)")
+//      println("received (is even request)")
       val result = cryptoService.isEven(enc)
       val actualResult = Await.result(result, 4 seconds)
       sender() ! actualResult
 
     case IsOddRequest(enc) =>
-      println("received (is odd request)")
+//      println("received (is odd request)")
       val result = cryptoService.isOdd(enc)
       val actualResult = Await.result(result, 4 seconds)
       sender() ! actualResult
 
     case SplitStrRequest(enc, regex) =>
-      println("received (split string request)")
+//      println("received (split string request)")
       val result = cryptoService.splitStr(enc, regex)
       val actualResult = Await.result(result, 4 seconds)
       sender() ! actualResult
@@ -78,25 +78,25 @@ class CryptoServiceActor extends Actor with ActorLogging with RequiresMessageQue
       cryptoService.decryptAndPrint(v)
 
     case ToOpeRequest(in: EncInt) =>
-      println("received (to ope request)")
+//      println("received (to ope request)")
       val result = cryptoService.toOpe(in)
       val actualResult = Await.result(result, 4 seconds)
       sender() ! actualResult
 
     case ToAesRequest(in: EncInt) =>
-      println("received (to aes request)")
+//      println("received (to aes request)")
       val result = cryptoService.toAes(in)
       val actualResult = Await.result(result, 4 seconds)
       sender() ! actualResult
 
     case ToElGamalRequest(in: EncInt) =>
-      println("received (to elgamal request)")
+//      println("received (to elgamal request)")
       val result = cryptoService.toElGamal(in)
       val actualResult = Await.result(result, 4 seconds)
       sender() ! actualResult
 
     case ToPaillierRequest(in: EncInt) =>
-      println("received (to paillier request) ")
+//      println("received (to paillier request) ")
       val result = cryptoService.toPaillier(in)
       val actualResult = Await.result(result, 4 seconds)
       sender() ! actualResult
@@ -108,31 +108,31 @@ class CryptoServiceActor extends Actor with ActorLogging with RequiresMessageQue
     //TODO: complete the rest of functionalities
 
     case ConvertIntRequest(s, in) =>
-      println("received (convert int request) ")
+//      println("received (convert int request) ")
       val result = cryptoService.convert(s)(in)
       val actualResult = Await.result(result, 4 seconds)
       sender() ! actualResult
 
     case SubstractRequest(lhs, rhs) =>
-      println("received (substract request) ")
+//      println("received (substract request) ")
       val result = cryptoService.subtract(lhs, rhs)
       val actualResult = Await.result(result, 4 seconds)
       sender() ! actualResult
 
     case IntegerDevideRequest(lhs, rhs) =>
-      println("received (int divide request) ")
+//      println("received (int divide request) ")
       val result = cryptoService.integerDivide(lhs, rhs)
       val actualResult = Await.result(result, 4 seconds)
       sender() ! actualResult
 
     case FloorRatioRequest(ratio) =>
-      println("received (floor ratio request) ")
+//      println("received (floor ratio request) ")
       val result = cryptoService.floorRatio(ratio)
       val actualResult = Await.result(result, 4 seconds)
       sender() ! actualResult
 
     case CeilRatioRequest(ratio) =>
-      println("received (floor ratio request) ")
+//      println("received (floor ratio request) ")
       val result = cryptoService.ceilRatio(ratio)
       val actualResult = Await.result(result, 4 seconds)
       sender() ! actualResult

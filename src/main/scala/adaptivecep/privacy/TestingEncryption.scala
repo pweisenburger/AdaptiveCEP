@@ -97,7 +97,7 @@ object TestingEncryption extends App {
     val encTwo: EncInt = Await.result(cryptoSvc.encrypt(Comparable)(2), Duration(5, TimeUnit.SECONDS))
 
     val encQuery2: Query2[EncInt, EncInt] =
-    stream[EncInt]("A").join(stream[EncInt]("B"), slidingWindow(1.instances), slidingWindow(1.instances))
+    stream[EncInt]("A").join(stream[EncInt]("B"), slidingWindow(3.instances), slidingWindow(3.instances))
       .where((x, y) => interpret(interpret( interpret(x * encTwo ) + encOne) > y), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
 
