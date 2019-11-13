@@ -69,11 +69,11 @@ object PerformanceEvaluation extends App {
     val publisherA: ActorRef = actorSystem.actorOf(Props(EvaluationPublisher(id => Event1(MeasureEvent(java.util.UUID.randomUUID.toString, id)))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
     val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id * 2))).withDeploy(Deploy(scope = RemoteScope(address2))), "B")
     //
-//    val cryptoActor: ActorRef = actorSystem.actorOf(Props[CryptoServiceActor].withDeploy(Deploy(scope = RemoteScope(address3))), "CryptoService")
-//
-//    val cryptoSvc = new CryptoServiceWrapper(cryptoActor)
-//
-//    val interpret = new CEPRemoteInterpreter(cryptoSvc)
+    //    val cryptoActor: ActorRef = actorSystem.actorOf(Props[CryptoServiceActor].withDeploy(Deploy(scope = RemoteScope(address3))), "CryptoService")
+    //
+    //    val cryptoSvc = new CryptoServiceWrapper(cryptoActor)
+    //
+    //    val interpret = new CEPRemoteInterpreter(cryptoSvc)
 
     //    val encOne: EncInt = Await.result(cryptoSvc.encrypt(Comparable)(1), Duration(5, TimeUnit.SECONDS))
     //    val encTwo: EncInt = Await.result(cryptoSvc.encrypt(Comparable)(2), Duration(5, TimeUnit.SECONDS))
@@ -115,20 +115,20 @@ object PerformanceEvaluation extends App {
     /** *
       * Normal operations with no privacy what so ever
       */
-    implicit val pc: PrivacyContext = NoPrivacyContext
+    //    implicit val pc: PrivacyContext = NoPrivacyContext
 
 
     /** *
       * SGX enabled privacy
       */
 
-    //    val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
-    //    val measureEventTransformer = EncDecTransformer(encryptMeasureEvent, decryptMeasureEvent)
-    //    implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
-    //      Set(TrustedHost(NodeHost(host1))), // Trusted hosts
-    //      eventProcessorClient,
-    //      Map("A" -> Event1Rule(measureEventTransformer), "B" -> Event1Rule(IntEventTransformer))
-    //    )
+    val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
+    val measureEventTransformer = EncDecTransformer(encryptMeasureEvent, decryptMeasureEvent)
+    implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
+      Set(TrustedHost(NodeHost(host1))), // Trusted hosts
+      eventProcessorClient,
+      Map("A" -> Event1Rule(measureEventTransformer), "B" -> Event1Rule(IntEventTransformer))
+    )
 
 
     /** *

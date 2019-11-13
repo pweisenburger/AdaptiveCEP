@@ -90,11 +90,11 @@ export HOST4="13.80.151.52"
 
 
 export HOST1="40.115.4.25"
-export HOST2="40.68.242.241"
-export HOST3="40.68.242.177"
-export HOST4="40.68.243.16"
-export HOST5="40.68.242.187"
-export HOST6="40.68.242.236"
+export HOST2="51.144.170.122"
+export HOST3="51.144.170.15"
+export HOST4="51.144.170.119"
+export HOST5="51.144.170.104"
+export HOST6="51.144.170.61"
 export HOST7="13.80.151.52"
 
 
