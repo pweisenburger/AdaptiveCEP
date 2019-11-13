@@ -94,7 +94,7 @@ object PerformanceEvaluation extends App {
     val query2: Query2[MeasureEvent, Int] =
       stream[MeasureEvent]("A").
         and(stream[Int]("B"))
-        .where((x, y) => x.data < y, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+        .where((x, y) => x.data != y, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
 
     val publishers: Map[String, ActorRef] = Map(

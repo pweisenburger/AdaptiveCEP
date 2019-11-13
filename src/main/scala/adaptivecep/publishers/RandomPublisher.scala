@@ -24,6 +24,10 @@ case class RandomPublisher(createEventFromId: Integer => Event) extends Publishe
     initialDelay = FiniteDuration(20000, TimeUnit.MILLISECONDS),
     interval = FiniteDuration(1, TimeUnit.SECONDS),
     runnable = () => {
-      (1 to 5000).foreach(n => publish(n))
+      (1 to 5000).foreach(
+        n =>  {
+//          Thread.sleep(200)
+          publish(n)}
+      )
     })
 }

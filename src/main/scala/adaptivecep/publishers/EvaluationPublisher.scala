@@ -42,6 +42,7 @@ case class EvaluationPublisher(createEventFromId: Integer => Event) extends Publ
     interval = FiniteDuration(1, TimeUnit.SECONDS),
     runnable = () => {
       (1 to 5000).foreach(n => {
+//        Thread.sleep(200)
         publish(n)
       })
     })
