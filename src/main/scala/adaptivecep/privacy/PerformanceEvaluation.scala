@@ -80,13 +80,13 @@ object PerformanceEvaluation extends App {
     val encTwo: EncInt = Await.result(cryptoSvc.encrypt(Comparable)(2), Duration(5, TimeUnit.SECONDS))
     //
 
-    val query1: Query2[MeasureEventEncPhe, EncInt] =
-      stream[MeasureEventEncPhe]("A").and(stream[EncInt]("B"))
-        .where((x, y) => interpret(interpret(interpret(x.data * encTwo) + y) > encZero), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+    //    val query1: Query2[MeasureEventEncPhe, EncInt] =
+    //      stream[MeasureEventEncPhe]("A").and(stream[EncInt]("B"))
+    //        .where((x, y) => interpret(interpret(interpret(x.data * encTwo) + y) > encZero), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
-    //            val query2: Query2[MeasureEventEncPhe, EncInt] =
-    //              stream[MeasureEventEncPhe]("A").and(stream[EncInt]("B"))
-    //                .where((x, y) => interpret(x.data < y) || interpret(x.data > y), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+    val query2: Query2[MeasureEventEncPhe, EncInt] =
+      stream[MeasureEventEncPhe]("A").and(stream[EncInt]("B"))
+        .where((x, y) => interpret(x.data < y) || interpret(x.data > y), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
 
     //    val query1: Query2[MeasureEvent, Int] =
@@ -146,7 +146,7 @@ object PerformanceEvaluation extends App {
 
 
     val placement: ActorRef = actorSystem.actorOf(Props(PlacementActorCentralized(actorSystem,
-      query1,
+      query2,
       publishers,
       publishersHosts,
       AverageFrequencyMonitorFactory(interval = 3000, logging = false),
