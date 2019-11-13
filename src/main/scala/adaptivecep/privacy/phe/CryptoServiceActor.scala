@@ -6,6 +6,7 @@ import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
 import akka.dispatch.{BoundedMessageQueueSemantics, RequiresMessageQueue}
 import crypto._
+import crypto.cipher.Common
 import crypto.dsl._
 import crypto.remote.{CryptoServiceImpl, CryptoServicePlus}
 
@@ -22,6 +23,9 @@ class CryptoServiceActor extends Actor with ActorLogging with RequiresMessageQue
   implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
 
   val keyRing: KeyRing = KeyRing.create
+
+
+
   val cryptoService: CryptoServicePlus = new CryptoServiceImpl(keyRing)
 
   //TODO: remove this interpreter as it will not be used anymore

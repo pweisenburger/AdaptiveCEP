@@ -82,7 +82,13 @@ case class StreamNode(
               emitEvent(encEvent)
             case PhePrivacyContext(cryptoService, sourceMappers) =>
               val mapper = sourceMappers(publisherName)
+
+              val t0 = System.nanoTime()
               val mappedEvent = mapSource(a,mapper,cryptoService)
+              val t1 = System.nanoTime()
+              if(publisherName == "B")
+                println(t1 - t0 / 1000000)
+
               emitEvent(mappedEvent )
 //              println(s"Emitting encrypted event for event $a and $mappedEvent\n")
               //TODO: encrypt using source conversion rules
