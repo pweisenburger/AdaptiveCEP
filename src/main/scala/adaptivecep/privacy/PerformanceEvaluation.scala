@@ -48,8 +48,8 @@ object PerformanceEvaluation extends App {
     val address3 = Address("akka.tcp", "ClusterSystem", sys.env("HOST3"), 8000)
     val address4 = Address("akka.tcp", "ClusterSystem", sys.env("HOST4"), 8000)
     val address5 = Address("akka.tcp", "ClusterSystem", sys.env("HOST5"), 8000)
-    val address6 = Address("akka.tcp", "ClusterSystem", sys.env("HOST6"), 8000)
-    val address7 = Address("akka.tcp", "ClusterSystem", sys.env("HOST7"), 8000)
+//    val address6 = Address("akka.tcp", "ClusterSystem", sys.env("HOST6"), 8000)
+//    val address7 = Address("akka.tcp", "ClusterSystem", sys.env("HOST7"), 8000)
 
     ////deploy host actors
     val host1: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address1))), "Host" + "1")
@@ -57,11 +57,11 @@ object PerformanceEvaluation extends App {
     val host3: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address3))), "Host" + "3")
     val host4: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address4))), "Host" + "4")
     val host5: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address5))), "Host" + "5")
-    val host6: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address6))), "Host" + "6")
-    val host7: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address7))), "Host" + "7")
+//    val host6: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address6))), "Host" + "6")
+//    val host7: ActorRef = actorSystem.actorOf(Props[HostActorCentralized].withDeploy(Deploy(scope = RemoteScope(address7))), "Host" + "7")
 
-    val hosts: Set[ActorRef] = Set(host1, host2, host3, host4, host5, host6, host7)
-    //    val hosts: Set[ActorRef] = Set(host1, host2, host3, host4)
+//    val hosts: Set[ActorRef] = Set(host1, host2, host3, host4, host5, host6, host7)
+        val hosts: Set[ActorRef] = Set(host1, host2, host3, host4, host5)
 
     hosts.foreach(host => host ! Hosts(hosts))
 
@@ -148,7 +148,7 @@ object PerformanceEvaluation extends App {
       publishersHosts,
       AverageFrequencyMonitorFactory(interval = 3000, logging = false),
       PathLatencyMonitorFactory(interval = 1000, logging = false),
-      PathBandwidthMonitorFactory(interval = 1000, logging = false), NodeHost(host7),
+      PathBandwidthMonitorFactory(interval = 1000, logging = false), NodeHost(host5),
       hosts, optimizeFor)), "Placement")
 
     println("\n Calling Initialize query \n")
