@@ -87,7 +87,7 @@ case class StreamNode(
               val mappedEvent = mapSource(a,mapper,cryptoService)
               val t1 = System.nanoTime()
               if(publisherName == "B")
-                println(t1 - t0 / 1000000)
+                println((t1 - t0) / 1000000)
 
               emitEvent(mappedEvent )
 //              println(s"Emitting encrypted event for event $a and $mappedEvent\n")
