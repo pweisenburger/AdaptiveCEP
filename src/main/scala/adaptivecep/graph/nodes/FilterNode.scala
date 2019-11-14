@@ -110,10 +110,8 @@ case class FilterNode(
     } ///check if pc is empty
   }
 
+  var eventsNo = 0
   def processEvent(event: Event, sender: ActorRef): Unit = {
-
-
-//    logEvent(event)
 
     if (sender == childNode) {
       if (privacyContext.nonEmpty) {
@@ -124,9 +122,15 @@ case class FilterNode(
           case SgxPrivacyContext(_, _, _) =>
             try {
               if (eventProcessor.nonEmpty) {
+                eventsNo += 1
+                print(s"event #${eventsNo}")
                 if (eventProcessor.get.applyPredicate(cond, event)) {
                   emitEvent(event)
+                  println("passed!")
+                }else{
+                  println("dropped!")
                 }
+
               } else {
                 println("event processor not initialized")
               }
@@ -136,21 +140,9 @@ case class FilterNode(
             }
           case PhePrivacyContext(svc, _) =>
             try {
-
-//              event match {
-//                case Event2(e1: EncInt, e2: EncInt) =>
-//                  svc.decryptAndPrint(e1)
-//                  svc.decryptAndPrint(e2)
-//                case _ =>
-//              }
-
               if (cond(event)) {
-//                svc.println("--------passed")
                 emitEvent(event)
               }
-//              svc.println("--------dropped")
-
-
             } catch {
               case e => println("encountered some error while filtering: " + e.getMessage)
             }
