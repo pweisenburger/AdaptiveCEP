@@ -14,6 +14,7 @@ object TestingRemoteObject {
 
       val client = EventProcessorClient("13.80.151.52", 60000)
       val remoteObject = client.lookupObject()
+
       val input = Event1(5)
       if (remoteObject.applyPredicate(condE, input)) {
         println("condition satisfied")
