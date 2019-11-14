@@ -19,9 +19,9 @@ object TestingRemoteObject {
       (1 to 5000).foreach(i => {
         val input = Event1(i)
         if (remoteObject.applyPredicate(condE, input)) {
-          println("condition satisfied")
+          println("condition satisfied for " + i)
         } else {
-          println("condition not satisfied")
+          println("condition not satisfied "  + i)
         }
       })
 
