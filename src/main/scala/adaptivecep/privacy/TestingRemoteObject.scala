@@ -15,15 +15,15 @@ object TestingRemoteObject {
       val client = EventProcessorClient("13.80.151.52", 60000)
       val remoteObject = client.lookupObject()
 
-      val input = Event1(5)
-      if (remoteObject.applyPredicate(condE, input)) {
-        println("condition satisfied")
-      } else {
-        println("condition not satisfied")
-      }
-//      (1 to 5000).foreach(i => {
-//
-//      })
+
+      (1 to 5000).foreach(i => {
+        val input = Event1(i)
+        if (remoteObject.applyPredicate(condE, input)) {
+          println("condition satisfied")
+        } else {
+          println("condition not satisfied")
+        }
+      })
 
     } catch {
       case e: Exception =>
