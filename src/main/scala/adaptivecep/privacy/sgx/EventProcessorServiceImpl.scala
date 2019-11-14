@@ -32,35 +32,36 @@ class EventProcessorServiceImpl extends EventProcessorServer {
 
   override def applyPredicate(cond: Event => Boolean, input: Event): Boolean = this.synchronized(
 
-      (cond, input) match {
-        case (f: (Event1 => Boolean), e: Event1) => f(e)
-        case (f: (Event2 => Boolean), e: Event2) => f(e)
-        case (f: (Event3 => Boolean), e: Event3) => f(e)
-        case (f: (Event4 => Boolean), e: Event4) => f(e)
-        case (f: (Event5 => Boolean), e: Event5) => f(e)
-        case (f: (Event6 => Boolean), e: Event6) => f(e)
-        case (f: (Event1 => Boolean), e: EncEvent1) =>
-          val decryptedEvent = getDecryptedEvent(e).asInstanceOf[Event1]
-          f(decryptedEvent)
-        case (f: (Event2 => Boolean), e: EncEvent2) =>
-          val decryptedEvent = getDecryptedEvent(e).asInstanceOf[Event2]
-          println(s"decrypted and applying predicate ${decryptedEvent}")
-          f(decryptedEvent)
-        case (f: (Event3 => Boolean), e: EncEvent3) =>
-          val decryptedEvent = getDecryptedEvent(e).asInstanceOf[Event3]
-          f(decryptedEvent)
-        case (f: (Event4 => Boolean), e: EncEvent4) =>
-          val decryptedEvent = getDecryptedEvent(e).asInstanceOf[Event4]
-          f(decryptedEvent)
-        case (f: (Event5 => Boolean), e: EncEvent5) =>
-          val decryptedEvent = getDecryptedEvent(e).asInstanceOf[Event5]
-          f(decryptedEvent)
-        case (f: (Event6 => Boolean), e: EncEvent6) =>
-          val decryptedEvent = getDecryptedEvent(e).asInstanceOf[Event6]
-          f(decryptedEvent)
-        case _ => println("unexpected type!")
-          sys.error("an error happened")
-      }
+    (cond, input) match {
+      case (f: (Event1 => Boolean), e: Event1) => f(e)
+      case (f: (Event2 => Boolean), e: Event2) => f(e)
+      case (f: (Event3 => Boolean), e: Event3) => f(e)
+      case (f: (Event4 => Boolean), e: Event4) => f(e)
+      case (f: (Event5 => Boolean), e: Event5) => f(e)
+      case (f: (Event6 => Boolean), e: Event6) => f(e)
+
+      case (f: (Event1 => Boolean), e: EncEvent1) =>
+        val decryptedEvent = getDecryptedEvent(e).asInstanceOf[Event1]
+        f(decryptedEvent)
+      case (f: (Event2 => Boolean), e: EncEvent2) =>
+        val decryptedEvent = getDecryptedEvent(e).asInstanceOf[Event2]
+        println("decrypted and applying predicate" + decryptedEvent)
+        f(decryptedEvent)
+      case (f: (Event3 => Boolean), e: EncEvent3) =>
+        val decryptedEvent = getDecryptedEvent(e).asInstanceOf[Event3]
+        f(decryptedEvent)
+      case (f: (Event4 => Boolean), e: EncEvent4) =>
+        val decryptedEvent = getDecryptedEvent(e).asInstanceOf[Event4]
+        f(decryptedEvent)
+      case (f: (Event5 => Boolean), e: EncEvent5) =>
+        val decryptedEvent = getDecryptedEvent(e).asInstanceOf[Event5]
+        f(decryptedEvent)
+      case (f: (Event6 => Boolean), e: EncEvent6) =>
+        val decryptedEvent = getDecryptedEvent(e).asInstanceOf[Event6]
+        f(decryptedEvent)
+      case _ => println("unexpected type!")
+        sys.error("an error happened")
+    }
   )
 
 

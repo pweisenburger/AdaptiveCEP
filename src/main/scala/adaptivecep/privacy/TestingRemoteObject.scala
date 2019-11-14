@@ -8,22 +8,21 @@ object TestingRemoteObject {
     try {
 
 
-      def cond = (x: Int) => x > 5
+      def cond = (x: Int) => x > 2500
 
       val condE = toFunEventBoolean(cond)
 
-      val input = Event1(5)
-
-
       val client = EventProcessorClient("13.80.151.52", 60000)
-
       val remoteObject = client.lookupObject()
-      if (remoteObject.applyPredicate(condE, input)) {
-        println("condition satisfied")
-      } else {
-        println("condition not satisfied")
 
-      }
+      (1 to 5000).foreach(i => {
+        val input = Event1(i)
+        if (remoteObject.applyPredicate(condE, input)) {
+          println("condition satisfied")
+        } else {
+          println("condition not satisfied")
+        }
+      })
 
     } catch {
       case e: Exception =>
