@@ -44,12 +44,7 @@ class EventProcessorServiceImpl extends EventProcessorServer {
           f(decryptedEvent)
         case (f: (Event2 => Boolean), e: EncEvent2) =>
           val decryptedEvent = getDecryptedEvent(e).asInstanceOf[Event2]
-          decryptedEvent match {
-            case Event2(e1: MeasureEvent, e2: Int) =>
-              println(s"applying predicate on ${e1.data} and ${e2}")
-            case _ =>
-          }
-//          println(s"decrypted and applying predicate ${decryptedEvent}")
+          println(s"decrypted and applying predicate ${decryptedEvent}")
           f(decryptedEvent)
         case (f: (Event3 => Boolean), e: EncEvent3) =>
           val decryptedEvent = getDecryptedEvent(e).asInstanceOf[Event3]
