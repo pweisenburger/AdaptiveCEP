@@ -45,8 +45,8 @@ libraryDependencies ++= Seq(
   * 4) the output will be saved in folder: target/scala-2.12
    */
 
-test in assembly := {}
-
-mainClass in assembly := Some("adaptivecep.privacy.sgx.Server")
-
-assemblyJarName in assembly := "sgx-server.jar"
+//test in assembly := {}
+//
+//mainClass in assembly := Some("adaptivecep.privacy.sgx.Server")
+//
+//assemblyJarName in assembly := "sgx-server.jar"
