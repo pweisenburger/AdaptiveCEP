@@ -23,7 +23,7 @@ case class EvaluationPublisher2(createEventFromId: Integer => Event) extends Pub
   var firstEvent: Long = 0
   var lastEvent: Long = 0
 
-  var beginning: Long = 20000
+  val beginning: Long = 20000
   var recordOnce = false
 
   def publish(id: Int): Unit = {

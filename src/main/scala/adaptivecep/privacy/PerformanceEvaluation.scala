@@ -71,15 +71,15 @@ object PerformanceEvaluation extends App {
 
     val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id * 2))).withDeploy(Deploy(scope = RemoteScope(address2))), "B")
 
-    val cryptoActor: ActorRef = actorSystem.actorOf(Props[CryptoServiceActor].withDeploy(Deploy(scope = RemoteScope(address3))), "CryptoService")
+//    val cryptoActor: ActorRef = actorSystem.actorOf(Props[CryptoServiceActor].withDeploy(Deploy(scope = RemoteScope(address3))), "CryptoService")
+//
+//    val cryptoSvc = new CryptoServiceWrapper(cryptoActor)
+//
+//    val interpret = new CEPRemoteInterpreter(cryptoSvc)
 
-    val cryptoSvc = new CryptoServiceWrapper(cryptoActor)
-
-    val interpret = new CEPRemoteInterpreter(cryptoSvc)
-
-    val encZero: EncInt = Await.result(cryptoSvc.encrypt(Comparable)(0), Duration(5, TimeUnit.SECONDS))
-    val encOne: EncInt = Await.result(cryptoSvc.encrypt(Comparable)(1), Duration(5, TimeUnit.SECONDS))
-    val encTwo: EncInt = Await.result(cryptoSvc.encrypt(Comparable)(2), Duration(5, TimeUnit.SECONDS))
+//    val encZero: EncInt = Await.result(cryptoSvc.encrypt(Comparable)(0), Duration(5, TimeUnit.SECONDS))
+//    val encOne: EncInt = Await.result(cryptoSvc.encrypt(Comparable)(1), Duration(5, TimeUnit.SECONDS))
+//    val encTwo: EncInt = Await.result(cryptoSvc.encrypt(Comparable)(2), Duration(5, TimeUnit.SECONDS))
 
 
     //    val query: Query2[MeasureEventEncPhe, EncInt] =
@@ -90,9 +90,9 @@ object PerformanceEvaluation extends App {
     //      stream[MeasureEventEncPhe]("A").and(stream[EncInt]("B"))
     //        .where((x, y) => interpret(x.data < y) || interpret(x.data > y), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
-    val query: Query2[EncInt, EncInt] =
-      stream[EncInt]("A").and(stream[EncInt]("B"))
-        .where((x, y) => interpret(interpret(interpret(x * encTwo) + y) > encZero), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+//    val query: Query2[EncInt, EncInt] =
+//      stream[EncInt]("A").and(stream[EncInt]("B"))
+//        .where((x, y) => interpret(interpret(interpret(x * encTwo) + y) > encZero), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
 
 //    val query: Query2[EncInt, EncInt] =
@@ -112,13 +112,13 @@ object PerformanceEvaluation extends App {
     //        and(stream[Int]("B"))
     //        .where((x, y) => x.data < y || x.data > y, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
-    ///SIMPLE SGX + BASELINE
-    //    val query: Query2[Int, Int] =
-    //      stream[Int]("A").
-    //        and(stream[Int]("B"))
-    //        .where((x, y) => x < y || x > y, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+    /////SIMPLE SGX + BASELINE
+        val query: Query2[Int, Int] =
+          stream[Int]("A").
+            and(stream[Int]("B"))
+            .where((x, y) => x < y || x > y, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
-    ///COMPLEX SGX + BASELINE
+    //////COMPLEX SGX + BASELINE
     //    val query: Query2[Int, Int] =
     //      stream[Int]("A").
     //        and(stream[Int]("B"))
@@ -158,12 +158,12 @@ object PerformanceEvaluation extends App {
     //    )
 
 
-    //    val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
-    //    implicit val sgxPrivacyContext2: PrivacyContext = SgxPrivacyContext(
-    //      Set(TrustedHost(NodeHost(host1))), // Trusted hosts
-    //      eventProcessorClient,
-    //      Map("A" -> Event1Rule(IntEventTransformer), "B" -> Event1Rule(IntEventTransformer))
-    //    )
+    val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
+    implicit val sgxPrivacyContext2: PrivacyContext = SgxPrivacyContext(
+      Set(TrustedHost(NodeHost(host1))), // Trusted hosts
+      eventProcessorClient,
+      Map("A" -> Event1Rule(IntEventTransformer), "B" -> Event1Rule(IntEventTransformer))
+    )
 
 
     /** *
@@ -177,10 +177,10 @@ object PerformanceEvaluation extends App {
     //    )
 
 
-    implicit val phePrivacyContext2: PrivacyContext = PhePrivacyContext(
-      cryptoSvc,
-      Map("A" -> Event1Rule(IntPheSourceMapper), "B" -> Event1Rule(IntPheSourceMapper))
-    )
+//    implicit val phePrivacyContext2: PrivacyContext = PhePrivacyContext(
+//      cryptoSvc,
+//      Map("A" -> Event1Rule(IntPheSourceMapper), "B" -> Event1Rule(IntPheSourceMapper))
+//    )
 
 
     val placement: ActorRef = actorSystem.actorOf(Props(PlacementActorCentralized(actorSystem,
