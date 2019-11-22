@@ -42,3 +42,4 @@ sudo SGXLKL_TAP=sgxlkl_tap0 SGXLKL_HEAP=500M sgx-lkl-java ./sgxlkl-java-fs.img -
 sudo ip tuntap del dev sgxlkl_tap0 mode tap
 
 
+sudo java -jar sgx-server.jar test.policy 13.80.151.52 60000
