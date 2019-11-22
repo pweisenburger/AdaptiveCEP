@@ -90,14 +90,14 @@ object PerformanceEvaluation extends App {
     //      stream[MeasureEventEncPhe]("A").and(stream[EncInt]("B"))
     //        .where((x, y) => interpret(x.data < y) || interpret(x.data > y), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
-    //        val query: Query2[EncInt, EncInt] =
-    //          stream[EncInt]("A").and(stream[EncInt]("B"))
-    //            .where((x, y) => interpret(interpret(interpret(x * encTwo) + y) > encZero), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
-    //
-
     val query: Query2[EncInt, EncInt] =
-    stream[EncInt]("A").and(stream[EncInt]("B"))
-      .where((x, y) => interpret(x < y) || interpret(x > y), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+      stream[EncInt]("A").and(stream[EncInt]("B"))
+        .where((x, y) => interpret(interpret(interpret(x * encTwo) + y) > encZero), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+
+
+//    val query: Query2[EncInt, EncInt] =
+//    stream[EncInt]("A").and(stream[EncInt]("B"))
+//      .where((x, y) => interpret(x < y) || interpret(x > y), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
 
     ////////////////////////////////////////////////SGX and BASELINE//////////////////////////
