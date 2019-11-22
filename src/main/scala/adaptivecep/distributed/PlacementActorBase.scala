@@ -117,11 +117,12 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
         case _ =>
       }
     case Event2(e1, e2) => println(s"COMPLEX EVENT:\tEvent1($e1,$e2)")
-      e1 match {
-        case MeasureEvent(id, data) => publishers("A") ! EventReceived(id, data)
-        case MeasureEventEncPhe(id, data) => publishers("A") ! EventReceived(id, 0)
-        case _ =>
-      }
+      publishers("A") ! EventReceived("Any", 1)
+//      e1 match {
+//        case MeasureEvent(id, data) => publishers("A") ! EventReceived(id, data)
+//        case MeasureEventEncPhe(id, data) => publishers("A") ! EventReceived(id, 0)
+//        case _ =>
+//      }
     //    case EncEvent1(e1, rule) => println(s"COMPLEX ENCEVENT:\tEvent1($e1)")
     case e: EncEvent1 =>
       val decrypted = getDecryptedEvent(e).asInstanceOf[Event1]
