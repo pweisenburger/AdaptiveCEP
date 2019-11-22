@@ -69,7 +69,7 @@ object PerformanceEvaluation extends App {
 //    val publisherA: ActorRef = actorSystem.actorOf(Props(EvaluationPublisher(id => Event1(MeasureEvent(java.util.UUID.randomUUID.toString, id)))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
     val publisherA: ActorRef = actorSystem.actorOf(Props(EvaluationPublisher2(id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
 
-    val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id * 2))).withDeploy(Deploy(scope = RemoteScope(address2))), "B")
+    val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id * id))).withDeploy(Deploy(scope = RemoteScope(address2))), "B")
     //
     //    val cryptoActor: ActorRef = actorSystem.actorOf(Props[CryptoServiceActor].withDeploy(Deploy(scope = RemoteScope(address3))), "CryptoService")
     //
