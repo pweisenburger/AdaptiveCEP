@@ -20,6 +20,9 @@ case class EvaluationPublisher2(createEventFromId: Integer => Event) extends Pub
 
   var id = 0
   var countReceived = 0
+  var firstEvent: Long = 0
+  var lastEvent: Long = 0
+
   var beginning: Long = System.nanoTime()
   var recordOnce = false
 
@@ -30,11 +33,11 @@ case class EvaluationPublisher2(createEventFromId: Integer => Event) extends Pub
         if (eid == 5000) recordOnce = true
         if (!recordOnce) {
           val timestamp = System.nanoTime()
-          val time = (timestamp - beginning) / 1000000
+          val time = (timestamp - beginning - 20000) / 1000000
           if (eid == 1)
-            println(s"first event published after: $time ms")
+            firstEvent = time
           if (eid == 4999)
-            println(s"last event published after: $time ms")
+            lastEvent = time
         }
       case _ =>
     }
@@ -57,8 +60,8 @@ case class EvaluationPublisher2(createEventFromId: Integer => Event) extends Pub
       countReceived += 1
       if (countReceived < 3500) {
         val t1 = System.nanoTime()
-        val timeSpan = (t1 - beginning) / 1000000
-        println(s"$data,$timeSpan")
+        val timeSpan = (t1 - beginning - 20000) / 1000000
+        println(s"$data,$timeSpan,$firstEvent,$lastEvent")
       }
 
   }
