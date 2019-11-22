@@ -19,6 +19,7 @@ import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Address, Deploy, 
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
 import akka.remote.RemoteScope
+import crypto.EncInt
 import rescala.default._
 import rescala.{default, _}
 import rescala.core.{CreationTicket, ReSerializable}
@@ -115,15 +116,17 @@ trait PlacementActorBase extends Actor with ActorLogging with System {
         case MeasureEvent(id, data) => publishers("A") ! EventReceived(id, data)
         case MeasureEventEncPhe(id, data) => publishers("A") ! EventReceived(id, 0)
         case value: Int => publishers("A") ! EventReceived("ANY", value)
+        case EncInt => publishers("A") ! EventReceived("ANY", 0)
         case _ =>
       }
     case Event2(e1, e2) =>
       println(s"COMPLEX EVENT:\tEvent1($e1,$e2)")
-      
+
       e1 match {
         case MeasureEvent(id, data) => publishers("A") ! EventReceived(id, data)
         case MeasureEventEncPhe(id, data) => publishers("A") ! EventReceived(id, 0)
         case value: Int => publishers("A") ! EventReceived("ANY", value)
+        case EncInt => publishers("A") ! EventReceived("ANY", 0)
         case _ =>
       }
     //    case EncEvent1(e1, rule) => println(s"COMPLEX ENCEVENT:\tEvent1($e1)")
