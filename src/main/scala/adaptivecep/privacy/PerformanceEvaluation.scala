@@ -66,10 +66,10 @@ object PerformanceEvaluation extends App {
     hosts.foreach(host => host ! Hosts(hosts))
 
     /////deploy publishers
-//    val publisherA: ActorRef = actorSystem.actorOf(Props(EvaluationPublisher(id => Event1(MeasureEvent(java.util.UUID.randomUUID.toString, id)))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+    //    val publisherA: ActorRef = actorSystem.actorOf(Props(EvaluationPublisher(id => Event1(MeasureEvent(java.util.UUID.randomUUID.toString, id)))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
     val publisherA: ActorRef = actorSystem.actorOf(Props(EvaluationPublisher2(id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
 
-    val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id * id))).withDeploy(Deploy(scope = RemoteScope(address2))), "B")
+    val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id * 2))).withDeploy(Deploy(scope = RemoteScope(address2))), "B")
     //
     //    val cryptoActor: ActorRef = actorSystem.actorOf(Props[CryptoServiceActor].withDeploy(Deploy(scope = RemoteScope(address3))), "CryptoService")
     //
@@ -90,16 +90,41 @@ object PerformanceEvaluation extends App {
     //      stream[MeasureEventEncPhe]("A").and(stream[EncInt]("B"))
     //        .where((x, y) => interpret(x.data < y) || interpret(x.data > y), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
+    //        val query: Query2[EncInt, EncInt] =
+    //          stream[EncInt]("A").and(stream[EncInt]("B"))
+    //            .where((x, y) => interpret(interpret(interpret(x * encTwo) + y) > encZero), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+    //
+    //        val query: Query2[EncInt, EncInt] =
+    //          stream[EncInt]("A").and(stream[EncInt]("B"))
+    //            .where((x, y) => interpret(x < y) || interpret(x > y), frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
-//        val query: Query2[MeasureEvent, Int] =
-//          stream[MeasureEvent]("A").
-//            and(stream[Int]("B"))
-//            .where((x, y) => x.data * 2 + y > 0, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
-//
-    val query: Query2[MeasureEvent, Int] =
-      stream[MeasureEvent]("A").
+
+////////////////////////////////////////////////SGX and BASELINE
+
+    //        val query: Query2[MeasureEvent, Int] =
+    //          stream[MeasureEvent]("A").
+    //            and(stream[Int]("B"))
+    //            .where((x, y) => x.data * 2 + y > 0, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+    //
+    //    val query: Query2[MeasureEvent, Int] =
+    //      stream[MeasureEvent]("A").
+    //        and(stream[Int]("B"))
+    //        .where((x, y) => x.data < y || x.data > y, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+
+    ///SIMPLE SGX + BASELINE
+    val query: Query2[Int, Int] =
+      stream[Int]("A").
         and(stream[Int]("B"))
-        .where((x, y) => x.data < y || x.data > y, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+        .where((x, y) => x < y || x > y, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+
+    ///COMPLEX SGX + BASELINE
+//    val query: Query2[Int, Int] =
+//      stream[Int]("A").
+//        and(stream[Int]("B"))
+//        .where((x, y) => x *2 + y > 0, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+
+
+
 
 
     val publishers: Map[String, ActorRef] = Map(
@@ -120,24 +145,23 @@ object PerformanceEvaluation extends App {
     /** *
       * Normal operations with no privacy what so ever
       */
-            implicit val pc: PrivacyContext = NoPrivacyContext
+    implicit val pc: PrivacyContext = NoPrivacyContext
 
 
     /** *
-      * SGX enabled privacy
+      * SGX enabled privacy for Measure EVENT
       */
-
-//    val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
-//    val measureEventTransformer = EncDecTransformer(encryptMeasureEvent, decryptMeasureEvent)
-//    implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
-//      Set(TrustedHost(NodeHost(host1))), // Trusted hosts
-//      eventProcessorClient,
-//      Map("A" -> Event1Rule(measureEventTransformer), "B" -> Event1Rule(IntEventTransformer))
-//    )
+    //    val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
+    //    val measureEventTransformer = EncDecTransformer(encryptMeasureEvent, decryptMeasureEvent)
+    //    implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
+    //      Set(TrustedHost(NodeHost(host1))), // Trusted hosts
+    //      eventProcessorClient,
+    //      Map("A" -> Event1Rule(measureEventTransformer), "B" -> Event1Rule(IntEventTransformer))
+    //    )
 
 
     /** *
-      * PHE enabled privacy
+      * PHE enabled privacy for Measure EVENT
       */
 
     //    val measureEventSourceMapper = PheSourceTransformer(pheMapMeasureEvent)
