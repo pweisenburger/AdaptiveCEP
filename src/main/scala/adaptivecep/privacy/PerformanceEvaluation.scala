@@ -117,7 +117,7 @@ object PerformanceEvaluation extends App {
     val query: Query2[Int, Int] =
       stream[Int]("A").
         and(stream[Int]("B"))
-        .where((x, y) => x < y , frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+        .where((x, y) => x < y || x > y, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
     ////COMPLEX SGX + BASELINE
 //        val query: Query2[Int, Int] =
@@ -144,22 +144,22 @@ object PerformanceEvaluation extends App {
     /** *
       * Normal operations with no privacy what so ever
       */
-            implicit val pc: PrivacyContext = NoPrivacyContext
+    //        implicit val pc: PrivacyContext = NoPrivacyContext
 
 
-//    val x = MeasureEvent("a", 1)
+    val x = MeasureEvent("a", 1)
     /** *
       * SGX enabled privacy for Measure EVENT
       */
-//    val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
-//    val measureEventTransformer = EncDecTransformer(encryptMeasureEvent, decryptMeasureEvent)
-//    val sr = Event1Rule(measureEventTransformer)
-//    //    val newIntTransformer = EncDecTransformer(encryptInt,decryptInt)
-//    implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
-//      Set(TrustedHost(NodeHost(host1))), // Trusted hosts
-//      eventProcessorClient,
-//      Map("A" -> Event1Rule(IntEventTransformer), "B" -> Event1Rule(IntEventTransformer))
-//    )
+    val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
+    val measureEventTransformer = EncDecTransformer(encryptMeasureEvent, decryptMeasureEvent)
+    val sr = Event1Rule(measureEventTransformer)
+    //    val newIntTransformer = EncDecTransformer(encryptInt,decryptInt)
+    implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
+      Set(TrustedHost(NodeHost(host1))), // Trusted hosts
+      eventProcessorClient,
+      Map("A" -> Event1Rule(IntEventTransformer), "B" -> Event1Rule(IntEventTransformer))
+    )
 
 
     //    val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
