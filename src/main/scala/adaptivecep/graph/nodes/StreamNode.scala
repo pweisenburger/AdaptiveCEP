@@ -78,7 +78,7 @@ case class StreamNode(
             case SgxPrivacyContext(trustedHosts, remoteObject, conversionRules) =>
               val rule = conversionRules(publisherName)
               val encEvent = getEncryptedEvent(a, rule)
-              println(s"Emitting encrypted event for event $a and $encEvent\n")
+//              println(s"Emitting encrypted event for event $a and $encEvent\n")
               emitEvent(encEvent)
             case PhePrivacyContext(cryptoService, sourceMappers) =>
               val mapper = sourceMappers(publisherName)
