@@ -22,6 +22,7 @@ case class EvaluationPublisher(createEventFromId: Integer => Event) extends Publ
 
   var recordOnce = false
   var begin: Long = 0
+  var countReceived:Int = 0
 
 
   def publish(id: Int): Unit = {
@@ -57,9 +58,12 @@ case class EvaluationPublisher(createEventFromId: Integer => Event) extends Publ
     case Subscribe =>
       super.receive(Subscribe)
     case EventReceived(eid,data) =>
-      val t = System.nanoTime()
-      val timeSpan = t / 1000000
-      println(s"$data,$timeSpan,$begin")
+      countReceived += 1
+      if (countReceived < 3500) {
+        val t = System.nanoTime()
+        val timeSpan = t / 1000000
+        println(s"$data,$timeSpan,$begin")
+      }
 //      if (publishedEventsTimestamps.contains(eid)) {
 //        val t0 = publishedEventsTimestamps(eid)
 //        val t1 = System.nanoTime()
