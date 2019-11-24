@@ -35,9 +35,9 @@ class EventProcessorServiceImpl extends EventProcessorServer {
 
     input match {
       case e: EncEvent =>
-        println(s"received :$e")
+//        println(s"received :$e")
         val decryptedEvent = getDecryptedEvent(e)
-        println(s"decrypted :$decryptedEvent")
+//        println(s"decrypted :$decryptedEvent")
         cond(decryptedEvent)
       case e: Event =>
         cond(e)

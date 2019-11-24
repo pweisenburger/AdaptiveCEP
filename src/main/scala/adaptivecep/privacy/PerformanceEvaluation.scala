@@ -66,7 +66,7 @@ object PerformanceEvaluation extends App {
     hosts.foreach(host => host ! Hosts(hosts))
 
     /////deploy publishers
-//    val publisherA: ActorRef = actorSystem.actorOf(Props(EvaluationPublisher(id => Event1(MeasureEvent(java.util.UUID.randomUUID.toString, id)))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+    //    val publisherA: ActorRef = actorSystem.actorOf(Props(EvaluationPublisher(id => Event1(MeasureEvent(java.util.UUID.randomUUID.toString, id)))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
     val publisherA: ActorRef = actorSystem.actorOf(Props(EvaluationPublisher(id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
 
     val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id * 2))).withDeploy(Deploy(scope = RemoteScope(address2))), "B")
@@ -101,29 +101,29 @@ object PerformanceEvaluation extends App {
     //
 
     ////////////////////////////////////////////////SGX and BASELINE//////////////////////////
-//
-//            val query: Query2[MeasureEvent, Int] =
-//              stream[MeasureEvent]("A").
-//                and(stream[Int]("B"))
-//                .where((x, y) => x.data * 2 + y > 0, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+    //
+    //            val query: Query2[MeasureEvent, Int] =
+    //              stream[MeasureEvent]("A").
+    //                and(stream[Int]("B"))
+    //                .where((x, y) => x.data * 2 + y > 0, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
-//
-//     val query: Query2[MeasureEvent, Int] =
-//          stream[MeasureEvent]("A").
-//            and(stream[Int]("B"))
-//            .where((x, y) => x.data < y || x.data > y, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+    //
+    //     val query: Query2[MeasureEvent, Int] =
+    //          stream[MeasureEvent]("A").
+    //            and(stream[Int]("B"))
+    //            .where((x, y) => x.data < y || x.data > y, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
     /////SIMPLE SGX + BASELINE
     val query: Query2[Int, Int] =
       stream[Int]("A").
         and(stream[Int]("B"))
-        .where((x, y) => x != y, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+        .where((x, y) => x < y || x > y, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
     ////COMPLEX SGX + BASELINE
-//    val query: Query2[Int, Int] =
-//              stream[Int]("A").
-//                and(stream[Int]("B"))
-//                .where((x, y) => x *2 + y > 0, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+    //    val query: Query2[Int, Int] =
+    //              stream[Int]("A").
+    //                and(stream[Int]("B"))
+    //                .where((x, y) => x *2 + y > 0, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
 
     val publishers: Map[String, ActorRef] = Map(
@@ -147,14 +147,14 @@ object PerformanceEvaluation extends App {
     //        implicit val pc: PrivacyContext = NoPrivacyContext
 
 
-    val x = MeasureEvent("a",1)
+    val x = MeasureEvent("a", 1)
     /** *
       * SGX enabled privacy for Measure EVENT
       */
     val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
     val measureEventTransformer = EncDecTransformer(encryptMeasureEvent, decryptMeasureEvent)
     val sr = Event1Rule(measureEventTransformer)
-//    val newIntTransformer = EncDecTransformer(encryptInt,decryptInt)
+    //    val newIntTransformer = EncDecTransformer(encryptInt,decryptInt)
     implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
       Set(TrustedHost(NodeHost(host1))), // Trusted hosts
       eventProcessorClient,
@@ -162,14 +162,14 @@ object PerformanceEvaluation extends App {
     )
 
 
-//    val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
-//
-//    implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
-//      Set(TrustedHost(NodeHost(host1)), TrustedHost(NodeHost(host2))), // Trusted hosts
-//      eventProcessorClient,
-//      Map("A" -> Event1Rule(IntEventTransformer),
-//        "B" -> Event1Rule(IntEventTransformer))
-//    )
+    //    val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
+    //
+    //    implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
+    //      Set(TrustedHost(NodeHost(host1)), TrustedHost(NodeHost(host2))), // Trusted hosts
+    //      eventProcessorClient,
+    //      Map("A" -> Event1Rule(IntEventTransformer),
+    //        "B" -> Event1Rule(IntEventTransformer))
+    //    )
 
 
     /** *
