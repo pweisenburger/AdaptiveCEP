@@ -1,7 +1,7 @@
 package adaptivecep.privacy
 
 import adaptivecep.data.Events._
-import adaptivecep.privacy.ConversionRules.{Event1Rule, IntEventTransformer, getEncryptedEvent}
+import adaptivecep.privacy.ConversionRules.{Event1Rule, Event2Rule, IntEventTransformer, getEncryptedEvent}
 import adaptivecep.privacy.encryption.{CryptoAES, Encryption}
 import adaptivecep.privacy.sgx.EventProcessorClient
 import javax.crypto.SecretKeyFactory
@@ -22,17 +22,17 @@ object TestingRemoteObject {
       implicit val encryption: Encryption = CryptoAES(skeySpec, iv)
 
 
-      def cond = (x: Int) => {x > 2500}
+      def cond = (x: Int,y : Int) => {x + y > 2500}
 
       val condE = toFunEventBoolean(cond)
 
-      val client = EventProcessorClient("52.157.152.197", 60000)
+      val client = EventProcessorClient("13.80.151.52", 60000)
       val remoteObject = client.lookupObject()
 
       (1 to 5000).foreach(i => {
 
-        val input = Event1(i)
-        val encEvent = getEncryptedEvent(input, Event1Rule(IntEventTransformer))
+        val input = Event2(i,i)
+        val encEvent = getEncryptedEvent(input, Event2Rule(IntEventTransformer,IntEventTransformer))
         if (remoteObject.applyPredicate(condE, encEvent)) {
           println("condition satisfied for " + i)
         } else {

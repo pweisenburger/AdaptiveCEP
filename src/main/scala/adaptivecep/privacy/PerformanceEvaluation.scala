@@ -163,7 +163,8 @@ object PerformanceEvaluation extends App {
     implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
       Set(TrustedHost(NodeHost(host1)), TrustedHost(NodeHost(host2))), // Trusted hosts
       eventProcessorClient,
-      Map("A" -> Event1Rule(IntEventTransformer), "B" -> Event1Rule(IntEventTransformer))
+      Map("A" -> Event1Rule(IntEventTransformer),
+        "B" -> Event1Rule(IntEventTransformer))
     )
 
 
