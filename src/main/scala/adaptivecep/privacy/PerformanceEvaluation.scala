@@ -121,7 +121,7 @@ object PerformanceEvaluation extends App {
     ////COMPLEX SGX + BASELINE
     val query: Query2[Int, Int] =
               stream[Int]("A").
-                join(stream[Int]("B"),slidingWindow(1.instances), slidingWindow(1.instances))
+                and(stream[Int]("B"))
                 .where((x, y) => x *2 + y > 0, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
 
