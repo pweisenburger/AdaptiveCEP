@@ -114,16 +114,16 @@ object PerformanceEvaluation extends App {
     //            .where((x, y) => x.data < y || x.data > y, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
     /////SIMPLE SGX + BASELINE
-    val query: Query2[Int, Int] =
-      stream[Int]("A").
-        and(stream[Int]("B"))
-        .where((x, y) => x < y || x > y, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+//    val query: Query2[Int, Int] =
+//      stream[Int]("A").
+//        and(stream[Int]("B"))
+//        .where((x, y) => x < y || x > y, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
     ////COMPLEX SGX + BASELINE
-//        val query: Query2[Int, Int] =
-//                  stream[Int]("A").
-//                    and(stream[Int]("B"))
-//                    .where((x, y) => x *2 + y > 0, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
+        val query: Query2[Int, Int] =
+                  stream[Int]("A").
+                    and(stream[Int]("B"))
+                    .where((x, y) => x *2 + y > 0, frequency > ratio(3500.instances, 1.seconds) otherwise { nodeData => /*println(s"PROBLEM:\tNode `${nodeData.name}` emits too few events!")*/})
 
 
     val publishers: Map[String, ActorRef] = Map(
