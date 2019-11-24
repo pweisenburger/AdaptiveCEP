@@ -1,6 +1,7 @@
 package adaptivecep.privacy.sgx
 
 import java.rmi.{Remote, RemoteException}
+import adaptivecep.privacy.shared.Custom._
 
 import adaptivecep.data.Events.Event
 

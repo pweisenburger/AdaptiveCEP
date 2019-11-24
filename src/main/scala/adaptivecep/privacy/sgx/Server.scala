@@ -2,6 +2,7 @@ package adaptivecep.privacy.sgx
 
 import java.rmi.registry.{LocateRegistry, Registry}
 import java.rmi.server.UnicastRemoteObject
+import adaptivecep.privacy.shared.Custom._
 
 object Server {
   var registry: Registry = null
