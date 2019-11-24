@@ -28,6 +28,7 @@ case class EvaluationPublisher2(createEventFromId: Integer => Event) extends Pub
 
   def publish(id: Int): Unit = {
     val event: Event = createEventFromId(id)
+
     event match {
       case Event1(eid: Int) =>
         if (eid == 5000) recordOnce = true
@@ -41,6 +42,7 @@ case class EvaluationPublisher2(createEventFromId: Integer => Event) extends Pub
         }
       case _ =>
     }
+
     source._1.offer(event)
   }
 
@@ -56,6 +58,7 @@ case class EvaluationPublisher2(createEventFromId: Integer => Event) extends Pub
   override def receive: Receive = {
     case Subscribe =>
       super.receive(Subscribe)
+
     case EventReceived(_, data) =>
       countReceived += 1
       if (countReceived < 3500) {
