@@ -32,9 +32,12 @@ class EventProcessorServiceImpl extends EventProcessorServer {
 
   override def applyPredicate(cond: Event => Boolean, input: Event): Boolean = this.synchronized(
 
+
     input match {
       case e: EncEvent =>
+        println(s"received :$e")
         val decryptedEvent = getDecryptedEvent(e)
+        println(s"decrypted :$decryptedEvent")
         cond(decryptedEvent)
       case e: Event =>
         cond(e)
