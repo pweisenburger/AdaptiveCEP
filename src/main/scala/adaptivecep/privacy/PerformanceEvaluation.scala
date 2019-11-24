@@ -66,8 +66,8 @@ object PerformanceEvaluation extends App {
     hosts.foreach(host => host ! Hosts(hosts))
 
     /////deploy publishers
-//    val publisherA: ActorRef = actorSystem.actorOf(Props(EvaluationPublisher(id => Event1(MeasureEvent(java.util.UUID.randomUUID.toString, id)))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
-    val publisherA: ActorRef = actorSystem.actorOf(Props(EvaluationPublisher(id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+    val publisherA: ActorRef = actorSystem.actorOf(Props(EvaluationPublisher(id => Event1(MeasureEvent(java.util.UUID.randomUUID.toString, id)))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
+//    val publisherA: ActorRef = actorSystem.actorOf(Props(EvaluationPublisher(id => Event1(id))).withDeploy(Deploy(scope = RemoteScope(address1))), "A")
 
     val publisherB: ActorRef = actorSystem.actorOf(Props(RandomPublisher(id => Event1(id * 2))).withDeploy(Deploy(scope = RemoteScope(address2))), "B")
 
