@@ -14,6 +14,7 @@ import crypto.dsl.Implicits._
 import adaptivecep.data.Events._
 import adaptivecep.data.Queries._
 import adaptivecep.distributed.centralized.{HostActorCentralized, PlacementActorCentralized}
+import adaptivecep.distributed.greedy.PlacementActorGreedy
 import adaptivecep.distributed.operator.{Host, NodeHost, TrustedHost}
 import adaptivecep.dsl.Dsl._
 import adaptivecep.graph.qos.{AverageFrequencyMonitorFactory, PathBandwidthMonitorFactory, PathLatencyMonitorFactory}
@@ -144,22 +145,19 @@ object PerformanceEvaluation extends App {
     /** *
       * Normal operations with no privacy what so ever
       */
-    //        implicit val pc: PrivacyContext = NoPrivacyContext
+            implicit val pc: PrivacyContext = NoPrivacyContext
 
 
-    val x = MeasureEvent("a", 1)
     /** *
       * SGX enabled privacy for Measure EVENT
       */
-    val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
-    val measureEventTransformer = EncDecTransformer(encryptMeasureEvent, decryptMeasureEvent)
-    val sr = Event1Rule(measureEventTransformer)
-    //    val newIntTransformer = EncDecTransformer(encryptInt,decryptInt)
-    implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
-      Set(TrustedHost(NodeHost(host1))), // Trusted hosts
-      eventProcessorClient,
-      Map("A" -> Event1Rule(IntEventTransformer), "B" -> Event1Rule(IntEventTransformer))
-    )
+//    val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
+////    val measureEventTransformer = EncDecTransformer(encryptMeasureEvent, decryptMeasureEvent)
+//    implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
+//      Set(TrustedHost(NodeHost(host1))), // Trusted hosts
+//      eventProcessorClient,
+//      Map("A" -> Event1Rule(IntEventTransformer), "B" -> Event1Rule(IntEventTransformer))
+//    )
 
 
     //    val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
@@ -189,7 +187,7 @@ object PerformanceEvaluation extends App {
     //    )
 
 
-    val placement: ActorRef = actorSystem.actorOf(Props(PlacementActorCentralized(actorSystem,
+    val placement: ActorRef = actorSystem.actorOf(Props(PlacementActorGreedy(actorSystem,
       query,
       publishers,
       publishersHosts,
