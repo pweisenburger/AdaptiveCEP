@@ -27,10 +27,10 @@ case class EvaluationPublisher(createEventFromId: Integer => Event) extends Publ
 
   def publish(id: Int): Unit = {
     val event: Event = createEventFromId(id)
-//    if(!recordOnce){
-//      begin = System.nanoTime() / 1000000
-//      recordOnce = true
-//    }
+    if(!recordOnce){
+      begin = System.nanoTime() / 1000000
+      recordOnce = true
+    }
 //    event match {
 //      case Event1(e1: MeasureEvent) =>
 //        if(id == 5000) recordOnce = true
