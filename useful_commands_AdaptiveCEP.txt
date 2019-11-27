@@ -88,11 +88,12 @@ export HOST3="13.93.109.83"
 export HOST4="13.80.151.52"
 
 
+#Configure the hosts IPs here and paste these lines to the remote machines
 
 export HOST1="40.115.4.25"
-export HOST2="137.116.213.124"
-export HOST3="23.97.224.216"
-export HOST4="23.97.224.170"
+export HOST2="13.80.22.93"
+export HOST3="13.73.231.131"
+export HOST4="40.68.218.75"
 export HOST5="13.80.151.52"
 
 

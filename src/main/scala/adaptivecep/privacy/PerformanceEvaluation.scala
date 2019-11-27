@@ -151,13 +151,13 @@ object PerformanceEvaluation extends App {
     /** *
       * SGX enabled privacy for Measure EVENT
       */
-//    val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
+    val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)
 ////    val measureEventTransformer = EncDecTransformer(encryptMeasureEvent, decryptMeasureEvent)
-//    implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
-//      Set(TrustedHost(NodeHost(host1))), // Trusted hosts
-//      eventProcessorClient,
-//      Map("A" -> Event1Rule(IntEventTransformer), "B" -> Event1Rule(IntEventTransformer))
-//    )
+    implicit val sgxPrivacyContext: PrivacyContext = SgxPrivacyContext(
+      Set(TrustedHost(NodeHost(host1))), // Trusted hosts
+      eventProcessorClient,
+      Map("A" -> Event1Rule(IntEventTransformer), "B" -> Event1Rule(IntEventTransformer))
+    )
 
 
     //    val eventProcessorClient = EventProcessorClient("13.80.151.52", 60000)

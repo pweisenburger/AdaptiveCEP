@@ -59,7 +59,7 @@ case class EvaluationPublisher(createEventFromId: Integer => Event) extends Publ
       super.receive(Subscribe)
     case EventReceived(eid,data) =>
       countReceived += 1
-      if (countReceived % 3500 == 0) {
+      if (countReceived % 500 == 0) {
         val t = System.nanoTime()
         val timeSpan = t / 1000000
         println(s"$data,$timeSpan,$begin")
