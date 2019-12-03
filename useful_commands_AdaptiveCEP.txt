@@ -1,3 +1,6 @@
+
+
+
 #Establish an ssh connection to the Azure instances
 
 ssh <username>@<INSTANCE_NAME>.westeurope.cloudapp.azure.com
@@ -111,31 +114,7 @@ export HOST18="3.15.37.2"
 export HOST19="18.220.229.241"
 export HOST20="3.16.193.175"
 
-#paste the ips of all hosts into the consumer hosts (needed to start al hosts and establish the network)
-
-
-
-
-export HOST1="18.219.222.126"
-export HOST2=""
-export HOST3=""
-export HOST4=""
-export HOST5=""
-export HOST6=""
-export HOST7=""
-export HOST8=""
-export HOST9=""
-export HOST10=""
-export HOST11=""
-export HOST12=""
-export HOST13=""
-export HOST14=""
-export HOST15=""
-export HOST16=""
-export HOST17=""
-export HOST18=""
-export HOST19=""
-export HOST20="3.16.193.175"
+#paste the ips of all hosts into the consumer hosts (needed to start at all hosts and establish the network)
 
 
 # to build jar file use
@@ -143,17 +122,7 @@ export HOST20="3.16.193.175"
 sbt "set test in assembly := {}" clean assembly #ignores tests
 
 
-
-#Deploy on SGX-LKL
- sudo iptables -t nat -D PREROUTING 2
-
- sudo sysctl -w net.ipv4.ip_forward=1
-
-sudo iptables -t nat -I PREROUTING -p tcp -d `hostname -i` --dport 8000 -j DNAT --to-destination 10.0.1.1:8000
-
-
-# Secure scala
-
+# Secure scala requirements
 
 git clone https://github.com/allprojects/securescala.git
 #switch to branch libope-libssl.1.0

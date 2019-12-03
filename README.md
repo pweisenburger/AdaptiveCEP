@@ -71,6 +71,30 @@ As said, the AdaptiveCEP backend is a tree of Akka actors representing a query, 
 
 A node representing a primitive (so far, there's only one primitive: a subscription to a stream) is just a plain Akka actor subscribing to the respective publisher, whereas nodes representing operators are all running an independent instance of the Esper event processing engine.
 
+
+# running the privacy-aware version on Azure Cloud
+
+1. Start the instances on your Azure account and ssh to those instances
+2. Follow the first time installation steps in useful_commands_AdaptiveCEP file
+3. Configure the public IPs in all nodes as shown in useful_commands_AdaptiveCEP file
+4. Run the leader first followed by the rest of the nodes
+5. run the Main file adaptivecep.privacy.PerformanceEvaluation
+
+## running SGX mode
+1. declare implicit SGX privacy context
+2. compile the Trusted Event Processor service by following the instructions in build.sbt file
+3. Install SGX-LKL on one of the SGX enabled nodes, instructions can be found here (https://github.com/lsds/sgx-lkl)
+4. copy the generated .jar file containing the service to sgx-lkl/apps/jvm/hello-world folder and modify the Make file to copy the sgx-service.jar with the needed configurations
+5. start the trusted event processor using instructions in 'Run EventProcessor on SGX LKL.txt' file
+6. configure the EventProcessorClient  to point to the public IP of the SGX-powered instance
+7. run the simulation
+
+## running PHE mode
+1. declare implicit PHE privacy context
+2. Deploy the cryptoServiceActor to one of the cloud instances
+3. write the query using the interpreter exactly as show in the examples found under adaptivecep.privacy.PerformanceEvaluation
+3. run the simulation
+
 # Publications
 
 Pascal Weisenburger, Manisha Luthra, Boris Koldehofe, and Guido Salvaneschi. 2017. Quality-aware runtime adaptation in complex event processing. In Proceedings of the 12th International Symposium on Software Engineering for Adaptive and Self-Managing Systems (SEAMS '17). IEEE Press, Piscataway, NJ, USA, 140-151

@@ -21,6 +21,7 @@ import scala.concurrent.Await
   */
 object Custom {
 
+  //Example user-defined classes
   case class MeasureEvent(id: String, data: Int) extends Serializable
   case class MeasureEventEncSgx(id: String, data: Array[Byte]) extends Serializable
   case class MeasureEventEncPhe(id: String, data: EncInt) extends Serializable
@@ -53,6 +54,7 @@ object Custom {
   }
 
 
+  //////////////Another set of custom object
   case class CarEvent(plateNumber: String, speed: Int) extends Serializable
 
   case class CarEventEnc(plateNumber: Array[Byte], speed: Array[Byte]) extends Serializable
@@ -93,6 +95,7 @@ object Custom {
     }
   }
 
+  /////// Custom objects used with Secure Scala
   case class Employee(id: Int, name: String, salary: Int) extends Serializable
   case class EmployeeEnc(id: EncInt, name: String, salary: EncInt) extends Serializable
 
